@@ -14,14 +14,16 @@ export default async function handler(req, res) {
 
   const webhookUrl = process.env.LEAD_WEBHOOK_URL;
   let savedLead = null;
+  let localOnly = false;
 
   try {
     savedLead = await createLead(req.body);
   } catch (error) {
-    return res.status(500).json({
-      error: error.code || "LEAD_SAVE_FAILED",
-      message: error.message || "Lead save failed",
-      details: error.details || "",
+    localOnly = true;
+    console.error("Lead database save failed; accepting lead without database persistence", {
+      code: error?.code || "LEAD_SAVE_FAILED",
+      message: error?.message || "",
+      details: error?.details || "",
     });
   }
 
@@ -42,5 +44,5 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(200).json({ ok: true, lead: savedLead });
+  return res.status(200).json({ ok: true, lead: savedLead, localOnly });
 }

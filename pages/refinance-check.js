@@ -1,11 +1,7 @@
 import Head from "next/head";
 import { useMemo, useRef, useState } from "react";
-import { ActionCard, MoneyInput } from "../components/Shared";
-import { extractMortgageReport, readPdfText } from "../lib/extractMortgageReport";
 import { cleanNumber, displayNumber, formatILS, formatPct, toNumber } from "../lib/format";
 import { monthlyPayment } from "../lib/mortgage";
-
-const showExtractionDebug = process.env.NODE_ENV !== "production";
 
 const initialData = {
   balance: "",
@@ -27,8 +23,30 @@ const initialLead = {
   purchaseStatus: "refinance",
 };
 
-function displayDecimal(value) {
-  return String(value || "").replace(/[^\d.]/g, "");
+const navLinks = [
+  ["דף הבית", "/"],
+  ["בדיקת מחזור", "#calculator"],
+  ["תוצאה", "#summary"],
+  ["השוואה", "#comparison"],
+  ["שאלות נפוצות", "#faq"],
+];
+
+const improvementCards = [
+  ["הורדת ריבית", "בדיקה אם ניתן לקבל ריבית נמוכה יותר ולצמצם עלות כוללת."],
+  ["שינוי תקופה", "קיצור או הארכת תקופה יכולים לשנות החזר חודשי וריבית מצטברת."],
+  ["שינוי תמהיל", "חלוקה אחרת בין מסלולים עשויה לשפר יציבות וגמישות."],
+  ["בדיקת עלויות", "עמלות וקנסות משפיעים ישירות על נקודת האיזון."],
+];
+
+const faqItems = [
+  ["מתי מחזור משכנתא עשוי להשתלם?", "כאשר יש חיסכון חודשי או חיסכון ריבית משמעותי, ועלויות המחזור מוחזרות בתוך תקופה סבירה ביחס לשנים שנותרו."],
+  ["האם חיסכון חודשי מספיק כדי להחליט?", "לא. צריך לבדוק גם חיסכון נטו אחרי עלויות, סך ריבית לאורך התקופה ונקודת איזון."],
+  ["מה קורה אם אין חיסכון לפי הנתונים?", "העמוד יציג זאת בצורה ברורה ולא יציג המלצה חיובית למחזור. עדיין אפשר לבדוק מול יועץ אם יש נתונים חסרים."],
+  ["האם זו הצעה בנקאית?", "לא. זו סימולציה ראשונית בלבד, ויש לוודא נתונים מול בנק או יועץ משכנתאות מורשה."],
+];
+
+function clamp(value, min = 0, max = 100) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function formatMonths(months) {
@@ -37,21 +55,6 @@ function formatMonths(months) {
   const years = Math.floor(months / 12);
   const rest = months % 12;
   return rest ? `${years} שנים ו-${rest} חודשים` : `${years} שנים`;
-}
-
-function formatILSExact(value) {
-  const number = Number(value);
-  if (!Number.isFinite(number)) return "--";
-  return new Intl.NumberFormat("he-IL", {
-    style: "currency",
-    currency: "ILS",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(number);
-}
-
-function clamp(value, min = 0, max = 100) {
-  return Math.max(min, Math.min(max, value));
 }
 
 function calculateRefinance(data) {
@@ -83,7 +86,6 @@ function calculateRefinance(data) {
   const breakEvenWithinTerm = refinanceCost === 0 ? monthlySavings > 0 : breakEvenMonths > 0 && breakEvenMonths <= months;
   const isWorthwhile = hasRequiredInputs && monthlySavings > 0 && netSavings > 0 && breakEvenWithinTerm;
   const isBorderline = hasRequiredInputs && !isWorthwhile && monthlySavings > 0 && (totalInterestSavings > 0 || breakEvenMonths > 0);
-  const disposableIncome = Math.max(0, income - expenses - loans);
   const totalObligationsRatio = income ? ((newPayment + loans) / income) * 100 : 0;
   const afterRefinance = income ? income - expenses - loans - newPayment : 0;
   const newMonthlyRate = newRate / 100 / 12;
@@ -110,14 +112,14 @@ function calculateRefinance(data) {
     },
     {
       title: "קיצור תקופה",
-      note: "בודק מה קורה אם מקצרים את התקופה. ההחזר החודשי עולה אבל סך הריבית יורד.",
+      note: "ההחזר החודשי עולה, אבל סך הריבית עשוי לרדת משמעותית.",
       payment: hasRequiredInputs ? monthlyPayment(balance, newRate, shorterYears) : 0,
       rate: newRate,
       years: shorterYears,
     },
     {
       title: "ריבית ותקופה משולבים",
-      note: "בודק שילוב של הורדת ריבית קלה עם קיצור תקופה מתון — עשוי לשפר גם חיסכון וגם גמישות.",
+      note: "שילוב של הורדת ריבית קלה עם קיצור תקופה מתון.",
       payment: hasRequiredInputs ? monthlyPayment(balance, lowerRate, combinedYears) : 0,
       rate: lowerRate,
       years: combinedYears,
@@ -148,10 +150,10 @@ function calculateRefinance(data) {
       ? "נראה שיש פוטנציאל לבדיקה מקצועית"
       : isBorderline
         ? "הכדאיות אינה חד-משמעית"
-        : "לפי הנתונים כרגע — המחזור כנראה לא משתלם";
+        : "לפי הנתונים כרגע - המחזור כנראה לא משתלם";
 
   const recommendationText = !hasRequiredInputs
-    ? "העלו דוח או הזינו ידנית יתרה, ריבית ותקופה שנותרה."
+    ? "הזינו יתרה, ריבית ותקופה שנותרה. אם ההחזר החודשי חסר, נחושב אותו לפי נוסחת שפיצר."
     : isWorthwhile
       ? "ייתכן שניתן לחסוך בהחזר או בריבית הכוללת, בכפוף לריביות בפועל ועלויות מחזור."
       : isBorderline
@@ -165,9 +167,9 @@ function calculateRefinance(data) {
     : monthlySavings <= 0
       ? "אין חיסכון חודשי לפי הנתונים"
       : breakEvenMonths > months
-        ? "נקודת האיזון ארוכה מהתקופה שנותרה — כנראה לא משתלם"
+        ? "נקודת האיזון ארוכה מהתקופה שנותרה - כנראה לא משתלם"
         : refinanceCost === 0
-          ? "ללא עלות מחזור שהוזנה"
+          ? "לא הוזנה עלות מחזור"
           : `החיסכון מכסה את עלויות המחזור בתוך ${formatMonths(breakEvenMonths)}`;
 
   const risk = !hasRequiredInputs
@@ -177,14 +179,6 @@ function calculateRefinance(data) {
       : totalObligationsRatio > 35
         ? "בינונית"
         : "נמוכה";
-
-  const scoreTone = !hasRequiredInputs
-    ? "from-mort-blue to-mort-emerald"
-    : isWorthwhile
-      ? "from-emerald-600 to-teal-600"
-      : isBorderline
-        ? "from-amber-500 to-orange-500"
-        : "from-slate-600 to-slate-700";
 
   return {
     balance,
@@ -198,13 +192,9 @@ function calculateRefinance(data) {
     newMonthlyRate,
     refinanceCost,
     newPayment,
-    currentTotalPaid,
-    newTotalPaid,
     currentInterestEstimate,
     newInterestEstimate,
-    monthlyDifference,
     monthlySavings,
-    totalInterestDifference,
     totalInterestSavings,
     netSavings,
     breakEvenMonths,
@@ -212,10 +202,8 @@ function calculateRefinance(data) {
     isWorthwhile,
     isBorderline,
     totalObligationsRatio,
-    disposableIncome,
     afterRefinance,
     score,
-    scoreTone,
     recommendation,
     recommendationText,
     breakEvenNote,
@@ -227,99 +215,30 @@ function calculateRefinance(data) {
 
 export default function RefinanceCheck() {
   const [data, setData] = useState(initialData);
-  const [uploadedFileName, setUploadedFileName] = useState("");
-  const [pdfLoading, setPdfLoading] = useState(false);
-  const [pdfError, setPdfError] = useState("");
-  const [extractedReport, setExtractedReport] = useState(null);
-  const [extractionConfirmed, setExtractionConfirmed] = useState(false);
   const [lead, setLead] = useState(initialLead);
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadSent, setLeadSent] = useState(false);
   const [leadError, setLeadError] = useState("");
-  const fileInputRef = useRef(null);
-  const manualInputRef = useRef(null);
+  const successRef = useRef(null);
   const result = useMemo(() => calculateRefinance(data), [data]);
-  const upload = useMemo(() => ({
-    status: pdfLoading
-      ? "loading"
-      : extractionConfirmed
-        ? "confirmed"
-        : extractedReport
-          ? pdfError
-            ? "partial"
-            : "ready"
-          : pdfError
-            ? "error"
-            : "idle",
-    fileName: uploadedFileName,
-    extracted: extractedReport,
-    error: pdfError,
-  }), [extractedReport, extractionConfirmed, pdfError, pdfLoading, uploadedFileName]);
 
   function update(key, value) {
     setData((current) => ({ ...current, [key]: value }));
-  }
-
-  async function handleUpload(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setUploadedFileName(file.name);
-    setPdfLoading(true);
-    setPdfError("");
-    setExtractedReport(null);
-    setExtractionConfirmed(false);
-    try {
-      const pdfData = await readPdfText(file);
-      const extracted = extractMortgageReport(pdfData);
-      setExtractedReport(extracted);
-      if (extracted.missingFields.length) {
-        setPdfError("לא הצלחנו לזהות את כל הנתונים. אפשר להשלים ידנית ולהמשיך.");
-      }
-      if (!extracted.payoffBalance && !extracted.balance && !extracted.currentPayment && !extracted.currentRate) {
-        setPdfError("לא הצלחנו לקרוא את כל הנתונים מהקובץ. אפשר להזין ידנית את החסרים ולהמשיך בבדיקה.");
-      }
-    } catch {
-      setExtractedReport(null);
-      setPdfError("לא הצלחנו לקרוא את כל הנתונים מהקובץ. אפשר להזין ידנית את החסרים ולהמשיך בבדיקה.");
-    } finally {
-      setPdfLoading(false);
-    }
-  }
-
-  function confirmExtracted() {
-    if (!extractedReport) return;
-    if (!extractedReport.payoffBalance) {
-      setPdfError("לא זוהתה יתרה לסילוק. אפשר להשלים ידנית.");
-      manualInputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
-    }
-    setData((current) => ({
-      ...current,
-      balance: String(extractedReport.payoffBalance),
-      currentPayment: extractedReport.currentPayment ? String(extractedReport.currentPayment) : current.currentPayment,
-      remainingYears: extractedReport.remainingYears ? String(extractedReport.remainingYears) : current.remainingYears,
-      currentRate: extractedReport.currentRate ? String(extractedReport.currentRate) : current.currentRate,
-      refinanceCost: extractedReport.refinanceCost ? String(extractedReport.refinanceCost) : current.refinanceCost,
-    }));
-    setExtractionConfirmed(true);
-    window.requestAnimationFrame(() => {
-      document.getElementById("summary")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
   }
 
   async function submitLead(event) {
     event.preventDefault();
     if (leadLoading || leadSent) return;
     const phone = cleanNumber(lead.phone);
-    if (!lead.name.trim() || phone.length < 9) {
-      setLeadError("יש להזין שם וטלפון תקין.");
+    if (lead.name.trim().length < 2 || !/^05\d{8}$|^9725\d{8}$/.test(phone)) {
+      setLeadError("יש להזין שם וטלפון ישראלי תקין.");
       return;
     }
 
     const record = {
       ...lead,
       phone,
-      mortgageAmount: cleanNumber(lead.mortgageAmount) || result.balance,
+      mortgageAmount: cleanNumber(lead.mortgageAmount) || String(result.balance || ""),
       purchaseStatus: "refinance",
       source: "refinance-check",
       approval: result.score,
@@ -337,642 +256,351 @@ export default function RefinanceCheck() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lead: record, analysis: result }),
       });
-      if (!response.ok) throw new Error("Lead request failed");
-      const apiResult = await response.json().catch(() => null);
-      if (!apiResult?.ok) throw new Error("Lead request was not confirmed");
-      const saved = JSON.parse(localStorage.getItem("mortgai2_leads") || "[]");
-      localStorage.setItem("mortgai2_leads", JSON.stringify([record, ...saved]));
+      const apiResult = await response.json().catch(() => ({}));
+      if (!response.ok || apiResult?.ok !== true) throw new Error("Lead request was not confirmed");
+
+      try {
+        const saved = JSON.parse(localStorage.getItem("mortgai2_leads") || "[]");
+        localStorage.setItem("mortgai2_leads", JSON.stringify([record, ...saved].slice(0, 50)));
+      } catch {
+        // Browser backup is optional. Server accepted the lead.
+      }
+
       setLeadSent(true);
+      window.requestAnimationFrame(() => successRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
     } catch {
       setLeadSent(false);
-      setLeadError("הפנייה לא נשלחה. נסה שוב או צור קשר ישירות.");
+      setLeadError("הפנייה לא נשלחה. נסו שוב או צרו קשר ישירות.");
     } finally {
       setLeadLoading(false);
     }
   }
 
   return (
-    <main dir="rtl" className="min-h-screen px-4 py-5 text-mort-text sm:px-6 lg:px-8">
+    <main dir="rtl" className="min-h-screen bg-white text-slate-950">
       <Head>
         <title>בדיקת מחזור משכנתא | בדיקת זכאות למשכנתא</title>
-        <meta name="description" content="בדיקה ראשונית למחזור משכנתא: העלאת דוח או הזנת נתונים ידנית לקבלת אומדן חיסכון חודשי, חיסכון ריבית, נקודת איזון וכדאיות מחזור." />
-        <meta property="og:title" content="בדיקת כדאיות מחזור משכנתא | בדיקת זכאות למשכנתא" />
-        <meta name="robots" content="index, follow" />
+        <meta name="description" content="בדיקה ראשונית למחזור משכנתא: הזינו נתונים ידנית וקבלו אומדן חיסכון חודשי, חיסכון ריבית, נקודת איזון וכדאיות מחזור." />
       </Head>
 
-      <div className="mx-auto w-full max-w-6xl">
-        <Header />
+      <Header />
+      <Hero />
 
-        <section id="top" className="py-16 text-center sm:py-24">
-          <span className="pill border-emerald-200 bg-emerald-50 text-emerald-800">מחזור משכנתא</span>
-          <h1 className="mx-auto mt-6 max-w-4xl text-[40px] font-black leading-[1.02] tracking-normal text-mort-ink sm:text-6xl lg:text-7xl">
-            בדיקת כדאיות מחזור משכנתא — לפני שממחזרים
-          </h1>
-          <p className="mx-auto mt-6 max-w-3xl text-lg font-bold leading-8 text-mort-muted">
-            העלו דוח משכנתא או הזינו נתונים ידנית, וקבלו אומדן ראשוני: חיסכון חודשי, חיסכון ריבית, נקודת איזון והאם המחזור באמת משתלם.
-          </p>
-          <a className="mt-9 inline-flex rounded-2xl bg-gradient-to-br from-mort-emerald to-mort-blue px-8 py-4 text-lg font-black text-white shadow-glow transition hover:-translate-y-0.5" href="#inputs">
-            בדוק כדאיות מחזור
-          </a>
-          <p className="mx-auto mt-5 max-w-3xl text-sm font-bold leading-7 text-mort-muted">
-            הסימולציה אינה אישור בנקאי. היא נועדה לעזור להבין האם שווה להתקדם לבדיקה מקצועית.
-          </p>
-        </section>
+      <section id="calculator" className="bg-gradient-to-b from-white via-violet-50/35 to-white py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <SectionHeader
+            eyebrow="בדיקת מחזור"
+            title="הזינו את נתוני המשכנתא הקיימת"
+            text="העלאת דוחות PDF הוסרה זמנית כדי לשמור על יציבות. הזנה ידנית נותנת בדיקה מהירה וברורה."
+          />
+          <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
+            <ManualForm data={data} update={update} />
+            <ResultPanel result={result} />
+          </div>
+        </div>
+      </section>
 
-        <SectionIntro
-          id="inputs"
-          label="שלב 1 · העלאת נתונים"
-          title="מעלים דוח או מזינים ידנית"
-          text="אפשר להתחיל מדוח יתרות לסילוק מהבנק, או למלא את הנתונים המרכזיים ידנית. הנתונים שחולצו מהדוח מוצגים לאישור לפני החישוב."
+      <section id="summary" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <SectionHeader
+          eyebrow="תוצאה"
+          title="האם המחזור נראה משתלם?"
+          text="העמוד מציג אומדן בלבד: חיסכון חודשי, חיסכון נטו אחרי עלויות ונקודת איזון ביחס לתקופה שנותרה."
         />
+        <div className="mt-10 grid gap-4 md:grid-cols-2">
+          <MetricCard label="ציון כדאיות למחזור" value={result.hasRequiredInputs ? `${result.score}/100` : "--"} note={result.recommendation} />
+          <MetricCard label="חיסכון חודשי משוער" value={result.hasRequiredInputs ? formatILS(result.monthlySavings) : "--"} note={result.monthlySavings <= 0 && result.hasRequiredInputs ? "אין חיסכון חודשי לפי הנתונים" : "הפרש בין ההחזר הנוכחי לחדש"} />
+          <MetricCard label="חיסכון נטו לאחר עלויות" value={result.hasRequiredInputs ? formatILS(result.netSavings) : "--"} note={result.netSavings <= 0 && result.hasRequiredInputs ? "לא מוצגת המלצה חיובית כשאין חיסכון נטו" : "חיסכון ריבית פחות עלויות מחזור"} />
+          <MetricCard label="נקודת איזון" value={result.hasRequiredInputs ? formatMonths(result.breakEvenMonths) : "--"} note={result.breakEvenNote} />
+        </div>
 
-        <section className="grid gap-5 lg:grid-cols-2">
-          <UploadCard upload={upload} fileInputRef={fileInputRef} onUpload={handleUpload} />
-          <ManualInputCard data={data} update={update} manualInputRef={manualInputRef} />
-        </section>
-
-        {upload.status !== "idle" && (
-          <ExtractedReportCard upload={upload} onConfirm={confirmExtracted} onEdit={() => manualInputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })} />
-        )}
-
-        {extractedReport && <DetectedTracksSection tracks={extractedReport.tracks || []} />}
-
-        <SectionIntro
-          id="summary"
-          label="שלב 2 · ניתוח כדאיות"
-          title="תוצאת המחזור לפי הנתונים שהוזנו"
-          text="התוצאה מציגה אומדן בלבד: האם יש פוטנציאל לחיסכון, מה נקודת האיזון, ומה הסיכון המרכזי לפני שמתקדמים."
+        <AdvisorCta
+          result={result}
+          lead={lead}
+          setLead={setLead}
+          submitLead={submitLead}
+          leadLoading={leadLoading}
+          leadSent={leadSent}
+          leadError={leadError}
+          successRef={successRef}
         />
+      </section>
 
-        <section className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-          <ResultSummary result={result} />
-          <ResultBars result={result} />
-        </section>
+      <section id="comparison" className="bg-slate-50 py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <SectionHeader
+            eyebrow="לפני ואחרי"
+            title="השוואת המשכנתא הנוכחית מול תרחיש המחזור"
+            text="אם הנתונים לא מצביעים על חיסכון, ההמלצה תישאר זהירה ולא תציג מחזור כמשתלם."
+          />
+          <div className="mt-10 grid gap-6 lg:grid-cols-2">
+            <ComparisonColumn
+              title="מצב נוכחי"
+              rows={[
+                ["החזר חודשי", result.hasRequiredInputs ? formatILS(result.currentPayment) : "--"],
+                ["ריבית ממוצעת", result.hasRequiredInputs ? formatPct(result.currentRate) : "--"],
+                ["יתרה לסילוק", result.hasRequiredInputs ? formatILS(result.balance) : "--"],
+                ["סך ריבית משוער", result.hasRequiredInputs ? formatILS(result.currentInterestEstimate) : "--"],
+              ]}
+            />
+            <ComparisonColumn
+              title="מצב חדש"
+              highlighted
+              rows={[
+                ["החזר חודשי חדש", result.hasRequiredInputs ? formatILS(result.newPayment) : "--"],
+                ["ריבית חדשה", result.hasRequiredInputs ? formatPct(result.newRate) : "--"],
+                ["חיסכון חודשי", result.hasRequiredInputs ? formatILS(result.monthlySavings) : "--"],
+                ["חיסכון נטו לאחר עלויות", result.hasRequiredInputs ? formatILS(result.netSavings) : "--"],
+              ]}
+            />
+          </div>
+        </div>
+      </section>
 
-        <AdvisorCta result={result} lead={lead} setLead={setLead} submitLead={submitLead} leadLoading={leadLoading} leadSent={leadSent} leadError={leadError} />
-
-        <SectionIntro
-          id="comparison"
-          label="שלב 3 · לפני ואחרי"
-          title="לפני ואחרי המחזור"
-          text="השוואה פשוטה בין המצב הנוכחי לבין תרחיש המחזור שהוזן. אם אין חיסכון נטו, העמוד לא יציג המלצה חיובית."
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <SectionHeader
+          eyebrow="תרחישים"
+          title="ארבע דרכים לבדוק את המחזור"
+          text="כל תרחיש מציג תוצאה שונה כדי להבין מה משפיע על ההחזר ועל הריבית הכוללת."
         />
-
-        <BeforeAfterComparison result={result} />
-
-        <section className="mt-5 grid gap-5 lg:grid-cols-2">
-          <FormulaExplanation result={result} />
-          <BreakEvenExplanation result={result} />
-        </section>
-
-        <SectionIntro
-          id="scenarios"
-          label="שלב 4 · אפשרויות שיפור"
-          title="דרכים אפשריות להקטין החזר או לשפר כדאיות"
-          text="התרחישים אינם הצעה בנקאית. הם עוזרים להבין אילו מנופים כדאי לבדוק מול יועץ או בנק."
-        />
-
-        <section className="mort-two-card-grid">
+        <div className="mt-10 grid gap-4 md:grid-cols-2">
           {result.scenarios.map((scenario) => (
             <ScenarioCard key={scenario.title} scenario={scenario} active={result.hasRequiredInputs} />
           ))}
-        </section>
+        </div>
 
-        <section className="mt-5 mort-two-card-grid">
-          <ActionCard title="להאריך שנים" text="יכול להוריד החזר חודשי, אבל חשוב לבדוק כמה ריבית נוספת משלמים." />
-          <ActionCard title="להוריד ריבית" text="הדרך החזקה ביותר: גם החזר חודשי נמוך וגם פחות ריבית מצטברת." />
-          <ActionCard title="לשנות תמהיל" text="פיזור נכון בין מסלולים עשוי לשפר יציבות, גמישות וסיכון עתידי." />
-          <ActionCard title="לבדוק קנסות ועלויות" text="עמלות פירעון מוקדם משפיעות על נקודת האיזון ועל הכדאיות." />
-        </section>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {improvementCards.map(([title, text]) => (
+            <InfoCard key={title} title={title} text={text} />
+          ))}
+        </div>
+      </section>
 
-        <AdvisorCta result={result} lead={lead} setLead={setLead} submitLead={submitLead} leadLoading={leadLoading} leadSent={leadSent} leadError={leadError} compact />
-
-        <FaqAndDisclaimer />
-
-        <footer className="mt-10 border-t border-slate-200 py-8 text-center">
-          <p className="text-sm font-bold leading-7 text-mort-muted">
-            בדיקת מחזור משכנתא היא כלי סימולציה ראשוני בלבד. הנתונים אינם מהווים ייעוץ משכנתאות, אישור בנקאי או הצעת מחיר מחייבת.
-          </p>
-          <div className="mt-3 flex justify-center gap-4 text-sm font-black text-mort-emerald">
-            <a href="/" className="hover:underline">בדיקת זכאות למשכנתא</a>
-            <span className="text-slate-300">|</span>
-            <a href="#top" className="hover:underline">חזרה למעלה</a>
+      <section id="faq" className="bg-slate-50 py-20">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <SectionHeader eyebrow="שאלות נפוצות" title="מה חשוב לדעת לפני מחזור?" text="הבדיקה כאן היא כלי ראשוני, לא הצעה בנקאית ולא ייעוץ מחייב." />
+          <div className="mt-10 grid gap-4 md:grid-cols-2">
+            {faqItems.map(([title, text]) => (
+              <InfoCard key={title} title={title} text={text} />
+            ))}
           </div>
-        </footer>
-      </div>
+        </div>
+      </section>
+
+      <Footer />
     </main>
   );
 }
 
 function Header() {
   return (
-    <header className="flex flex-col gap-4 border-b border-slate-200/70 bg-white/80 py-5 md:flex-row md:items-center md:justify-between">
-      <a href="/" className="block" aria-label="דף הבית">
-        <strong className="block text-2xl font-black text-mort-ink">בדיקת זכאות למשכנתא</strong>
-        <span className="text-sm font-bold text-mort-muted">תשובה פשוטה לפני שפונים לבנק</span>
-      </a>
-      <nav className="flex flex-wrap gap-2 text-sm font-black text-mort-muted" aria-label="ניווט ראשי">
-        <a className="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:text-mort-ink" href="#inputs">העלאת דוח</a>
-        <a className="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:text-mort-ink" href="#summary">תוצאה</a>
-        <a className="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:text-mort-ink" href="#comparison">השוואה</a>
-        <a className="rounded-full bg-mort-ink px-4 py-2 text-white shadow-soft transition hover:opacity-90" href="/">מחשבון רכישה</a>
-      </nav>
+    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+        <a href="/" className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-violet-100 text-lg font-black text-violet-700">זכ</span>
+          <span className="leading-tight">
+            <span className="block text-base font-black text-slate-950">בדיקת זכאות למשכנתא</span>
+            <span className="hidden text-xs font-bold text-slate-500 sm:block">תשובה פשוטה לפני שפונים לבנק</span>
+          </span>
+        </a>
+        <nav className="hidden items-center gap-6 text-sm font-bold text-slate-600 lg:flex">
+          {navLinks.map(([label, href]) => (
+            <a key={href} href={href} className="transition hover:text-violet-700">{label}</a>
+          ))}
+        </nav>
+        <a href="#calculator" className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
+          בדיקה חינם
+        </a>
+      </div>
     </header>
   );
 }
 
-function SectionIntro({ id, label, title, text }) {
+function Hero() {
   return (
-    <section id={id} className="scroll-mt-24 pt-14">
-      <span className="pill border-blue-100 bg-blue-50 text-mort-blue">{label}</span>
-      <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px] md:items-end">
-        <div>
-          <h2 className="text-3xl font-black leading-tight text-mort-ink sm:text-4xl">{title}</h2>
-          <p className="mt-2 max-w-3xl font-bold leading-7 text-mort-muted">{text}</p>
-        </div>
-        <div className="h-1 rounded-full bg-gradient-to-l from-mort-emerald via-mort-blue to-transparent" />
-      </div>
-    </section>
-  );
-}
-
-function UploadCard({ upload, fileInputRef, onUpload }) {
-  const hasFile = Boolean(upload.fileName);
-  return (
-    <article className="glass-card p-6 sm:p-8">
-      <span className="pill border-emerald-200 bg-emerald-50 text-emerald-800">דוח משכנתא PDF</span>
-      <h3 className="mt-4 text-2xl font-black text-mort-ink">העלאת דוח מהבנק</h3>
-      <p className="mt-2 font-bold leading-7 text-mort-muted">
-        העלו דוח יתרות לסילוק / דוח משכנתא. ננסה לזהות יתרה, החזר, תקופה, ריבית ועלויות מחזור.
-      </p>
-      <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" className="sr-only" onChange={onUpload} />
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        className="mt-6 flex min-h-40 w-full flex-col items-center justify-center rounded-[26px] border-2 border-dashed border-emerald-300 bg-white/75 p-6 text-center shadow-soft transition hover:-translate-y-0.5"
-      >
-        <strong className="text-xl font-black text-mort-ink">{hasFile ? upload.fileName : "בחרו קובץ PDF להעלאה"}</strong>
-        <span className="mt-2 font-bold text-mort-muted">
-          {upload.status === "loading" ? "קורא את הדוח..." : "הקובץ נשאר בדפדפן לצורך חילוץ ראשוני של נתונים."}
-        </span>
-      </button>
-      {upload.error && <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-black leading-6 text-amber-900">{upload.error}</p>}
-      <div className="mt-5 grid gap-3 rounded-[22px] border border-slate-200 bg-white/70 p-4">
-        {["נכנסים לאפליקציה או לאתר הבנק", "עוברים לאזור המשכנתאות", "מורידים דוח יתרות לסילוק / דוח הלוואות", "מעלים כאן ומאשרים את הנתונים שחולצו"].map((item, index) => (
-          <span key={item} className="flex gap-3 text-sm font-black leading-6 text-mort-muted">
-            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-mort-ink text-xs text-white">{index + 1}</span>
-            {item}
-          </span>
-        ))}
-      </div>
-    </article>
-  );
-}
-
-function ManualInputCard({ data, update, manualInputRef }) {
-  return (
-    <article id="manual-inputs" ref={manualInputRef} className="glass-card scroll-mt-24 p-6 sm:p-8">
-      <span className="pill border-blue-100 bg-blue-50 text-mort-blue">הזנה ידנית</span>
-      <h3 className="mt-4 text-2xl font-black text-mort-ink">נתוני המשכנתא הקיימת</h3>
-      <p className="mt-2 font-bold leading-7 text-mort-muted">
-        שלושת הנתונים החיוניים: יתרה לסילוק, ריבית קיימת ושנים שנותרו. אם ההחזר החודשי חסר, נחושב אותו לפי נוסחת שפיצר.
-      </p>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <MoneyInput required label="יתרת משכנתא לסילוק" helper="הסכום שנשאר להחזיר לפי דוח יתרות לסילוק." value={data.balance} onChange={(v) => update("balance", v)} />
-        <MoneyInput label="החזר חודשי נוכחי" helper="אם לא מוזן, נחושב משוער לפי היתרה, הריבית והתקופה." value={data.currentPayment} onChange={(v) => update("currentPayment", v)} />
-        <RateInput required label="ריבית קיימת ממוצעת" helper="הריבית הממוצעת במסלולים הקיימים." value={data.currentRate} onChange={(v) => update("currentRate", v)} />
-        <NumberInput required label="שנים שנותרו" helper="מספר השנים שנותרו עד סיום המשכנתא." value={data.remainingYears} onChange={(v) => update("remainingYears", v)} />
-        <RateInput label="ריבית חדשה לבדיקה" helper="הריבית שתרצו לבדוק בתרחיש המחזור." value={data.newRate} onChange={(v) => update("newRate", v)} />
-        <MoneyInput label="עלות מחזור משוערת" helper="שכר טרחה, פתיחת תיק, שמאות ועמלות." value={data.refinanceCost} onChange={(v) => update("refinanceCost", v)} />
-      </div>
-      <div className="mt-5 rounded-[22px] border border-slate-200 bg-white/70 p-4">
-        <p className="mb-3 text-xs font-black uppercase tracking-wide text-mort-muted">אופציונלי · יחס החזר לאחר מחזור</p>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <MoneyInput label="הכנסה נטו" value={data.income} onChange={(v) => update("income", v)} />
-          <MoneyInput label="הוצאות קבועות" value={data.expenses} onChange={(v) => update("expenses", v)} />
-          <MoneyInput label="הלוואות קיימות" value={data.loans} onChange={(v) => update("loans", v)} />
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function ExtractedReportCard({ upload, onConfirm, onEdit }) {
-  const extracted = upload.extracted;
-  return (
-    <section className="mt-5 glass-card p-6 sm:p-8">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
-        <div>
-          <span className="pill border-amber-200 bg-amber-50 text-mort-gold">אישור נתוני הדוח</span>
-          <h3 className="mt-4 text-2xl font-black text-mort-ink">
-            {extracted ? "מצאנו את הנתונים הבאים בדוח" : "נתונים שחולצו אוטומטית יופיעו כאן"}
-          </h3>
-          <p className="mt-2 font-bold leading-7 text-mort-muted">
-            נתונים שחולצו אוטומטית — יש לאשר לפני חישוב. אם משהו חסר או לא מדויק, אפשר לערוך ידנית ולהמשיך בבדיקה.
+    <section className="relative overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,0.18),transparent_45%)]" />
+      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-2">
+        <div className="mx-auto max-w-2xl text-center lg:text-right">
+          <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-black text-violet-800">מחזור משכנתא</span>
+          <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+            בדיקת כדאיות למחזור משכנתא
+          </h1>
+          <p className="mx-auto mt-6 max-w-xl text-lg font-semibold leading-8 text-slate-600 lg:mx-0">
+            הזינו כמה נתונים בסיסיים וקבלו אומדן חיסכון חודשי, חיסכון ריבית, נקודת איזון והאם כדאי להתקדם לבדיקה מקצועית.
           </p>
+          <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+            <a href="#calculator" className="rounded-full bg-violet-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-violet-800">
+              בדקו מחזור עכשיו
+            </a>
+            <a href="/" className="rounded-full border border-violet-200 bg-white px-8 py-4 text-center text-base font-black text-violet-800 shadow-sm transition hover:border-violet-300 hover:bg-violet-50">
+              מחשבון רכישה
+            </a>
+          </div>
+          <p className="mt-5 text-sm font-bold text-slate-500">סימולציה ראשונית בלבד, לא אישור בנקאי או ייעוץ משכנתאות רשמי.</p>
         </div>
-        <div className="rounded-[22px] border border-slate-200 bg-white/75 p-4 text-sm font-black leading-6 text-mort-muted">
-          {upload.status === "loading" ? "קורא את הדוח..." : upload.fileName ? `קובץ: ${upload.fileName}` : "עדיין לא הועלה קובץ"}
-        </div>
-      </div>
-
-      <div className="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-white/80">
-        <ExtractedRow label="יתרה לסילוק לפי הדוח" value={extracted?.payoffBalance ? formatILSExact(extracted.payoffBalance) : extracted?.balance ? formatILSExact(extracted.balance) : "--"} />
-        <ExtractedRow label="קרן / יתרת קרן אם קיימת" value={extracted?.principalBalance ? formatILSExact(extracted.principalBalance) : "--"} />
-        <ExtractedRow label="החזר חודשי נוכחי" value={extracted?.currentPayment ? formatILSExact(extracted.currentPayment) : "--"} />
-        <ExtractedRow label="תקופה שנותרה" value={extracted?.remainingYears ? `${extracted.remainingYears} שנים` : "--"} />
-        <ExtractedRow label="ריבית כוללת חזויה" value={extracted?.currentRate ? formatPct(extracted.currentRate, 4) : "--"} />
-        <ExtractedRow label="מסלולים שזוהו" value={extracted?.tracks?.length ? `${extracted.tracks.length} מסלולים זוהו חלקית` : "--"} />
-        <ExtractedRow label="עמלת פירעון מוקדם / עלויות מחזור אם זוהו" value={extracted?.refinanceCost ? formatILSExact(extracted.refinanceCost) : "--"} />
-        <ExtractedRow label="רמת ביטחון בזיהוי" value={confidenceLabel(extracted?.confidence)} />
-        <ExtractedRow label="נתונים חסרים" value={extracted?.missingFields?.length ? extracted.missingFields.join(", ") : extracted ? "לא זוהו חסרים מרכזיים" : "--"} warn={Boolean(extracted?.missingFields?.length)} />
-      </div>
-
-      {showExtractionDebug && extracted && <PdfExtractionDebug extracted={extracted} />}
-
-      {showExtractionDebug && extracted?.rawTextPreview && (
-        <details className="mt-4 rounded-2xl border border-slate-200 bg-white/70 p-4">
-          <summary className="cursor-pointer font-black text-mort-ink">תצוגה מקדימה של טקסט שחולץ</summary>
-          <p className="mt-3 text-xs font-bold leading-6 text-mort-muted">{extracted.rawTextPreview}</p>
-        </details>
-      )}
-
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-        <button type="button" disabled={!extracted} onClick={onConfirm} className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white shadow-soft transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
-          אשר והמשך לחישוב
-        </button>
-        <button type="button" onClick={onEdit} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-black text-mort-ink shadow-soft transition hover:-translate-y-0.5">
-          ערוך ידנית
-        </button>
+        <Illustration />
       </div>
     </section>
   );
 }
 
-function confidenceLabel(confidence) {
-  if (confidence === "high") return "גבוהה";
-  if (confidence === "medium") return "בינונית";
-  if (confidence === "low") return "נמוכה";
-  return "--";
-}
-
-function DetectedTracksSection({ tracks }) {
+function Illustration() {
   return (
-    <section className="mt-5 glass-card p-6 sm:p-8">
-      <span className="pill border-blue-100 bg-blue-50 text-mort-blue">מסלולים שזוהו בדוח</span>
-      <h3 className="mt-4 text-2xl font-black text-mort-ink">מבנה המשכנתא לפי הדוח</h3>
-      <p className="mt-2 font-bold leading-7 text-mort-muted">
-        המערכת זיהתה את מבנה המשכנתא מתוך הדוח. הנתונים מוצגים לבדיקה בלבד, ויש לוודא אותם מול הדוח המקורי.
-      </p>
-
-      {tracks.length ? (
-        <div className="mt-5 mort-two-card-grid">
-          {tracks.map((track, index) => (
-            <article key={`${track.loanNumber || "track"}-${index}`} className="equal-card rounded-[22px] border border-slate-200 bg-white/80 p-5 shadow-soft">
-              <div>
-                <strong dir="ltr" className="block text-lg font-black text-mort-ink">{track.loanNumber || `Track ${index + 1}`}</strong>
-                <div className="mt-4 grid gap-2 text-sm font-bold text-mort-muted">
-                  <TrackField label="סוג מסלול" value={track.rateType || "--"} />
-                  <TrackField label="יתרה / סכום אם זוהה" value={track.balance ? formatILSExact(track.balance) : track.originalAmount ? formatILSExact(track.originalAmount) : "--"} />
-                  <TrackField label="ריבית" value={track.rate ? formatPct(track.rate, 3) : "--"} />
-                  <TrackField label="הצמדה" value={track.indexation || "--"} />
-                  <TrackField label="תאריך סיום" value={track.finalPaymentDate || "--"} />
-                  <TrackField label="שיטת החזר" value={track.repaymentMethod || "--"} />
-                </div>
-              </div>
-              <small className="mt-4 rounded-2xl bg-surface-low px-3 py-2 text-xs font-black text-mort-muted">זיהוי {confidenceLabel(track.confidence)}</small>
-            </article>
-          ))}
+    <div className="relative mx-auto w-full max-w-lg">
+      <div className="absolute -inset-6 rounded-[56px] bg-violet-200/30 blur-3xl" />
+      <div className="relative rounded-[44px] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-violet-50 p-8 shadow-[0_28px_80px_rgba(15,23,42,0.12)]">
+        <div className="rounded-[32px] border border-slate-200 bg-white p-6">
+          <p className="text-sm font-black text-slate-500">אומדן מחזור</p>
+          <div className="mt-5 space-y-4">
+            <Line label="החזר נוכחי" width="92%" />
+            <Line label="החזר חדש" width="68%" purple />
+            <Line label="חיסכון נטו" width="74%" />
+          </div>
+          <div className="mt-6 rounded-3xl bg-violet-700 p-5 text-white">
+            <p className="text-sm font-black text-violet-100">נקודת איזון</p>
+            <p className="mt-2 text-3xl font-black">בדיקה מהירה</p>
+          </div>
         </div>
-      ) : (
-        <p className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 font-black leading-7 text-amber-900">
-          לא זוהו מסלולים בצורה מלאה. אפשר להמשיך לבדיקה לפי הסיכום הכללי ולהשלים ידנית.
-        </p>
-      )}
-    </section>
-  );
-}
-
-function TrackField({ label, value }) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-xl bg-white/75 px-3 py-2">
-      <span>{label}</span>
-      <strong className="text-mort-ink">{value}</strong>
+      </div>
     </div>
   );
 }
 
-function PdfExtractionDebug({ extracted }) {
-  const candidates = extracted.candidatePayoffNumbers || [];
-  const rejected = extracted.rejectedPayoffCandidates || [];
-
+function Line({ label, width, purple = false }) {
   return (
-    <details className="mt-4 rounded-2xl border border-slate-300 bg-white/80 p-4">
-      <summary className="cursor-pointer font-black text-mort-ink">Debug PDF Extraction</summary>
-      <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        <DebugRow label="payoffBalance" value={debugMoney(extracted.payoffBalance)} />
-        <DebugRow label="balance" value={debugMoney(extracted.balance)} />
-        <DebugRow label="principalBalance" value={debugMoney(extracted.principalBalance)} />
-        <DebugRow label="currentPayment" value={debugMoney(extracted.currentPayment)} />
-        <DebugRow label="currentRate" value={extracted.currentRate ? formatPct(extracted.currentRate, 4) : "--"} />
-        <DebugRow label="refinanceCost" value={debugMoney(extracted.refinanceCost)} />
-        <DebugRow label="extractionMethod" value={extracted.extractionMethod || "--"} />
-        <DebugRow label="anchorName" value={extracted.anchorName || "--"} />
-        <DebugRow label="anchorIndex" value={Number.isFinite(extracted.anchorIndex) ? extracted.anchorIndex : "--"} />
-        <DebugRow label="detectedSummaryLine" value={<DebugPre value={extracted.detectedSummaryLine || "--"} />} />
-        <DebugRow label="windowText" value={<DebugPre value={extracted.windowText || "--"} />} />
-        <DebugRow label="candidatePayoffNumbers" value={<DebugPre value={JSON.stringify(candidates, null, 2)} />} />
-        <DebugRow label="rejectedPayoffCandidates" value={<DebugPre value={JSON.stringify(rejected, null, 2)} />} />
-        <DebugRow label="tracks" value={<DebugPre value={JSON.stringify(extracted.tracks || [], null, 2)} />} />
-      </div>
-      <p className="mt-3 text-xs font-bold leading-6 text-mort-muted">
-        Temporary debug view: this shows exactly what the parser returned after PDF upload so production mapping issues can be diagnosed.
-      </p>
-    </details>
-  );
-}
-
-function debugMoney(value) {
-  return value ? formatILSExact(value) : "--";
-}
-
-function DebugRow({ label, value }) {
-  return (
-    <div className="grid gap-2 border-b border-slate-100 p-3 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)]">
-      <span dir="ltr" className="font-mono text-xs font-black text-slate-500">{label}</span>
-      <strong className="min-w-0 break-words text-sm font-black text-mort-ink">{value}</strong>
+    <div>
+      <div className="flex justify-between text-sm font-black text-slate-500"><span>{label}</span><span>{width}</span></div>
+      <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full ${purple ? "bg-violet-600" : "bg-slate-300"}`} style={{ width }} /></div>
     </div>
   );
 }
 
-function DebugPre({ value }) {
+function SectionHeader({ eyebrow, title, text }) {
   return (
-    <pre dir="ltr" className="max-h-52 overflow-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-left font-mono text-xs font-bold leading-5 text-slate-700">
-      {value}
-    </pre>
-  );
-}
-
-function ExtractedRow({ label, value, warn = false }) {
-  return (
-    <div className={`grid gap-2 border-b border-slate-100 p-4 last:border-b-0 sm:grid-cols-[1fr_1.4fr] ${warn ? "bg-amber-50 text-amber-900" : ""}`}>
-      <span className="font-black text-mort-muted">{label}</span>
-      <strong className="font-black text-mort-ink">{value}</strong>
+    <div className="mx-auto max-w-3xl text-center">
+      <span className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">{eyebrow}</span>
+      <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950 sm:text-4xl">{title}</h2>
+      <p className="mt-4 text-lg leading-8 text-slate-600">{text}</p>
     </div>
   );
 }
 
-function ResultSummary({ result }) {
+function ManualForm({ data, update }) {
   return (
-    <section className="glass-card p-6 sm:p-8">
-      <div className={`rounded-[28px] bg-gradient-to-br ${result.scoreTone} p-6 text-white shadow-glow`}>
-        <span className="text-sm font-black opacity-85">ציון כדאיות למחזור</span>
-        <strong className="mt-2 block text-7xl font-black leading-none">{result.hasRequiredInputs ? result.score : "--"}</strong>
-        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/25">
-          <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${result.score}%` }} />
+    <form className="rounded-[34px] border border-slate-200 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-7">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <MoneyField label="יתרת משכנתא לסילוק" value={data.balance} onChange={(value) => update("balance", value)} helper="הסכום שנשאר להחזיר לפי הדוח או האפליקציה." />
+        <MoneyField label="החזר חודשי נוכחי" value={data.currentPayment} onChange={(value) => update("currentPayment", value)} helper="אם ריק, נחושב לפי יתרה, ריבית ותקופה." />
+        <RateField label="ריבית קיימת ממוצעת" value={data.currentRate} onChange={(value) => update("currentRate", value)} />
+        <NumberField label="שנים שנותרו" value={data.remainingYears} onChange={(value) => update("remainingYears", value)} />
+        <RateField label="ריבית חדשה לבדיקה" value={data.newRate} onChange={(value) => update("newRate", value)} />
+        <MoneyField label="עלות מחזור משוערת" value={data.refinanceCost} onChange={(value) => update("refinanceCost", value)} />
+        <MoneyField label="הכנסה נטו" value={data.income} onChange={(value) => update("income", value)} />
+        <MoneyField label="הוצאות והלוואות" value={data.expenses} onChange={(value) => update("expenses", value)} />
+      </div>
+      <p className="mt-5 rounded-2xl bg-violet-50 px-4 py-3 text-sm font-bold leading-6 text-violet-900">
+        כרגע הבדיקה ידנית בלבד. העלאת PDF תחזור בהמשך אחרי שנייצב את חילוץ הנתונים.
+      </p>
+    </form>
+  );
+}
+
+function ResultPanel({ result }) {
+  return (
+    <aside className="rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-700 to-violet-950 p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.28)] sm:p-8">
+      <p className="text-sm font-black text-violet-100">תוצאה בזמן אמת</p>
+      <div className="mt-6 flex items-end justify-between gap-4">
+        <div>
+          <h3 className="text-2xl font-black">ציון כדאיות למחזור</h3>
+          <p className="mt-2 text-violet-100">{result.recommendation}</p>
         </div>
-        <h3 className="mt-5 text-2xl font-black">{result.recommendation}</h3>
-        <p className="mt-2 font-bold leading-7 text-white/85">{result.recommendationText}</p>
+        <span className="number-display text-5xl font-black">{result.hasRequiredInputs ? result.score : "--"}</span>
       </div>
-
-      <div className="mt-5 mort-two-card-grid">
-        <ResultCard label="חיסכון חודשי משוער" value={result.hasRequiredInputs ? formatILS(result.monthlySavings) : "--"} highlight={result.monthlySavings > 200} />
-        <ResultCard label="חיסכון ריבית כולל משוער" value={result.hasRequiredInputs ? formatILS(result.totalInterestSavings) : "--"} highlight={result.totalInterestSavings > 10000} />
-        <ResultCard label="חיסכון נטו לאחר עלויות" value={result.hasRequiredInputs ? formatILS(result.netSavings) : "--"} highlight={result.netSavings > 0} warn={result.hasRequiredInputs && result.netSavings <= 0} />
-        <ResultCard label="נקודת איזון" value={result.hasRequiredInputs ? formatMonths(result.breakEvenMonths) : "--"} highlight={result.breakEvenWithinTerm && result.breakEvenMonths <= 24} warn={result.hasRequiredInputs && !result.breakEvenWithinTerm && result.monthlySavings > 0} />
+      <div className="mt-7 h-3 overflow-hidden rounded-full bg-white/15">
+        <div className="h-full rounded-full bg-white transition-all duration-500" style={{ width: `${result.score}%` }} />
       </div>
-    </section>
+      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <DarkMetric label="חיסכון חודשי" value={result.hasRequiredInputs ? formatILS(result.monthlySavings) : "--"} />
+        <DarkMetric label="חיסכון נטו" value={result.hasRequiredInputs ? formatILS(result.netSavings) : "--"} />
+        <DarkMetric label="החזר חדש" value={result.hasRequiredInputs ? formatILS(result.newPayment) : "--"} />
+        <DarkMetric label="רמת סיכון" value={result.risk} />
+      </div>
+      <div className="mt-6 rounded-3xl bg-white/10 p-5 ring-1 ring-white/10">
+        <p className="text-sm font-black text-violet-100">הסבר</p>
+        <p className="mt-2 leading-7 text-violet-50">{result.recommendationText}</p>
+      </div>
+      <a href="#lead" className="mt-6 block rounded-full bg-white px-6 py-4 text-center text-base font-black text-violet-800 shadow-lg transition hover:bg-violet-50">
+        בדיקה עם יועץ
+      </a>
+    </aside>
   );
 }
 
-function ResultBars({ result }) {
-  const monthlyPct = clamp((result.monthlySavings / 1500) * 100);
-  const netPct = clamp((Math.max(0, result.netSavings) / 150000) * 100);
-  const breakEvenPct = result.breakEvenMonths ? clamp(100 - (result.breakEvenMonths / Math.max(result.months, 1)) * 100) : 0;
-  return (
-    <section className="glass-card p-6 sm:p-8">
-      <span className="pill border-blue-100 bg-blue-50 text-mort-blue">מה זה אומר?</span>
-      <h3 className="mt-4 text-2xl font-black text-mort-ink">מדדי כדאיות מרכזיים</h3>
-      <p className="mt-2 font-bold leading-7 text-mort-muted">
-        המדדים מציגים אם יש חיסכון חודשי, אם נשאר חיסכון נטו אחרי עלויות, והאם נקודת האיזון מגיעה בזמן סביר.
-      </p>
-      <div className="mt-6 grid gap-4">
-        <ProgressMetric label="חיסכון חודשי" value={result.hasRequiredInputs ? formatILS(result.monthlySavings) : "--"} pct={monthlyPct} good={result.monthlySavings > 0} />
-        <ProgressMetric label="חיסכון נטו" value={result.hasRequiredInputs ? formatILS(result.netSavings) : "--"} pct={netPct} good={result.netSavings > 0} />
-        <ProgressMetric label="נקודת איזון" value={result.hasRequiredInputs ? result.breakEvenNote : "--"} pct={breakEvenPct} good={result.breakEvenWithinTerm} />
-        <ProgressMetric label="רמת כדאיות" value={result.hasRequiredInputs ? `${result.score}/100` : "--"} pct={result.score} good={result.isWorthwhile} />
-      </div>
-      {result.hasRequiredInputs && !result.isWorthwhile && (
-        <p className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-black leading-6 text-amber-900">
-          לפי הנתונים כרגע אין המלצה חיובית למחזור. כדאי לבדוק אם ריבית נמוכה יותר, עלויות נמוכות יותר או תמהיל אחר משנים את התמונה.
-        </p>
-      )}
-    </section>
-  );
-}
-
-function BeforeAfterComparison({ result }) {
-  return (
-    <section className="grid gap-5 lg:grid-cols-2">
-      <ComparisonColumn
-        title="מצב נוכחי"
-        tone="slate"
-        rows={[
-          ["החזר חודשי", result.hasRequiredInputs ? formatILS(result.currentPayment) : "--"],
-          ["ריבית ממוצעת", result.hasRequiredInputs ? formatPct(result.currentRate) : "--"],
-          ["יתרה", result.hasRequiredInputs ? formatILS(result.balance) : "--"],
-          ["סך ריבית משוער", result.hasRequiredInputs ? formatILS(result.currentInterestEstimate) : "--"],
-        ]}
-      />
-      <ComparisonColumn
-        title="מצב חדש"
-        tone="emerald"
-        rows={[
-          ["החזר חודשי חדש", result.hasRequiredInputs ? formatILS(result.newPayment) : "--"],
-          ["ריבית חדשה", result.hasRequiredInputs ? formatPct(result.newRate) : "--"],
-          ["חיסכון חודשי", result.hasRequiredInputs ? formatILS(result.monthlySavings) : "--"],
-          ["חיסכון נטו לאחר עלויות", result.hasRequiredInputs ? formatILS(result.netSavings) : "--"],
-        ]}
-      />
-    </section>
-  );
-}
-
-function ComparisonColumn({ title, rows, tone }) {
-  const toneClass = tone === "emerald" ? "border-emerald-200 bg-emerald-50/70" : "border-slate-200 bg-white/80";
-  return (
-    <article className={`equal-card rounded-[28px] border p-6 shadow-soft ${toneClass}`}>
-      <div>
-        <h3 className="text-2xl font-black text-mort-ink">{title}</h3>
-        <div className="mt-5 grid gap-3">
-          {rows.map(([label, value]) => (
-            <div key={label} className="flex items-center justify-between gap-4 rounded-2xl bg-white/75 p-4">
-              <span className="font-black text-mort-muted">{label}</span>
-              <strong className="number-display text-xl font-black text-mort-ink">{value}</strong>
-            </div>
-          ))}
-        </div>
-      </div>
-      <span className="mt-4 rounded-2xl bg-white/80 px-3 py-2 text-xs font-black text-mort-muted">אומדן לפי הנתונים שהוזנו</span>
-    </article>
-  );
-}
-
-function FormulaExplanation({ result }) {
-  return (
-    <section className="glass-card p-6 sm:p-8">
-      <span className="pill border-blue-100 bg-blue-50 text-mort-blue">הסבר חישוב</span>
-      <h3 className="mt-4 text-2xl font-black text-mort-ink">איך ההחזר החודשי מחושב?</h3>
-      <p className="mt-2 font-bold leading-7 text-mort-muted">
-        אומדן לפי נוסחת שפיצר: יתרת הקרן, הריבית השנתית ומספר החודשים שנותרו. בפועל הבנק מחשב לפי מסלולים, הצמדות, עמלות וקנסות פירעון מוקדם.
-      </p>
-      <div className="mt-5 mort-two-card-grid">
-        <MiniMetric label="קרן לחישוב" value={result.hasRequiredInputs ? formatILS(result.balance) : "--"} />
-        <MiniMetric label="ריבית חודשית חדשה" value={result.hasRequiredInputs ? formatPct(result.newMonthlyRate * 100, 2) : "--"} />
-        <MiniMetric label="מספר חודשים" value={result.hasRequiredInputs ? `${result.months}` : "--"} />
-        <MiniMetric label="עלות מחזור" value={formatILS(result.refinanceCost)} />
-      </div>
-    </section>
-  );
-}
-
-function BreakEvenExplanation({ result }) {
-  return (
-    <section className="glass-card p-6 sm:p-8">
-      <span className="pill border-amber-200 bg-amber-50 text-mort-gold">נקודת איזון וסיכון</span>
-      <h3 className="mt-4 text-2xl font-black text-mort-ink">מתי המחזור מתחיל להשתלם?</h3>
-      <p className="mt-2 font-bold leading-7 text-mort-muted">
-        נקודת איזון היא הזמן שבו החיסכון החודשי מכסה את עלויות המחזור. אם היא ארוכה מהתקופה שנותרה, בדרך כלל המחזור לא משתלם לפי הנתונים.
-      </p>
-      <div className="mt-5 rounded-[24px] border border-slate-200 bg-white/80 p-5">
-        <strong className="number-display block text-3xl font-black text-mort-ink">{result.hasRequiredInputs ? formatMonths(result.breakEvenMonths) : "--"}</strong>
-        <p className="mt-2 font-black leading-7 text-mort-muted">{result.breakEvenNote}</p>
-      </div>
-      <div className="mt-4 mort-two-card-grid">
-        <MiniMetric label="יחס התחייבויות כולל מהכנסה" value={result.hasRequiredInputs ? formatPct(result.totalObligationsRatio) : "--"} />
-        <MiniMetric label="רמת סיכון" value={result.risk} />
-      </div>
-    </section>
-  );
-}
-
-function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, leadError, compact = false }) {
+function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, leadError, successRef }) {
   const title = result.isWorthwhile
-    ? "נראה שיש פוטנציאל — עכשיו צריך לבדוק איך מממשים אותו"
+    ? "נראה שיש פוטנציאל - עכשיו צריך לבדוק איך מממשים אותו"
     : result.isBorderline
-      ? "הכדאיות לא חד-משמעית — בדיקה מקצועית יכולה לעשות סדר"
-      : "המחזור לא תמיד משתלם — אבל כדאי להבין למה";
-  const bullets = [
-    "בדיקת הדוח מול הנתונים שחולצו",
-    "זיהוי מסלולים יקרים או מסוכנים",
-    "בדיקת נקודת איזון ועלויות מחזור",
-    "בחינת תמהיל חלופי מול ריביות בפועל",
-  ];
+      ? "הכדאיות לא חד-משמעית - בדיקה מקצועית יכולה לעשות סדר"
+      : "המחזור לא תמיד משתלם - אבל כדאי להבין למה";
 
   return (
-    <section className={`mt-8 rounded-[28px] border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-blue-50 p-7 shadow-luxury ${compact ? "lg:grid lg:grid-cols-[1fr_1fr] lg:gap-6" : ""}`}>
+    <section id="lead" className="mt-10 grid items-stretch gap-6 rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] lg:grid-cols-2">
       <div>
-        <span className="pill border-emerald-200 bg-white/85 text-emerald-800">בדיקה עם יועץ</span>
-        <h2 className="mt-4 text-3xl font-black leading-tight text-mort-ink">{title}</h2>
-        <p className="mt-3 font-bold leading-7 text-mort-muted">
-          מחזור משכנתא יכול לחסוך כסף — אבל רק אם בודקים את כל התמונה: ריביות, עמלות, תקופה שנותרה, תמהיל ונקודת איזון. השאר פרטים ויועץ יחזור אליך לבדיקה ראשונית.
+        <span className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-black text-violet-800 shadow-sm">בדיקה עם יועץ</span>
+        <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950">{title}</h2>
+        <p className="mt-4 leading-8 text-slate-600">
+          מחזור משכנתא יכול לחסוך כסף, אבל רק אם בודקים ריביות, עלויות, תקופה שנותרה ונקודת איזון. השאירו פרטים לבדיקה ראשונית.
         </p>
-        <div className="mt-4 grid gap-2 rounded-[22px] border border-emerald-200 bg-white/75 p-4">
-          {bullets.map((item) => (
-            <span key={item} className="flex items-center gap-2 text-sm font-black text-emerald-900">
-              <span className="text-mort-emerald">✓</span>
-              {item}
-            </span>
-          ))}
-        </div>
+        <ul className="mt-5 space-y-3 font-bold text-slate-700">
+          <li>• בדיקת הנתונים מול מצב המשכנתא הקיים</li>
+          <li>• זיהוי נקודות חיסכון אפשריות</li>
+          <li>• בדיקת נקודת איזון ועלויות מחזור</li>
+          <li>• בחינת תמהיל חלופי מול ריביות בפועל</li>
+        </ul>
       </div>
 
-      <form onSubmit={submitLead} className="mt-6 grid gap-3 lg:mt-0" noValidate>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <LeadInput label="שם מלא" value={lead.name} onChange={(v) => setLead({ ...lead, name: v })} placeholder="ישראל ישראלי" />
-          <LeadInput label="טלפון" value={lead.phone} onChange={(v) => setLead({ ...lead, phone: v })} placeholder="05X-XXXXXXX" inputMode="tel" />
-          <LeadInput label="עיר (אופציונלי)" value={lead.city} onChange={(v) => setLead({ ...lead, city: v })} placeholder="עיר מגורים" />
-          <LeadInput label="סכום משכנתא" value={lead.mortgageAmount ? displayNumber(lead.mortgageAmount) : displayNumber(result.balance)} onChange={(v) => setLead({ ...lead, mortgageAmount: cleanNumber(v) })} placeholder="סכום משכנתא" inputMode="numeric" />
+      <form onSubmit={submitLead} className="rounded-[28px] bg-white p-5 shadow-sm">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextField label="שם מלא" value={lead.name} onChange={(value) => setLead({ ...lead, name: value })} />
+          <TextField label="טלפון" value={lead.phone} onChange={(value) => setLead({ ...lead, phone: value })} placeholder="05X-XXXXXXX" />
+          <TextField label="עיר" value={lead.city} onChange={(value) => setLead({ ...lead, city: value })} />
+          <MoneyField label="סכום משכנתא" value={lead.mortgageAmount || String(result.balance || "")} onChange={(value) => setLead({ ...lead, mortgageAmount: value })} />
         </div>
-        <button type="submit" disabled={leadLoading || leadSent} className="min-h-14 rounded-2xl bg-gradient-to-br from-mort-emerald to-mort-blue px-5 py-4 text-lg font-black text-white shadow-glow transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60">
-          {leadLoading ? "שולח..." : leadSent ? "✓ נשלח בהצלחה" : "בדיקה ראשונית ללא התחייבות"}
+        {leadError && <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
+        {leadSent && <p ref={successRef} className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-800">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
+        <button type="submit" disabled={leadLoading || leadSent} className="mt-5 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70">
+          {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "בדיקה ראשונית ללא התחייבות"}
         </button>
-        <small className="block text-center font-bold leading-6 text-mort-muted">הפרטים נשמרים לצורך חזרה אליך בלבד.</small>
-        {leadSent && <strong className="rounded-2xl bg-emerald-100 p-3 text-center text-emerald-800">הפנייה נשלחה בהצלחה.</strong>}
-        {leadError && <strong className="rounded-2xl bg-red-100 p-3 text-center text-red-700">{leadError}</strong>}
-        {result.hasRequiredInputs && (
-          <p className="rounded-2xl border border-slate-200 bg-white/70 p-3 text-sm font-bold leading-6 text-mort-muted">
-            תוצאת הסימולציה כרגע: {result.recommendation}. זו אינה המלצה סופית.
-          </p>
-        )}
+        <p className="mt-3 text-center text-xs font-bold text-slate-500">הפרטים נשמרים לצורך חזרה אליך בלבד.</p>
       </form>
     </section>
   );
 }
 
-function FaqAndDisclaimer() {
-  const items = [
-    ["מתי מחזור משכנתא עשוי להשתלם?", "כאשר יש חיסכון חודשי או חיסכון ריבית משמעותי, ועלויות המחזור מוחזרות בתוך תקופה סבירה ביחס לשנים שנותרו."],
-    ["למה צריך דוח יתרות לסילוק?", "הדוח מציג יתרה, מסלולים, ריביות, הצמדות וקנסות פירעון. בלי הנתונים האלה קשה לדעת אם המחזור באמת משתלם."],
-    ["האם חיסכון חודשי מספיק כדי להחליט?", "לא. צריך לבדוק גם חיסכון נטו אחרי עלויות, סך ריבית לאורך התקופה ונקודת איזון."],
-    ["האם זו הצעה בנקאית?", "לא. זו סימולציה ראשונית בלבד, ויש לוודא נתונים מול בנק או יועץ משכנתאות מורשה."],
-  ];
+function MetricCard({ label, value, note }) {
   return (
-    <section className="mt-10 glass-card p-6 sm:p-8">
-      <span className="pill border-blue-100 bg-blue-50 text-mort-blue">שאלות נפוצות</span>
-      <h2 className="mt-4 text-3xl font-black text-mort-ink">מה חשוב לדעת לפני מחזור?</h2>
-      <div className="mt-6 mort-two-card-grid">
-        {items.map(([title, text]) => (
-          <article key={title} className="equal-card rounded-[22px] border border-slate-200 bg-white/75 p-5 shadow-soft">
-            <div>
-              <strong className="block text-lg font-black text-mort-ink">{title}</strong>
-              <p className="mt-2 font-bold leading-7 text-mort-muted">{text}</p>
-            </div>
-            <span className="mt-4 rounded-2xl bg-surface-low px-3 py-2 text-xs font-black text-mort-muted">מידע כללי בלבד</span>
-          </article>
-        ))}
-      </div>
-      <p className="mt-5 rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm font-bold leading-7 text-mort-muted">
-        החישוב הוא סימולציה ראשונית בלבד ואינו מהווה ייעוץ משכנתאות, המלצה פיננסית או אישור בנקאי.
-      </p>
-    </section>
-  );
-}
-
-function ProgressMetric({ label, value, pct, good }) {
-  return (
-    <div className="rounded-[22px] border border-slate-200 bg-white/75 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <span className="font-black text-mort-muted">{label}</span>
-        <strong className={`text-sm font-black ${good ? "text-emerald-800" : "text-mort-ink"}`}>{value}</strong>
-      </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-        <div className={`h-full rounded-full ${good ? "bg-mort-emerald" : "bg-mort-blue"}`} style={{ width: `${clamp(pct)}%` }} />
-      </div>
-    </div>
-  );
-}
-
-function ResultCard({ label, value, highlight, warn }) {
-  return (
-    <article className={`equal-card rounded-[22px] border p-4 shadow-soft ${warn ? "border-amber-200 bg-amber-50/70" : highlight ? "border-emerald-200 bg-emerald-50/60" : "border-slate-200 bg-white/85"}`}>
+    <article className="flex h-full flex-col justify-between rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
       <div>
-        <span className="block text-xs font-black text-mort-muted">{label}</span>
-        <strong className={`number-display mt-2 block text-2xl font-black leading-7 ${warn ? "text-amber-900" : highlight ? "text-mort-emerald" : "text-mort-ink"}`}>{value}</strong>
+        <p className="text-sm font-black text-slate-500">{label}</p>
+        <p className="number-display mt-3 text-3xl font-black text-slate-950">{value}</p>
       </div>
-      <span className={`mt-4 rounded-2xl px-3 py-2 text-xs font-black ${warn ? "bg-white/80 text-amber-900" : highlight ? "bg-white/80 text-emerald-800" : "bg-surface-low text-mort-muted"}`}>נתון מרכזי להחלטת מחזור</span>
+      <p className="mt-4 leading-7 text-slate-600">{note}</p>
     </article>
   );
 }
 
-function MiniMetric({ label, value }) {
+function ComparisonColumn({ title, rows, highlighted = false }) {
   return (
-    <article className="surface-card equal-card p-4">
-      <div>
-        <span className="block text-xs font-black text-mort-muted">{label}</span>
-        <strong className="number-display mt-1 block text-xl font-black text-mort-ink">{value}</strong>
+    <article className={`rounded-[30px] border p-6 shadow-sm ${highlighted ? "border-violet-200 bg-violet-50/70" : "border-slate-200 bg-white"}`}>
+      <h3 className="text-2xl font-black text-slate-950">{title}</h3>
+      <div className="mt-5 grid gap-3">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex items-center justify-between gap-4 rounded-2xl bg-white px-4 py-3">
+            <span className="font-bold text-slate-600">{label}</span>
+            <strong className="number-display text-lg font-black text-slate-950">{value}</strong>
+          </div>
+        ))}
       </div>
-      <span className="mt-3 rounded-xl bg-white/75 px-3 py-2 text-[11px] font-black text-mort-muted">חלק מתמונת הכדאיות</span>
     </article>
   );
 }
@@ -980,77 +608,116 @@ function MiniMetric({ label, value }) {
 function ScenarioCard({ scenario, active }) {
   const positive = scenario.monthlyChange > 0;
   return (
-    <article className="equal-card rounded-[24px] border border-slate-200 bg-white/80 p-5 shadow-soft">
+    <article className="flex h-full flex-col justify-between rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
       <div>
-        <strong className="block text-xl font-black text-mort-ink">{scenario.title}</strong>
-        <p className="mt-2 text-sm font-bold leading-6 text-mort-muted">{scenario.note}</p>
-        <div className="mt-4 rounded-2xl bg-slate-50 p-4">
-          <span className="block text-xs font-black text-mort-muted">החזר בתרחיש</span>
-          <strong className="mt-1 block text-2xl font-black text-mort-ink">{active ? formatILS(scenario.payment) : "--"}</strong>
-          <span className={`mt-2 block text-sm font-black ${positive ? "text-mort-emerald" : "text-amber-700"}`}>
+        <h3 className="text-xl font-black text-slate-950">{scenario.title}</h3>
+        <p className="mt-2 leading-7 text-slate-600">{scenario.note}</p>
+        <div className="mt-5 rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm font-black text-slate-500">החזר בתרחיש</p>
+          <p className="number-display mt-1 text-2xl font-black text-slate-950">{active ? formatILS(scenario.payment) : "--"}</p>
+          <p className={`mt-2 text-sm font-black ${positive ? "text-emerald-700" : "text-amber-700"}`}>
             שינוי חודשי: {active ? formatILS(scenario.monthlyChange) : "--"}
-          </span>
-          <span className="mt-2 block text-sm font-black text-mort-muted">
-            סך ריבית משוער: {active ? formatILS(scenario.totalInterest) : "--"}
-          </span>
+          </p>
+          <p className="mt-2 text-sm font-bold text-slate-600">סך ריבית משוער: {active ? formatILS(scenario.totalInterest) : "--"}</p>
         </div>
       </div>
-      <small className="mt-4 block rounded-2xl bg-surface-low px-3 py-2 font-bold text-mort-muted">
-        {active ? `${formatPct(scenario.rate)} ל-${scenario.years} שנים` : "ממתין לנתונים"}
-      </small>
-      <small className="mt-2 block rounded-2xl bg-white/80 px-3 py-2 font-bold text-mort-muted">
-        {active ? scenario.riskExplanation : "הסבר סיכון יוצג לאחר הזנת נתונים"}
-      </small>
+      <p className="mt-4 rounded-2xl bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">
+        {active ? `${formatPct(scenario.rate)} ל-${scenario.years} שנים · ${scenario.riskExplanation}` : "ממתין לנתונים"}
+      </p>
     </article>
   );
 }
 
-function LeadInput({ label, value, onChange, placeholder, inputMode = "text" }) {
+function InfoCard({ title, text }) {
   return (
-    <label className="grid gap-2">
-      <span className="text-sm font-black text-mort-muted">{label}</span>
-      <input
-        className="focus-field min-h-12 min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-black text-mort-ink"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        inputMode={inputMode}
-      />
-    </label>
+    <article className="flex h-full flex-col justify-between rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 className="text-xl font-black text-slate-950">{title}</h3>
+      <p className="mt-3 leading-7 text-slate-600">{text}</p>
+    </article>
   );
 }
 
-function NumberInput({ label, value, onChange, helper, required = false }) {
+function Footer() {
   return (
-    <label className="grid gap-2">
-      <span className="text-sm font-black text-mort-muted">{label}{required ? " *" : ""}</span>
-      <input
-        className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-lg font-black text-mort-ink"
-        inputMode="numeric"
-        value={value}
-        onChange={(e) => onChange(cleanNumber(e.target.value).slice(0, 2))}
-        required={required}
-      />
-      {helper && <small className="font-bold leading-5 text-mort-muted">{helper}</small>}
-    </label>
-  );
-}
-
-function RateInput({ label, value, onChange, helper, required = false }) {
-  return (
-    <label className="grid gap-2">
-      <span className="text-sm font-black text-mort-muted">{label}{required ? " *" : ""}</span>
-      <div className="flex min-h-12 overflow-hidden rounded-2xl border border-slate-200 bg-white ring-emerald-200 transition focus-within:ring-4">
-        <span className="grid w-14 shrink-0 place-items-center bg-blue-50 font-black text-mort-blue">%</span>
-        <input
-          className="min-w-0 flex-1 px-4 py-3 text-lg font-black text-mort-ink outline-none"
-          inputMode="decimal"
-          value={displayDecimal(value)}
-          onChange={(e) => onChange(cleanNumber(e.target.value, true))}
-          required={required}
-        />
+    <footer className="border-t border-slate-200 bg-white py-10">
+      <div className="mx-auto max-w-6xl px-4 text-sm font-semibold leading-7 text-slate-500 sm:px-6">
+        <p className="font-black text-slate-900">בדיקת זכאות למשכנתא</p>
+        <p>החישוב הוא סימולציה ראשונית בלבד ואינו מהווה ייעוץ משכנתאות, הצעה מחייבת או אישור בנקאי.</p>
       </div>
-      {helper && <small className="font-bold leading-5 text-mort-muted">{helper}</small>}
+    </footer>
+  );
+}
+
+function MoneyField({ label, value, onChange, helper }) {
+  return (
+    <label className="block">
+      <span className="text-sm font-black text-slate-700">{label}</span>
+      <span className="relative mt-2 block">
+        <input
+          inputMode="numeric"
+          value={displayNumber(value)}
+          onChange={(event) => onChange(cleanNumber(event.target.value))}
+          className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+        />
+        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">₪</span>
+      </span>
+      {helper && <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{helper}</span>}
     </label>
+  );
+}
+
+function TextField({ label, value, onChange, placeholder = "" }) {
+  return (
+    <label className="block">
+      <span className="text-sm font-black text-slate-700">{label}</span>
+      <input
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+      />
+    </label>
+  );
+}
+
+function NumberField({ label, value, onChange }) {
+  return (
+    <label className="block">
+      <span className="text-sm font-black text-slate-700">{label}</span>
+      <input
+        type="number"
+        min="1"
+        max="30"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+      />
+    </label>
+  );
+}
+
+function RateField({ label, value, onChange }) {
+  return (
+    <label className="block">
+      <span className="text-sm font-black text-slate-700">{label}</span>
+      <span className="relative mt-2 block">
+        <input
+          inputMode="decimal"
+          value={String(value || "").replace(/[^\d.]/g, "")}
+          onChange={(event) => onChange(cleanNumber(event.target.value, true))}
+          className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+        />
+        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">%</span>
+      </span>
+    </label>
+  );
+}
+
+function DarkMetric({ label, value }) {
+  return (
+    <div className="rounded-3xl bg-white/10 p-4 ring-1 ring-white/10">
+      <p className="text-xs font-black text-violet-100">{label}</p>
+      <p className="number-display mt-2 text-xl font-black text-white">{value}</p>
+    </div>
   );
 }

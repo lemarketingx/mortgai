@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cleanNumber, displayNumber, formatILS, formatPct } from "../lib/format";
 import { calculateMortgageAnalysis } from "../lib/mortgage";
 
@@ -161,6 +161,7 @@ export default function Home() {
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadError, setLeadError] = useState("");
   const [openFaq, setOpenFaq] = useState(null);
+  const leadSuccessRef = useRef(null);
 
   useEffect(() => {
     fetch("/api/rates")
@@ -226,6 +227,7 @@ export default function Home() {
       }
 
       setLeadSent(true);
+      window.requestAnimationFrame(() => leadSuccessRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
     } catch {
       setLeadSent(false);
       setLeadError("הפנייה לא נשלחה. נסו שוב או צרו קשר ישירות.");
@@ -265,6 +267,7 @@ export default function Home() {
           leadLoading={leadLoading}
           leadSent={leadSent}
           leadError={leadError}
+          successRef={leadSuccessRef}
           analysis={analysis}
           ready={ready}
         />
@@ -601,7 +604,7 @@ function RefinanceSection() {
   );
 }
 
-function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, analysis, ready }) {
+function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, successRef, analysis, ready }) {
   return (
     <section id="lead" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
       <div className="grid items-stretch gap-6 lg:grid-cols-2">
@@ -637,7 +640,7 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
           </div>
 
           {leadError && <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
-          {leadSent && <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">הפנייה נשלחה בהצלחה.</p>}
+          {leadSent && <p ref={successRef} className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-700">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
 
           <button
             type="submit"
