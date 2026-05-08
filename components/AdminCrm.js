@@ -5,6 +5,20 @@ import { formatILS } from "../lib/format";
 const fallbackStatuses = ["חדש", "נשלח ליועץ", "בטיפול", "אושר עקרונית", "נסגר", "לא רלוונטי"];
 const fallbackCommissionStatuses = ["pending", "invoiced", "paid"];
 
+function adminApiMessage(errorCode) {
+  const messages = {
+    ADMIN_AUTH_REQUIRED: "החיבור לאדמין פג או לא קיים. יש להתחבר מחדש.",
+    ADMIN_AUTH_NOT_CONFIGURED: "ADMIN_SESSION_SECRET לא מוגדר בשרת.",
+    SUPABASE_ENV_MISSING: "חסרים משתני Supabase ב-Vercel: SUPABASE_URL או SUPABASE_SERVICE_KEY.",
+    SUPABASE_READ_FAILED: "שגיאת קריאה מ-Supabase. בדוק שהטבלה leads קיימת ושה-Service Key תקין.",
+    SUPABASE_UPDATE_FAILED: "שגיאת עדכון ב-Supabase. בדוק הרשאות Service Key ומבנה טבלת leads.",
+    LEADS_READ_FAILED: "לא ניתן לטעון את הלידים כרגע בגלל שגיאת שרת.",
+    LEAD_UPDATE_FAILED: "לא ניתן היה לעדכן את הליד בגלל שגיאת שרת.",
+    LEAD_NOT_FOUND: "הליד לא נמצא במסד הנתונים.",
+  };
+  return messages[errorCode] || "לא ניתן להשלים את הפעולה כרגע.";
+}
+
 export default function PrivateAdmin() {
   const [leads, setLeads] = useState([]);
   const [statuses, setStatuses] = useState(fallbackStatuses);
@@ -44,22 +58,25 @@ export default function PrivateAdmin() {
 
     try {
       const response = await fetch("/api/admin/leads");
+      const json = await response.json().catch(() => ({}));
       if (!response.ok) {
         if (response.status === 401) {
           setIsAuthenticated(false);
-          setMessage("");
+          setMessage(adminApiMessage(json.error || "ADMIN_AUTH_REQUIRED"));
           return;
         }
-        throw new Error("Lead load failed");
+        throw new Error(adminApiMessage(json.error) || json.message || "Lead load failed");
       }
 
-      const json = await response.json();
       setLeads(json.leads || []);
       setStatuses(json.statuses || fallbackStatuses);
       setCommissionStatuses(json.commissionStatuses || fallbackCommissionStatuses);
       setIsAuthenticated(true);
-    } catch {
-      setMessage("לא ניתן לטעון את הלידים כרגע.");
+      if (!json.leads?.length) {
+        setMessage("אין לידים להצגה כרגע. אם שלחת ליד לבדיקה, ודא שהשמירה ל-Supabase הצליחה.");
+      }
+    } catch (error) {
+      setMessage(error.message || "לא ניתן לטעון את הלידים כרגע.");
     } finally {
       setLoading(false);
     }
@@ -79,13 +96,17 @@ export default function PrivateAdmin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
+      const json = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error("Invalid login");
+        if (json.error === "ADMIN_PASSWORD_NOT_CONFIGURED") throw new Error("ADMIN_PASSWORD לא מוגדר בשרת.");
+        if (json.error === "INVALID_PASSWORD") throw new Error("הסיסמה שגויה.");
+        if (json.error === "ADMIN_AUTH_NOT_CONFIGURED") throw new Error("ADMIN_SESSION_SECRET לא מוגדר בשרת.");
+        throw new Error("בעיית התחברות לאדמין.");
       }
       setPassword("");
       await loadLeads();
-    } catch {
-      setMessage("סיסמה שגויה או בעיית התחברות.");
+    } catch (error) {
+      setMessage(error.message || "סיסמה שגויה או בעיית התחברות.");
       setIsAuthenticated(false);
     } finally {
       setLoading(false);
@@ -115,12 +136,12 @@ export default function PrivateAdmin() {
       body: JSON.stringify({ id, changes }),
     });
 
+    const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setMessage("לא ניתן היה לעדכן את הליד.");
+      setMessage(adminApiMessage(json.error));
       return;
     }
 
-    const json = await response.json();
     setLeads((current) => current.map((lead) => (lead.id === id ? json.lead : lead)));
   }
 
@@ -189,7 +210,7 @@ export default function PrivateAdmin() {
         </section>
 
         <section className="fintech-card mt-5 p-6 sm:p-8">
-          <div className="grid gap-3 md:grid-cols-[1fr_240px_auto]">
+          <div className="grid gap-3 md:grid-cols-[1fr_240px_auto_auto]">
             <input
               className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink"
               value={query}
@@ -205,6 +226,9 @@ export default function PrivateAdmin() {
             <button disabled={loading} onClick={loadLeads} className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white shadow-soft disabled:opacity-60" type="button">
               {loading ? "טוען..." : "רענון"}
             </button>
+            <a className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-center font-black text-mort-ink shadow-soft" href="/api/admin/export">
+              ייצוא CSV
+            </a>
           </div>
           {message && <strong className="mt-4 block rounded-2xl bg-red-100 p-3 text-red-700">{message}</strong>}
         </section>

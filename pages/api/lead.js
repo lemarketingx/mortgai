@@ -1,45 +1,45 @@
 import { createLead } from "../../lib/leadsStore";
-
-function isValidLeadPayload(body) {
-  const lead = body?.lead;
-  if (!lead || typeof lead !== "object") return false;
-  const name = String(lead.name || "").trim();
-  const phone = String(lead.phone || "").replace(/[^\d]/g, "");
-  return Boolean(name) && phone.length >= 9;
-}
+import { publicLeadSchema, validationErrorPayload } from "../../lib/validation";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  if (!isValidLeadPayload(req.body)) {
-    return res.status(400).json({ error: "INVALID_LEAD_PAYLOAD" });
+  const parsed = publicLeadSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json(validationErrorPayload(parsed.error));
   }
+  req.body = parsed.data;
 
   const webhookUrl = process.env.LEAD_WEBHOOK_URL;
   let savedLead = null;
+
+  try {
+    savedLead = await createLead(req.body);
+  } catch (error) {
+    return res.status(500).json({
+      error: error.code || "LEAD_SAVE_FAILED",
+      message: error.message || "Lead save failed",
+      details: error.details || "",
+    });
+  }
 
   if (webhookUrl) {
     try {
       const response = await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(req.body),
+        body: JSON.stringify({ ...req.body, savedLead }),
       });
 
       if (!response.ok) {
-        return res.status(502).json({ error: "Lead webhook failed" });
+        const body = await response.text().catch(() => "");
+        console.warn("Lead webhook failed", response.status, body);
       }
-    } catch {
-      return res.status(502).json({ error: "Lead webhook unavailable" });
+    } catch (error) {
+      console.warn("Lead webhook unavailable", error);
     }
-  }
-
-  try {
-    savedLead = await createLead(req.body);
-  } catch {
-    return res.status(500).json({ error: "Lead save failed" });
   }
 
   return res.status(200).json({ ok: true, lead: savedLead });

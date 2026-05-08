@@ -37,11 +37,7 @@ Admin page:
 /admin
 ```
 
-Legacy path (still available for backward compatibility):
-
-```text
-/admin-dorian-private-2026
-```
+The old temporary private URL was removed. Use `/admin` only.
 
 Admin access now requires:
 
@@ -68,6 +64,38 @@ Optional lead forwarding webhook:
 ```text
 LEAD_WEBHOOK_URL
 ```
+
+If `SUPABASE_URL` or `SUPABASE_SERVICE_KEY` is missing in Vercel, `/api/admin/leads` returns `SUPABASE_ENV_MISSING` and the CRM shows a clear setup message instead of a generic loading failure.
+
+## Required Vercel Environment Variables
+
+Set these in Vercel Project Settings -> Environment Variables:
+
+```text
+ADMIN_PASSWORD
+ADMIN_SESSION_SECRET
+SUPABASE_URL
+SUPABASE_SERVICE_KEY
+```
+
+Optional:
+
+```text
+LEAD_WEBHOOK_URL
+OPENAI_API_KEY
+```
+
+`OPENAI_API_KEY` is only needed if a future PDF extraction or analysis flow uses OpenAI. The current PDF extraction uses browser-side PDF text parsing and does not require OpenAI.
+
+## Supabase Setup
+
+Create the `leads` table by running:
+
+```text
+lib/supabase-schema.sql
+```
+
+Use the Supabase `service_role` key for `SUPABASE_SERVICE_KEY`. Do not expose this key in client-side code.
 
 ## Vercel / GitHub Deployment
 

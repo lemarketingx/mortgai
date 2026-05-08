@@ -1,1 +1,1 @@
-export { default } from "./admin-dorian-private-2026";
+export { default } from "../components/AdminCrm";
