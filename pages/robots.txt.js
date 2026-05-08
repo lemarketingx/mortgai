@@ -9,7 +9,7 @@ export async function getServerSideProps({ res }) {
   res.write(`User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /api/
+Disallow: /api/admin
 
 Sitemap: ${SITE_URL}/sitemap.xml
 `);

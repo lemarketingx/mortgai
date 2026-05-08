@@ -266,6 +266,7 @@ export default function Home() {
         <title>{HOME_SEO.title}</title>
         <meta name="description" content={HOME_SEO.description} />
         <meta name="keywords" content={HOME_SEO.keywords} />
+        <meta name="robots" content="index,follow" />
         <meta property="og:title" content={HOME_SEO.title} />
         <meta property="og:description" content={HOME_SEO.description} />
         <meta property="og:type" content="website" />

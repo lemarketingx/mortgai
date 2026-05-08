@@ -293,6 +293,7 @@ export default function RefinanceCheck() {
         <title>{REFINANCE_SEO.title}</title>
         <meta name="description" content={REFINANCE_SEO.description} />
         <meta name="keywords" content={REFINANCE_SEO.keywords} />
+        <meta name="robots" content="index,follow" />
         <meta property="og:title" content={REFINANCE_SEO.title} />
         <meta property="og:description" content={REFINANCE_SEO.description} />
         <meta property="og:type" content="website" />

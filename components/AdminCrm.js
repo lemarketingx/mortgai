@@ -150,7 +150,7 @@ export default function PrivateAdmin() {
       <main dir="rtl" className="min-h-screen px-4 py-6 text-mort-text sm:px-6 lg:px-8">
         <Head>
           <title>Admin CRM | MortgAI2</title>
-          <meta name="robots" content="noindex,nofollow" />
+          <meta name="robots" content="noindex,nofollow" key="robots" />
         </Head>
         <div className="mx-auto w-full max-w-lg">
           <section className="glass-card p-6 sm:p-8">
@@ -181,7 +181,7 @@ export default function PrivateAdmin() {
     <main dir="rtl" className="min-h-screen px-4 py-6 text-mort-text sm:px-6 lg:px-8">
       <Head>
         <title>Admin CRM | MortgAI2</title>
-        <meta name="robots" content="noindex,nofollow" />
+        <meta name="robots" content="noindex,nofollow" key="robots" />
       </Head>
 
       <div className="mx-auto w-full max-w-[1500px] 2xl:max-w-[1680px]">
