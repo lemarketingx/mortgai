@@ -2,6 +2,15 @@ import Head from "next/head";
 import { useMemo, useRef, useState } from "react";
 import { cleanNumber, displayNumber, formatILS, formatPct, toNumber } from "../lib/format";
 import { monthlyPayment } from "../lib/mortgage";
+import {
+  REFINANCE_SEO,
+  absoluteUrl,
+  faqSchema,
+  financialServiceSchema,
+  organizationSchema,
+  stringifyJsonLd,
+  webPageSchema,
+} from "../lib/seo";
 
 const initialData = {
   balance: "",
@@ -43,6 +52,8 @@ const faqItems = [
   ["האם חיסכון חודשי מספיק כדי להחליט?", "לא. צריך לבדוק גם חיסכון נטו אחרי עלויות, סך ריבית לאורך התקופה ונקודת איזון."],
   ["מה קורה אם אין חיסכון לפי הנתונים?", "העמוד יציג זאת בצורה ברורה ולא יציג המלצה חיובית למחזור. עדיין אפשר לבדוק מול יועץ אם יש נתונים חסרים."],
   ["האם זו הצעה בנקאית?", "לא. זו סימולציה ראשונית בלבד, ויש לוודא נתונים מול בנק או יועץ משכנתאות מורשה."],
+  ["אילו נתונים צריך כדי לבדוק מחזור משכנתא?", "כדאי להזין יתרת משכנתא לסילוק, החזר חודשי נוכחי, ריבית קיימת, שנים שנותרו, ריבית חדשה משוערת ועלויות מחזור או עמלת פירעון מוקדם אם קיימת."],
+  ["מהי נקודת איזון במחזור משכנתא?", "נקודת איזון היא משך הזמן שבו החיסכון החודשי מכסה את עלויות המחזור. אם נקודת האיזון ארוכה מהתקופה שנותרה, המחזור עלול להיות פחות משתלם."],
 ];
 
 function clamp(value, min = 0, max = 100) {
@@ -279,15 +290,33 @@ export default function RefinanceCheck() {
   return (
     <main dir="rtl" className="min-h-screen bg-white pb-24 text-slate-950 md:pb-0">
       <Head>
-        <title>בדיקת מחזור משכנתא | בדיקת זכאות למשכנתא</title>
-        <meta name="description" content="בדיקה ראשונית למחזור משכנתא: הזינו נתונים ידנית וקבלו אומדן חיסכון חודשי, חיסכון ריבית, נקודת איזון וכדאיות מחזור." />
-        <meta property="og:title" content="בדיקת מחזור משכנתא | בדיקת זכאות למשכנתא" />
-        <meta
-          property="og:description"
-          content="בדיקה ראשונית למחזור משכנתא: אומדן חיסכון חודשי, חיסכון ריבית ונקודת איזון לפני בדיקה מקצועית."
-        />
+        <title>{REFINANCE_SEO.title}</title>
+        <meta name="description" content={REFINANCE_SEO.description} />
+        <meta name="keywords" content={REFINANCE_SEO.keywords} />
+        <meta property="og:title" content={REFINANCE_SEO.title} />
+        <meta property="og:description" content={REFINANCE_SEO.description} />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href="https://mortgai-gxjc.vercel.app/refinance-check" />
+        <meta property="og:url" content={absoluteUrl(REFINANCE_SEO.path)} />
+        <meta property="og:site_name" content="בדיקת זכאות למשכנתא" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={REFINANCE_SEO.title} />
+        <meta name="twitter:description" content={REFINANCE_SEO.description} />
+        <link rel="canonical" href={absoluteUrl(REFINANCE_SEO.path)} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: stringifyJsonLd([
+              organizationSchema(),
+              financialServiceSchema({
+                url: absoluteUrl(REFINANCE_SEO.path),
+                name: "בדיקת מחזור משכנתא",
+                description: REFINANCE_SEO.description,
+              }),
+              webPageSchema(REFINANCE_SEO),
+              faqSchema(faqItems),
+            ]),
+          }}
+        />
       </Head>
 
       <Header />

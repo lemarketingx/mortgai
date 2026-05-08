@@ -2,6 +2,15 @@ import Head from "next/head";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cleanNumber, displayNumber, formatILS, formatPct } from "../lib/format";
 import { calculateMortgageAnalysis } from "../lib/mortgage";
+import {
+  HOME_SEO,
+  absoluteUrl,
+  faqSchema,
+  financialServiceSchema,
+  organizationSchema,
+  stringifyJsonLd,
+  webPageSchema,
+} from "../lib/seo";
 
 const initialData = {
   income: "",
@@ -114,6 +123,21 @@ const faqItems = [
     question: "מתי כדאי לדבר עם יועץ?",
     answer:
       "כאשר יחס ההחזר גבולי, חסר הון עצמי, יש הלוואות קיימות או כשאתם רוצים להשוות תמהיל וריביות לפני פנייה לבנק.",
+  },
+  {
+    question: "איך מחשבים החזר חודשי משוער למשכנתא?",
+    answer:
+      "החזר חודשי מושפע מסכום המשכנתא, תקופת ההחזר, הריבית, סוג ההצמדה ושיטת ההחזר. המחשבון מציג אומדן לפי הנתונים שהוזנו, אך הריבית בפועל תיקבע רק לאחר בדיקה מול בנק או יועץ.",
+  },
+  {
+    question: "מהו אחוז מימון LTV ולמה הוא חשוב?",
+    answer:
+      "LTV הוא היחס בין סכום המשכנתא לבין שווי הנכס. בישראל קיימות מגבלות מימון כלליות לפי סוג העסקה, ולכן אחוז מימון גבוה יכול להשפיע על סיכוי האישור ועל התנאים שהבנק עשוי להציע.",
+  },
+  {
+    question: "האם המחשבון מתאים גם לפני חתימת חוזה?",
+    answer:
+      "כן. הבדיקה נועדה לתת תמונת מצב ראשונית לפני פנייה לבנק או חתימת חוזה, כדי להבין החזר חודשי, הון עצמי נדרש, יחס החזר ונקודות שעלולות להפריע לאישור.",
   },
 ];
 
@@ -239,18 +263,33 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>מחשבון משכנתא חכם | בדיקת זכאות והחזר חודשי</title>
-        <meta
-          name="description"
-          content="בדקו תוך דקה כמה משכנתא תוכלו לקבל, מה ההחזר המשוער ומה אומדן סיכוי האישור שלכם לפי נתוני הכנסה, הון עצמי ואחוז מימון."
-        />
-        <meta property="og:title" content="מחשבון משכנתא חכם לבדיקת זכאות והחזר חודשי" />
-        <meta
-          property="og:description"
-          content="בדיקה ראשונית למשכנתא בישראל: אומדן אישור, החזר חודשי, הון עצמי נדרש ויתרה למחיה."
-        />
+        <title>{HOME_SEO.title}</title>
+        <meta name="description" content={HOME_SEO.description} />
+        <meta name="keywords" content={HOME_SEO.keywords} />
+        <meta property="og:title" content={HOME_SEO.title} />
+        <meta property="og:description" content={HOME_SEO.description} />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href="https://mortgai-gxjc.vercel.app/" />
+        <meta property="og:url" content={absoluteUrl(HOME_SEO.path)} />
+        <meta property="og:site_name" content="בדיקת זכאות למשכנתא" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={HOME_SEO.title} />
+        <meta name="twitter:description" content={HOME_SEO.description} />
+        <link rel="canonical" href={absoluteUrl(HOME_SEO.path)} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: stringifyJsonLd([
+              organizationSchema(),
+              financialServiceSchema({
+                url: absoluteUrl(HOME_SEO.path),
+                name: "בדיקת זכאות למשכנתא",
+                description: HOME_SEO.description,
+              }),
+              webPageSchema(HOME_SEO),
+              faqSchema(faqItems),
+            ]),
+          }}
+        />
       </Head>
 
       <main id="home" dir="rtl" className="min-h-screen bg-white pb-24 text-slate-950 md:pb-0">
@@ -258,6 +297,7 @@ export default function Home() {
         <Hero />
         <TrustStrip />
         <HowItWorks />
+        <SeoContentSection />
         <CalculatorSection
           data={data}
           updateData={updateData}
@@ -426,6 +466,41 @@ function HowItWorks() {
             </div>
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function SeoContentSection() {
+  return (
+    <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6" aria-labelledby="mortgage-seo-title">
+      <div className="rounded-[34px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div>
+            <span className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+              בדיקת משכנתא בישראל
+            </span>
+            <h2 id="mortgage-seo-title" className="mt-5 text-3xl font-black leading-tight text-slate-950">
+              מה בודקים לפני שלוקחים משכנתא?
+            </h2>
+            <p className="mt-4 leading-8 text-slate-600">
+              לפני שפונים לבנק כדאי להבין אם המספרים עובדים: מה סכום המשכנתא הדרוש, מה ההחזר החודשי המשוער, כמה הון עצמי חסר אם בכלל, ומה יחס ההחזר ביחס להכנסה. בדיקה מוקדמת יכולה לעזור לזהות נקודות סיכון לפני חתימת חוזה או הגשת בקשה לאישור עקרוני.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              ["יחס החזר", "בודק כמה מההכנסה נטו מיועד להחזר המשכנתא והתחייבויות קיימות."],
+              ["אחוז מימון LTV", "משווה בין סכום המשכנתא לשווי הנכס לפי סוג העסקה."],
+              ["הון עצמי", "מציג אם ההון העצמי מספיק ביחס למחיר הנכס ולמגבלות המימון."],
+              ["תזרים אחרי העסקה", "בודק כמה נשאר למחיה אחרי הוצאות, הלוואות והחזר משכנתא."],
+            ].map(([title, text]) => (
+              <article key={title} className="rounded-3xl bg-slate-50 p-5">
+                <h3 className="font-black text-slate-950">{title}</h3>
+                <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{text}</p>
+              </article>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
