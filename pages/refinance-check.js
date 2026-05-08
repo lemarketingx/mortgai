@@ -277,10 +277,17 @@ export default function RefinanceCheck() {
   }
 
   return (
-    <main dir="rtl" className="min-h-screen bg-white text-slate-950">
+    <main dir="rtl" className="min-h-screen bg-white pb-24 text-slate-950 md:pb-0">
       <Head>
         <title>בדיקת מחזור משכנתא | בדיקת זכאות למשכנתא</title>
         <meta name="description" content="בדיקה ראשונית למחזור משכנתא: הזינו נתונים ידנית וקבלו אומדן חיסכון חודשי, חיסכון ריבית, נקודת איזון וכדאיות מחזור." />
+        <meta property="og:title" content="בדיקת מחזור משכנתא | בדיקת זכאות למשכנתא" />
+        <meta
+          property="og:description"
+          content="בדיקה ראשונית למחזור משכנתא: אומדן חיסכון חודשי, חיסכון ריבית ונקודת איזון לפני בדיקה מקצועית."
+        />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://mortgai-gxjc.vercel.app/refinance-check" />
       </Head>
 
       <Header />
@@ -387,6 +394,7 @@ export default function RefinanceCheck() {
       </section>
 
       <Footer />
+      <MobileStickyCta />
     </main>
   );
 }
@@ -402,7 +410,7 @@ function Header() {
             <span className="hidden text-xs font-bold text-slate-500 sm:block">תשובה פשוטה לפני שפונים לבנק</span>
           </span>
         </a>
-        <nav className="hidden items-center gap-6 text-sm font-bold text-slate-600 lg:flex">
+        <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 text-sm font-bold text-slate-600 lg:flex">
           {navLinks.map(([label, href]) => (
             <a key={href} href={href} className="transition hover:text-violet-700">{label}</a>
           ))}
@@ -559,15 +567,15 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
         </ul>
       </div>
 
-      <form onSubmit={submitLead} className="rounded-[28px] bg-white p-5 shadow-sm">
+      <form onSubmit={submitLead} aria-busy={leadLoading ? "true" : "false"} className="rounded-[28px] bg-white p-5 shadow-sm">
         <div className="grid gap-4 sm:grid-cols-2">
-          <TextField label="שם מלא" value={lead.name} onChange={(value) => setLead({ ...lead, name: value })} />
-          <TextField label="טלפון" value={lead.phone} onChange={(value) => setLead({ ...lead, phone: value })} placeholder="05X-XXXXXXX" />
-          <TextField label="עיר" value={lead.city} onChange={(value) => setLead({ ...lead, city: value })} />
+          <TextField label="שם מלא" value={lead.name} onChange={(value) => setLead({ ...lead, name: value })} autoComplete="name" />
+          <TextField label="טלפון" value={lead.phone} onChange={(value) => setLead({ ...lead, phone: value })} placeholder="05X-XXXXXXX" autoComplete="tel" />
+          <TextField label="עיר" value={lead.city} onChange={(value) => setLead({ ...lead, city: value })} autoComplete="address-level2" />
           <MoneyField label="סכום משכנתא" value={lead.mortgageAmount || String(result.balance || "")} onChange={(value) => setLead({ ...lead, mortgageAmount: value })} />
         </div>
-        {leadError && <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
-        {leadSent && <p ref={successRef} className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-800">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
+        {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
+        {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-800">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
         <button type="submit" disabled={leadLoading || leadSent} className="mt-5 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70">
           {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "בדיקה ראשונית ללא התחייבות"}
         </button>
@@ -666,13 +674,35 @@ function MoneyField({ label, value, onChange, helper }) {
   );
 }
 
-function TextField({ label, value, onChange, placeholder = "" }) {
+function MobileStickyCta() {
+  return (
+    <div className="mobile-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 bg-white/95 px-4 pt-3 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
+      <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
+        <a
+          href="#calculator"
+          className="rounded-full bg-violet-700 px-4 py-3 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(109,40,217,0.28)]"
+        >
+          בדיקת מחזור
+        </a>
+        <a
+          href="#lead"
+          className="rounded-full border border-violet-200 bg-violet-50 px-4 py-3 text-center text-sm font-black text-violet-800"
+        >
+          חזרה מיועץ
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function TextField({ label, value, onChange, placeholder = "", autoComplete }) {
   return (
     <label className="block">
       <span className="text-sm font-black text-slate-700">{label}</span>
       <input
         value={value}
         placeholder={placeholder}
+        autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
       />

@@ -11,6 +11,7 @@
 
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: 88px;
   }
 
   body {
@@ -33,9 +34,29 @@
     font: inherit;
   }
 
+  :focus-visible {
+    outline: 3px solid #8b5cf6;
+    outline-offset: 3px;
+  }
+
   /* Prevent horizontal scroll on mobile */
   body, main {
     overflow-x: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
@@ -82,6 +103,10 @@
   /* Sticky mobile CTA bar */
   .sticky-cta-bar {
     padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  }
+
+  .mobile-sticky-cta {
+    padding-bottom: max(14px, env(safe-area-inset-bottom, 14px));
   }
 }
 

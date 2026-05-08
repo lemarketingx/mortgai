@@ -244,9 +244,16 @@ export default function Home() {
           name="description"
           content="בדקו תוך דקה כמה משכנתא תוכלו לקבל, מה ההחזר המשוער ומה אומדן סיכוי האישור שלכם לפי נתוני הכנסה, הון עצמי ואחוז מימון."
         />
+        <meta property="og:title" content="מחשבון משכנתא חכם לבדיקת זכאות והחזר חודשי" />
+        <meta
+          property="og:description"
+          content="בדיקה ראשונית למשכנתא בישראל: אומדן אישור, החזר חודשי, הון עצמי נדרש ויתרה למחיה."
+        />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://mortgai-gxjc.vercel.app/" />
       </Head>
 
-      <main id="home" dir="rtl" className="min-h-screen bg-white text-slate-950">
+      <main id="home" dir="rtl" className="min-h-screen bg-white pb-24 text-slate-950 md:pb-0">
         <Header />
         <Hero />
         <TrustStrip />
@@ -273,6 +280,7 @@ export default function Home() {
         />
         <FaqSection openFaq={openFaq} setOpenFaq={setOpenFaq} />
         <Footer />
+        <MobileStickyCta />
       </main>
     </>
   );
@@ -292,7 +300,7 @@ function Header() {
           </span>
         </a>
 
-        <nav className="hidden items-center gap-6 text-sm font-bold text-slate-600 lg:flex">
+        <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 text-sm font-bold text-slate-600 lg:flex">
           {navLinks.map(([label, href]) => (
             <a key={href} href={href} className="transition hover:text-violet-700">
               {label}
@@ -624,11 +632,15 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
           </div>
         </div>
 
-        <form onSubmit={submitLead} className="rounded-[34px] border border-slate-200 bg-white p-7 shadow-[0_24px_70px_rgba(15,23,42,0.10)]">
+        <form
+          onSubmit={submitLead}
+          aria-busy={leadLoading ? "true" : "false"}
+          className="rounded-[34px] border border-slate-200 bg-white p-7 shadow-[0_24px_70px_rgba(15,23,42,0.10)]"
+        >
           <div className="grid gap-4 sm:grid-cols-2">
-            <TextField label="שם מלא" value={lead.name} onChange={(value) => updateLead("name", value)} required />
-            <TextField label="טלפון" value={lead.phone} onChange={(value) => updateLead("phone", value)} placeholder="05X-XXXXXXX" required />
-            <TextField label="עיר" value={lead.city} onChange={(value) => updateLead("city", value)} />
+            <TextField label="שם מלא" value={lead.name} onChange={(value) => updateLead("name", value)} autoComplete="name" required />
+            <TextField label="טלפון" value={lead.phone} onChange={(value) => updateLead("phone", value)} placeholder="05X-XXXXXXX" autoComplete="tel" required />
+            <TextField label="עיר" value={lead.city} onChange={(value) => updateLead("city", value)} autoComplete="address-level2" />
             <MoneyField label="סכום משכנתא" value={lead.mortgageAmount} onChange={(value) => updateLead("mortgageAmount", value)} />
             <TextField
               label="סטטוס רכישה"
@@ -639,8 +651,8 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
             />
           </div>
 
-          {leadError && <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
-          {leadSent && <p ref={successRef} className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-700">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
+          {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
+          {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-700">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
 
           <button
             type="submit"
@@ -669,6 +681,8 @@ function FaqSection({ openFaq, setOpenFaq }) {
                 <button
                   type="button"
                   onClick={() => setOpenFaq(isOpen ? null : index)}
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-answer-${index}`}
                   className="flex w-full items-center justify-between gap-4 px-6 py-5 text-right"
                 >
                   <span className="text-lg font-black text-slate-950">{item.question}</span>
@@ -676,7 +690,7 @@ function FaqSection({ openFaq, setOpenFaq }) {
                     {isOpen ? "-" : "+"}
                   </span>
                 </button>
-                {isOpen && <p className="px-6 pb-6 leading-8 text-slate-600">{item.answer}</p>}
+                {isOpen && <p id={`faq-answer-${index}`} className="px-6 pb-6 leading-8 text-slate-600">{item.answer}</p>}
               </div>
             );
           })}
@@ -694,6 +708,27 @@ function Footer() {
         <p>החישוב הוא סימולציה ראשונית בלבד ואינו מהווה ייעוץ משכנתאות, הצעה מחייבת או אישור בנקאי.</p>
       </div>
     </footer>
+  );
+}
+
+function MobileStickyCta() {
+  return (
+    <div className="mobile-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 bg-white/95 px-4 pt-3 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
+      <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
+        <a
+          href="#calculator"
+          className="rounded-full bg-violet-700 px-4 py-3 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(109,40,217,0.28)]"
+        >
+          בדיקת זכאות
+        </a>
+        <a
+          href="#lead"
+          className="rounded-full border border-violet-200 bg-violet-50 px-4 py-3 text-center text-sm font-black text-violet-800"
+        >
+          חזרה מיועץ
+        </a>
+      </div>
+    </div>
   );
 }
 
@@ -725,7 +760,7 @@ function MoneyField({ label, value, onChange, helper, className = "" }) {
   );
 }
 
-function TextField({ label, value, onChange, placeholder = "", required = false, className = "" }) {
+function TextField({ label, value, onChange, placeholder = "", required = false, className = "", autoComplete }) {
   return (
     <label className={`block ${className}`}>
       <span className="text-sm font-black text-slate-700">{label}</span>
@@ -733,6 +768,7 @@ function TextField({ label, value, onChange, placeholder = "", required = false,
         value={value}
         required={required}
         placeholder={placeholder}
+        autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
       />
