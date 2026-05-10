@@ -1,4 +1,4 @@
-import { COMMISSION_STATUSES, LEAD_STATUSES, LeadStoreError, getSupabaseConfigStatus, readLeads, updateLead } from "../../../lib/leadsStore";
+import { COMMISSION_STATUSES, LEAD_STATUSES, LeadStoreError, getSupabaseConfigStatus, readAdvisors, readLeads, updateLead } from "../../../lib/leadsStore";
 import { hasAdminSession } from "../../../lib/adminAuth";
 import { adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
 
@@ -25,9 +25,10 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
-      const leads = await readLeads();
+      const [leads, advisors] = await Promise.all([readLeads(), readAdvisors()]);
       return res.status(200).json({
         leads,
+        advisors,
         statuses: LEAD_STATUSES,
         commissionStatuses: COMMISSION_STATUSES,
         supabase: getSupabaseConfigStatus(),

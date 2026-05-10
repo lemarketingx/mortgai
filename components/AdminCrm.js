@@ -27,6 +27,7 @@ export default function PrivateAdmin() {
   const [statusFilter, setStatusFilter] = useState("");
   const [advisorFilter, setAdvisorFilter] = useState("");
   const [message, setMessage] = useState("");
+  const [advisors, setAdvisors] = useState([]);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -73,6 +74,7 @@ export default function PrivateAdmin() {
       setLeads(json.leads || []);
       setStatuses(json.statuses || fallbackStatuses);
       setCommissionStatuses(json.commissionStatuses || fallbackCommissionStatuses);
+      setAdvisors(json.advisors || []);
       setIsAuthenticated(true);
       if (!json.leads?.length) {
         setMessage("אין לידים להצגה כרגע. אם שלחת ליד לבדיקה, ודא שהשמירה ל-Supabase הצליחה.");
@@ -140,11 +142,14 @@ export default function PrivateAdmin() {
 
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setMessage(adminApiMessage(json.error));
-      return;
+      const errorMessage = adminApiMessage(json.error);
+      setMessage(errorMessage);
+      return { ok: false, error: errorMessage };
     }
 
     setLeads((current) => current.map((lead) => (lead.id === id ? json.lead : lead)));
+    await loadLeads();
+    return { ok: true };
   }
 
   if (!isAuthenticated) {
@@ -245,6 +250,7 @@ export default function PrivateAdmin() {
               lead={lead}
               statuses={statuses}
               commissionStatuses={commissionStatuses}
+              advisors={advisors}
               updateLead={updateLead}
             />
           ))}
@@ -257,7 +263,61 @@ export default function PrivateAdmin() {
   );
 }
 
-function LeadCard({ lead, statuses, commissionStatuses, updateLead }) {
+function LeadCard({ lead, statuses, commissionStatuses, advisors, updateLead }) {
+  const [draft, setDraft] = useState({
+    assignedAdvisorId: lead.assignedAdvisorId || "",
+    assignedAdvisor: lead.assignedAdvisor || "",
+    advisorPhone: lead.advisorPhone || "",
+    advisorEmail: lead.advisorEmail || "",
+    leadStatus: lead.leadStatus || lead.status || "חדש",
+    internalNotes: lead.internalNotes || lead.notes || "",
+    followUpDate: lead.followUpDate || "",
+    lastContactedAt: lead.lastContactedAt || "",
+    commissionAmount: lead.commissionAmount || "",
+    commissionStatus: lead.commissionStatus || "pending",
+  });
+  const [saveMessage, setSaveMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setDraft({
+      assignedAdvisorId: lead.assignedAdvisorId || "",
+      assignedAdvisor: lead.assignedAdvisor || "",
+      advisorPhone: lead.advisorPhone || "",
+      advisorEmail: lead.advisorEmail || "",
+      leadStatus: lead.leadStatus || lead.status || "חדש",
+      internalNotes: lead.internalNotes || lead.notes || "",
+      followUpDate: lead.followUpDate || "",
+      lastContactedAt: lead.lastContactedAt || "",
+      commissionAmount: lead.commissionAmount || "",
+      commissionStatus: lead.commissionStatus || "pending",
+    });
+  }, [lead]);
+
+  const advisorExists = !draft.assignedAdvisorId || advisors.some((advisor) => String(advisor.advisor_id) === String(draft.assignedAdvisorId));
+
+  async function saveLead() {
+    setIsSaving(true);
+    setSaveMessage("");
+    const result = await updateLead(lead.id, { ...draft, status: draft.leadStatus });
+    if (result?.ok) setSaveMessage("הליד עודכן בהצלחה.");
+    else setSaveMessage(result?.error || "שמירת הליד נכשלה.");
+    setIsSaving(false);
+  }
+
+  async function markCommissionPaid() {
+    setIsSaving(true);
+    setSaveMessage("");
+    const result = await updateLead(lead.id, { commissionStatus: "paid" });
+    if (result?.ok) {
+      setDraft((current) => ({ ...current, commissionStatus: "paid" }));
+      setSaveMessage("העמלה סומנה כשולמה.");
+    } else {
+      setSaveMessage(result?.error || "עדכון סטטוס העמלה נכשל.");
+    }
+    setIsSaving(false);
+  }
+
   return (
     <article className="fintech-card p-5 sm:p-6">
       <div className="grid gap-5 xl:grid-cols-[1fr_1.2fr]">
@@ -267,57 +327,39 @@ function LeadCard({ lead, statuses, commissionStatuses, updateLead }) {
               <h2 className="text-2xl font-black text-mort-ink">{lead.name || "ללא שם"}</h2>
               <p className="font-bold text-mort-muted">{lead.phone} · {lead.city || "עיר לא צוינה"}</p>
             </div>
-            <span className="pill border-emerald-200 bg-emerald-50 text-emerald-800">{lead.leadStatus || lead.status}</span>
+            <span className="pill border-emerald-200 bg-emerald-50 text-emerald-800">{draft.leadStatus}</span>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <Info label="סכום משכנתא" value={formatILS(lead.mortgageAmount)} />
             <Info label="סטטוס רכישה" value={lead.purchaseStatus || "לא צוין"} />
             <Info label="סיכוי אישור" value={`${Math.round(Number(lead.approvalScore) || 0)}%`} />
-            <Info label="בעיה מרכזית" value={lead.mainIssue || "לא צוין"} />
             <Info label="מקור" value={lead.source || "mortgai2"} />
             <Info label="נוצר" value={new Date(lead.createdAt).toLocaleString("he-IL")} />
           </div>
         </div>
 
         <div className="grid gap-3">
-          <select className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={lead.leadStatus || lead.status} onChange={(event) => updateLead(lead.id, { leadStatus: event.target.value, status: event.target.value })}>
-            {statuses.map((status) => (
-              <option key={status} value={status}>{status}</option>
-            ))}
+          <select className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={draft.leadStatus} onChange={(event) => setDraft((c) => ({ ...c, leadStatus: event.target.value }))}>
+            {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
           </select>
-
           <div className="grid gap-3 md:grid-cols-2">
-            <AdminInput label="יועץ משויך" value={lead.assignedAdvisor} onBlur={(value) => updateLead(lead.id, { assignedAdvisor: value })} />
-            <AdminInput label="Advisor ID" value={lead.assignedAdvisorId || ""} onBlur={(value) => updateLead(lead.id, { assignedAdvisorId: value })} />
-            <AdminInput label="טלפון יועץ" value={lead.advisorPhone} onBlur={(value) => updateLead(lead.id, { advisorPhone: value })} />
-            <AdminInput label="עמלה צפויה" value={lead.expectedCommission} onBlur={(value) => updateLead(lead.id, { expectedCommission: value })} />
-            <AdminInput label="עמלה בפועל" value={lead.actualCommission} onBlur={(value) => updateLead(lead.id, { actualCommission: value })} />
+            <AdminInput label="Advisor ID" value={draft.assignedAdvisorId} onChange={(value) => setDraft((c) => ({ ...c, assignedAdvisorId: value }))} />
+            <AdminInput label="שם יועץ" value={draft.assignedAdvisor} onChange={(value) => setDraft((c) => ({ ...c, assignedAdvisor: value }))} />
+            <AdminInput label="טלפון יועץ" value={draft.advisorPhone} onChange={(value) => setDraft((c) => ({ ...c, advisorPhone: value }))} />
+            <AdminInput label='אימייל יועץ' value={draft.advisorEmail} onChange={(value) => setDraft((c) => ({ ...c, advisorEmail: value }))} />
+            <AdminInput label="סכום עמלה" value={draft.commissionAmount} onChange={(value) => setDraft((c) => ({ ...c, commissionAmount: value }))} />
+            <AdminInput label="תאריך מעקב" type="date" value={draft.followUpDate?.slice(0,10)} onChange={(value) => setDraft((c) => ({ ...c, followUpDate: value }))} />
           </div>
-
-          <select className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={lead.commissionStatus} onChange={(event) => updateLead(lead.id, { commissionStatus: event.target.value })}>
-            {commissionStatuses.map((status) => (
-              <option key={status} value={status}>{status}</option>
-            ))}
+          {!advisorExists && <p className="rounded-2xl bg-amber-100 p-2 text-sm font-bold text-amber-800">לא נמצא Advisor ID כזה בטבלת היועצים.</p>}
+          <AdminInput label="יצירת קשר אחרון" value={draft.lastContactedAt} onChange={(value) => setDraft((c) => ({ ...c, lastContactedAt: value }))} />
+          <select className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={draft.commissionStatus} onChange={(event) => setDraft((c) => ({ ...c, commissionStatus: event.target.value }))}>
+            {commissionStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
           </select>
-
-          <select className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={lead.commissionAgreement} onChange={(event) => updateLead(lead.id, { commissionAgreement: event.target.value })}>
-            <option value="">סוג הסכם עמלה</option>
-            <option value="תשלום קבוע לליד">תשלום קבוע לליד</option>
-            <option value="תשלום רק על עסקה שנסגרה">תשלום רק על עסקה שנסגרה</option>
-            <option value="אחוז משכר טרחת יועץ">אחוז משכר טרחת יועץ</option>
-            <option value="סכום קבוע לעסקה סגורה">סכום קבוע לעסקה סגורה</option>
-          </select>
-
-          <textarea
-            className="focus-field min-h-24 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink"
-            defaultValue={lead.internalNotes || lead.notes}
-            onBlur={(event) => updateLead(lead.id, { internalNotes: event.target.value })}
-            placeholder="הערות"
-          />
-
+          <textarea className="focus-field min-h-24 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={draft.internalNotes} onChange={(event) => setDraft((c) => ({ ...c, internalNotes: event.target.value }))} placeholder="הערות" />
+          {saveMessage && <strong className="rounded-2xl bg-slate-100 p-2 text-sm text-mort-ink">{saveMessage}</strong>}
           <div className="flex flex-wrap gap-2">
-            <button className="rounded-2xl bg-mort-ink px-4 py-2 font-black text-white" onClick={() => updateLead(lead.id, { status: "נסגר" })} type="button">סמן כנסגר</button>
-            <button className="rounded-2xl bg-emerald-600 px-4 py-2 font-black text-white" onClick={() => updateLead(lead.id, { commissionStatus: "paid" })} type="button">עמלה שולמה</button>
+            <button disabled={isSaving} className="rounded-2xl bg-mort-ink px-4 py-2 font-black text-white disabled:opacity-60" onClick={saveLead} type="button">{isSaving ? "שומר..." : "עדכן ליד"}</button>
+            <button disabled={isSaving} className="rounded-2xl bg-emerald-600 px-4 py-2 font-black text-white disabled:opacity-60" onClick={markCommissionPaid} type="button">עמלה שולמה</button>
           </div>
         </div>
       </div>
@@ -343,14 +385,15 @@ function AdminStat({ label, value }) {
   );
 }
 
-function AdminInput({ label, value, onBlur }) {
+function AdminInput({ label, value, onChange, type = "text" }) {
   return (
     <label className="grid gap-1">
       <span className="text-xs font-black text-mort-muted">{label}</span>
       <input
         className="focus-field min-h-11 rounded-2xl border border-slate-200 bg-white px-4 py-2 font-bold text-mort-ink"
-        defaultValue={value}
-        onBlur={(event) => onBlur(event.target.value)}
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
       />
     </label>
   );
