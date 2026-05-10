@@ -25,6 +25,7 @@ export default function PrivateAdmin() {
   const [commissionStatuses, setCommissionStatuses] = useState(fallbackCommissionStatuses);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [advisorFilter, setAdvisorFilter] = useState("");
   const [message, setMessage] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,11 +34,12 @@ export default function PrivateAdmin() {
   const filteredLeads = useMemo(() => {
     const term = query.trim();
     return leads.filter((lead) => {
-      const matchesStatus = !statusFilter || lead.status === statusFilter;
+      const matchesStatus = !statusFilter || (lead.leadStatus || lead.status) === statusFilter;
+      const matchesAdvisor = !advisorFilter || lead.assignedAdvisorId === advisorFilter;
       const matchesQuery = !term || `${lead.name} ${lead.phone} ${lead.city}`.includes(term);
-      return matchesStatus && matchesQuery;
+      return matchesStatus && matchesAdvisor && matchesQuery;
     });
-  }, [leads, query, statusFilter]);
+  }, [leads, query, statusFilter, advisorFilter]);
   const dashboardStats = useMemo(() => {
     const money = (value) => Number(String(value || "").replace(/[^\d.-]/g, "")) || 0;
     return {
@@ -212,7 +214,7 @@ export default function PrivateAdmin() {
         </section>
 
         <section className="fintech-card mt-5 p-6 sm:p-8">
-          <div className="grid gap-3 md:grid-cols-[1fr_240px_auto_auto]">
+          <div className="grid gap-3 md:grid-cols-[1fr_220px_220px_auto_auto]">
             <input
               className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink"
               value={query}
@@ -225,6 +227,7 @@ export default function PrivateAdmin() {
                 <option key={status} value={status}>{status}</option>
               ))}
             </select>
+            <input className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={advisorFilter} onChange={(event)=>setAdvisorFilter(event.target.value)} placeholder="סינון לפי advisorId" />
             <button disabled={loading} onClick={loadLeads} className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white shadow-soft disabled:opacity-60" type="button">
               {loading ? "טוען..." : "רענון"}
             </button>
@@ -264,7 +267,7 @@ function LeadCard({ lead, statuses, commissionStatuses, updateLead }) {
               <h2 className="text-2xl font-black text-mort-ink">{lead.name || "ללא שם"}</h2>
               <p className="font-bold text-mort-muted">{lead.phone} · {lead.city || "עיר לא צוינה"}</p>
             </div>
-            <span className="pill border-emerald-200 bg-emerald-50 text-emerald-800">{lead.status}</span>
+            <span className="pill border-emerald-200 bg-emerald-50 text-emerald-800">{lead.leadStatus || lead.status}</span>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <Info label="סכום משכנתא" value={formatILS(lead.mortgageAmount)} />
@@ -277,7 +280,7 @@ function LeadCard({ lead, statuses, commissionStatuses, updateLead }) {
         </div>
 
         <div className="grid gap-3">
-          <select className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={lead.status} onChange={(event) => updateLead(lead.id, { status: event.target.value })}>
+          <select className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={lead.leadStatus || lead.status} onChange={(event) => updateLead(lead.id, { leadStatus: event.target.value, status: event.target.value })}>
             {statuses.map((status) => (
               <option key={status} value={status}>{status}</option>
             ))}
@@ -285,6 +288,7 @@ function LeadCard({ lead, statuses, commissionStatuses, updateLead }) {
 
           <div className="grid gap-3 md:grid-cols-2">
             <AdminInput label="יועץ משויך" value={lead.assignedAdvisor} onBlur={(value) => updateLead(lead.id, { assignedAdvisor: value })} />
+            <AdminInput label="Advisor ID" value={lead.assignedAdvisorId || ""} onBlur={(value) => updateLead(lead.id, { assignedAdvisorId: value })} />
             <AdminInput label="טלפון יועץ" value={lead.advisorPhone} onBlur={(value) => updateLead(lead.id, { advisorPhone: value })} />
             <AdminInput label="עמלה צפויה" value={lead.expectedCommission} onBlur={(value) => updateLead(lead.id, { expectedCommission: value })} />
             <AdminInput label="עמלה בפועל" value={lead.actualCommission} onBlur={(value) => updateLead(lead.id, { actualCommission: value })} />
@@ -306,8 +310,8 @@ function LeadCard({ lead, statuses, commissionStatuses, updateLead }) {
 
           <textarea
             className="focus-field min-h-24 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink"
-            defaultValue={lead.notes}
-            onBlur={(event) => updateLead(lead.id, { notes: event.target.value })}
+            defaultValue={lead.internalNotes || lead.notes}
+            onBlur={(event) => updateLead(lead.id, { internalNotes: event.target.value })}
             placeholder="הערות"
           />
 

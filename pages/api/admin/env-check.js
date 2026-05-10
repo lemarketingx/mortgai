@@ -2,6 +2,10 @@ import { hasAdminSession } from "../../../lib/adminAuth";
 import { getSupabaseConfigStatus } from "../../../lib/leadsStore";
 
 export default function handler(req, res) {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(404).json({ error: "NOT_FOUND" });
+  }
+
   try {
     if (!hasAdminSession(req)) {
       return res.status(401).json({ error: "ADMIN_AUTH_REQUIRED" });
