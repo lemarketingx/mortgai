@@ -15,6 +15,12 @@ function adminApiMessage(errorCode) {
     LEADS_READ_FAILED: "לא ניתן לטעון את הלידים כרגע בגלל שגיאת שרת.",
     LEAD_UPDATE_FAILED: "לא ניתן היה לעדכן את הליד בגלל שגיאת שרת.",
     LEAD_NOT_FOUND: "הליד לא נמצא במסד הנתונים.",
+    ADVISOR_ID_EXISTS: "Advisor ID כבר קיים במערכת.",
+    ADVISOR_ID_REQUIRED: "יש להזין advisorId.",
+    NAME_REQUIRED: "יש להזין שם.",
+    PHONE_REQUIRED: "יש להזין טלפון.",
+    EMAIL_REQUIRED: "יש להזין אימייל.",
+    INVALID_EMAIL: "האימייל אינו בפורמט תקין.",
   };
   return messages[errorCode] || "לא ניתן להשלים את הפעולה כרגע.";
 }
@@ -232,7 +238,7 @@ export default function PrivateAdmin() {
                 <option key={status} value={status}>{status}</option>
               ))}
             </select>
-            <input className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={advisorFilter} onChange={(event)=>setAdvisorFilter(event.target.value)} placeholder="סינון לפי advisorId" />
+            <select className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={advisorFilter} onChange={(event)=>setAdvisorFilter(event.target.value)}><option value="">כל היועצים</option>{advisors.map((advisor)=><option key={advisor.advisor_id} value={advisor.advisor_id}>{advisor.name} ({advisor.advisor_id})</option>)}</select>
             <button disabled={loading} onClick={loadLeads} className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white shadow-soft disabled:opacity-60" type="button">
               {loading ? "טוען..." : "רענון"}
             </button>
@@ -242,6 +248,8 @@ export default function PrivateAdmin() {
           </div>
           {message && <strong className="mt-4 block rounded-2xl bg-red-100 p-3 text-red-700">{message}</strong>}
         </section>
+
+        <AdvisorManagement advisors={advisors} refreshLeads={loadLeads} setMessage={setMessage} />
 
         <section className="mt-5 grid gap-4">
           {filteredLeads.map((lead) => (
@@ -343,7 +351,7 @@ function LeadCard({ lead, statuses, commissionStatuses, advisors, updateLead }) 
             {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
           </select>
           <div className="grid gap-3 md:grid-cols-2">
-            <AdminInput label="Advisor ID" value={draft.assignedAdvisorId} onChange={(value) => setDraft((c) => ({ ...c, assignedAdvisorId: value }))} />
+            <label className="grid gap-1"><span className="text-xs font-black text-mort-muted">Advisor ID</span><select className="focus-field min-h-11 rounded-2xl border border-slate-200 bg-white px-4 py-2 font-bold text-mort-ink" value={draft.assignedAdvisorId} onChange={(event)=>{const nextId=event.target.value; const selected=advisors.find((a)=>String(a.advisor_id)===String(nextId)); setDraft((c)=>({ ...c, assignedAdvisorId: nextId, assignedAdvisor: selected?.name || "", advisorPhone: selected?.phone || "", advisorEmail: selected?.email || "" }));}}><option value="">בחר יועץ</option>{advisors.filter((a)=>a.active!==false).map((advisor)=><option key={advisor.advisor_id} value={advisor.advisor_id}>{advisor.name} ({advisor.advisor_id})</option>)}</select></label>
             <AdminInput label="שם יועץ" value={draft.assignedAdvisor} onChange={(value) => setDraft((c) => ({ ...c, assignedAdvisor: value }))} />
             <AdminInput label="טלפון יועץ" value={draft.advisorPhone} onChange={(value) => setDraft((c) => ({ ...c, advisorPhone: value }))} />
             <AdminInput label='אימייל יועץ' value={draft.advisorEmail} onChange={(value) => setDraft((c) => ({ ...c, advisorEmail: value }))} />
@@ -396,5 +404,57 @@ function AdminInput({ label, value, onChange, type = "text" }) {
         onChange={(event) => onChange(event.target.value)}
       />
     </label>
+  );
+}
+
+
+function AdvisorManagement({ advisors, refreshLeads, setMessage }) {
+  const [form, setForm] = useState({ advisorId: "", name: "", phone: "", email: "", commissionType: "fixed", commissionAmount: "", active: true });
+  const [saving, setSaving] = useState(false);
+
+  async function createNewAdvisor(event) {
+    event.preventDefault();
+    setSaving(true);
+    setMessage("");
+    const res = await fetch("/api/admin/advisors", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setMessage(adminApiMessage(json.error) || json.message || "יצירת יועץ נכשלה");
+      setSaving(false);
+      return;
+    }
+    setForm({ advisorId: "", name: "", phone: "", email: "", commissionType: "fixed", commissionAmount: "", active: true });
+    await refreshLeads();
+    setMessage("היועץ נוצר בהצלחה.");
+    setSaving(false);
+  }
+
+  return (
+    <section className="fintech-card mt-5 p-6 sm:p-8">
+      <h2 className="text-2xl font-black text-mort-ink">ניהול יועצים</h2>
+      <p className="mt-1 font-bold text-mort-muted">צפייה, יצירה וניהול יועצים ישירות מממשק האדמין.</p>
+      <form onSubmit={createNewAdvisor} className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <AdminInput label="Advisor ID" value={form.advisorId} onChange={(value) => setForm((c) => ({ ...c, advisorId: value }))} />
+        <AdminInput label="שם" value={form.name} onChange={(value) => setForm((c) => ({ ...c, name: value }))} />
+        <AdminInput label="טלפון" value={form.phone} onChange={(value) => setForm((c) => ({ ...c, phone: value }))} />
+        <AdminInput label="אימייל" value={form.email} onChange={(value) => setForm((c) => ({ ...c, email: value }))} />
+        <AdminInput label="סוג עמלה" value={form.commissionType} onChange={(value) => setForm((c) => ({ ...c, commissionType: value }))} />
+        <AdminInput label="סכום עמלה" value={form.commissionAmount} onChange={(value) => setForm((c) => ({ ...c, commissionAmount: value }))} />
+        <label className="grid gap-1">
+          <span className="text-xs font-black text-mort-muted">סטטוס</span>
+          <select className="focus-field min-h-11 rounded-2xl border border-slate-200 bg-white px-4 py-2 font-bold text-mort-ink" value={String(form.active)} onChange={(e)=>setForm((c)=>({...c,active:e.target.value==="true"}))}>
+            <option value="true">פעיל</option>
+            <option value="false">לא פעיל</option>
+          </select>
+        </label>
+        <button disabled={saving} className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white shadow-soft disabled:opacity-60" type="submit">{saving ? "שומר..." : "יצירת יועץ"}</button>
+      </form>
+      <div className="mt-5 overflow-x-auto">
+        <table className="min-w-full text-right">
+          <thead><tr className="text-sm text-mort-muted"><th>advisorId</th><th>name</th><th>phone</th><th>email</th><th>active</th><th>commission type</th><th>commission amount</th></tr></thead>
+          <tbody>{advisors.map((advisor) => <tr key={advisor.advisor_id} className="border-t"><td className="py-2 font-black">{advisor.advisor_id}</td><td>{advisor.name}</td><td>{advisor.phone}</td><td>{advisor.email}</td><td>{advisor.active ? "פעיל" : "לא פעיל"}</td><td>{advisor.commission_type}</td><td>{advisor.commission_amount}</td></tr>)}</tbody>
+        </table>
+      </div>
+    </section>
   );
 }
