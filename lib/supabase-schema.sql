@@ -34,3 +34,21 @@ ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
 
 -- No public access — only the service-role key (used server-side) can read/write
 -- (No policy = no public access when RLS is enabled)
+
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS assigned_advisor_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS lead_status TEXT NOT NULL DEFAULT 'חדש';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS follow_up_date TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS last_contacted_at TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS commission_amount TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS internal_notes TEXT NOT NULL DEFAULT '';
+
+CREATE TABLE IF NOT EXISTS advisors (
+  advisor_id TEXT PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  email TEXT NOT NULL DEFAULT '',
+  active BOOLEAN NOT NULL DEFAULT true,
+  commission_type TEXT NOT NULL DEFAULT '',
+  commission_amount TEXT NOT NULL DEFAULT '',
+  notes TEXT NOT NULL DEFAULT ''
+);
