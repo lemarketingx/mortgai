@@ -1,33 +1,72 @@
+import { LeadStoreError, readLeads, updateLead } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
-import { readLeads, updateLead } from "../../../lib/leadsStore";
 import { adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
 
+function apiError(res, status, code, message, details = "") {
+  return res.status(status).json({ error: code, message, details });
+}
+
+function storeError(res, error, fallbackCode) {
+  if (error instanceof LeadStoreError) {
+    const status = error.code === "SUPABASE_ENV_MISSING" ? 503 : 502;
+    return apiError(res, status, error.code, error.message, error.details || "");
+  }
+  return apiError(res, 500, fallbackCode, "Unexpected advisor leads API failure");
+}
+
 export default async function handler(req, res) {
-  const session = getAdvisorSession(req);
-  if (!session) return res.status(401).json({ error: "ADVISOR_AUTH_REQUIRED" });
+  try {
+    const session = getAdvisorSession(req);
+    if (!session) {
+      return apiError(res, 401, "ADVISOR_AUTH_REQUIRED", "Advisor session cookie is missing or expired");
+    }
 
-  if (req.method === "GET") {
-    const leads = await readLeads();
-    return res.status(200).json({ leads: leads.filter((l) => l.assignedAdvisorId === session.advisorId) });
+    if (req.method === "GET") {
+      try {
+        const leads = await readLeads();
+        return res.status(200).json({
+          leads: leads.filter((l) => l.assignedAdvisorId === session.advisorId),
+        });
+      } catch (error) {
+        return storeError(res, error, "LEADS_READ_FAILED");
+      }
+    }
+
+    if (req.method === "PATCH") {
+      const parsed = adminLeadPatchSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        return res.status(400).json(validationErrorPayload(parsed.error));
+      }
+
+      const { id, changes } = parsed.data;
+      const leads = await readLeads();
+      const lead = leads.find((l) => l.id === id && l.assignedAdvisorId === session.advisorId);
+      if (!lead) {
+        return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
+      }
+
+      const allowed = {
+        leadStatus: changes.leadStatus,
+        status: changes.leadStatus,
+        internalNotes: changes.internalNotes,
+        followUpDate: changes.followUpDate,
+        lastContactedAt: changes.lastContactedAt,
+      };
+      const patch = Object.fromEntries(Object.entries(allowed).filter(([, v]) => v !== undefined));
+
+      try {
+        const updated = await updateLead(id, patch);
+        if (!updated) {
+          return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
+        }
+        return res.status(200).json({ lead: updated });
+      } catch (error) {
+        return storeError(res, error, "LEAD_UPDATE_FAILED");
+      }
+    }
+
+    return apiError(res, 405, "METHOD_NOT_ALLOWED", "Method not allowed");
+  } catch (error) {
+    return apiError(res, 500, "ADVISOR_LEADS_HANDLER_FAILED", "Unexpected advisor leads API failure", error?.message || "");
   }
-
-  if (req.method === "PATCH") {
-    const parsed = adminLeadPatchSchema.safeParse(req.body || {});
-    if (!parsed.success) return res.status(400).json(validationErrorPayload(parsed.error));
-    const { id, changes } = parsed.data;
-    const leads = await readLeads();
-    const lead = leads.find((l) => l.id === id && l.assignedAdvisorId === session.advisorId);
-    if (!lead) return res.status(404).json({ error: "LEAD_NOT_FOUND" });
-
-    const allowed = {
-      leadStatus: changes.leadStatus,
-      internalNotes: changes.internalNotes,
-      followUpDate: changes.followUpDate,
-      lastContactedAt: changes.lastContactedAt,
-    };
-    const updated = await updateLead(id, Object.fromEntries(Object.entries(allowed).filter(([, v]) => v !== undefined)));
-    return res.status(200).json({ lead: updated });
-  }
-
-  return res.status(405).json({ error: "METHOD_NOT_ALLOWED" });
 }
