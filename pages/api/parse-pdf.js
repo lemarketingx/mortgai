@@ -107,25 +107,60 @@ function parseMortgageFields(text) {
   };
 }
 
-/**
- * Use OpenAI GPT-4o to extract structured mortgage data from PDF text.
- * Only called when OPENAI_API_KEY is set.
- */
+const OPENAI_SCHEMA = {
+  type: "object",
+  properties: {
+    bankName: { type: ["string", "null"], description: "Name of the bank or lender (e.g. Bank Hapoalim, Bank Leumi)" },
+    balance: { type: ["number", "null"], description: "Remaining payoff balance in ILS (יתרת חוב לסילוק)" },
+    currentPayment: { type: ["number", "null"], description: "Current monthly payment in ILS (החזר חודשי)" },
+    remainingYears: { type: ["number", "null"], description: "Remaining term in years (can be decimal, e.g. 12.5)" },
+    currentRate: { type: ["number", "null"], description: "Current average interest rate as percentage (e.g. 4.5 means 4.5%)" },
+    refinanceCost: { type: ["number", "null"], description: "Prepayment penalty / refinance cost in ILS (עמלת פירעון)" },
+    tracks: {
+      type: ["array", "null"],
+      description: "Individual mortgage tracks (מסלולים) if multiple tracks exist",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Track name (e.g. פריים, קל״צ, משתנה)" },
+          balance: { type: ["number", "null"] },
+          rate: { type: ["number", "null"] },
+          remainingYears: { type: ["number", "null"] },
+        },
+      },
+    },
+    confidence: {
+      type: "object",
+      description: "Confidence score 0-1 per extracted field",
+      properties: {
+        bankName: { type: "number" },
+        balance: { type: "number" },
+        currentPayment: { type: "number" },
+        remainingYears: { type: "number" },
+        currentRate: { type: "number" },
+        refinanceCost: { type: "number" },
+      },
+    },
+  },
+  required: ["balance", "currentPayment", "remainingYears", "currentRate", "refinanceCost", "confidence"],
+};
+
 async function extractWithOpenAI(text) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
 
-  const prompt = `You are a mortgage data extraction assistant. Extract the following fields from this Israeli mortgage PDF text. Return a JSON object with these keys (use null for missing fields):
-- balance: remaining payoff balance in ILS (number)
-- currentPayment: current monthly payment in ILS (number)
-- remainingYears: remaining term in years (number, can be decimal)
-- currentRate: current average interest rate as a percentage (number, e.g. 4.5)
-- refinanceCost: refinance / prepayment penalty cost in ILS (number)
+  const systemPrompt = `You are an expert Israeli mortgage document parser. Extract structured data from mortgage PDF text.
 
-PDF text:
-${text.slice(0, 6000)}
+Rules:
+- Hebrew numbers: "מיליון" = 1,000,000; "אלף" = 1,000; commas are thousands separators
+- Percentages: if you see "4.5%" or "4.5 אחוז" return 4.5 (not 0.045)
+- All monetary amounts in ILS (Israeli New Shekel)
+- If a field is ambiguous or missing, return null
+- Assign confidence 0-1 per field: 1.0 = explicit clear match, 0.5 = inferred, 0.0 = not found
+- If multiple mortgage tracks exist, populate the tracks array
+- Return ONLY valid JSON matching the schema exactly`;
 
-Return ONLY valid JSON, no explanation.`;
+  const userPrompt = `Extract mortgage data from this PDF text:\n\n${text.slice(0, 7000)}`;
 
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -136,17 +171,26 @@ Return ONLY valid JSON, no explanation.`;
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
         temperature: 0,
-        max_tokens: 256,
+        max_tokens: 600,
+        response_format: { type: "json_object" },
       }),
     });
 
     if (!res.ok) return null;
     const json = await res.json();
     const content = json.choices?.[0]?.message?.content?.trim() || "";
-    const parsed = JSON.parse(content.replace(/^```json\n?/, "").replace(/\n?```$/, ""));
-    return typeof parsed === "object" && parsed !== null ? parsed : null;
+    const parsed = JSON.parse(content);
+    if (typeof parsed !== "object" || parsed === null) return null;
+    // Ensure confidence object exists
+    if (!parsed.confidence || typeof parsed.confidence !== "object") {
+      parsed.confidence = {};
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -187,21 +231,42 @@ export default async function handler(req, res) {
 
   // Try OpenAI-enhanced extraction first if text was found
   let fields = null;
+  let extractionMethod = "none";
+
   if (extractedText.length > 50 && process.env.OPENAI_API_KEY) {
     fields = await extractWithOpenAI(extractedText);
+    if (fields) extractionMethod = "openai";
   }
 
   // Fall back to heuristic extraction
   if (!fields && extractedText.length > 50) {
-    fields = parseMortgageFields(extractedText);
+    const heuristic = parseMortgageFields(extractedText);
+    if (heuristic) {
+      fields = {
+        ...heuristic,
+        bankName: null,
+        tracks: null,
+        confidence: {
+          balance: heuristic.balance != null ? 0.6 : 0,
+          currentPayment: heuristic.currentPayment != null ? 0.6 : 0,
+          remainingYears: heuristic.remainingYears != null ? 0.5 : 0,
+          currentRate: heuristic.currentRate != null ? 0.6 : 0,
+          refinanceCost: heuristic.refinanceCost != null ? 0.5 : 0,
+          bankName: 0,
+        },
+      };
+      extractionMethod = "heuristic";
+    }
   }
 
-  const hasAnyField = fields && Object.values(fields).some((v) => v !== null && v !== undefined);
+  const coreFields = ["balance", "currentPayment", "remainingYears", "currentRate", "refinanceCost"];
+  const hasAnyField = fields && coreFields.some((k) => fields[k] != null);
 
   if (!hasAnyField) {
     return res.status(200).json({
       ok: false,
       parsed: false,
+      extractionMethod: "none",
       message: "לא הצלחנו לחלץ נתונים מה-PDF. ייתכן שהדוח מוגן, סרוק כתמונה, או בפורמט לא נתמך. אנא הזינו את הנתונים ידנית.",
       fields: null,
     });
@@ -210,6 +275,7 @@ export default async function handler(req, res) {
   return res.status(200).json({
     ok: true,
     parsed: true,
+    extractionMethod,
     message: "הצלחנו לחלץ נתונים חלקיים. בדקו ואשרו לפני החישוב.",
     fields,
   });

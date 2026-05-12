@@ -1,6 +1,6 @@
 import { COMMISSION_STATUSES, LEAD_STATUSES, LeadStoreError, getSupabaseConfigStatus, readAdvisors, readLeads, updateLead } from "../../../lib/leadsStore";
 import { hasAdminSession } from "../../../lib/adminAuth";
-import { adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
+import { adminLeadBulkPatchSchema, adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
 
 function apiError(res, status, code, message, details = "") {
   return res.status(status).json({ error: code, message, details });
@@ -39,7 +39,23 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "PATCH") {
-    const parsed = adminLeadPatchSchema.safeParse(req.body || {});
+    const body = req.body || {};
+
+    // Bulk update: { ids: ["id1","id2",...], changes: {...} }
+    if (Array.isArray(body.ids)) {
+      const parsed = adminLeadBulkPatchSchema.safeParse(body);
+      if (!parsed.success) {
+        return res.status(400).json(validationErrorPayload(parsed.error));
+      }
+      const { ids, changes } = parsed.data;
+      const results = await Promise.allSettled(ids.map((id) => updateLead(id, changes || {})));
+      const updated = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
+      const failed = results.filter((r) => r.status === "rejected" || !r.value).length;
+      return res.status(200).json({ ok: true, updated: updated.length, failed });
+    }
+
+    // Single update
+    const parsed = adminLeadPatchSchema.safeParse(body);
     if (!parsed.success) {
       return res.status(400).json(validationErrorPayload(parsed.error));
     }
