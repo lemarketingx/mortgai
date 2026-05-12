@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "build:webpack": "next build --webpack",
-    "start": "next start"
+    "start": "next start",
+    "validate": "node scripts/validate-calculations.mjs"
   },
   "dependencies": {
     "next": "15.5.15",
