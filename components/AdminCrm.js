@@ -282,7 +282,8 @@ export default function PrivateAdmin() {
       const json = await response.json().catch(() => ({}));
       if (!response.ok) {
         if (response.status === 401) { setIsAuthenticated(false); setMessage(adminApiMessage(json.error || "ADMIN_AUTH_REQUIRED")); return; }
-        throw new Error(adminApiMessage(json.error) || json.message || "Lead load failed");
+        const serverDebug = [json.error, json.message, json.details].filter(Boolean).join(" | ");
+        throw new Error(serverDebug || adminApiMessage(json.error) || "Lead load failed");
       }
       setLeads(json.leads || []);
       setStatuses(json.statuses || fallbackStatuses);
