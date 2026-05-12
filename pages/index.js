@@ -51,10 +51,10 @@ const navLinks = [
 ];
 
 const trustItems = [
-  "מבוסס נתוני ריבית",
-  "חישוב יחס החזר",
-  "בדיקת הון עצמי",
-  "השוואת מצב קיים מול חדש",
+  { text: "אינה פוגעת בדירוג אשראי", icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" },
+  { text: "מבוסס ריביות ומגבלות עדכניות", icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" },
+  { text: "חישוב יחס החזר ו-LTV", icon: "M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" },
+  { text: "ללא התחייבות ובחינם", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
 ];
 
 const steps = [
@@ -194,6 +194,24 @@ export default function Home() {
       .catch(() => setRates(fallbackRates));
   }, []);
 
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const utmFields = {
+        utmSource: params.get("utm_source") || "",
+        utmMedium: params.get("utm_medium") || "",
+        utmCampaign: params.get("utm_campaign") || "",
+        utmContent: params.get("utm_content") || "",
+        utmTerm: params.get("utm_term") || "",
+      };
+      if (Object.values(utmFields).some(Boolean)) {
+        setLead((current) => ({ ...current, ...utmFields }));
+      }
+    } catch {
+      // URL parsing not critical
+    }
+  }, []);
+
   const analysis = useMemo(() => calculateMortgageAnalysis(data, rates), [data, rates]);
   const ready = useMemo(() => hasEnoughData(data), [data]);
   const recommendation = useMemo(() => leadRecommendation(analysis, ready), [analysis, ready]);
@@ -298,7 +316,6 @@ export default function Home() {
         <Hero />
         <TrustStrip />
         <HowItWorks />
-        <SeoContentSection />
         <CalculatorSection
           data={data}
           updateData={updateData}
@@ -307,6 +324,7 @@ export default function Home() {
           recommendation={recommendation}
         />
         <ResultsSection analysis={analysis} ready={ready} />
+        <SeoContentSection />
         <RefinanceSection />
         <LeadSection
           lead={lead}
@@ -370,10 +388,10 @@ function Hero() {
             סימולציה ראשונית למשכנתאות בישראל
           </span>
           <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-            מחשבון משכנתא חכם לבדיקת זכאות והחזר חודשי
+            בדיקת זכאות חינם למשכנתא תוך דקה
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg font-semibold leading-8 text-slate-600 lg:mx-0">
-            בדקו תוך דקה כמה משכנתא תוכלו לקבל, מה ההחזר המשוער ומה סיכוי האישור שלכם.
+            מלאו כמה נתונים בסיסיים וקבלו אומדן החזר חודשי, יחס החזר ואומדן סיכוי האישור — לפני שפונים לבנק.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
             <a
@@ -390,7 +408,7 @@ function Hero() {
             </a>
           </div>
           <p className="mt-5 text-sm font-bold text-slate-500">
-            אומדן בלבד, לא אישור בנקאי או ייעוץ משכנתאות רשמי.
+            אומדן בלבד. אינו פוגע בדירוג אשראי ואינו מחייב.
           </p>
         </div>
 
@@ -432,13 +450,15 @@ function HeroIllustration() {
 function TrustStrip() {
   return (
     <section className="border-y border-slate-200 bg-slate-50/80">
-      <div className="mx-auto grid max-w-6xl gap-3 px-4 py-6 sm:grid-cols-2 sm:px-6">
-        {trustItems.map((item) => (
-          <div key={item} className="flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-sm">
+      <div className="mx-auto grid max-w-6xl gap-3 px-4 py-6 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+        {trustItems.map(({ text, icon }) => (
+          <div key={text} className="flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-sm">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700">
-              <CheckIcon />
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d={icon} strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </span>
-            <span className="font-black text-slate-800">{item}</span>
+            <span className="font-black text-slate-800">{text}</span>
           </div>
         ))}
       </div>
@@ -529,31 +549,38 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation }
 function MortgageForm({ data, updateData }) {
   return (
     <form className="rounded-[34px] border border-slate-200 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-7">
+      <p className="mb-4 text-xs font-black uppercase tracking-widest text-violet-600">פרטי הנכס</p>
       <div className="grid gap-4 sm:grid-cols-2">
-        <MoneyField label="הכנסה חודשית נטו" value={data.income} onChange={(value) => updateData("income", value)} />
-        <MoneyField label="הוצאות קבועות" value={data.expenses} onChange={(value) => updateData("expenses", value)} />
-        <MoneyField label="הלוואות קיימות היום" value={data.loans} onChange={(value) => updateData("loans", value)} />
-        <MoneyField label="הלוואות שייסגרו" value={data.loansToClose} onChange={(value) => updateData("loansToClose", value)} />
-        <MoneyField
-          label="החזר משכנתא / שכירות כיום"
-          helper="כמה אתם משלמים היום על דיור לפני העסקה החדשה"
-          value={data.currentHousing}
-          onChange={(value) => updateData("currentHousing", value)}
-        />
         <SelectField label="סוג עסקה" value={data.propertyType} onChange={(value) => updateData("propertyType", value)} options={propertyOptions} />
         <MoneyField label="מחיר הנכס" value={data.price} onChange={(value) => updateData("price", value)} />
         <MoneyField label="הון עצמי" value={data.equity} onChange={(value) => updateData("equity", value)} />
         <MoneyField
-          label="סכום משכנתא ידני"
-          helper="אפשר להשאיר ריק - נחושב לפי מחיר פחות הון עצמי"
+          label="סכום משכנתא"
+          helper="אפשר להשאיר ריק — נחושב אוטומטית לפי מחיר פחות הון עצמי"
           value={data.mortgageAmount}
           onChange={(value) => updateData("mortgageAmount", value)}
         />
+      </div>
+      <p className="mb-4 mt-6 text-xs font-black uppercase tracking-widest text-violet-600">הכנסות והתחייבויות</p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <MoneyField label="הכנסה חודשית נטו" value={data.income} onChange={(value) => updateData("income", value)} />
+        <MoneyField label="הוצאות קבועות" value={data.expenses} onChange={(value) => updateData("expenses", value)} />
+        <MoneyField label="הלוואות קיימות היום" value={data.loans} onChange={(value) => updateData("loans", value)} />
+        <MoneyField label="הלוואות שייסגרו עם הרכישה" value={data.loansToClose} onChange={(value) => updateData("loansToClose", value)} />
+        <MoneyField
+          label="החזר דיור נוכחי"
+          helper="שכירות או משכנתא שאתם משלמים היום"
+          value={data.currentHousing}
+          onChange={(value) => updateData("currentHousing", value)}
+        />
+      </div>
+      <p className="mb-4 mt-6 text-xs font-black uppercase tracking-widest text-violet-600">תנאי המשכנתא</p>
+      <div className="grid gap-4 sm:grid-cols-2">
         <NumberField label="תקופה בשנים" min="5" max="30" value={data.years} onChange={(value) => updateData("years", value)} />
         <RateField label="ריבית שנתית משוערת" value={data.annualRate} onChange={(value) => updateData("annualRate", value)} />
         <SelectField label="סטטוס אשראי" value={data.credit} onChange={(value) => updateData("credit", value)} options={creditOptions} />
         <SelectField label="סוג הצמדה" value={data.indexation} onChange={(value) => updateData("indexation", value)} options={indexationOptions} />
-        <SelectField label="שיטת החזר" value={data.repaymentMethod} onChange={(value) => updateData("repaymentMethod", value)} options={repaymentOptions} />
+        <SelectField label="שיטת החזר" value={data.repaymentMethod} onChange={(value) => updateData("repaymentMethod", value)} options={repaymentOptions} className="sm:col-span-2" />
       </div>
     </form>
   );
@@ -691,21 +718,38 @@ function RefinanceSection() {
 function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, successRef, analysis, ready }) {
   return (
     <section id="lead" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-      <div className="grid items-stretch gap-6 lg:grid-cols-2">
+      <SectionHeader
+        eyebrow="בדיקה אנושית"
+        title="רוצים לדעת איך לשפר את הסיכוי ולקבל ריביות טובות יותר?"
+        text="השאירו פרטים לבדיקה ראשונית ללא עלות. יועץ יוכל לזהות נקודות חולשה ולבדוק שיפור תמהיל."
+      />
+      <div className="mt-10 grid items-stretch gap-6 lg:grid-cols-2">
         <div className="rounded-[34px] bg-gradient-to-br from-violet-50 to-white p-7 ring-1 ring-violet-100">
-          <span className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-black text-violet-800 shadow-sm">
-            בדיקה אנושית
-          </span>
-          <h2 className="mt-5 text-3xl font-black text-slate-950">רוצים לבדוק איך לשפר את הסיכוי והתנאים?</h2>
-          <p className="mt-4 leading-8 text-slate-600">
-            השאירו פרטים לבדיקה ראשונית. יועץ יוכל לבחון את הנתונים, לזהות נקודות חולשה ולבדוק אפשרות לשיפור תמהיל וריביות.
-          </p>
-          <div className="mt-6 rounded-3xl bg-white p-5 shadow-sm">
-            <p className="text-sm font-black text-slate-500">לפי הסימולציה</p>
-            <p className="mt-2 text-xl font-black text-violet-900">
-              {ready ? `${Math.round(analysis.approval)}% · ${analysis.mainIssue}` : "מלאו נתונים כדי לקבל אומדן"}
-            </p>
+          <div className="space-y-3">
+            {ready ? (
+              <>
+                <ResultSummaryRow label="אומדן סיכוי אישור" value={`${Math.round(analysis.approval)}%`} highlight={analysis.approval >= 65} />
+                <ResultSummaryRow label="החזר חודשי משוער" value={formatILS(analysis.monthly)} />
+                <ResultSummaryRow label="יחס החזר" value={formatPct(analysis.mortgageOnlyRatio)} warn={analysis.mortgageOnlyRatio > 40} />
+                <ResultSummaryRow label="יתרה למחיה" value={formatILS(analysis.afterHousing)} warn={analysis.afterHousing < 3000} />
+                {analysis.mainIssue && (
+                  <div className="mt-2 rounded-2xl bg-white px-4 py-3 shadow-sm">
+                    <p className="text-xs font-black text-slate-500">הנושא המרכזי לטיפול</p>
+                    <p className="mt-1 font-black text-violet-900">{analysis.mainIssue}</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="rounded-2xl bg-white px-4 py-5 text-center shadow-sm">
+                <p className="font-black text-slate-500">מלאו נתונים במחשבון כדי לראות כאן את סיכום הסימולציה.</p>
+              </div>
+            )}
           </div>
+          <ul className="mt-6 space-y-2 text-sm font-bold text-slate-600">
+            <li className="flex items-center gap-2"><CheckIcon /><span>בדיקה ראשונית ללא עלות</span></li>
+            <li className="flex items-center gap-2"><CheckIcon /><span>אינה פוגעת בדירוג אשראי</span></li>
+            <li className="flex items-center gap-2"><CheckIcon /><span>השוואת ריביות ותמהיל</span></li>
+          </ul>
         </div>
 
         <form
@@ -722,7 +766,7 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
               label="סטטוס רכישה"
               value={lead.purchaseStatus}
               onChange={(value) => updateLead("purchaseStatus", value)}
-              placeholder="לדוגמה: לפני חוזה / אחרי חוזה"
+              placeholder="לפני חוזה / אחרי חוזה"
               className="sm:col-span-2"
             />
           </div>
@@ -737,10 +781,21 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
           >
             {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "בדיקה ראשונית ללא התחייבות"}
           </button>
-          <p className="mt-3 text-center text-xs font-bold text-slate-500">הפרטים נשמרים לצורך חזרה אליך בלבד.</p>
+          <p className="mt-3 text-center text-xs font-bold text-slate-500">
+            הבדיקה אינה מחייבת ואינה פוגעת בדירוג אשראי. הפרטים נשמרים לצורך חזרה אליך בלבד.
+          </p>
         </form>
       </div>
     </section>
+  );
+}
+
+function ResultSummaryRow({ label, value, highlight = false, warn = false }) {
+  return (
+    <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm">
+      <span className="font-bold text-slate-600">{label}</span>
+      <span className={`number-display font-black ${highlight ? "text-emerald-700" : warn ? "text-amber-700" : "text-slate-950"}`}>{value}</span>
+    </div>
   );
 }
 
@@ -885,9 +940,9 @@ function RateField({ label, value, onChange }) {
   );
 }
 
-function SelectField({ label, value, onChange, options }) {
+function SelectField({ label, value, onChange, options, className = "" }) {
   return (
-    <label className="block">
+    <label className={`block ${className}`}>
       <span className="text-sm font-black text-slate-700">{label}</span>
       <select
         value={value}

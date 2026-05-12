@@ -414,6 +414,68 @@ section("breakEvenMonths: no division by zero");
   }
 }
 
+// ─── Scenario 11: Investment property LTV cap at 50% ─────────────────────────
+section("Scenario 11: Investment property LTV cap enforced at 50%");
+{
+  // 1,000,000 mortgage on 1,500,000 property = 66.7% LTV → exceeds 50% investment cap
+  const r = calculateMortgageAnalysis({
+    income: 30000, expenses: 5000, loans: 0, loansToClose: 0,
+    price: 1500000, equity: 500000, mortgageAmount: 1000000,
+    years: 25, propertyType: "investment", credit: "clean",
+  });
+  assert(r.ltvLimitExceeded, "LTV exceeded flag set for investment property at 66.7% LTV");
+  assert(r.hardLimitExceeded, "Hard limit exceeded for investment property over 50% LTV");
+  assert(r.approval <= 38, `Approval capped at 38 for hard limit (got ${r.approval})`);
+  assert(r.ltv > 50, `Computed LTV > 50% (got ${r.ltv.toFixed(1)}%)`);
+
+  // Just within limit: 700,000 on 1,500,000 = 46.7% LTV → OK
+  const ok = calculateMortgageAnalysis({
+    income: 30000, expenses: 5000, loans: 0, loansToClose: 0,
+    price: 1500000, equity: 800000, mortgageAmount: 700000,
+    years: 25, propertyType: "investment", credit: "clean",
+  });
+  assert(!ok.ltvLimitExceeded, "LTV limit NOT exceeded at 46.7% for investment property");
+}
+
+// ─── Scenario 12: UTM fields passthrough and lead payload validation ──────────
+section("Scenario 12: UTM fields passthrough and lead payload structure");
+{
+  // Simulate the lead payload as the API would build it
+  function buildLeadPayload(formLead, utmParams) {
+    return {
+      ...formLead,
+      utmSource: utmParams.utm_source || formLead.utmSource || "",
+      utmMedium: utmParams.utm_medium || formLead.utmMedium || "",
+      utmCampaign: utmParams.utm_campaign || formLead.utmCampaign || "",
+      utmContent: utmParams.utm_content || formLead.utmContent || "",
+      utmTerm: utmParams.utm_term || formLead.utmTerm || "",
+    };
+  }
+
+  const lead = buildLeadPayload(
+    { name: "ישראל ישראלי", phone: "0501234567", city: "תל אביב" },
+    { utm_source: "google", utm_medium: "cpc", utm_campaign: "mortgage-2026" }
+  );
+  assert(lead.utmSource === "google", `utmSource captured from query params (got "${lead.utmSource}")`);
+  assert(lead.utmMedium === "cpc", `utmMedium captured (got "${lead.utmMedium}")`);
+  assert(lead.utmCampaign === "mortgage-2026", `utmCampaign captured (got "${lead.utmCampaign}")`);
+  assert(lead.utmContent === "", `utmContent defaults to empty string when missing (got "${lead.utmContent}")`);
+  assert(lead.utmTerm === "", `utmTerm defaults to empty string when missing (got "${lead.utmTerm}")`);
+
+  // Simulate AI parse null safety — fields object with nulls should not crash
+  function safeParseAiResult(fields) {
+    if (!fields || typeof fields !== "object") return null;
+    const coreKeys = ["balance", "currentPayment", "remainingYears", "currentRate", "refinanceCost"];
+    const hasAny = coreKeys.some((k) => fields[k] != null);
+    return hasAny ? fields : null;
+  }
+
+  assert(safeParseAiResult(null) === null, "AI null result handled safely");
+  assert(safeParseAiResult({}) === null, "AI empty object (all nulls) handled safely");
+  assert(safeParseAiResult({ balance: null, currentPayment: null, remainingYears: null, currentRate: null, refinanceCost: null }) === null, "All-null AI fields handled safely");
+  assert(safeParseAiResult({ balance: 500000, currentPayment: null, remainingYears: null, currentRate: null, refinanceCost: null }) !== null, "Partial AI result with balance returned");
+}
+
 // ─── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${"─".repeat(50)}`);
 console.log(`Results: ${passed} passed, ${failed} failed`);

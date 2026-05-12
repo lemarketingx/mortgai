@@ -6,7 +6,20 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const parsed = publicLeadSchema.safeParse(req.body);
+  const q = req.query || {};
+  const bodyWithUtm = {
+    ...req.body,
+    lead: {
+      ...(req.body?.lead || {}),
+      utmSource: q.utm_source || req.body?.lead?.utmSource || "",
+      utmMedium: q.utm_medium || req.body?.lead?.utmMedium || "",
+      utmCampaign: q.utm_campaign || req.body?.lead?.utmCampaign || "",
+      utmContent: q.utm_content || req.body?.lead?.utmContent || "",
+      utmTerm: q.utm_term || req.body?.lead?.utmTerm || "",
+    },
+  };
+
+  const parsed = publicLeadSchema.safeParse(bodyWithUtm);
   if (!parsed.success) {
     return res.status(400).json(validationErrorPayload(parsed.error));
   }

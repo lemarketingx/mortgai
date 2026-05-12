@@ -32,6 +32,8 @@ export default function PrivateAdmin() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [advisorFilter, setAdvisorFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [message, setMessage] = useState("");
   const [advisors, setAdvisors] = useState([]);
   const [password, setPassword] = useState("");
@@ -40,13 +42,18 @@ export default function PrivateAdmin() {
 
   const filteredLeads = useMemo(() => {
     const term = query.trim();
+    const fromTs = dateFrom ? new Date(dateFrom).getTime() : null;
+    const toTs = dateTo ? new Date(dateTo + "T23:59:59").getTime() : null;
     return leads.filter((lead) => {
       const matchesStatus = !statusFilter || (lead.leadStatus || lead.status) === statusFilter;
       const matchesAdvisor = !advisorFilter || lead.assignedAdvisorId === advisorFilter;
-      const matchesQuery = !term || `${lead.name} ${lead.phone} ${lead.city}`.includes(term);
-      return matchesStatus && matchesAdvisor && matchesQuery;
+      const matchesQuery = !term || `${lead.name} ${lead.phone} ${lead.city} ${lead.utmSource || ""}`.includes(term);
+      const createdTs = lead.createdAt ? new Date(lead.createdAt).getTime() : null;
+      const matchesFrom = !fromTs || (createdTs && createdTs >= fromTs);
+      const matchesTo = !toTs || (createdTs && createdTs <= toTs);
+      return matchesStatus && matchesAdvisor && matchesQuery && matchesFrom && matchesTo;
     });
-  }, [leads, query, statusFilter, advisorFilter]);
+  }, [leads, query, statusFilter, advisorFilter, dateFrom, dateTo]);
   const dashboardStats = useMemo(() => {
     const money = (value) => Number(String(value || "").replace(/[^\d.-]/g, "")) || 0;
     return {
@@ -225,12 +232,12 @@ export default function PrivateAdmin() {
         </section>
 
         <section className="fintech-card mt-5 p-6 sm:p-8">
-          <div className="grid gap-3 md:grid-cols-[1fr_220px_220px_auto_auto]">
+          <div className="grid gap-3 md:grid-cols-[1fr_200px_200px_auto_auto]">
             <input
               className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="חיפוש לפי שם, טלפון או עיר"
+              placeholder="חיפוש לפי שם, טלפון, עיר או UTM"
             />
             <select className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
               <option value="">כל הסטטוסים</option>
@@ -245,6 +252,19 @@ export default function PrivateAdmin() {
             <a className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-center font-black text-mort-ink shadow-soft" href="/api/admin/export">
               ייצוא CSV
             </a>
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="grid gap-1">
+              <span className="text-xs font-black text-mort-muted">מתאריך</span>
+              <input type="date" className="focus-field min-h-11 rounded-2xl border border-slate-200 bg-white px-3 py-2 font-bold text-mort-ink" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+            </label>
+            <label className="grid gap-1">
+              <span className="text-xs font-black text-mort-muted">עד תאריך</span>
+              <input type="date" className="focus-field min-h-11 rounded-2xl border border-slate-200 bg-white px-3 py-2 font-bold text-mort-ink" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+            </label>
+            <div className="flex items-end">
+              <span className="text-sm font-bold text-mort-muted">{filteredLeads.length} / {leads.length} לידים</span>
+            </div>
           </div>
           {message && <strong className="mt-4 block rounded-2xl bg-red-100 p-3 text-red-700">{message}</strong>}
         </section>
@@ -269,6 +289,18 @@ export default function PrivateAdmin() {
       </div>
     </main>
   );
+}
+
+function statusBadgeClass(status) {
+  switch (status) {
+    case "חדש": return "border-blue-200 bg-blue-50 text-blue-800";
+    case "נשלח ליועץ": return "border-violet-200 bg-violet-50 text-violet-800";
+    case "בטיפול": return "border-amber-200 bg-amber-50 text-amber-800";
+    case "אושר עקרונית": return "border-emerald-200 bg-emerald-50 text-emerald-800";
+    case "נסגר": return "border-green-300 bg-green-100 text-green-900";
+    case "לא רלוונטי": return "border-slate-200 bg-slate-100 text-slate-500";
+    default: return "border-slate-200 bg-slate-50 text-slate-700";
+  }
 }
 
 function LeadCard({ lead, statuses, commissionStatuses, advisors, updateLead }) {
@@ -335,14 +367,17 @@ function LeadCard({ lead, statuses, commissionStatuses, advisors, updateLead }) 
               <h2 className="text-2xl font-black text-mort-ink">{lead.name || "ללא שם"}</h2>
               <p className="font-bold text-mort-muted">{lead.phone} · {lead.city || "עיר לא צוינה"}</p>
             </div>
-            <span className="pill border-emerald-200 bg-emerald-50 text-emerald-800">{draft.leadStatus}</span>
+            <span className={`pill ${statusBadgeClass(draft.leadStatus)}`}>{draft.leadStatus}</span>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <Info label="סכום משכנתא" value={formatILS(lead.mortgageAmount)} />
             <Info label="סטטוס רכישה" value={lead.purchaseStatus || "לא צוין"} />
             <Info label="סיכוי אישור" value={`${Math.round(Number(lead.approvalScore) || 0)}%`} />
             <Info label="מקור" value={lead.source || "mortgai2"} />
-            <Info label="נוצר" value={new Date(lead.createdAt).toLocaleString("he-IL")} />
+            <Info label="נוצר" value={lead.createdAt ? new Date(lead.createdAt).toLocaleString("he-IL") : "—"} />
+            {lead.utmSource && <Info label="UTM מקור" value={lead.utmSource} />}
+            {lead.utmCampaign && <Info label="UTM קמפיין" value={lead.utmCampaign} />}
+            {lead.mainIssue && <div className="surface-card col-span-2 p-3"><span className="block text-xs font-black text-mort-muted">נקודת שיפור</span><strong className="mt-1 block font-bold text-amber-700">{lead.mainIssue}</strong></div>}
           </div>
         </div>
 
