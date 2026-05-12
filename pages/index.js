@@ -257,7 +257,7 @@ export default function Home() {
       });
       const result = await response.json().catch(() => ({}));
 
-      if (!response.ok || result?.ok !== true) {
+      if (!response.ok || result?.ok !== true || result?.success === false) {
         throw new Error(result?.message || result?.error || "LEAD_SUBMIT_FAILED");
       }
 

@@ -28,16 +28,20 @@ export default async function handler(req, res) {
   const webhookUrl = process.env.LEAD_WEBHOOK_URL;
   let savedLead = null;
   let localOnly = false;
+  let insertError = null;
 
   try {
     savedLead = await createLead(req.body);
   } catch (error) {
     localOnly = true;
-    console.error("Lead database save failed; accepting lead without database persistence", {
+    insertError = {
       code: error?.code || "LEAD_SAVE_FAILED",
       message: error?.message || "",
       details: error?.details || "",
-    });
+      stack: error?.stack || "",
+      raw: String(error),
+    };
+    console.error("Lead database insert failed", insertError);
   }
 
   if (webhookUrl) {
@@ -57,5 +61,16 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(200).json({ ok: true, lead: savedLead, localOnly });
+  if (!savedLead) {
+    return res.status(500).json({
+      ok: false,
+      success: false,
+      error: "SUPABASE_INSERT_FAILED",
+      message: "Lead was not saved to CRM.",
+      localOnly,
+      details: insertError,
+    });
+  }
+
+  return res.status(200).json({ ok: true, success: true, lead: savedLead, localOnly });
 }
