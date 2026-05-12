@@ -16,24 +16,60 @@ function storeError(res, error, fallbackCode) {
 
 export default async function handler(req, res) {
   try {
+    console.log("[admin.leads] token/session validation start");
     if (!hasAdminSession(req)) {
+      console.error("[admin.leads] token/session validation failed: missing/expired session");
       return apiError(res, 401, "ADMIN_AUTH_REQUIRED", "Admin session cookie is missing or expired");
     }
+    console.log("[admin.leads] token/session validation success");
   } catch (error) {
+    console.error("[admin.leads] token/session validation crash", error);
     return apiError(res, 500, "ADMIN_AUTH_NOT_CONFIGURED", error.message || "ADMIN_SESSION_SECRET is missing");
   }
 
   if (req.method === "GET") {
     try {
-      const [leads, advisors] = await Promise.all([readLeads(), readAdvisors()]);
+      console.log("[admin.leads] leads select start");
+      const leads = await readLeads();
+      console.log("[admin.leads] leads select success", { count: Array.isArray(leads) ? leads.length : -1 });
+
+      let advisors = [];
+      try {
+        console.log("[admin.leads] advisors select start");
+        const advisorsResult = await readAdvisors();
+        advisors = Array.isArray(advisorsResult) ? advisorsResult : [];
+        console.log("[admin.leads] advisors select success", { count: advisors.length });
+      } catch (advisorError) {
+        console.error("[admin.leads] advisors select failed; returning leads without advisors", {
+          message: advisorError?.message,
+          code: advisorError?.code,
+          details: advisorError?.details,
+          stack: advisorError?.stack,
+        });
+      }
+
+      console.log("[admin.leads] merge/mapping logic start");
+      const safeLeads = Array.isArray(leads) ? leads : [];
+      const safeAdvisors = Array.isArray(advisors) ? advisors : [];
+      console.log("[admin.leads] merge/mapping logic success", {
+        leadsCount: safeLeads.length,
+        advisorsCount: safeAdvisors.length,
+      });
+
       return res.status(200).json({
-        leads,
-        advisors,
+        leads: safeLeads,
+        advisors: safeAdvisors,
         statuses: LEAD_STATUSES,
         commissionStatuses: COMMISSION_STATUSES,
         supabase: getSupabaseConfigStatus(),
       });
     } catch (error) {
+      console.error("[admin.leads] leads select failed", {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        stack: error?.stack,
+      });
       return storeError(res, error, "LEADS_READ_FAILED");
     }
   }
