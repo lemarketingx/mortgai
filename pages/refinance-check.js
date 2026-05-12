@@ -382,7 +382,7 @@ export default function RefinanceCheck() {
           <SectionHeader
             eyebrow="בדיקת מחזור"
             title="הזינו את נתוני המשכנתא הקיימת"
-            text="העלאת דוחות PDF הוסרה זמנית כדי לשמור על יציבות. הזנה ידנית נותנת בדיקה מהירה וברורה."
+            text="ניתן להעלות דוח משכנתא PDF לחילוץ נתונים, או להזין ידנית. תמיד תוצג אפשרות לאשר לפני השימוש בנתונים שחולצו."
           />
           <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
             <ManualForm data={data} update={update} pdfState={pdfState} pdfConfirmed={pdfConfirmed} onPdfUpload={handlePdfUpload} onPdfApply={applyPdfFields} onPdfCancel={cancelPdf} />
