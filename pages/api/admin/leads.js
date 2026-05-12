@@ -11,7 +11,7 @@ function storeError(res, error, fallbackCode) {
     const status = error.code === "SUPABASE_ENV_MISSING" ? 503 : 502;
     return apiError(res, status, error.code, error.message, error.details || "");
   }
-  return apiError(res, 500, fallbackCode, "Unexpected admin leads API failure");
+  return apiError(res, 500, fallbackCode, error?.message || "Unexpected admin leads API failure", String(error?.stack || ""));
 }
 
 export default async function handler(req, res) {
