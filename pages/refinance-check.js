@@ -17,7 +17,7 @@ const initialData = {
   currentPayment: "",
   remainingYears: "",
   currentRate: "",
-  newRate: "4.9",
+  newRate: "",
   refinanceCost: "",
   income: "",
   expenses: "",
@@ -230,8 +230,62 @@ export default function RefinanceCheck() {
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadSent, setLeadSent] = useState(false);
   const [leadError, setLeadError] = useState("");
+  const [pdfState, setPdfState] = useState({ status: "idle", message: "", fields: null });
+  const [pdfConfirmed, setPdfConfirmed] = useState(false);
   const successRef = useRef(null);
   const result = useMemo(() => calculateRefinance(data), [data]);
+
+  async function handlePdfUpload(file) {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      setPdfState({ status: "error", message: "יש להעלות קובץ PDF בלבד.", fields: null });
+      return;
+    }
+    setPdfState({ status: "loading", message: "מעבד את ה-PDF...", fields: null });
+    setPdfConfirmed(false);
+
+    try {
+      const res = await fetch("/api/parse-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/pdf" },
+        body: file,
+      });
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok || !json.ok) {
+        setPdfState({
+          status: "error",
+          message: json.message || "לא ניתן לחלץ נתונים מה-PDF. נסו להזין ידנית.",
+          fields: null,
+        });
+        return;
+      }
+
+      setPdfState({ status: "confirm", message: json.message, fields: json.fields });
+    } catch {
+      setPdfState({ status: "error", message: "שגיאה בהעלאת הקובץ. בדקו חיבור לאינטרנט ונסו שנית.", fields: null });
+    }
+  }
+
+  function applyPdfFields() {
+    if (!pdfState.fields) return;
+    const f = pdfState.fields;
+    setData((current) => ({
+      ...current,
+      ...(f.balance != null ? { balance: String(Math.round(f.balance)) } : {}),
+      ...(f.currentPayment != null ? { currentPayment: String(Math.round(f.currentPayment)) } : {}),
+      ...(f.remainingYears != null ? { remainingYears: String(f.remainingYears) } : {}),
+      ...(f.currentRate != null ? { currentRate: String(f.currentRate) } : {}),
+      ...(f.refinanceCost != null ? { refinanceCost: String(Math.round(f.refinanceCost)) } : {}),
+    }));
+    setPdfConfirmed(true);
+    setPdfState((s) => ({ ...s, status: "done" }));
+  }
+
+  function cancelPdf() {
+    setPdfState({ status: "idle", message: "", fields: null });
+    setPdfConfirmed(false);
+  }
 
   function update(key, value) {
     setData((current) => ({ ...current, [key]: value }));
@@ -331,7 +385,7 @@ export default function RefinanceCheck() {
             text="העלאת דוחות PDF הוסרה זמנית כדי לשמור על יציבות. הזנה ידנית נותנת בדיקה מהירה וברורה."
           />
           <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
-            <ManualForm data={data} update={update} />
+            <ManualForm data={data} update={update} pdfState={pdfState} pdfConfirmed={pdfConfirmed} onPdfUpload={handlePdfUpload} onPdfApply={applyPdfFields} onPdfCancel={cancelPdf} />
             <ResultPanel result={result} />
           </div>
         </div>
@@ -523,23 +577,92 @@ function SectionHeader({ eyebrow, title, text }) {
   );
 }
 
-function ManualForm({ data, update }) {
+function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfApply, onPdfCancel }) {
+  const fileInputRef = useRef(null);
+  const isLoading = pdfState.status === "loading";
+
   return (
-    <form className="rounded-[34px] border border-slate-200 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-7">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <MoneyField label="יתרת משכנתא לסילוק" value={data.balance} onChange={(value) => update("balance", value)} helper="הסכום שנשאר להחזיר לפי הדוח או האפליקציה." />
-        <MoneyField label="החזר חודשי נוכחי" value={data.currentPayment} onChange={(value) => update("currentPayment", value)} helper="אם ריק, נחושב לפי יתרה, ריבית ותקופה." />
-        <RateField label="ריבית קיימת ממוצעת" value={data.currentRate} onChange={(value) => update("currentRate", value)} />
-        <NumberField label="שנים שנותרו" value={data.remainingYears} onChange={(value) => update("remainingYears", value)} />
-        <RateField label="ריבית חדשה לבדיקה" value={data.newRate} onChange={(value) => update("newRate", value)} />
-        <MoneyField label="עלות מחזור משוערת" value={data.refinanceCost} onChange={(value) => update("refinanceCost", value)} />
-        <MoneyField label="הכנסה נטו" value={data.income} onChange={(value) => update("income", value)} />
-        <MoneyField label="הוצאות והלוואות" value={data.expenses} onChange={(value) => update("expenses", value)} />
+    <div className="flex flex-col gap-4">
+      {/* PDF Upload area */}
+      <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <p className="text-sm font-black text-slate-700">העלאת דוח משכנתא PDF <span className="font-semibold text-slate-400">(אופציונלי)</span></p>
+        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">המערכת תנסה לחלץ יתרה, החזר, ריבית ותקופה. תמיד תוצג אפשרות לאשר לפני השימוש.</p>
+
+        {pdfState.status === "idle" || pdfState.status === "done" ? (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-violet-300 bg-violet-50 px-4 py-4 text-sm font-black text-violet-800 transition hover:bg-violet-100 disabled:opacity-50"
+          >
+            <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            {pdfConfirmed ? "העלה דוח אחר" : "לחצו להעלאת PDF"}
+          </button>
+        ) : null}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/pdf,.pdf"
+          className="hidden"
+          onChange={(e) => onPdfUpload(e.target.files?.[0])}
+        />
+
+        {pdfState.status === "loading" && (
+          <div className="mt-3 rounded-2xl bg-violet-50 px-4 py-4 text-center text-sm font-black text-violet-800 animate-pulse">
+            מעבד את ה-PDF...
+          </div>
+        )}
+
+        {pdfState.status === "error" && (
+          <div className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold leading-6 text-red-700">
+            {pdfState.message}
+            <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-2 block text-sm font-black text-red-800 underline">נסה שנית</button>
+          </div>
+        )}
+
+        {pdfState.status === "confirm" && pdfState.fields && (
+          <div className="mt-3 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+            <p className="text-sm font-black text-violet-900">{pdfState.message}</p>
+            <p className="mt-1 text-xs font-semibold text-violet-700">בדקו את הנתונים לפני אישור — ערכים שגויים ישפיעו על התוצאה.</p>
+            <ul className="mt-3 space-y-1 text-sm font-bold text-slate-800">
+              {pdfState.fields.balance != null && <li>יתרה לסילוק: <span className="text-violet-900">{formatILS(pdfState.fields.balance)}</span></li>}
+              {pdfState.fields.currentPayment != null && <li>החזר חודשי: <span className="text-violet-900">{formatILS(pdfState.fields.currentPayment)}</span></li>}
+              {pdfState.fields.remainingYears != null && <li>שנים שנותרו: <span className="text-violet-900">{pdfState.fields.remainingYears}</span></li>}
+              {pdfState.fields.currentRate != null && <li>ריבית קיימת: <span className="text-violet-900">{pdfState.fields.currentRate}%</span></li>}
+              {pdfState.fields.refinanceCost != null && <li>עלות מחזור: <span className="text-violet-900">{formatILS(pdfState.fields.refinanceCost)}</span></li>}
+            </ul>
+            <div className="mt-4 flex gap-3">
+              <button type="button" onClick={onPdfApply} className="flex-1 rounded-full bg-violet-700 px-4 py-2 text-sm font-black text-white transition hover:bg-violet-800">
+                אשר ומלא אוטומטית
+              </button>
+              <button type="button" onClick={() => onPdfCancel()} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50">
+                ביטול
+              </button>
+            </div>
+          </div>
+        )}
+
+        {pdfState.status === "done" && (
+          <div className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+            הנתונים מה-PDF מולאו בטופס. בדקו ועדכנו לפי הצורך.
+          </div>
+        )}
       </div>
-      <p className="mt-5 rounded-2xl bg-violet-50 px-4 py-3 text-sm font-bold leading-6 text-violet-900">
-        כרגע הבדיקה ידנית בלבד. העלאת PDF תחזור בהמשך אחרי שנייצב את חילוץ הנתונים.
-      </p>
-    </form>
+
+      <form className="rounded-[34px] border border-slate-200 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-7">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <MoneyField label="יתרת משכנתא לסילוק" value={data.balance} onChange={(value) => update("balance", value)} helper="הסכום שנשאר להחזיר לפי הדוח או האפליקציה." />
+          <MoneyField label="החזר חודשי נוכחי" value={data.currentPayment} onChange={(value) => update("currentPayment", value)} helper="אם ריק, נחושב לפי יתרה, ריבית ותקופה." />
+          <RateField label="ריבית קיימת ממוצעת" value={data.currentRate} onChange={(value) => update("currentRate", value)} />
+          <NumberField label="שנים שנותרו" value={data.remainingYears} onChange={(value) => update("remainingYears", value)} />
+          <RateField label="ריבית חדשה לבדיקה" value={data.newRate} onChange={(value) => update("newRate", value)} />
+          <MoneyField label="עלות מחזור משוערת" value={data.refinanceCost} onChange={(value) => update("refinanceCost", value)} />
+          <MoneyField label="הכנסה נטו" value={data.income} onChange={(value) => update("income", value)} />
+          <MoneyField label="הוצאות והלוואות" value={data.expenses} onChange={(value) => update("expenses", value)} />
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -602,7 +725,7 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
           <TextField label="שם מלא" value={lead.name} onChange={(value) => setLead({ ...lead, name: value })} autoComplete="name" />
           <TextField label="טלפון" value={lead.phone} onChange={(value) => setLead({ ...lead, phone: value })} placeholder="05X-XXXXXXX" autoComplete="tel" />
           <TextField label="עיר" value={lead.city} onChange={(value) => setLead({ ...lead, city: value })} autoComplete="address-level2" />
-          <MoneyField label="סכום משכנתא" value={lead.mortgageAmount || String(result.balance || "")} onChange={(value) => setLead({ ...lead, mortgageAmount: value })} />
+          <MoneyField label="סכום משכנתא" value={lead.mortgageAmount} onChange={(value) => setLead({ ...lead, mortgageAmount: value })} />
         </div>
         {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
         {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-800">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
