@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cleanNumber, displayNumber, formatILS, formatPct } from "../lib/format";
 import { calculateMortgageAnalysis } from "../lib/mortgage";
+import { initializeAnalyticsLayer, trackEvent as trackAnalyticsEvent } from "../lib/analytics";
 import {
   HOME_SEO,
   absoluteUrl,
@@ -236,14 +237,15 @@ export default function Home() {
     }
   }, []);
 
+  useEffect(() => {
+    initializeAnalyticsLayer();
+  }, []);
+
   function trackEvent(eventName, payload = {}) {
-    if (typeof window === "undefined") return;
-    const eventPayload = { event: eventName, ts: Date.now(), ...payload };
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push(eventPayload);
-    if (process.env.NODE_ENV !== "production") {
-      window.dispatchEvent(new CustomEvent("mortgai:track", { detail: eventPayload }));
-    }
+    trackAnalyticsEvent(eventName, payload, {
+      source: "homepage",
+      sourceMeta: sourceMetaRef.current || {},
+    });
   }
 
   const analysis = useMemo(() => calculateMortgageAnalysis(data, rates), [data, rates]);
@@ -262,7 +264,10 @@ export default function Home() {
   async function submitLead(event) {
     event.preventDefault();
     if (leadLoading || leadSent) return;
-    trackEvent("lead_submit_started");
+    trackEvent("lead_submit_started", {
+      approvalEstimate: Math.round(analysis?.approval || 0),
+      paymentEstimate: Math.round(analysis?.monthly || 0),
+    });
 
     const phone = cleanNumber(lead.phone);
     if (lead.name.trim().length < 2 || !/^05\d{8}$|^9725\d{8}$/.test(phone)) {
@@ -310,11 +315,18 @@ export default function Home() {
       }
 
       setLeadSent(true);
-      trackEvent("lead_submit_success", { leadId: result?.lead?.id || "" });
+      trackEvent("lead_submit_success", {
+        approvalEstimate: Math.round(analysis?.approval || 0),
+        paymentEstimate: Math.round(analysis?.monthly || 0),
+      });
       window.requestAnimationFrame(() => leadSuccessRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
     } catch (error) {
       setLeadSent(false);
-      trackEvent("lead_submit_failed", { message: error?.message || "UNKNOWN_ERROR" });
+      trackEvent("lead_submit_failed", {
+        approvalEstimate: Math.round(analysis?.approval || 0),
+        paymentEstimate: Math.round(analysis?.monthly || 0),
+        errorCode: error?.message || "UNKNOWN_ERROR",
+      });
       setLeadError("הפנייה לא נשלחה. נסו שוב או צרו קשר ישירות.");
     } finally {
       setLeadLoading(false);
@@ -618,12 +630,24 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
     scrollYRef.current = window.scrollY;
     if (!eventSentRef.current.wizardStarted && bounded > 0) {
       eventSentRef.current.wizardStarted = true;
-      trackEvent("wizard_started");
+      trackEvent("wizard_started", { step: 1, stepName: wizardSteps[0]?.key || "property" });
     }
-    trackEvent("wizard_step_completed", { step: step + 1, nextStep: bounded + 1 });
+    trackEvent("wizard_step_completed", {
+      step: step + 1,
+      stepName: wizardSteps[step]?.key || "",
+      nextStep: bounded + 1,
+      approvalEstimate: Math.round(analysis?.approval || 0),
+      paymentEstimate: Math.round(analysis?.monthly || 0),
+    });
     if (bounded === wizardSteps.length - 1 && !eventSentRef.current.wizardCompleted) {
       eventSentRef.current.wizardCompleted = true;
-      trackEvent("wizard_completed", { steps: wizardSteps.length });
+      trackEvent("wizard_completed", {
+        step: wizardSteps.length,
+        stepName: wizardSteps[wizardSteps.length - 1]?.key || "review",
+        steps: wizardSteps.length,
+        approvalEstimate: Math.round(analysis?.approval || 0),
+        paymentEstimate: Math.round(analysis?.monthly || 0),
+      });
     }
     setStep(bounded);
     window.requestAnimationFrame(() => {
