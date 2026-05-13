@@ -193,6 +193,16 @@ export default function Home() {
   const [leadError, setLeadError] = useState("");
   const [openFaq, setOpenFaq] = useState(null);
   const leadSuccessRef = useRef(null);
+  const sourceMetaRef = useRef({
+    utmSource: "",
+    utmMedium: "",
+    utmCampaign: "",
+    utmContent: "",
+    utmTerm: "",
+    referrer: "",
+    landingPath: "",
+  });
+  const eventSentRef = useRef({ wizardStarted: false, wizardCompleted: false });
 
   useEffect(() => {
     fetch("/api/rates")
@@ -211,13 +221,27 @@ export default function Home() {
         utmContent: params.get("utm_content") || "",
         utmTerm: params.get("utm_term") || "",
       };
-      if (Object.values(utmFields).some(Boolean)) {
-        setLead((current) => ({ ...current, ...utmFields }));
-      }
+      const sourceMeta = {
+        ...utmFields,
+        referrer: document.referrer || "",
+        landingPath: `${window.location.pathname}${window.location.search}` || "",
+      };
+      sourceMetaRef.current = sourceMeta;
+      setLead((current) => ({ ...current, ...sourceMeta }));
     } catch {
       // URL parsing not critical
     }
   }, []);
+
+  function trackEvent(eventName, payload = {}) {
+    if (typeof window === "undefined") return;
+    const eventPayload = { event: eventName, ts: Date.now(), ...payload };
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push(eventPayload);
+    if (process.env.NODE_ENV !== "production") {
+      window.dispatchEvent(new CustomEvent("mortgai:track", { detail: eventPayload }));
+    }
+  }
 
   const analysis = useMemo(() => calculateMortgageAnalysis(data, rates), [data, rates]);
   const ready = useMemo(() => hasEnoughData(data), [data]);
@@ -235,6 +259,7 @@ export default function Home() {
   async function submitLead(event) {
     event.preventDefault();
     if (leadLoading || leadSent) return;
+    trackEvent("lead_submit_started");
 
     const phone = cleanNumber(lead.phone);
     if (lead.name.trim().length < 2 || !/^05\d{8}$|^9725\d{8}$/.test(phone)) {
@@ -254,6 +279,12 @@ export default function Home() {
       approval: Math.round(analysis.approval || 0),
       mainIssue: ready ? analysis.mainIssue : "טרם הוזנו נתונים מלאים",
       createdAt: new Date().toISOString(),
+      estimatedApprovalResult: Math.round(analysis?.approval || 0),
+      estimatedPayment: Math.round(analysis?.monthly || 0),
+      propertyPrice: toNumeric(data?.price),
+      equityAmount: toNumeric(data?.equity),
+      monthlyIncome: toNumeric(data?.income),
+      debtLevel: toNumeric(data?.loans) || toNumeric(data?.expenses) || 0,
     };
 
     try {
@@ -276,9 +307,11 @@ export default function Home() {
       }
 
       setLeadSent(true);
+      trackEvent("lead_submit_success", { leadId: result?.lead?.id || "" });
       window.requestAnimationFrame(() => leadSuccessRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
-    } catch {
+    } catch (error) {
       setLeadSent(false);
+      trackEvent("lead_submit_failed", { message: error?.message || "UNKNOWN_ERROR" });
       setLeadError("הפנייה לא נשלחה. נסו שוב או צרו קשר ישירות.");
     } finally {
       setLeadLoading(false);
@@ -329,6 +362,8 @@ export default function Home() {
           analysis={analysis}
           ready={ready}
           recommendation={recommendation}
+          trackEvent={trackEvent}
+          eventSentRef={eventSentRef}
         />
         <ResultsSection analysis={analysis} ready={ready} />
         <SeoContentSection />
@@ -343,6 +378,7 @@ export default function Home() {
           successRef={leadSuccessRef}
           analysis={analysis}
           ready={ready}
+          trackEvent={trackEvent}
         />
         <FaqSection openFaq={openFaq} setOpenFaq={setOpenFaq} />
         <Footer />
@@ -544,7 +580,7 @@ function SeoContentSection() {
   );
 }
 
-function CalculatorSection({ data, updateData, analysis, ready, recommendation }) {
+function CalculatorSection({ data, updateData, analysis, ready, recommendation, trackEvent, eventSentRef }) {
   return (
     <section id="calculator" className="bg-gradient-to-b from-slate-50 via-violet-50/40 to-white py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -555,7 +591,7 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation }
         />
 
         <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
-          <MortgageForm data={data} updateData={updateData} analysis={analysis} ready={ready} recommendation={recommendation} />
+          <MortgageForm data={data} updateData={updateData} analysis={analysis} ready={ready} recommendation={recommendation} trackEvent={trackEvent} eventSentRef={eventSentRef} />
           <LiveResultPanel analysis={analysis} ready={ready} recommendation={recommendation} />
         </div>
       </div>
@@ -563,13 +599,22 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation }
   );
 }
 
-function MortgageForm({ data, updateData, analysis, ready, recommendation }) {
+function MortgageForm({ data, updateData, analysis, ready, recommendation, trackEvent, eventSentRef }) {
   const [step, setStep] = useState(0);
   const scrollYRef = useRef(0);
 
   function moveStep(nextStep) {
     const bounded = Math.max(0, Math.min(wizardSteps.length - 1, nextStep));
     scrollYRef.current = window.scrollY;
+    if (!eventSentRef.current.wizardStarted && bounded > 0) {
+      eventSentRef.current.wizardStarted = true;
+      trackEvent("wizard_started");
+    }
+    trackEvent("wizard_step_completed", { step: step + 1, nextStep: bounded + 1 });
+    if (bounded === wizardSteps.length - 1 && !eventSentRef.current.wizardCompleted) {
+      eventSentRef.current.wizardCompleted = true;
+      trackEvent("wizard_completed", { steps: wizardSteps.length });
+    }
     setStep(bounded);
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: scrollYRef.current, behavior: "auto" });
@@ -758,7 +803,7 @@ function RefinanceSection() {
   );
 }
 
-function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, successRef, analysis, ready }) {
+function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, successRef, analysis, ready, trackEvent }) {
   return (
     <section id="lead" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
@@ -826,7 +871,7 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
           <button
             type="submit"
             disabled={leadLoading || leadSent}
-            className="mt-4 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-4 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "בדיקת זכאות חינם"}
           </button>
