@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Head from "next/head";
-import { absoluteUrl, canonicalUrl, faqSchema, stringifyJsonLd, webPageSchema } from "../lib/seo";
+import { absoluteUrl, breadcrumbSchema, canonicalUrl, faqSchema, stringifyJsonLd, webPageSchema } from "../lib/seo";
 
 export default function GuidePage({ guide, allGuides }) {
   const relatedGuides = guide.related
@@ -31,6 +31,18 @@ export default function GuidePage({ guide, allGuides }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: stringifyJsonLd(faqSchema(guide.faqs)) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: stringifyJsonLd(
+              breadcrumbSchema([
+                { name: "דף הבית", path: "/" },
+                { name: "מדריכי משכנתא", path: "/guides" },
+                { name: guide.h1, path: guide.path },
+              ])
+            ),
+          }}
         />
       </Head>
 

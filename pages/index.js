@@ -335,11 +335,9 @@ export default function Home() {
         <meta property="og:url" content={absoluteUrl(HOME_SEO.path)} />
         <meta property="og:site_name" content="בדיקת זכאות למשכנתא" />
         <meta property="og:locale" content="he_IL" />
-        <meta property="og:image" content={absoluteUrl("/og-home.jpg")} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={HOME_SEO.title} />
         <meta name="twitter:description" content={HOME_SEO.description} />
-        <meta name="twitter:image" content={absoluteUrl("/og-home.jpg")} />
         <link rel="canonical" href={canonicalUrl(HOME_SEO.path)} />
         <script
           type="application/ld+json"

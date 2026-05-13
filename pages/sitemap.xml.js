@@ -1,8 +1,11 @@
+import { guides } from "../lib/guides";
 import { absoluteUrl } from "../lib/seo";
 
 const publicPages = [
   { path: "/", priority: "1.0", changefreq: "weekly" },
   { path: "/refinance-check", priority: "0.8", changefreq: "weekly" },
+  { path: "/guides", priority: "0.8", changefreq: "weekly" },
+  ...guides.map((guide) => ({ path: guide.path, priority: "0.7", changefreq: "monthly" })),
 ];
 
 export default function SitemapXml() {
