@@ -153,6 +153,18 @@ export default function PrivateAdmin() {
                 <Info label="עיר" value={lead.city || "-"} />
                 <Info label="סכום משכנתא" value={formatILS(lead.mortgageAmount)} />
               </div>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <Info label="מקור UTM" value={lead.utmSource || "-"} />
+                <Info label="UTM קמפיין" value={lead.utmCampaign || "-"} />
+                <Info label="דף נחיתה" value={lead.landingPage || "-"} />
+                <Info label="Referrer" value={lead.referrer || "-"} />
+                <Info label="תוצאת אישור משוערת" value={lead.estimatedApprovalResult || "-"} />
+                <Info label="תשלום חודשי משוער" value={lead.estimatedPayment ? formatILS(Number(lead.estimatedPayment) || 0) : "-"} />
+                <Info label="מחיר נכס" value={lead.propertyPrice ? formatILS(Number(lead.propertyPrice)) : "-"} />
+                <Info label="הון עצמי" value={lead.equityAmount ? formatILS(Number(lead.equityAmount)) : "-"} />
+                <Info label="הכנסה חודשית" value={lead.monthlyIncome ? formatILS(Number(lead.monthlyIncome)) : "-"} />
+                <Info label="רמת התחייבויות" value={lead.debtLevel || "-"} />
+              </div>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <select className="focus-field min-h-11 rounded-2xl border border-slate-200 bg-white px-4 py-2 font-bold" value={lead.leadStatus || lead.status || "חדש"} onChange={(e) => updateLead(lead.id, { leadStatus: e.target.value, status: e.target.value })}>{statuses.map((s) => <option key={s} value={s}>{s}</option>)}</select>
                 <input className="focus-field min-h-11 rounded-2xl border border-slate-200 bg-white px-4 py-2 font-bold" placeholder="שם יועץ" value={lead.assignedAdvisor || ""} onChange={(e) => updateLead(lead.id, { assignedAdvisor: e.target.value })} />
