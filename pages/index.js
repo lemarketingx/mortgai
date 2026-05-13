@@ -311,7 +311,7 @@ export default function Home() {
         />
       </Head>
 
-      <main id="home" dir="rtl" className="min-h-screen bg-white pb-24 text-slate-950 md:pb-0">
+      <main id="home" dir="rtl" className="min-h-screen bg-slate-50 pb-24 text-slate-950 md:pb-0">
         <Header />
         <Hero />
         <TrustStrip />
@@ -380,9 +380,9 @@ function Header() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden border-b border-slate-200/70 bg-white">
       <div className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,0.18),transparent_45%)]" />
-      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-2">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2">
         <div className="mx-auto max-w-2xl text-center lg:text-right">
           <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-black text-violet-800">
             סימולציה ראשונית למשכנתאות בישראל
@@ -398,7 +398,7 @@ function Hero() {
               href="#calculator"
               className="rounded-full bg-violet-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-violet-800"
             >
-              בדקו זכאות חינם
+              בדיקת זכאות חינם
             </a>
             <a
               href="/refinance-check"
@@ -410,6 +410,16 @@ function Hero() {
           <p className="mt-5 text-sm font-bold text-slate-500">
             אומדן בלבד. אינו פוגע בדירוג אשראי ואינו מחייב.
           </p>
+          <div className="mt-7 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
+              <p className="text-xs font-black text-slate-500">זמן מילוי</p>
+              <p className="mt-1 text-lg font-black text-slate-900">כדקה אחת</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
+              <p className="text-xs font-black text-slate-500">תוצאה מיידית</p>
+              <p className="mt-1 text-lg font-black text-slate-900">יחס החזר + LTV</p>
+            </div>
+          </div>
         </div>
 
         <HeroIllustration />
@@ -450,7 +460,7 @@ function HeroIllustration() {
 function TrustStrip() {
   return (
     <section className="border-y border-slate-200 bg-slate-50/80">
-      <div className="mx-auto grid max-w-6xl gap-3 px-4 py-6 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-6xl gap-3 px-4 py-6 sm:grid-cols-2 sm:px-6">
         {trustItems.map(({ text, icon }) => (
           <div key={text} className="flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-sm">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700">
@@ -468,7 +478,7 @@ function TrustStrip() {
 
 function HowItWorks() {
   return (
-    <section id="how-it-works" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <section id="how-it-works" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
         eyebrow="איך זה עובד"
         title="ארבעה צעדים פשוטים לפני שפונים לבנק"
@@ -494,7 +504,7 @@ function HowItWorks() {
 
 function SeoContentSection() {
   return (
-    <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6" aria-labelledby="mortgage-seo-title">
+    <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20" aria-labelledby="mortgage-seo-title">
       <div className="rounded-[34px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="grid gap-8 lg:grid-cols-2">
           <div>
@@ -529,7 +539,7 @@ function SeoContentSection() {
 
 function CalculatorSection({ data, updateData, analysis, ready, recommendation }) {
   return (
-    <section id="calculator" className="bg-gradient-to-b from-white via-violet-50/35 to-white py-20">
+    <section id="calculator" className="bg-gradient-to-b from-slate-50 via-violet-50/40 to-white py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
           eyebrow="מחשבון משכנתא"
@@ -653,7 +663,7 @@ function ResultsSection({ analysis, ready }) {
   ];
 
   return (
-    <section id="results" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <section id="results" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
         eyebrow="תוצאות"
         title="קודם תשובה פשוטה, אחר כך המספרים"
@@ -685,7 +695,7 @@ function ResultsSection({ analysis, ready }) {
 
 function RefinanceSection() {
   return (
-    <section id="refinance" className="bg-violet-950 py-20 text-white">
+    <section id="refinance" className="bg-violet-950 py-16 text-white sm:py-20">
       <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-2">
         <div>
           <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-black text-violet-100">
@@ -717,7 +727,7 @@ function RefinanceSection() {
 
 function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, successRef, analysis, ready }) {
   return (
-    <section id="lead" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <section id="lead" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
         eyebrow="בדיקה אנושית"
         title="רוצים לדעת איך לשפר את הסיכוי ולקבל ריביות טובות יותר?"
@@ -779,7 +789,7 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
             disabled={leadLoading || leadSent}
             className="mt-5 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "בדיקה ראשונית ללא התחייבות"}
+            {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "בדיקת זכאות חינם"}
           </button>
           <p className="mt-3 text-center text-xs font-bold text-slate-500">
             הבדיקה אינה מחייבת ואינה פוגעת בדירוג אשראי. הפרטים נשמרים לצורך חזרה אליך בלבד.
@@ -801,7 +811,7 @@ function ResultSummaryRow({ label, value, highlight = false, warn = false }) {
 
 function FaqSection({ openFaq, setOpenFaq }) {
   return (
-    <section id="faq" className="bg-slate-50 py-20">
+    <section id="faq" className="bg-slate-100/60 py-16 sm:py-20">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
         <SectionHeader eyebrow="שאלות נפוצות" title="מה חשוב לדעת לפני בדיקת משכנתא?" text="תשובות קצרות לשאלות שעולות לפני פנייה לבנק או ליועץ." />
         <div className="mt-10 space-y-3">
