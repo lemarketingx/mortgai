@@ -1,7 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { guides } from "../../lib/guides";
-import { canonicalUrl } from "../../lib/seo";
+import { breadcrumbSchema, canonicalUrl, stringifyJsonLd } from "../../lib/seo";
 
 export default function GuidesIndexPage() {
   return (
@@ -10,6 +10,17 @@ export default function GuidesIndexPage() {
         <title>מדריכי משכנתא | MortgAI</title>
         <meta name="description" content="מדריכי משכנתא קצרים וברורים: יחס החזר, הון עצמי, אישור עקרוני, מחזור משכנתא, הלוואת גישור ועוד." />
         <link rel="canonical" href={canonicalUrl("/guides")} />
+              <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: stringifyJsonLd(
+              breadcrumbSchema([
+                { name: "דף הבית", path: "/" },
+                { name: "מדריכי משכנתא", path: "/guides" },
+              ])
+            ),
+          }}
+        />
       </Head>
       <main className="max-w-4xl mx-auto px-4 py-10" dir="rtl">
         <h1 className="text-3xl font-bold mb-4">מדריכי משכנתא</h1>
