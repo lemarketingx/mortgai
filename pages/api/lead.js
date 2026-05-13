@@ -16,6 +16,8 @@ export default async function handler(req, res) {
       utmCampaign: q.utm_campaign || req.body?.lead?.utmCampaign || "",
       utmContent: q.utm_content || req.body?.lead?.utmContent || "",
       utmTerm: q.utm_term || req.body?.lead?.utmTerm || "",
+      referrer: req.body?.lead?.referrer || req.headers.referer || "",
+      landingPage: req.body?.lead?.landingPage || q.landing_page || "",
     },
   };
 
