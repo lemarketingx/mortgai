@@ -1,6 +1,20 @@
 import { createLead } from "../../lib/leadsStore";
 import { publicLeadSchema, validationErrorPayload } from "../../lib/validation";
 
+function buildSafeLeadError(error) {
+  const code = String(error?.code || "UNKNOWN_LEAD_ERROR");
+  if (code === "SUPABASE_ENV_MISSING" || code === "SUPABASE_URL_INVALID") return "SUPABASE_NOT_CONFIGURED";
+  if (code === "SUPABASE_MISSING_COLUMN" || code === "SUPABASE_CREATE_FAILED" || code === "SUPABASE_INSERT_EMPTY_PAYLOAD") return "SUPABASE_INSERT_FAILED";
+  return "UNKNOWN_LEAD_ERROR";
+}
+
+function logLeadFailure(stage, payload = {}) {
+  console.error(`[lead-api:${stage}]`, {
+    ...payload,
+    at: new Date().toISOString(),
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -23,7 +37,13 @@ export default async function handler(req, res) {
 
   const parsed = publicLeadSchema.safeParse(bodyWithUtm);
   if (!parsed.success) {
-    return res.status(400).json(validationErrorPayload(parsed.error));
+    const validation = validationErrorPayload(parsed.error);
+    logLeadFailure("validation_failed", {
+      safeErrorCode: "VALIDATION_FAILED",
+      issueCount: parsed.error?.issues?.length || 0,
+      firstIssue: parsed.error?.issues?.[0]?.message || "",
+    });
+    return res.status(400).json({ ok: false, success: false, error: "VALIDATION_FAILED", details: validation.details || [] });
   }
   req.body = parsed.data;
 
@@ -36,14 +56,21 @@ export default async function handler(req, res) {
     savedLead = await createLead(req.body);
   } catch (error) {
     localOnly = true;
+    const safeError = buildSafeLeadError(error);
     insertError = {
-      code: error?.code || "LEAD_SAVE_FAILED",
+      code: safeError,
+      internalCode: error?.code || "LEAD_SAVE_FAILED",
+      message: error?.message || "",
+      details: error?.details || "",
+    };
+    logLeadFailure("insert_failed", {
+      safeErrorCode: safeError,
+      internalCode: error?.code || "LEAD_SAVE_FAILED",
       message: error?.message || "",
       details: error?.details || "",
       stack: error?.stack || "",
-      raw: String(error),
-    };
-    console.error("Lead database insert failed", insertError);
+      leadKeys: Object.keys(req.body?.lead || {}),
+    });
   }
 
   if (webhookUrl) {
@@ -67,10 +94,9 @@ export default async function handler(req, res) {
     return res.status(500).json({
       ok: false,
       success: false,
-      error: "SUPABASE_INSERT_FAILED",
-      message: "Lead was not saved to CRM.",
+      error: insertError?.code || "UNKNOWN_LEAD_ERROR",
+      message: "Lead was not saved to CRM",
       localOnly,
-      details: insertError,
     });
   }
 
