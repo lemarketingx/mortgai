@@ -5,12 +5,15 @@ import { calculateMortgageAnalysis } from "../lib/mortgage";
 import {
   HOME_SEO,
   absoluteUrl,
+  canonicalUrl,
   faqSchema,
   financialServiceSchema,
   organizationSchema,
   stringifyJsonLd,
   webPageSchema,
 } from "../lib/seo";
+
+const PROGRESS_BAR_STYLE = { willChange: "width" };
 
 const initialData = {
   income: "",
@@ -325,15 +328,19 @@ export default function Home() {
         <meta name="description" content={HOME_SEO.description} />
         <meta name="keywords" content={HOME_SEO.keywords} />
         <meta name="robots" content="index,follow" />
+        <meta name="language" content="he" />
         <meta property="og:title" content={HOME_SEO.title} />
         <meta property="og:description" content={HOME_SEO.description} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={absoluteUrl(HOME_SEO.path)} />
         <meta property="og:site_name" content="בדיקת זכאות למשכנתא" />
+        <meta property="og:locale" content="he_IL" />
+        <meta property="og:image" content={absoluteUrl("/og-home.jpg")} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={HOME_SEO.title} />
         <meta name="twitter:description" content={HOME_SEO.description} />
-        <link rel="canonical" href={absoluteUrl(HOME_SEO.path)} />
+        <meta name="twitter:image" content={absoluteUrl("/og-home.jpg")} />
+        <link rel="canonical" href={canonicalUrl(HOME_SEO.path)} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -352,6 +359,7 @@ export default function Home() {
       </Head>
 
       <main id="home" dir="rtl" className="min-h-screen bg-slate-50 pb-24 text-slate-950 md:pb-0">
+        <a href="#calculator" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:right-3 focus:z-[60] focus:rounded-full focus:bg-white focus:px-4 focus:py-2">דילוג למחשבון</a>
         <Header />
         <Hero />
         <TrustStrip />
@@ -366,6 +374,7 @@ export default function Home() {
           eventSentRef={eventSentRef}
         />
         <ResultsSection analysis={analysis} ready={ready} />
+        <TrustContentSection />
         <SeoContentSection />
         <RefinanceSection />
         <LeadSection
@@ -412,6 +421,7 @@ function Header() {
 
         <a
           href="#calculator"
+          aria-label="מעבר מהיר למחשבון זכאות"
           className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800"
         >
           בדיקת זכאות חינם
@@ -439,12 +449,14 @@ function Hero() {
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
             <a
               href="#calculator"
+              aria-label="התחלת בדיקת זכאות"
               className="rounded-full bg-violet-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-violet-800"
             >
               בדיקת זכאות חינם
             </a>
             <a
               href="/refinance-check"
+              aria-label="מעבר לבדיקת מחזור משכנתא"
               className="rounded-full border border-violet-200 bg-white px-8 py-4 text-center text-base font-black text-violet-800 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
             >
               בדיקת מחזור משכנתא
@@ -622,14 +634,14 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
   }
 
   return (
-    <form className="rounded-[34px] border border-slate-200 bg-white p-4 shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-7">
+    <form aria-label="אשף בדיקת זכאות למשכנתא" className="rounded-[34px] border border-slate-200 bg-white p-4 shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-7">
       <div className="mb-5 rounded-2xl bg-slate-100 p-3">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-black text-violet-700">שלב {step + 1} מתוך {wizardSteps.length}</p>
           <p className="text-sm font-black text-slate-700">{wizardSteps[step].title}</p>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-white">
-          <div className="h-full rounded-full bg-violet-700 transition-all duration-300" style={{ width: `${((step + 1) / wizardSteps.length) * 100}%` }} />
+          <div className="h-full rounded-full bg-violet-700 transition-all duration-300" style={{ ...PROGRESS_BAR_STYLE, width: `${((step + 1) / wizardSteps.length) * 100}%` }} />
         </div>
       </div>
 
@@ -803,6 +815,42 @@ function RefinanceSection() {
   );
 }
 
+function TrustContentSection() {
+  const trustBlocks = [
+    {
+      title: "איך אומדן הזכאות עובד",
+      text: "האומדן משלב יחס החזר, הון עצמי, אחוז מימון (LTV), התחייבויות ויציבות תזרים - כדי לתת תמונת מצב ראשונית לפני פנייה לבנק.",
+    },
+    {
+      title: "מה משפיע על אישור",
+      text: "הבנקים בוחנים הכנסה נטו, הלוואות קיימות, אחוז מימון, היסטוריית אשראי ויכולת החזר לאורך זמן. שינוי קטן בנתונים יכול לשפר את התוצאה.",
+    },
+    {
+      title: "מה זה מחזור משכנתא",
+      text: "מחזור הוא החלפת תנאי המשכנתא הקיימת כדי להפחית החזר חודשי או עלות כוללת. בדיקה ראשונית מסייעת להבין אם הפוטנציאל מצדיק המשך תהליך.",
+    },
+    {
+      title: "ללא התחייבות",
+      text: "השימוש במחשבון ובפנייה ליועץ הוא ראשוני בלבד. אין התחייבות לתהליך, והמידע משמש לחזרה מקצועית בהתאם לבקשה שלכם.",
+    },
+  ];
+
+  return (
+    <section aria-labelledby="trust-content-title" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+      <SectionHeader eyebrow="שקיפות ואמינות" title="הבסיס המקצועי מאחורי האומדן" text="תוכן קצר וברור שמסביר מה נבדק, מה משפיע על הסיכוי לאישור ומה המשמעות של בדיקה ללא התחייבות." />
+      <h2 id="trust-content-title" className="sr-only">מידע אמון והסבר מקצועי</h2>
+      <div className="mt-10 grid gap-4 md:grid-cols-2">
+        {trustBlocks.map((item) => (
+          <article key={item.title} className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 className="text-xl font-black text-slate-950">{item.title}</h3>
+            <p className="mt-3 leading-7 text-slate-600">{item.text}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, successRef, analysis, ready, trackEvent }) {
   return (
     <section id="lead" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
@@ -928,9 +976,20 @@ function FaqSection({ openFaq, setOpenFaq }) {
 function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white py-10">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 text-sm font-semibold text-slate-500 sm:px-6">
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 text-sm font-semibold text-slate-500 sm:px-6 lg:grid-cols-3">
+        <div className="space-y-2">
         <p className="font-black text-slate-900">בדיקת זכאות למשכנתא</p>
-        <p>החישוב הוא סימולציה ראשונית בלבד ואינו מהווה ייעוץ משכנתאות, הצעה מחייבת או אישור בנקאי.</p>
+          <p>החישוב הוא סימולציה ראשונית בלבד ואינו מהווה ייעוץ משכנתאות, הצעה מחייבת או אישור בנקאי.</p>
+        </div>
+        <div className="space-y-2">
+          <p className="font-black text-slate-900">פרטיות ושימוש במידע</p>
+          <p>המידע נמסר מרצון ומשמש לצורך אומדן ראשוני וחזרה מקצועית בלבד. לא מתבצעת התחייבות לפעולה פיננסית.</p>
+        </div>
+        <address className="not-italic space-y-2">
+          <p className="font-black text-slate-900">יצירת קשר</p>
+          <p>לשאלות או הבהרות ניתן להשאיר פנייה בטופס ונחזור בהקדם.</p>
+          <p className="text-xs">התוכן באתר הינו מידע כללי בלבד ואינו ייעוץ פיננסי או משפטי.</p>
+        </address>
       </div>
     </footer>
   );
@@ -968,11 +1027,14 @@ function SectionHeader({ eyebrow, title, text }) {
 }
 
 function MoneyField({ label, value, onChange, helper, className = "" }) {
+  const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   return (
     <label className={`block ${className}`}>
-      <span className="text-sm font-black text-slate-700">{label}</span>
+      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
       <span className="relative mt-2 block">
         <input
+          id={fieldId}
+          aria-labelledby={`${fieldId}-label`}
           inputMode="numeric"
           dir="ltr"
           pattern="[0-9,]*"
@@ -988,10 +1050,13 @@ function MoneyField({ label, value, onChange, helper, className = "" }) {
 }
 
 function TextField({ label, value, onChange, placeholder = "", required = false, className = "", autoComplete }) {
+  const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   return (
     <label className={`block ${className}`}>
-      <span className="text-sm font-black text-slate-700">{label}</span>
+      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
       <input
+        id={fieldId}
+        aria-labelledby={`${fieldId}-label`}
         value={value}
         required={required}
         placeholder={placeholder}
@@ -1004,10 +1069,13 @@ function TextField({ label, value, onChange, placeholder = "", required = false,
 }
 
 function NumberField({ label, value, onChange, min, max }) {
+  const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   return (
     <label className="block">
-      <span className="text-sm font-black text-slate-700">{label}</span>
+      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
       <input
+        id={fieldId}
+        aria-labelledby={`${fieldId}-label`}
         type="number"
         min={min}
         max={max}
@@ -1020,11 +1088,14 @@ function NumberField({ label, value, onChange, min, max }) {
 }
 
 function RateField({ label, value, onChange }) {
+  const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   return (
     <label className="block">
-      <span className="text-sm font-black text-slate-700">{label}</span>
+      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
       <span className="relative mt-2 block">
         <input
+          id={fieldId}
+          aria-labelledby={`${fieldId}-label`}
           inputMode="decimal"
           value={value}
           onChange={(event) => onChange(cleanNumber(event.target.value, true))}
@@ -1037,10 +1108,13 @@ function RateField({ label, value, onChange }) {
 }
 
 function SelectField({ label, value, onChange, options, className = "" }) {
+  const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   return (
     <label className={`block ${className}`}>
-      <span className="text-sm font-black text-slate-700">{label}</span>
+      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
       <select
+        id={fieldId}
+        aria-labelledby={`${fieldId}-label`}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
