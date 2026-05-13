@@ -64,18 +64,18 @@ const steps = [
     icon: "M12 6v12m6-6H6",
   },
   {
-    title: "מקבלים חיווי בנקאי",
-    text: "המערכת בודקת יחס החזר, LTV והתחייבויות קיימות.",
+    title: "מקבלים בדיקה חכמה",
+    text: "המערכת מבצעת ניתוח פיננסי ראשוני של יחס החזר, LTV והתחייבויות קיימות.",
     icon: "M5 13l4 4L19 7",
   },
   {
-    title: "רואים החזר משוער",
-    text: "מקבלים אומדן החזר חודשי, יתרה למחיה ועלות ריבית.",
+    title: "רואים אומדן ראשוני",
+    text: "מקבלים הפרדה ברורה בין אומדן זכאות, החזר חודשי ואינדיקציית סיכון.",
     icon: "M4 19h16M7 15l3-3 3 2 4-6",
   },
   {
-    title: "משאירים פרטים ליועץ",
-    text: "אם תרצו, אפשר להעביר את הנתונים לבדיקה אנושית.",
+    title: "ממשיכים ליועץ מקצועי",
+    text: "רק אם תרצו, הנתונים עוברים להמשך בדיקה אנושית ללא התחייבות.",
     icon: "M8 11a4 4 0 118 0M4 20a8 8 0 0116 0",
   },
 ];
@@ -362,7 +362,7 @@ function Header() {
           </span>
           <span className="leading-tight">
             <span className="block text-base font-black text-slate-950">בדיקת זכאות למשכנתא</span>
-            <span className="hidden text-xs font-bold text-slate-500 sm:block">תשובה פשוטה לפני שפונים לבנק</span>
+            <span className="hidden text-xs font-bold text-slate-500 sm:block">אומדן ראשוני לפני פנייה לבנק</span>
           </span>
         </a>
 
@@ -392,13 +392,13 @@ function Hero() {
       <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2">
         <div className="mx-auto max-w-2xl text-center lg:text-right">
           <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-black text-violet-800">
-            סימולציה ראשונית למשכנתאות בישראל
+            בדיקה חכמה למשכנתאות בישראל
           </span>
           <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-            בדיקת זכאות חינם למשכנתא תוך דקה
+            בדיקת זכאות חינם למשכנתא עם ניתוח פיננסי ראשוני
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg font-semibold leading-8 text-slate-600 lg:mx-0">
-            מלאו כמה נתונים בסיסיים וקבלו אומדן החזר חודשי, יחס החזר ואומדן סיכוי האישור — לפני שפונים לבנק.
+            מלאו נתונים בסיסיים וקבלו אומדן ראשוני: סיכוי זכאות, החזר חודשי ואינדיקציית סיכון. התוצאה לא מהווה אישור בנקאי.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
             <a
@@ -415,7 +415,7 @@ function Hero() {
             </a>
           </div>
           <p className="mt-5 text-sm font-bold text-slate-500">
-            אומדן בלבד. אינו פוגע בדירוג אשראי ואינו מחייב.
+            אומדן ראשוני בלבד, לא מהווה אישור בנקאי, ללא פגיעה בדירוג אשראי וללא התחייבות.
           </p>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
@@ -489,7 +489,7 @@ function HowItWorks() {
       <SectionHeader
         eyebrow="איך זה עובד"
         title="ארבעה צעדים פשוטים לפני שפונים לבנק"
-        text="המטרה היא לתת תמונת מצב ברורה ולא להציף אתכם במונחים מקצועיים מוקדם מדי."
+        text="תהליך קצר שמייצר תמונת מצב פיננסית ברורה, בלי עומס ובלי לחץ לפני קבלת החלטה."
       />
       <div className="mt-10 grid gap-4 md:grid-cols-2">
         {steps.map((step, index) => (
@@ -550,8 +550,8 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation }
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
           eyebrow="מחשבון משכנתא"
-          title="הנתונים לבדיקה"
-          text="מלאו רק מה שאתם יודעים - התוצאה תתעדכן אוטומטית ברגע שיש מספיק נתונים לחישוב."
+          title="בדיקה חכמה לפי הנתונים שלכם"
+          text="ממלאים רק נתונים בסיסיים, ומקבלים אומדן ראשוני שמתעדכן בזמן אמת."
         />
 
         <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
@@ -612,12 +612,12 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation }) {
       </div>}
 
       {step === 3 && <div className="space-y-3 rounded-2xl bg-slate-50 p-4">
-        <p className="text-sm font-black text-slate-700">סיכום ביניים לפני שליחה ליועץ</p>
+        <p className="text-sm font-black text-slate-700">סיכום אומדן ראשוני לפני המשך</p>
         <ResultSummaryRow label="אומדן סיכוי אישור" value={ready ? `${Math.round(analysis.approval)}%` : "--"} highlight={ready && analysis.approval >= 65} />
         <ResultSummaryRow label="החזר חודשי" value={displayMoney(analysis.monthly, ready)} />
         <ResultSummaryRow label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} warn={ready && analysis.mortgageOnlyRatio > 40} />
         <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-600">{ready ? recommendation : "השלימו נתונים לקבלת חיווי מלא."}</p>
-        <a href="#lead" className="block rounded-full bg-violet-700 px-5 py-3 text-center text-sm font-black text-white">להמשך לבדיקה אנושית</a>
+        <a href="#lead" className="block rounded-full bg-violet-700 px-5 py-3 text-center text-sm font-black text-white">בדיקת זכאות חינם</a>
       </div>}
 
       <div className="mt-5 flex gap-3">
@@ -633,7 +633,7 @@ function LiveResultPanel({ analysis, ready, recommendation }) {
 
   return (
     <aside className="rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-700 to-violet-950 p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.28)] sm:p-8">
-      <p className="text-sm font-black text-violet-100">{ready ? "חיווי בזמן אמת" : "מלאו נתונים לקבלת חיווי"}</p>
+      <p className="text-sm font-black text-violet-100">{ready ? "ניתוח פיננסי בזמן אמת" : "מלאו נתונים לבדיקה חכמה"}</p>
       <div className="mt-6 flex items-end justify-between gap-4">
         <div>
           <h3 className="text-2xl font-black">אומדן סיכוי אישור</h3>
@@ -666,10 +666,11 @@ function LiveResultPanel({ analysis, ready, recommendation }) {
 
       <a
         href="#lead"
-        className="mt-6 block rounded-full bg-white px-6 py-4 text-center text-base font-black text-violet-800 shadow-lg transition hover:bg-violet-50"
+        className="mt-5 block rounded-full bg-white px-6 py-4 text-center text-base font-black text-violet-800 shadow-lg transition hover:bg-violet-50"
       >
-        בדיקה ראשונית ללא התחייבות
+        בדיקת זכאות חינם
       </a>
+      <p className="mt-3 text-center text-xs font-bold text-violet-100">אומדן ראשוני בלבד • לא מהווה אישור בנקאי • ללא התחייבות</p>
     </aside>
   );
 }
@@ -686,7 +687,7 @@ function ResultsSection({ analysis, ready }) {
   const resultCards = [
     ["אומדן סיכוי אישור", ready ? `${Math.round(analysis.approval)}%` : "--", approvalLabel(analysis, ready)],
     ["החזר חודשי משוער", displayMoney(analysis.monthly, ready), "לפי תקופה, ריבית ושיטת החזר"],
-    ["יחס החזר", displayPercent(analysis.mortgageOnlyRatio, ready), "משכנתא בלבד מתוך הכנסה נטו"],
+    ["אינדיקציית סיכון (יחס החזר)", displayPercent(analysis.mortgageOnlyRatio, ready), "משכנתא בלבד מתוך הכנסה נטו"],
     ["הון עצמי", ready ? (analysis.missingEquity > 0 ? `חסר ${formatILS(analysis.missingEquity)}` : "תקין") : "--", "לפי מגבלת LTV לסוג העסקה"],
     ["יתרה למחיה", displayMoney(analysis.afterHousing, ready), "לאחר הוצאות, הלוואות ומשכנתא"],
     ["סך ריבית צפויה", displayMoney(analysis.totalInterestEstimate, ready), "לאורך כל תקופת המשכנתא"],
@@ -698,8 +699,8 @@ function ResultsSection({ analysis, ready }) {
     <section id="results" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
         eyebrow="תוצאות"
-        title="קודם תשובה פשוטה, אחר כך המספרים"
-        text="התוצאה מציגה את המדדים החשובים ביותר לקבלת החלטה ראשונית. הניתוח המלא נשאר זמין למי שרוצה להעמיק."
+        title="תוצאה ברורה לקבלת החלטה ראשונית"
+        text="הפרדה ברורה בין אומדן זכאות, החזר חודשי ואינדיקציית סיכון — לפני בדיקה מקצועית מול גורם אנושי."
       />
 
       <div className="mt-10 grid gap-4 md:grid-cols-2">
@@ -761,9 +762,9 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
   return (
     <section id="lead" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
-        eyebrow="בדיקה אנושית"
-        title="רוצים לדעת איך לשפר את הסיכוי ולקבל ריביות טובות יותר?"
-        text="השאירו פרטים לבדיקה ראשונית ללא עלות. יועץ יוכל לזהות נקודות חולשה ולבדוק שיפור תמהיל."
+        eyebrow="המשך מקצועי"
+        title="רוצים לעבור מאומדן ראשוני לבדיקה מקצועית?"
+        text="השאירו פרטים לבדיקת זכאות חינם וללא התחייבות. יועץ יחזור להסבר מסודר על הצעד הבא, כולל מה ניתן לשפר לפני פנייה לבנק."
       />
       <div className="mt-10 grid items-stretch gap-6 lg:grid-cols-2">
         <div className="rounded-[34px] bg-gradient-to-br from-violet-50 to-white p-7 ring-1 ring-violet-100">
@@ -788,9 +789,10 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
             )}
           </div>
           <ul className="mt-6 space-y-2 text-sm font-bold text-slate-600">
-            <li className="flex items-center gap-2"><CheckIcon /><span>בדיקה ראשונית ללא עלות</span></li>
+            <li className="flex items-center gap-2"><CheckIcon /><span>בדיקת זכאות חינם וללא התחייבות</span></li>
             <li className="flex items-center gap-2"><CheckIcon /><span>אינה פוגעת בדירוג אשראי</span></li>
-            <li className="flex items-center gap-2"><CheckIcon /><span>השוואת ריביות ותמהיל</span></li>
+            <li className="flex items-center gap-2"><CheckIcon /><span>פרטיות מלאה ושימוש במידע לצורך חזרה בלבד</span></li>
+            <li className="flex items-center gap-2"><CheckIcon /><span>שיחה מקצועית קצרה להבנת הצעד הבא</span></li>
           </ul>
         </div>
 
@@ -816,15 +818,20 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
           {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
           {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-700">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
 
+          <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-sm font-black text-slate-700">מה קורה אחרי השליחה?</p>
+            <p className="mt-1 text-sm font-semibold text-slate-600">יועץ מקצועי חוזר אליכם לתיאום שיחה קצרה, מעבר על האומדן הראשוני והכוונה לצעד הבא. ללא התחייבות.</p>
+          </div>
+
           <button
             type="submit"
             disabled={leadLoading || leadSent}
-            className="mt-5 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-4 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "בדיקת זכאות חינם"}
           </button>
           <p className="mt-3 text-center text-xs font-bold text-slate-500">
-            הבדיקה אינה מחייבת ואינה פוגעת בדירוג אשראי. הפרטים נשמרים לצורך חזרה אליך בלבד.
+            בדיקת זכאות חינם היא אומדן ראשוני בלבד, לא מהווה אישור בנקאי, וללא כל התחייבות. המידע נשמר באופן מאובטח לצורך חזרה בלבד.
           </p>
         </form>
       </div>
@@ -851,7 +858,7 @@ function FaqSection({ openFaq, setOpenFaq }) {
             const isOpen = openFaq === index;
             return (
               <div key={item.question} className="rounded-[24px] border border-slate-200 bg-white shadow-sm">
-                <button
+          <button
                   type="button"
                   onClick={() => setOpenFaq(isOpen ? null : index)}
                   aria-expanded={isOpen}
@@ -886,19 +893,19 @@ function Footer() {
 
 function MobileStickyCta() {
   return (
-    <div className="mobile-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 bg-white/95 px-4 pt-3 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
+    <div className="mobile-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 bg-white/95 px-4 pt-2 pb-2 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
       <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
         <a
           href="#calculator"
           className="rounded-full bg-violet-700 px-4 py-3 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(109,40,217,0.28)]"
         >
-          בדיקת זכאות
+          בדיקת זכאות חינם
         </a>
         <a
           href="#lead"
           className="rounded-full border border-violet-200 bg-violet-50 px-4 py-3 text-center text-sm font-black text-violet-800"
         >
-          חזרה מיועץ
+          בדיקת זכאות חינם
         </a>
       </div>
     </div>
