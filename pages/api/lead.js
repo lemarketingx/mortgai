@@ -15,6 +15,14 @@ function logLeadFailure(stage, payload = {}) {
   });
 }
 
+function safeValidationIssues(error) {
+  return (error?.issues || []).map((issue) => ({
+    path: Array.isArray(issue?.path) ? issue.path.join(".") : "",
+    code: issue?.code || "",
+    message: issue?.message || "",
+  }));
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -31,7 +39,13 @@ export default async function handler(req, res) {
       utmContent: q.utm_content || req.body?.lead?.utmContent || "",
       utmTerm: q.utm_term || req.body?.lead?.utmTerm || "",
       referrer: req.body?.lead?.referrer || req.headers.referer || "",
-      landingPage: req.body?.lead?.landingPage || q.landing_page || "",
+      landingPage: req.body?.lead?.landingPage || req.body?.lead?.landing_page || q.landing_page || "",
+      estimatedApprovalResult: req.body?.lead?.estimatedApprovalResult ?? req.body?.lead?.estimated_approval_result,
+      estimatedPayment: req.body?.lead?.estimatedPayment ?? req.body?.lead?.estimated_payment,
+      propertyPrice: req.body?.lead?.propertyPrice ?? req.body?.lead?.property_price,
+      equityAmount: req.body?.lead?.equityAmount ?? req.body?.lead?.equity_amount,
+      monthlyIncome: req.body?.lead?.monthlyIncome ?? req.body?.lead?.monthly_income,
+      debtLevel: req.body?.lead?.debtLevel ?? req.body?.lead?.debt_level,
     },
   };
 
@@ -42,6 +56,7 @@ export default async function handler(req, res) {
       safeErrorCode: "VALIDATION_FAILED",
       issueCount: parsed.error?.issues?.length || 0,
       firstIssue: parsed.error?.issues?.[0]?.message || "",
+      issues: safeValidationIssues(parsed.error),
     });
     return res.status(400).json({ ok: false, success: false, error: "VALIDATION_FAILED", details: validation.details || [] });
   }
