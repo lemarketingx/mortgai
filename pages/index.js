@@ -103,6 +103,13 @@ const repaymentOptions = [
   ["equalPrincipal", "קרן שווה - החזר יורד"],
 ];
 
+const wizardSteps = [
+  { key: "property", title: "פרטי הנכס" },
+  { key: "profile", title: "הכנסות והתחייבויות" },
+  { key: "terms", title: "תנאי משכנתא" },
+  { key: "review", title: "סיכום והמשך" },
+];
+
 const faqItems = [
   {
     question: "האם זו בדיקת זכאות רשמית?",
@@ -548,7 +555,7 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation }
         />
 
         <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
-          <MortgageForm data={data} updateData={updateData} />
+          <MortgageForm data={data} updateData={updateData} analysis={analysis} ready={ready} recommendation={recommendation} />
           <LiveResultPanel analysis={analysis} ready={ready} recommendation={recommendation} />
         </div>
       </div>
@@ -556,41 +563,66 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation }
   );
 }
 
-function MortgageForm({ data, updateData }) {
+function MortgageForm({ data, updateData, analysis, ready, recommendation }) {
+  const [step, setStep] = useState(0);
+  const scrollYRef = useRef(0);
+
+  function moveStep(nextStep) {
+    const bounded = Math.max(0, Math.min(wizardSteps.length - 1, nextStep));
+    scrollYRef.current = window.scrollY;
+    setStep(bounded);
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: scrollYRef.current, behavior: "auto" });
+    });
+  }
+
   return (
-    <form className="rounded-[34px] border border-slate-200 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-7">
-      <p className="mb-4 text-xs font-black uppercase tracking-widest text-violet-600">פרטי הנכס</p>
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form className="rounded-[34px] border border-slate-200 bg-white p-4 shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-7">
+      <div className="mb-5 rounded-2xl bg-slate-100 p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-black text-violet-700">שלב {step + 1} מתוך {wizardSteps.length}</p>
+          <p className="text-sm font-black text-slate-700">{wizardSteps[step].title}</p>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-white">
+          <div className="h-full rounded-full bg-violet-700 transition-all duration-300" style={{ width: `${((step + 1) / wizardSteps.length) * 100}%` }} />
+        </div>
+      </div>
+
+      {step === 0 && <div className="grid gap-4 sm:grid-cols-2">
         <SelectField label="סוג עסקה" value={data.propertyType} onChange={(value) => updateData("propertyType", value)} options={propertyOptions} />
         <MoneyField label="מחיר הנכס" value={data.price} onChange={(value) => updateData("price", value)} />
         <MoneyField label="הון עצמי" value={data.equity} onChange={(value) => updateData("equity", value)} />
-        <MoneyField
-          label="סכום משכנתא"
-          helper="אפשר להשאיר ריק — נחושב אוטומטית לפי מחיר פחות הון עצמי"
-          value={data.mortgageAmount}
-          onChange={(value) => updateData("mortgageAmount", value)}
-        />
-      </div>
-      <p className="mb-4 mt-6 text-xs font-black uppercase tracking-widest text-violet-600">הכנסות והתחייבויות</p>
-      <div className="grid gap-4 sm:grid-cols-2">
+        <MoneyField label="סכום משכנתא" helper="אפשר להשאיר ריק — נחושב אוטומטית לפי מחיר פחות הון עצמי" value={data.mortgageAmount} onChange={(value) => updateData("mortgageAmount", value)} />
+      </div>}
+
+      {step === 1 && <div className="grid gap-4 sm:grid-cols-2">
         <MoneyField label="הכנסה חודשית נטו" value={data.income} onChange={(value) => updateData("income", value)} />
         <MoneyField label="הוצאות קבועות" value={data.expenses} onChange={(value) => updateData("expenses", value)} />
         <MoneyField label="הלוואות קיימות היום" value={data.loans} onChange={(value) => updateData("loans", value)} />
         <MoneyField label="הלוואות שייסגרו עם הרכישה" value={data.loansToClose} onChange={(value) => updateData("loansToClose", value)} />
-        <MoneyField
-          label="החזר דיור נוכחי"
-          helper="שכירות או משכנתא שאתם משלמים היום"
-          value={data.currentHousing}
-          onChange={(value) => updateData("currentHousing", value)}
-        />
-      </div>
-      <p className="mb-4 mt-6 text-xs font-black uppercase tracking-widest text-violet-600">תנאי המשכנתא</p>
-      <div className="grid gap-4 sm:grid-cols-2">
+        <MoneyField label="החזר דיור נוכחי" helper="שכירות או משכנתא שאתם משלמים היום" value={data.currentHousing} onChange={(value) => updateData("currentHousing", value)} className="sm:col-span-2" />
+      </div>}
+
+      {step === 2 && <div className="grid gap-4 sm:grid-cols-2">
         <NumberField label="תקופה בשנים" min="5" max="30" value={data.years} onChange={(value) => updateData("years", value)} />
         <RateField label="ריבית שנתית משוערת" value={data.annualRate} onChange={(value) => updateData("annualRate", value)} />
         <SelectField label="סטטוס אשראי" value={data.credit} onChange={(value) => updateData("credit", value)} options={creditOptions} />
         <SelectField label="סוג הצמדה" value={data.indexation} onChange={(value) => updateData("indexation", value)} options={indexationOptions} />
         <SelectField label="שיטת החזר" value={data.repaymentMethod} onChange={(value) => updateData("repaymentMethod", value)} options={repaymentOptions} className="sm:col-span-2" />
+      </div>}
+
+      {step === 3 && <div className="space-y-3 rounded-2xl bg-slate-50 p-4">
+        <p className="text-sm font-black text-slate-700">סיכום ביניים לפני שליחה ליועץ</p>
+        <ResultSummaryRow label="אומדן סיכוי אישור" value={ready ? `${Math.round(analysis.approval)}%` : "--"} highlight={ready && analysis.approval >= 65} />
+        <ResultSummaryRow label="החזר חודשי" value={displayMoney(analysis.monthly, ready)} />
+        <ResultSummaryRow label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} warn={ready && analysis.mortgageOnlyRatio > 40} />
+        <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-600">{ready ? recommendation : "השלימו נתונים לקבלת חיווי מלא."}</p>
+        <a href="#lead" className="block rounded-full bg-violet-700 px-5 py-3 text-center text-sm font-black text-white">להמשך לבדיקה אנושית</a>
+      </div>}
+
+      <div className="mt-5 flex gap-3">
+        <button type="button" onClick={() => moveStep(step - 1)} disabled={step === 0} className="h-12 flex-1 rounded-full border border-slate-300 bg-white font-black text-slate-700 disabled:opacity-50">חזרה</button>
+        <button type="button" onClick={() => moveStep(step + 1)} disabled={step === wizardSteps.length - 1} className="h-12 flex-1 rounded-full bg-violet-700 font-black text-white disabled:opacity-50">המשך</button>
       </div>
     </form>
   );
@@ -601,7 +633,7 @@ function LiveResultPanel({ analysis, ready, recommendation }) {
 
   return (
     <aside className="rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-700 to-violet-950 p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.28)] sm:p-8">
-      <p className="text-sm font-black text-violet-100">חיווי בזמן אמת</p>
+      <p className="text-sm font-black text-violet-100">{ready ? "חיווי בזמן אמת" : "מלאו נתונים לקבלת חיווי"}</p>
       <div className="mt-6 flex items-end justify-between gap-4">
         <div>
           <h3 className="text-2xl font-black">אומדן סיכוי אישור</h3>
@@ -676,7 +708,7 @@ function ResultsSection({ analysis, ready }) {
         ))}
       </div>
 
-      <details className="mt-6 rounded-[28px] border border-slate-200 bg-slate-50 p-5 open:bg-white sm:p-7">
+      {ready && <details className="mt-6 rounded-[28px] border border-slate-200 bg-slate-50 p-5 open:bg-white sm:p-7">
         <summary className="cursor-pointer text-lg font-black text-violet-800">צפייה בניתוח פיננסי מלא</summary>
         <div className="mt-6 grid gap-3 md:grid-cols-2">
           <DetailRow label="יחס התחייבויות כולל" value={displayPercent(analysis.totalObligationsRatio, ready)} />
@@ -688,7 +720,7 @@ function ResultsSection({ analysis, ready }) {
           <DetailRow label="תרחיש עליית ריבית" value={displayMoney(analysis.monthlyHigh, ready)} />
           <DetailRow label="הכנסה נדרשת לאומדן זה" value={displayMoney(analysis.requiredIncomeForMortgage, ready)} />
         </div>
-      </details>
+      </details>}
     </section>
   );
 }
@@ -890,9 +922,11 @@ function MoneyField({ label, value, onChange, helper, className = "" }) {
       <span className="relative mt-2 block">
         <input
           inputMode="numeric"
-          value={displayNumber(value)}
+          dir="ltr"
+          pattern="[0-9,]*"
+          value={displayNumber(value || "")}
           onChange={(event) => onChange(cleanNumber(event.target.value))}
-          className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+          className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 sm:h-14"
         />
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">₪</span>
       </span>
@@ -911,7 +945,7 @@ function TextField({ label, value, onChange, placeholder = "", required = false,
         placeholder={placeholder}
         autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+        className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 sm:h-14"
       />
     </label>
   );
@@ -942,7 +976,7 @@ function RateField({ label, value, onChange }) {
           inputMode="decimal"
           value={value}
           onChange={(event) => onChange(cleanNumber(event.target.value, true))}
-          className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+          className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 sm:h-14"
         />
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">%</span>
       </span>
