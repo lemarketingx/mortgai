@@ -6,19 +6,53 @@ function csvCell(value) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
+const columns = [
+  ["createdAt", "תאריך יצירה"],
+  ["lastUpdated", "עדכון אחרון"],
+  ["name", "שם"],
+  ["phone", "טלפון"],
+  ["city", "עיר מגורים"],
+  ["propertyCity", "עיר נכס"],
+  ["mortgageAmount", "סכום משכנתא"],
+  ["propertyPrice", "מחיר נכס"],
+  ["equityAmount", "הון עצמי"],
+  ["monthlyIncome", "הכנסה חודשית"],
+  ["debtLevel", "התחייבויות חודשיות"],
+  ["purchaseStatus", "סטטוס רכישה"],
+  ["contractStatus", "סטטוס חוזה"],
+  ["employmentStatus", "סטטוס תעסוקה"],
+  ["hasExistingMortgage", "משכנתא קיימת"],
+  ["requestedContactTime", "מועד חזרה"],
+  ["approvalScore", "ציון אישור"],
+  ["estimatedApprovalResult", "אומדן אישור"],
+  ["mainIssue", "בעיה מרכזית"],
+  ["leadQuality", "איכות ליד"],
+  ["leadPriority", "עדיפות"],
+  ["leadStatus", "סטטוס ליד"],
+  ["status", "סטטוס כללי"],
+  ["followUpStage", "שלב מעקב"],
+  ["followUpDate", "תאריך מעקב"],
+  ["lastContactedAt", "יצירת קשר אחרונה"],
+  ["assignedAdvisor", "יועץ משויך"],
+  ["advisorPhone", "טלפון יועץ"],
+  ["advisorEmail", "אימייל יועץ"],
+  ["commissionStatus", "סטטוס עמלה"],
+  ["commissionAmount", "עמלה"],
+  ["expectedCommission", "עמלה צפויה"],
+  ["actualCommission", "עמלה בפועל"],
+  ["source", "מקור"],
+  ["utmSource", "UTM Source"],
+  ["utmMedium", "UTM Medium"],
+  ["utmCampaign", "UTM Campaign"],
+  ["referrer", "Referrer"],
+  ["landingPage", "Landing Page"],
+  ["notes", "הערות לקוח"],
+  ["internalNotes", "הערות פנימיות"],
+];
+
 function toCsv(leads) {
-  const headers = ["createdAt", "name", "phone", "city", "amount", "status", "approvalScore", "source", "notes"];
-  const rows = leads.map((lead) => [
-    lead.createdAt,
-    lead.name,
-    lead.phone,
-    lead.city,
-    lead.mortgageAmount,
-    lead.status,
-    lead.approvalScore,
-    lead.source,
-    lead.notes,
-  ]);
+  const headers = columns.map(([, label]) => label);
+  const rows = leads.map((lead) => columns.map(([key]) => lead[key]));
 
   return [
     headers.map(csvCell).join(","),
@@ -44,7 +78,7 @@ export default async function handler(req, res) {
     const csv = `\uFEFF${toCsv(leads)}`;
     const date = new Date().toISOString().slice(0, 10);
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename="mortgai2-leads-${date}.csv"`);
+    res.setHeader("Content-Disposition", `attachment; filename="mortgai-leads-${date}.csv"`);
     return res.status(200).send(csv);
   } catch (error) {
     if (error instanceof LeadStoreError) {
