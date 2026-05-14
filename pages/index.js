@@ -1132,7 +1132,7 @@ function MobileStickyCta() {
           href="#lead"
           className="rounded-full border border-violet-200 bg-violet-50 px-4 py-3 text-center text-sm font-black text-violet-800"
         >
-          בדיקת זכאות חינם
+          השאר פרטים
         </a>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { createLead } from "../../lib/leadsStore";
 import { publicLeadSchema, validationErrorPayload } from "../../lib/validation";
+import { checkLoginRateLimit, getClientIp, recordFailedLogin } from "../../lib/rateLimit";
 
 function buildSafeLeadError(error) {
   const code = String(error?.code || "UNKNOWN_LEAD_ERROR");
@@ -27,6 +28,14 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  const ip = getClientIp(req);
+  const rateLimit = checkLoginRateLimit(ip, { limit: 10, windowMs: 15 * 60 * 1000 });
+  if (!rateLimit.allowed) {
+    res.setHeader("Retry-After", String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)));
+    return res.status(429).json({ ok: false, success: false, error: "TOO_MANY_REQUESTS", message: "יותר מדי בקשות. נסה שוב מאוחר יותר." });
+  }
+  recordFailedLogin(ip);
 
   const q = req.query || {};
   const bodyWithUtm = {
