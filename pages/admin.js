@@ -1,1 +1,1 @@
-export { default } from "../components/AdminCrm";
+export { default } from "../components/AdminCrmSend";
