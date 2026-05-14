@@ -239,9 +239,14 @@ export default function Home() {
   const [leadSent, setLeadSent] = useState(false);
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadError, setLeadError] = useState("");
+  const [bottomLead, setBottomLead] = useState({ name: "", phone: "", city: "" });
+  const [bottomLeadSent, setBottomLeadSent] = useState(false);
+  const [bottomLeadLoading, setBottomLeadLoading] = useState(false);
+  const [bottomLeadError, setBottomLeadError] = useState("");
   const [openFaq, setOpenFaq] = useState(null);
   const [isInsideEligibility, setIsInsideEligibility] = useState(false);
   const leadSuccessRef = useRef(null);
+  const bottomLeadSeenRef = useRef(false);
   const sourceMetaRef = useRef({
     utmSource: "",
     utmMedium: "",
@@ -296,6 +301,20 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
+
+
+  useEffect(() => {
+    const section = document.getElementById("bottom-lead");
+    if (!section || typeof IntersectionObserver === "undefined") return undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !bottomLeadSeenRef.current) {
+        bottomLeadSeenRef.current = true;
+        trackEvent("bottom_lead_viewed");
+      }
+    }, { threshold: 0.35 });
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
   function trackEvent(eventName, payload = {}) {
     trackAnalyticsEvent(eventName, payload, {
       source: "homepage",
@@ -317,6 +336,63 @@ export default function Home() {
   function updateLead(key, value) {
     setLead((current) => ({ ...current, [key]: value }));
     if (leadError) setLeadError("");
+  }
+
+  function updateBottomLead(key, value) {
+    setBottomLead((current) => ({ ...current, [key]: value }));
+    if (bottomLeadError) setBottomLeadError("");
+  }
+
+  async function submitBottomLead(event) {
+    event.preventDefault();
+    if (bottomLeadLoading || bottomLeadSent) return;
+
+    trackEvent("bottom_lead_submit_started");
+
+    const phone = cleanNumber(bottomLead.phone);
+    if (bottomLead.name.trim().length < 2 || !/^05\d{8}$|^9725\d{8}$/.test(phone)) {
+      setBottomLeadError("יש להזין שם וטלפון ישראלי תקין.");
+      return;
+    }
+
+    setBottomLeadLoading(true);
+    setBottomLeadError("");
+
+    const leadPayload = {
+      ...bottomLead,
+      ...sourceMetaRef.current,
+      phone,
+      source: "homepage_bottom",
+      createdAt: new Date().toISOString(),
+      approval: Math.round(analysis?.approval || 0),
+      mainIssue: ready ? analysis.mainIssue : "פנייה מהטופס התחתון",
+      estimatedApprovalResult: Math.round(analysis?.approval || 0),
+      estimatedPayment: Math.round(analysis?.monthly || 0),
+      propertyPrice: toNumeric(data?.price),
+      equityAmount: toNumeric(data?.equity),
+      monthlyIncome: toNumeric(data?.income),
+      debtLevel: toNumeric(data?.loans) || toNumeric(data?.expenses) || 0,
+    };
+
+    try {
+      const response = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead: leadPayload, analysis }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result?.ok !== true || result?.success === false) {
+        throw new Error(result?.message || result?.error || "BOTTOM_LEAD_SUBMIT_FAILED");
+      }
+
+      setBottomLeadSent(true);
+      trackEvent("bottom_lead_submit_success");
+    } catch {
+      setBottomLeadSent(false);
+      setBottomLeadError("הפנייה לא נשלחה. נסו שוב.");
+    } finally {
+      setBottomLeadLoading(false);
+    }
   }
 
   async function submitLead(event) {
@@ -468,6 +544,14 @@ export default function Home() {
           trackEvent={trackEvent}
         />
         <FaqSection openFaq={openFaq} setOpenFaq={setOpenFaq} />
+        <BottomLeadSection
+          bottomLead={bottomLead}
+          updateBottomLead={updateBottomLead}
+          submitBottomLead={submitBottomLead}
+          bottomLeadLoading={bottomLeadLoading}
+          bottomLeadSent={bottomLeadSent}
+          bottomLeadError={bottomLeadError}
+        />
         <Footer onCtaClick={handleCtaClick} />
         <MobileStickyCta onCtaClick={handleCtaClick} hidden={isInsideEligibility} />
       </main>
@@ -1116,6 +1200,29 @@ function FaqSection({ openFaq, setOpenFaq }) {
   );
 }
 
+
+function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bottomLeadLoading, bottomLeadSent, bottomLeadError }) {
+  return (
+    <section id="bottom-lead" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+      <div className="rounded-[30px] border border-violet-200/70 bg-gradient-to-br from-slate-950 via-violet-950 to-violet-900 p-6 text-white shadow-[0_28px_70px_rgba(46,16,101,0.35)] sm:p-8">
+        <h2 className="text-2xl font-black sm:text-3xl">רוצים לבדוק זכאות בצורה מקצועית?</h2>
+        <p className="mt-2 text-sm font-semibold text-violet-100 sm:text-base">השאירו פרטים ונציג מקצועי יחזור אליכם להמשך בדיקה.</p>
+        <form onSubmit={submitBottomLead} className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-4">
+          <TextField label="שם מלא" value={bottomLead.name} onChange={(value) => updateBottomLead("name", value)} autoComplete="name" required />
+          <TextField label="טלפון" value={bottomLead.phone} onChange={(value) => updateBottomLead("phone", value)} autoComplete="tel" placeholder="05X-XXXXXXX" required />
+          <TextField label="עיר" value={bottomLead.city} onChange={(value) => updateBottomLead("city", value)} autoComplete="address-level2" />
+          <button type="submit" disabled={bottomLeadLoading || bottomLeadSent} className="min-h-12 rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 transition hover:bg-violet-50 disabled:opacity-70">
+            {bottomLeadLoading ? "שולח..." : bottomLeadSent ? "נשלח בהצלחה" : "שליחה לנציג מקצועי"}
+          </button>
+        </form>
+        {bottomLeadError && <p role="alert" className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{bottomLeadError}</p>}
+        {bottomLeadSent && <p role="status" className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
+        <p className="mt-3 text-xs font-bold text-violet-100">ללא התחייבות. הפרטים ישמשו לחזרה אליכם בלבד.</p>
+      </div>
+    </section>
+  );
+}
+
 function Footer({ onCtaClick }) {
   return (
     <footer className="border-t border-slate-200 bg-white py-10">
@@ -1135,9 +1242,14 @@ function Footer({ onCtaClick }) {
         </address>
       </div>
       <div className="mx-auto mt-6 max-w-6xl px-4 sm:px-6">
-        <a href="#eligibility-check" onClick={() => onCtaClick?.("footer")} className="inline-flex rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
-          בדיקת זכאות חינם
-        </a>
+        <div className="flex flex-wrap gap-3">
+          <a href="#eligibility-check" onClick={() => onCtaClick?.("footer")} className="inline-flex rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
+            בדיקת זכאות חינם
+          </a>
+          <a href="#bottom-lead" onClick={() => onCtaClick?.("footer_bottom_lead")} className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800 transition hover:bg-violet-100">
+            השאר פרטים
+          </a>
+        </div>
       </div>
     </footer>
   );
@@ -1155,7 +1267,7 @@ function MobileStickyCta({ onCtaClick, hidden }) {
           בדיקת זכאות חינם
         </a>
         <a
-          href="#lead"
+          href="#bottom-lead"
           className="rounded-full border border-violet-200 bg-violet-50 px-4 py-3 text-center text-sm font-black text-violet-800"
         >
           השאר פרטים
