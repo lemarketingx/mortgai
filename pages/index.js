@@ -180,6 +180,34 @@ function leadRecommendation(analysis, ready) {
   return "מומלץ לבצע התאמות לפני הגשה כדי להפחית סיכון לסירוב.";
 }
 
+function evaluateLeadProfile(lead) {
+  const monthlyIncome = toNumeric(lead.monthlyIncome);
+  const propertyPrice = toNumeric(lead.propertyPrice);
+  const equityAmount = toNumeric(lead.equityAmount);
+  const equityRatio = propertyPrice > 0 ? (equityAmount / propertyPrice) * 100 : 0;
+
+  let score = 0;
+  if (monthlyIncome >= 22000) score += 2;
+  else if (monthlyIncome >= 14000) score += 1;
+
+  if (equityRatio >= 30) score += 2;
+  else if (equityRatio >= 20) score += 1;
+
+  if (lead.contractStatus === "signed") score += 2;
+  else if (lead.contractStatus === "negotiation") score += 1;
+
+  if (lead.creditStatus === "clean") score += 2;
+  else if (lead.creditStatus === "unknown") score += 1;
+  else if (lead.creditStatus === "bad") score -= 1;
+
+  if (monthlyIncome < 10000) score -= 1;
+  if (equityRatio > 0 && equityRatio < 15) score -= 1;
+
+  const leadQuality = score >= 6 ? "חם" : score >= 3 ? "בינוני" : "חלש";
+  const leadPriority = score >= 6 ? "גבוה" : score >= 3 ? "רגיל" : "נמוך";
+  return { leadQuality, leadPriority, leadScore: score };
+}
+
 function displayMoney(value, ready = true) {
   return ready ? formatILS(value) : "--";
 }
@@ -191,7 +219,23 @@ function displayPercent(value, ready = true) {
 export default function Home() {
   const [data, setData] = useState(initialData);
   const [rates, setRates] = useState(fallbackRates);
-  const [lead, setLead] = useState({ name: "", phone: "", city: "", mortgageAmount: "", purchaseStatus: "" });
+  const [lead, setLead] = useState({
+    name: "",
+    phone: "",
+    city: "",
+    mortgageAmount: "",
+    purchaseStatus: "",
+    propertyPrice: "",
+    equityAmount: "",
+    monthlyIncome: "",
+    debtLevel: "",
+    employmentStatus: "",
+    contractStatus: "before",
+    hasExistingMortgage: "no",
+    requestedContactTime: "",
+    creditStatus: "unknown",
+    notes: "",
+  });
   const [leadSent, setLeadSent] = useState(false);
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadError, setLeadError] = useState("");
@@ -289,11 +333,21 @@ export default function Home() {
       createdAt: new Date().toISOString(),
       estimatedApprovalResult: Math.round(analysis?.approval || 0),
       estimatedPayment: Math.round(analysis?.monthly || 0),
-      propertyPrice: toNumeric(data?.price),
-      equityAmount: toNumeric(data?.equity),
-      monthlyIncome: toNumeric(data?.income),
-      debtLevel: toNumeric(data?.loans) || toNumeric(data?.expenses) || 0,
+      propertyPrice: toNumeric(lead.propertyPrice) || toNumeric(data?.price),
+      equityAmount: toNumeric(lead.equityAmount) || toNumeric(data?.equity),
+      monthlyIncome: toNumeric(lead.monthlyIncome) || toNumeric(data?.income),
+      debtLevel: toNumeric(lead.debtLevel) || toNumeric(data?.loans) || toNumeric(data?.expenses) || 0,
+      employmentStatus: lead.employmentStatus || "",
+      contractStatus: lead.contractStatus || "",
+      hasExistingMortgage: lead.hasExistingMortgage || "",
+      requestedContactTime: lead.requestedContactTime || "",
+      creditStatus: lead.creditStatus || "",
+      notes: lead.notes?.trim() || "",
     };
+    const { leadQuality, leadPriority, leadScore } = evaluateLeadProfile(leadPayload);
+    leadPayload.leadQuality = leadQuality;
+    leadPayload.leadPriority = leadPriority;
+    leadPayload.leadScore = leadScore;
 
     try {
       const response = await fetch("/api/lead", {
@@ -921,11 +975,58 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
             <TextField label="טלפון" value={lead.phone} onChange={(value) => updateLead("phone", value)} placeholder="05X-XXXXXXX" autoComplete="tel" required />
             <TextField label="עיר" value={lead.city} onChange={(value) => updateLead("city", value)} autoComplete="address-level2" />
             <MoneyField label="סכום משכנתא" value={lead.mortgageAmount} onChange={(value) => updateLead("mortgageAmount", value)} />
+            <MoneyField label="מחיר נכס" value={lead.propertyPrice} onChange={(value) => updateLead("propertyPrice", value)} />
+            <MoneyField label="הון עצמי" value={lead.equityAmount} onChange={(value) => updateLead("equityAmount", value)} />
+            <MoneyField label="הכנסה חודשית נטו" value={lead.monthlyIncome} onChange={(value) => updateLead("monthlyIncome", value)} />
+            <MoneyField label="החזרי הלוואות קיימים" value={lead.debtLevel} onChange={(value) => updateLead("debtLevel", value)} />
+            <TextField label="סטטוס תעסוקה" value={lead.employmentStatus} onChange={(value) => updateLead("employmentStatus", value)} placeholder="שכיר / עצמאי / אחר" />
             <TextField
               label="סטטוס רכישה"
               value={lead.purchaseStatus}
               onChange={(value) => updateLead("purchaseStatus", value)}
               placeholder="לפני חוזה / אחרי חוזה"
+            />
+            <SelectField
+              label="סטטוס חוזה"
+              value={lead.contractStatus}
+              onChange={(value) => updateLead("contractStatus", value)}
+              options={[
+                ["before", "לפני חוזה"],
+                ["negotiation", "במו\"מ / טיוטות"],
+                ["signed", "חוזה חתום"],
+              ]}
+            />
+            <SelectField
+              label="האם קיימת משכנתא"
+              value={lead.hasExistingMortgage}
+              onChange={(value) => updateLead("hasExistingMortgage", value)}
+              options={[
+                ["no", "לא"],
+                ["yes", "כן"],
+              ]}
+            />
+            <SelectField
+              label="מצב אשראי"
+              value={lead.creditStatus}
+              onChange={(value) => updateLead("creditStatus", value)}
+              options={[
+                ["unknown", "לא ידוע"],
+                ["clean", "תקין"],
+                ["medium", "גבולי"],
+                ["bad", "בעייתי"],
+              ]}
+            />
+            <TextField
+              label="מועד נוח לחזרה"
+              value={lead.requestedContactTime}
+              onChange={(value) => updateLead("requestedContactTime", value)}
+              placeholder="למשל: א'-ה' 17:00-20:00"
+            />
+            <TextField
+              label="הערות נוספות"
+              value={lead.notes}
+              onChange={(value) => updateLead("notes", value)}
+              placeholder="מידע נוסף שחשוב שנדע"
               className="sm:col-span-2"
             />
           </div>
