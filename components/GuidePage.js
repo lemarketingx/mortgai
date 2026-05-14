@@ -1,8 +1,12 @@
 import Link from "next/link";
 import Head from "next/head";
 import { absoluteUrl, breadcrumbSchema, canonicalUrl, faqSchema, stringifyJsonLd, webPageSchema } from "../lib/seo";
+import { trackEvent } from "../lib/analytics";
 
 export default function GuidePage({ guide, allGuides }) {
+  function handleGuideCtaClick() {
+    trackEvent("cta_click", { location: "guide" }, { source: "guide" });
+  }
   const relatedGuides = guide.related
     .map((item) => {
       if (item.startsWith("/")) {
@@ -66,7 +70,7 @@ export default function GuidePage({ guide, allGuides }) {
         <section className="bg-blue-50 border border-blue-100 rounded-lg p-5 my-10">
           <h2 className="text-2xl font-semibold mb-2">בדיקת זכאות חינם</h2>
           <p className="mb-4">רוצים אומדן ראשוני לפי הנתונים שלכם? חזרו למחשבון המשכנתא הראשי ובצעו בדיקה תוך דקות.</p>
-          <Link href="/" className="inline-block bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800">בדיקת זכאות חינם</Link>
+          <Link href="/#eligibility-check" onClick={handleGuideCtaClick} className="inline-block bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800">בדיקת זכאות חינם</Link>
         </section>
 
         <section className="mb-10">

@@ -48,7 +48,7 @@ const fallbackRates = {
 
 const navLinks = [
   ["דף הבית", "#home"],
-  ["מחשבון משכנתא", "#calculator"],
+  ["מחשבון משכנתא", "#eligibility-check"],
   ["מחזור משכנתא", "#refinance"],
   ["איך זה עובד", "#how-it-works"],
   ["שאלות נפוצות", "#faq"],
@@ -240,6 +240,7 @@ export default function Home() {
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadError, setLeadError] = useState("");
   const [openFaq, setOpenFaq] = useState(null);
+  const [isInsideEligibility, setIsInsideEligibility] = useState(false);
   const leadSuccessRef = useRef(null);
   const sourceMetaRef = useRef({
     utmSource: "",
@@ -285,11 +286,24 @@ export default function Home() {
     initializeAnalyticsLayer();
   }, []);
 
+  useEffect(() => {
+    const section = document.getElementById("eligibility-check");
+    if (!section || typeof IntersectionObserver === "undefined") return undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsInsideEligibility(entry.isIntersecting);
+    }, { threshold: 0.2 });
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+
   function trackEvent(eventName, payload = {}) {
     trackAnalyticsEvent(eventName, payload, {
       source: "homepage",
       sourceMeta: sourceMetaRef.current || {},
     });
+  }
+  function handleCtaClick(location) {
+    trackEvent("cta_click", { location });
   }
 
   const analysis = useMemo(() => calculateMortgageAnalysis(data, rates), [data, rates]);
@@ -423,9 +437,9 @@ export default function Home() {
       </Head>
 
       <main id="home" dir="rtl" className="min-h-screen bg-slate-50 pb-24 text-slate-950 md:pb-0">
-        <a href="#calculator" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:right-3 focus:z-[60] focus:rounded-full focus:bg-white focus:px-4 focus:py-2">דילוג למחשבון</a>
-        <Header />
-        <Hero />
+        <a href="#eligibility-check" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:right-3 focus:z-[60] focus:rounded-full focus:bg-white focus:px-4 focus:py-2">דילוג למחשבון</a>
+        <Header onCtaClick={handleCtaClick} />
+        <Hero onCtaClick={handleCtaClick} />
         <TrustStrip />
         <HowItWorks />
         <CalculatorSection
@@ -454,14 +468,14 @@ export default function Home() {
           trackEvent={trackEvent}
         />
         <FaqSection openFaq={openFaq} setOpenFaq={setOpenFaq} />
-        <Footer />
-        <MobileStickyCta />
+        <Footer onCtaClick={handleCtaClick} />
+        <MobileStickyCta onCtaClick={handleCtaClick} hidden={isInsideEligibility} />
       </main>
     </>
   );
 }
 
-function Header() {
+function Header({ onCtaClick }) {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
@@ -484,7 +498,8 @@ function Header() {
         </nav>
 
         <a
-          href="#calculator"
+          href="#eligibility-check"
+          onClick={() => onCtaClick?.("hero")}
           aria-label="מעבר מהיר למחשבון זכאות"
           className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800"
         >
@@ -495,7 +510,7 @@ function Header() {
   );
 }
 
-function Hero() {
+function Hero({ onCtaClick }) {
   return (
     <section className="relative overflow-hidden border-b border-slate-200/70 bg-white">
       <div className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,0.18),transparent_45%)]" />
@@ -512,7 +527,8 @@ function Hero() {
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
             <a
-              href="#calculator"
+              href="#eligibility-check"
+              onClick={() => onCtaClick?.("hero")}
               aria-label="התחלת בדיקת זכאות"
               className="rounded-full bg-violet-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-violet-800"
             >
@@ -529,6 +545,10 @@ function Hero() {
           <p className="mt-5 text-sm font-bold text-slate-500">
             אומדן ראשוני בלבד, לא מהווה אישור בנקאי, ללא פגיעה בדירוג אשראי וללא התחייבות.
           </p>
+          <a href="#eligibility-check" onClick={() => onCtaClick?.("hero")} className="mt-4 inline-flex items-center gap-2 text-sm font-black text-violet-700 hover:text-violet-800">
+            <span>הבדיקה מתחילה כאן</span>
+            <span aria-hidden="true">↓</span>
+          </a>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
               <p className="text-xs font-black text-slate-500">זמן מילוי</p>
@@ -658,7 +678,7 @@ function SeoContentSection() {
 
 function CalculatorSection({ data, updateData, analysis, ready, recommendation, trackEvent, eventSentRef }) {
   return (
-    <section id="calculator" className="bg-gradient-to-b from-slate-50 via-violet-50/40 to-white py-16 sm:py-20">
+    <section id="eligibility-check" className="bg-gradient-to-b from-slate-50 via-violet-50/40 to-white py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
           eyebrow="מחשבון משכנתא"
@@ -1096,7 +1116,7 @@ function FaqSection({ openFaq, setOpenFaq }) {
   );
 }
 
-function Footer() {
+function Footer({ onCtaClick }) {
   return (
     <footer className="border-t border-slate-200 bg-white py-10">
       <div className="mx-auto grid max-w-6xl gap-6 px-4 text-sm font-semibold text-slate-500 sm:px-6 lg:grid-cols-3">
@@ -1114,16 +1134,22 @@ function Footer() {
           <p className="text-xs">התוכן באתר הינו מידע כללי בלבד ואינו ייעוץ פיננסי או משפטי.</p>
         </address>
       </div>
+      <div className="mx-auto mt-6 max-w-6xl px-4 sm:px-6">
+        <a href="#eligibility-check" onClick={() => onCtaClick?.("footer")} className="inline-flex rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
+          בדיקת זכאות חינם
+        </a>
+      </div>
     </footer>
   );
 }
 
-function MobileStickyCta() {
+function MobileStickyCta({ onCtaClick, hidden }) {
   return (
-    <div className="mobile-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 bg-white/95 px-4 pt-2 pb-2 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
+    <div className={`mobile-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 bg-white/95 px-4 pt-2 pb-2 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl transition md:hidden ${hidden ? "pointer-events-none translate-y-full opacity-0" : "translate-y-0 opacity-100"}`}>
       <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
         <a
-          href="#calculator"
+          href="#eligibility-check"
+          onClick={() => onCtaClick?.("sticky_mobile")}
           className="rounded-full bg-violet-700 px-4 py-3 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(109,40,217,0.28)]"
         >
           בדיקת זכאות חינם
