@@ -319,6 +319,46 @@ export default function BlogPostPage({ post, relatedPosts }) {
             </section>
           )}
 
+          {/* Recommended tools */}
+          <section className="mb-10">
+            <p className="text-xs font-black text-mort-muted uppercase tracking-widest mb-4">כלים פיננסיים שכדאי להכיר</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <a
+                href="https://riseup-friends.link/cmr?icrc=xEP7t-Ok6&utm_source=mortgai"
+                target="_blank"
+                rel="nofollow sponsored noopener noreferrer"
+                onClick={() => trackEvent("blog_cta_click", { slug: post.slug, tool: "riseup", location: "affiliate" }, { source: "blog" })}
+                className="flex gap-4 items-start p-5 bg-white border border-slate-200 rounded-2xl hover:border-emerald-300 hover:shadow-soft transition-all group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 text-lg">💰</div>
+                <div>
+                  <p className="font-black text-mort-ink text-sm group-hover:text-emerald-700 transition-colors">RiseUp — ניהול תקציב חכם</p>
+                  <p className="text-mort-muted text-xs leading-5 mt-1">
+                    עוקבים אחרי ההוצאות, מבינים לאן הכסף הולך ומתכוננים נכון לפני לקיחת משכנתא.
+                  </p>
+                  <span className="inline-block mt-2 text-xs font-bold text-emerald-600">להתנסות חינם ←</span>
+                </div>
+              </a>
+
+              <a
+                href="https://www.ezcount.co.il/sr/uref/285f6523-b921-43af-b404-c11f83226847?utm_campaign=recommendation&utm_medium=referral&utm_source=mortgai"
+                target="_blank"
+                rel="nofollow sponsored noopener noreferrer"
+                onClick={() => trackEvent("blog_cta_click", { slug: post.slug, tool: "ezcount", location: "affiliate" }, { source: "blog" })}
+                className="flex gap-4 items-start p-5 bg-white border border-slate-200 rounded-2xl hover:border-blue-300 hover:shadow-soft transition-all group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 text-lg">🧾</div>
+                <div>
+                  <p className="font-black text-mort-ink text-sm group-hover:text-blue-700 transition-colors">EZcount — חשבוניות לעצמאים</p>
+                  <p className="text-mort-muted text-xs leading-5 mt-1">
+                    מנהלים עסק עצמאי? דוחות מסודרים דרך EZcount עוזרים להציג הכנסה יציבה לבנק.
+                  </p>
+                  <span className="inline-block mt-2 text-xs font-bold text-blue-600">להתנסות חינם ←</span>
+                </div>
+              </a>
+            </div>
+          </section>
+
           {/* Lead form CTA */}
           <section className="mb-10 bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-soft">
             <div className="mb-6">
