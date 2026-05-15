@@ -108,6 +108,12 @@
   .mobile-sticky-cta {
     padding-bottom: max(14px, env(safe-area-inset-bottom, 14px));
   }
+
+  body:has(input:focus) .mobile-sticky-cta,
+  body:has(textarea:focus) .mobile-sticky-cta,
+  body:has(select:focus) .mobile-sticky-cta {
+    display: none;
+  }
 }
 
 @layer utilities {

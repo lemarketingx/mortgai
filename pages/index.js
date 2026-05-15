@@ -86,9 +86,9 @@ const steps = [
 ];
 
 const propertyOptions = [
-  ["single", "דירה יחידה - עד 75% מימון"],
-  ["replacement", "משפרי דיור - עד 70% מימון"],
-  ["investment", "דירה להשקעה - עד 50% מימון"],
+  ["single", "דירה יחידה - לרוב עד כ-75% מימון"],
+  ["replacement", "משפרי דיור - לרוב עד כ-70% מימון"],
+  ["investment", "דירה להשקעה - לרוב עד כ-50% מימון"],
 ];
 
 const creditOptions = [
@@ -119,17 +119,17 @@ const faqItems = [
   {
     question: "האם זו בדיקת זכאות רשמית?",
     answer:
-      "לא. זו סימולציה ראשונית לפי הנתונים שהוזנו. אישור בנקאי מתקבל רק לאחר בדיקת מסמכים, שמאות ותנאי הבנק.",
+      "לא. זו סימולציה ראשונית לפי הנתונים שהוזנו. אישור בנקאי, אם יינתן, כפוף לבדיקת מסמכים, שמאות, נתוני אשראי ותנאי הבנק.",
   },
   {
     question: "כמה הון עצמי צריך בישראל?",
     answer:
-      "בדרך כלל דירה יחידה מאפשרת עד 75% מימון, משפרי דיור עד 70%, ודירה להשקעה עד 50%. המחשבון מציג אם חסר הון עצמי לפי סוג העסקה.",
+      "בדרך כלל, מגבלות המימון המקובלות לדירה ראשונה יכולות להגיע עד כ-75%, למשפרי דיור עד כ-70%, ולדירה להשקעה עד כ-50%, בכפוף למדיניות הגוף המממן. המחשבון מציג אומדן ראשוני אם חסר הון עצמי לפי סוג העסקה.",
   },
   {
     question: "מהו יחס החזר תקין?",
     answer:
-      "רוב הבנקים יעדיפו החזר משכנתא סביב 30%-35% מהכנסה נטו, אך הם בודקים גם הלוואות קיימות, יציבות הכנסה ויתרה למחיה.",
+      "ברוב המקרים נהוג לראות יחס החזר סביב 30%-35% כטווח נוח יותר לבדיקה. יחס החזר גבוה, סביב 35%-40% ומעלה, עשוי להקשות על קבלת אישור או להשפיע על תנאי ההלוואה, לצד בדיקת הלוואות קיימות, יציבות הכנסה ויתרה למחיה.",
   },
   {
     question: "מתי כדאי לדבר עם יועץ?",
@@ -144,12 +144,12 @@ const faqItems = [
   {
     question: "מהו אחוז מימון LTV ולמה הוא חשוב?",
     answer:
-      "LTV הוא היחס בין סכום המשכנתא לבין שווי הנכס. בישראל קיימות מגבלות מימון כלליות לפי סוג העסקה, ולכן אחוז מימון גבוה יכול להשפיע על סיכוי האישור ועל התנאים שהבנק עשוי להציע.",
+      "LTV הוא היחס בין סכום המשכנתא לבין שווי הנכס. בישראל נהוגות מגבלות מימון לפי סוג העסקה ולפי מדיניות הגוף המממן, ולכן אחוז מימון גבוה עשוי להשפיע על בדיקת הבקשה ועל התנאים שהבנק עשוי להציע.",
   },
   {
     question: "האם המחשבון מתאים גם לפני חתימת חוזה?",
     answer:
-      "כן. הבדיקה נועדה לתת תמונת מצב ראשונית לפני פנייה לבנק או חתימת חוזה, כדי להבין החזר חודשי, הון עצמי נדרש, יחס החזר ונקודות שעלולות להפריע לאישור.",
+      "כן. הבדיקה נועדה לתת תמונת מצב ראשונית לפני פנייה לבנק או חתימת חוזה, כדי להבין החזר חודשי, הון עצמי נדרש, יחס החזר ונקודות שעשויות להשפיע על בדיקת הבקשה.",
   },
 ];
 
@@ -167,18 +167,18 @@ function hasEnoughData(data) {
 
 function approvalLabel(analysis, ready) {
   if (!ready) return "הזינו נתונים";
-  if (analysis.hardLimitExceeded) return "דורש התאמה לפני פנייה לבנק";
-  if (analysis.approval >= 75) return "בסיס טוב לבדיקה";
+  if (analysis.hardLimitExceeded) return "עשוי לדרוש התאמה לפני פנייה לבנק";
+  if (analysis.approval >= 75) return "בסיס ראשוני טוב לבדיקה";
   if (analysis.approval >= 45) return "גבולי - כדאי לבדוק";
   return "סיכון גבוה";
 }
 
 function leadRecommendation(analysis, ready) {
   if (!ready) return "מלאו את הנתונים המרכזיים כדי לקבל אומדן ראשוני.";
-  if (analysis.hardLimitExceeded) return "מומלץ לבדוק התאמות לפני הגשה כדי להפחית סיכון לסירוב.";
-  if (analysis.approval >= 70) return "יש בסיס טוב לבדיקה מקצועית - עכשיו כדאי לבדוק ריביות, תמהיל וחיסכון אפשרי.";
+  if (analysis.hardLimitExceeded) return "מומלץ לבצע בדיקה ראשונית של התאמות לפני הגשה, משום שהנתונים עשויים להשפיע על החלטת הגוף המממן.";
+  if (analysis.approval >= 70) return "יש בסיס ראשוני טוב לבדיקה מקצועית - עכשיו כדאי לבדוק ריביות, תמהיל וחיסכון אפשרי.";
   if (analysis.approval >= 45) return "התיק גבולי. לפני פנייה לבנק כדאי לבדוק מה משפר את יחס ההחזר או אחוז המימון.";
-  return "מומלץ לבצע התאמות לפני הגשה כדי להפחית סיכון לסירוב.";
+  return "מומלץ לבצע התאמות ובדיקה מקצועית לפני הגשה, משום שהנתונים עשויים להקשות על קבלת אישור או להשפיע על תנאי ההלוואה.";
 }
 
 function evaluateLeadProfile(lead) {
@@ -608,7 +608,7 @@ function Hero({ onCtaClick }) {
             בדיקת זכאות חינם למשכנתא עם ניתוח פיננסי ראשוני
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg font-semibold leading-8 text-slate-600 lg:mx-0">
-            מלאו נתונים בסיסיים וקבלו אומדן ראשוני: סיכוי זכאות, החזר חודשי ואינדיקציית סיכון. התוצאה לא מהווה אישור בנקאי.
+            מלאו נתונים בסיסיים וקבלו אומדן ראשוני: בדיקת זכאות ראשונית, החזר חודשי ואינדיקציית סיכון. התוצאה לא מהווה אישור בנקאי.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
             <a
@@ -739,7 +739,7 @@ function SeoContentSection() {
               מה בודקים לפני שלוקחים משכנתא?
             </h2>
             <p className="mt-4 leading-8 text-slate-600">
-              לפני שפונים לבנק כדאי להבין אם המספרים עובדים: מה סכום המשכנתא הדרוש, מה ההחזר החודשי המשוער, כמה הון עצמי חסר אם בכלל, ומה יחס ההחזר ביחס להכנסה. בדיקה מוקדמת יכולה לעזור לזהות נקודות סיכון לפני חתימת חוזה או הגשת בקשה לאישור עקרוני.
+              לפני שפונים לבנק כדאי להבין אם המספרים עובדים: מה סכום המשכנתא הדרוש, מה ההחזר החודשי המשוער, כמה הון עצמי חסר אם בכלל, ומה יחס ההחזר ביחס להכנסה. בדיקה מוקדמת יכולה לעזור לזהות נקודות סיכון לפני חתימת חוזה או הגשת בקשה לאישור עקרוני, אך היא אומדן בלבד וכפופה לבדיקה סופית.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -851,7 +851,7 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
 
       {step === 3 && <div className="space-y-3 rounded-2xl bg-slate-50 p-4">
         <p className="text-sm font-black text-slate-700">סיכום אומדן ראשוני לפני המשך</p>
-        <ResultSummaryRow label="אומדן סיכוי אישור" value={ready ? `${Math.round(analysis.approval)}%` : "--"} highlight={ready && analysis.approval >= 65} />
+        <ResultSummaryRow label="אומדן בדיקה ראשונית" value={ready ? `${Math.round(analysis.approval)}%` : "--"} highlight={ready && analysis.approval >= 65} />
         <ResultSummaryRow label="החזר חודשי" value={displayMoney(analysis.monthly, ready)} />
         <ResultSummaryRow label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} warn={ready && analysis.mortgageOnlyRatio > 40} />
         <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-600">{ready ? recommendation : "השלימו נתונים לקבלת חיווי מלא."}</p>
@@ -874,7 +874,7 @@ function LiveResultPanel({ analysis, ready, recommendation }) {
       <p className="text-sm font-black text-violet-100">{ready ? "ניתוח פיננסי בזמן אמת" : "מלאו נתונים לבדיקה חכמה"}</p>
       <div className="mt-6 flex items-end justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-black">אומדן סיכוי אישור</h3>
+          <h3 className="text-2xl font-black">אומדן ראשוני לבדיקת משכנתא</h3>
           <p className="mt-2 text-violet-100">{approvalLabel(analysis, ready)}</p>
         </div>
         <div className="text-left">
@@ -923,10 +923,10 @@ function ResultsSection({ analysis, ready }) {
         : "לפי הנתונים, העסקה מכבידה על התקציב החודשי.";
 
   const resultCards = [
-    ["אומדן סיכוי אישור", ready ? `${Math.round(analysis.approval)}%` : "--", approvalLabel(analysis, ready)],
+    ["אומדן בדיקה ראשונית", ready ? `${Math.round(analysis.approval)}%` : "--", approvalLabel(analysis, ready)],
     ["החזר חודשי משוער", displayMoney(analysis.monthly, ready), "לפי תקופה, ריבית ושיטת החזר"],
     ["אינדיקציית סיכון (יחס החזר)", displayPercent(analysis.mortgageOnlyRatio, ready), "משכנתא בלבד מתוך הכנסה נטו"],
-    ["הון עצמי", ready ? (analysis.missingEquity > 0 ? `חסר ${formatILS(analysis.missingEquity)}` : "תקין") : "--", "לפי מגבלת LTV לסוג העסקה"],
+    ["הון עצמי", ready ? (analysis.missingEquity > 0 ? `חסר ${formatILS(analysis.missingEquity)}` : "נראה תקין") : "--", "לפי אומדן LTV לסוג העסקה"],
     ["יתרה למחיה", displayMoney(analysis.afterHousing, ready), "לאחר הוצאות, הלוואות ומשכנתא"],
     ["סך ריבית צפויה", displayMoney(analysis.totalInterestEstimate, ready), "לאורך כל תקופת המשכנתא"],
     ["סך תשלום צפוי", displayMoney(analysis.totalPaidEstimate, ready), "החזר כולל לאורך התקופה"],
@@ -1000,11 +1000,11 @@ function TrustContentSection() {
   const trustBlocks = [
     {
       title: "איך אומדן הזכאות עובד",
-      text: "האומדן משלב יחס החזר, הון עצמי, אחוז מימון (LTV), התחייבויות ויציבות תזרים - כדי לתת תמונת מצב ראשונית לפני פנייה לבנק.",
+      text: "האומדן משלב יחס החזר, הון עצמי, אחוז מימון (LTV), התחייבויות ויציבות תזרים - כדי לתת תמונת מצב ראשונית בלבד לפני פנייה לבנק.",
     },
     {
-      title: "מה משפיע על אישור",
-      text: "הבנקים בוחנים הכנסה נטו, הלוואות קיימות, אחוז מימון, היסטוריית אשראי ויכולת החזר לאורך זמן. שינוי קטן בנתונים יכול לשפר את התוצאה.",
+      title: "מה עשוי להשפיע על הבדיקה",
+      text: "הבנקים בוחנים בדרך כלל הכנסה נטו, הלוואות קיימות, אחוז מימון, היסטוריית אשראי ויכולת החזר לאורך זמן. שינוי קטן בנתונים עשוי לשפר את תוצאת הבדיקה הראשונית.",
     },
     {
       title: "מה זה מחזור משכנתא",
@@ -1018,7 +1018,7 @@ function TrustContentSection() {
 
   return (
     <section aria-labelledby="trust-content-title" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-      <SectionHeader eyebrow="שקיפות ואמינות" title="הבסיס המקצועי מאחורי האומדן" text="תוכן קצר וברור שמסביר מה נבדק, מה משפיע על הסיכוי לאישור ומה המשמעות של בדיקה ללא התחייבות." />
+      <SectionHeader eyebrow="שקיפות ואמינות" title="הבסיס המקצועי מאחורי האומדן" text="תוכן קצר וברור שמסביר מה נבדק, מה עשוי להשפיע על בדיקת הבקשה ומה המשמעות של בדיקה ללא התחייבות." />
       <h2 id="trust-content-title" className="sr-only">מידע אמון והסבר מקצועי</h2>
       <div className="mt-10 grid gap-4 md:grid-cols-2">
         {trustBlocks.map((item) => (
@@ -1038,14 +1038,14 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
       <SectionHeader
         eyebrow="המשך מקצועי"
         title="רוצים לעבור מאומדן ראשוני לבדיקה מקצועית?"
-        text="השאירו פרטים לבדיקת זכאות חינם וללא התחייבות. יועץ יחזור להסבר מסודר על הצעד הבא, כולל מה ניתן לשפר לפני פנייה לבנק."
+        text="השאירו פרטים לבדיקת זכאות ראשונית חינם וללא התחייבות. יועץ יחזור להסבר מסודר על הצעד הבא, כולל מה אפשר לבדוק ולשפר לפני פנייה לבנק."
       />
       <div className="mt-10 grid items-stretch gap-6 lg:grid-cols-2">
         <div className="rounded-[34px] bg-gradient-to-br from-violet-50 to-white p-7 ring-1 ring-violet-100">
           <div className="space-y-3">
             {ready ? (
               <>
-                <ResultSummaryRow label="אומדן סיכוי אישור" value={`${Math.round(analysis.approval)}%`} highlight={analysis.approval >= 65} />
+                <ResultSummaryRow label="אומדן בדיקה ראשונית" value={`${Math.round(analysis.approval)}%`} highlight={analysis.approval >= 65} />
                 <ResultSummaryRow label="החזר חודשי משוער" value={formatILS(analysis.monthly)} />
                 <ResultSummaryRow label="יחס החזר" value={formatPct(analysis.mortgageOnlyRatio)} warn={analysis.mortgageOnlyRatio > 40} />
                 <ResultSummaryRow label="יתרה למחיה" value={formatILS(analysis.afterHousing)} warn={analysis.afterHousing < 3000} />
