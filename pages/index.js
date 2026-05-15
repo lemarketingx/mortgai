@@ -52,6 +52,7 @@ const navLinks = [
   ["מחזור משכנתא", "#refinance"],
   ["איך זה עובד", "#how-it-works"],
   ["שאלות נפוצות", "#faq"],
+  ["בלוג", "/blog"],
 ];
 
 const trustItems = [
@@ -1242,13 +1243,15 @@ function Footer({ onCtaClick }) {
         </address>
       </div>
       <div className="mx-auto mt-6 max-w-6xl px-4 sm:px-6">
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 items-center">
           <a href="#eligibility-check" onClick={() => onCtaClick?.("footer")} className="inline-flex rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
             בדיקת זכאות חינם
           </a>
           <a href="#bottom-lead" onClick={() => onCtaClick?.("footer_bottom_lead")} className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800 transition hover:bg-violet-100">
             השאר פרטים
           </a>
+          <a href="/blog" className="text-sm font-bold text-violet-700 hover:underline">בלוג משכנתאות ←</a>
+          <a href="/guides" className="text-sm font-bold text-violet-700 hover:underline">מדריכי משכנתא ←</a>
         </div>
       </div>
     </footer>
