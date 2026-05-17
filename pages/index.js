@@ -54,6 +54,7 @@ const navLinks = [
   ["איך זה עובד", "#how-it-works"],
   ["שאלות נפוצות", "#faq"],
   ["בלוג", "/blog"],
+  ["לידים ליועצים", "/advisors"],
 ];
 
 const trustItems = [
