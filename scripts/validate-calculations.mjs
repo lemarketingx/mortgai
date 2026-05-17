@@ -125,11 +125,12 @@ function calculateMortgageAnalysis(data, rates = {}) {
   const hardLimitExceeded = mortgageOnlyRatio > 50 || ltvLimitExceeded || totalObligationsRatio > 55 || afterHousing <= 0;
   const borderlineCase = !hardLimitExceeded && (mortgageOnlyRatio > 40 || totalObligationsRatio > 40 || disposableRepaymentRatio > 50);
 
+  const incomePenalty = income <= 0 ? 60 : income < 6000 ? 30 : income < 10000 ? 10 : 0;
   const mortgageOnlyPenalty = mortgageOnlyRatio > 50 ? 38 : mortgageOnlyRatio > 40 ? 20 : mortgageOnlyRatio > 35 ? 7 : 0;
   const obligationsPenalty = totalObligationsRatio > 55 ? 34 : totalObligationsRatio > 50 ? 24 : totalObligationsRatio > 40 ? 15 : 0;
   const conservativePenalty = disposableRepaymentRatio > 60 ? 24 : disposableRepaymentRatio > 50 ? 18 : disposableRepaymentRatio > 40 ? 8 : 0;
-  const equityPenalty = requestedAboveLimit > 0 ? 34 : missingEquity > 0 ? 22 : 0;
-  const baseApproval = 92 - credit.penalty - mortgageOnlyPenalty - obligationsPenalty - conservativePenalty - equityPenalty - rateImpact;
+  const equityPenalty = requestedAboveLimit > 0 ? 34 : 0;
+  const baseApproval = 92 - incomePenalty - credit.penalty - mortgageOnlyPenalty - obligationsPenalty - conservativePenalty - equityPenalty - rateImpact;
   const approval = hardLimitExceeded ? Math.min(38, Math.max(5, baseApproval)) : Math.max(5, Math.min(96, baseApproval));
 
   return {
