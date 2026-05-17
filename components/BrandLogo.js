@@ -1,26 +1,14 @@
 export default function BrandLogo({ withTagline = true, className = "" }) {
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-        <defs>
-          <linearGradient id="finzoGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#4F46E5" />
-            <stop offset="100%" stopColor="#2563EB" />
-          </linearGradient>
-        </defs>
-        <rect x="2" y="4" width="16" height="5" rx="2.5" fill="url(#finzoGrad)" />
-        <rect x="6" y="11.5" width="16" height="5" rx="2.5" fill="url(#finzoGrad)" />
-        <rect x="10" y="19" width="16" height="5" rx="2.5" fill="url(#finzoGrad)" />
-      </svg>
-      <span className="leading-tight">
-        <span className="inline-flex items-end text-2xl font-black tracking-tight text-[#0B1B45]">
-          Finz
-          <span className="relative inline-flex pl-0.5">
-            o
-            <span className="absolute -top-0.5 -right-1 h-1.5 w-1.5 rounded-full bg-[#2563EB]" />
-          </span>
-        </span>
-        {withTagline && <span className="hidden text-xs font-bold text-slate-500 sm:block">בדיקת זכאות חכמה למשכנתא בישראל</span>}
+    <div className={`inline-flex items-center gap-3 ${className}`} dir="ltr" aria-label="Finzo">
+      <span className="flex h-9 w-9 shrink-0 flex-col justify-center gap-1.5" aria-hidden="true">
+        <span className="block h-1.5 w-8 rounded-full bg-[#2563EB]" />
+        <span className="block h-1.5 w-6 rounded-full bg-[#4F46E5]" />
+        <span className="block h-1.5 w-3 rounded-full bg-[#06B6D4]" />
+      </span>
+      <span className="flex flex-col items-start leading-none">
+        <span className="text-4xl font-black tracking-tight text-[#0F172A]">Finzo</span>
+        {withTagline && <span dir="rtl" className="mt-1 text-xs font-extrabold text-slate-500">בדיקת זכאות חכמה למשכנתא בישראל</span>}
       </span>
     </div>
   );
