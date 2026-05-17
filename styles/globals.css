@@ -39,7 +39,6 @@
     outline-offset: 3px;
   }
 
-  /* Prevent horizontal scroll on mobile */
   body, main {
     overflow-x: hidden;
   }
@@ -100,7 +99,6 @@
     @apply outline-none ring-emerald-200 transition focus:ring-4;
   }
 
-  /* Sticky mobile CTA bar */
   .sticky-cta-bar {
     padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
   }
@@ -113,6 +111,14 @@
   body:has(textarea:focus) .mobile-sticky-cta,
   body:has(select:focus) .mobile-sticky-cta {
     display: none;
+  }
+
+  #lead .grid.items-stretch {
+    align-items: start;
+  }
+
+  #lead .grid.items-stretch > * {
+    align-self: start;
   }
 }
 
@@ -150,7 +156,6 @@
     to { width: var(--score-width, 0%); }
   }
 
-  /* FAQ accordion transition */
   .faq-open {
     animation: faqOpen 0.2s ease-out forwards;
   }
