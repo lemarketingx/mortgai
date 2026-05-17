@@ -35,7 +35,7 @@ function MidCta({ slug, category }) {
       <p className="text-sm font-semibold uppercase tracking-widest opacity-80 mb-2">כלי חינמי</p>
       <h3 className="text-xl md:text-2xl font-black mb-2">רוצים לבדוק זכאות למשכנתא?</h3>
       <p className="text-sm md:text-base opacity-90 mb-5 leading-7">
-        מחשבון MortgAI מנתח את הנתונים שלכם ומחזיר אומדן סיכוי אישור, החזר חודשי ומסגרת אפשרית — תוך דקה.
+        מחשבון Finzo מנתח את הנתונים שלכם ומחזיר אומדן סיכוי אישור, החזר חודשי ומסגרת אפשרית — תוך דקה.
       </p>
       <Link
         href="/#eligibility-check"
@@ -268,7 +268,7 @@ export default function BlogPostPage({ post, relatedPosts }) {
             <div className="flex gap-4 text-xs text-slate-400 flex-wrap">
               <span>⏱ {post.readingTime} דקות קריאה</span>
               <span>📅 {new Date(post.publishDate).toLocaleDateString("he-IL", { year: "numeric", month: "long", day: "numeric" })}</span>
-              <span>✍️ צוות MortgAI</span>
+              <span>✍️ צוות Finzo</span>
             </div>
           </div>
         </div>

@@ -80,13 +80,13 @@ export default function BlogIndexPage() {
   return (
     <>
       <Head>
-        <title>בלוג משכנתאות | ידע, מדריכים וכלים | MortgAI</title>
+        <title>בלוג משכנתאות | ידע, מדריכים וכלים | Finzo</title>
         <meta
           name="description"
           content="מאמרים מקצועיים על משכנתאות בישראל: זכאות, הון עצמי, יחס החזר, מחזור משכנתא, ריביות ועוד. כל מה שצריך לדעת לפני שלוקחים משכנתא."
         />
         <link rel="canonical" href={canonicalUrl("/blog")} />
-        <meta property="og:title" content="בלוג משכנתאות | MortgAI" />
+        <meta property="og:title" content="בלוג משכנתאות | Finzo" />
         <meta property="og:description" content="מאמרים מקצועיים על משכנתאות בישראל." />
         <meta property="og:url" content={canonicalUrl("/blog")} />
         <script
@@ -106,7 +106,7 @@ export default function BlogIndexPage() {
         {/* ── Hero ── */}
         <div className="bg-gradient-to-b from-mort-ink to-slate-800 text-white pt-12 pb-16 px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <p className="text-xs font-black text-violet-400 uppercase tracking-widest mb-4">MortgAI · בלוג</p>
+            <p className="text-xs font-black text-violet-400 uppercase tracking-widest mb-4">Finzo · בלוג</p>
             <h1 className="text-3xl md:text-5xl font-black mb-4 leading-tight">
               ידע שעובד בשבילכם
             </h1>
@@ -159,7 +159,7 @@ export default function BlogIndexPage() {
           <div className="mt-14 rounded-2xl bg-gradient-to-l from-violet-600 to-indigo-700 p-8 text-white text-center">
             <h2 className="text-2xl font-black mb-2">מוכנים לבדוק זכאות?</h2>
             <p className="text-slate-200 mb-6 text-sm leading-7">
-              השתמשו במחשבון MortgAI וקבלו אומדן מהיר של סיכוי האישור, ההחזר החודשי והמסגרת האפשרית.
+              השתמשו במחשבון Finzo וקבלו אומדן מהיר של סיכוי האישור, ההחזר החודשי והמסגרת האפשרית.
             </p>
             <Link
               href="/#eligibility-check"
