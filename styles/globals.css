@@ -42,21 +42,6 @@
   body, main {
     overflow-x: hidden;
   }
-
-  @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
-
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      scroll-behavior: auto !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
 }
 
 @layer components {
@@ -98,20 +83,6 @@
   .focus-field {
     @apply outline-none ring-emerald-200 transition focus:ring-4;
   }
-
-  .sticky-cta-bar {
-    padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
-  }
-
-  .mobile-sticky-cta {
-    padding-bottom: max(14px, env(safe-area-inset-bottom, 14px));
-  }
-
-  body:has(input:focus) .mobile-sticky-cta,
-  body:has(textarea:focus) .mobile-sticky-cta,
-  body:has(select:focus) .mobile-sticky-cta {
-    display: none;
-  }
 }
 
 @layer utilities {
@@ -121,52 +92,25 @@
 
   #lead .rounded-\[34px\].bg-gradient-to-br {
     position: relative;
-    display: flex;
-    min-height: 100% !important;
-    flex-direction: column;
     overflow: hidden;
   }
 
   #lead .rounded-\[34px\].bg-gradient-to-br::after {
-    content: "מה עוד נבדק בהמשך?\A\A✓ הכנסה חודשית ויחס החזר\A✓ הון עצמי מול מחיר הנכס\A✓ הלוואות קיימות והתחייבויות\A✓ סטטוס רכישה ואשראי\A\Aדוגמה לסיכום אפשרי\Aסיכוי זכאות: 78%\Aהחזר משוער: 6,420 ₪\Aיחס החזר: תקין\A\Aללא התחייבות · לא מועבר לבנק · מידע מאובטח";
+    content: "✓ בדיקת זכאות ראשונית\A✓ ניתוח יחס החזר\A✓ התאמה להון העצמי\A✓ בדיקה ללא התחייבות";
     white-space: pre-line;
     display: block;
-    margin-top: 1.25rem;
-    border-radius: 1.5rem;
-    border: 1px solid rgba(124, 58, 237, 0.16);
-    background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(238,242,255,0.86));
-    padding: 1.25rem;
-    color: #334155;
-    font-size: 0.94rem;
+    margin-top: 1.5rem;
+    border-radius: 1.25rem;
+    background: rgba(255,255,255,0.72);
+    padding: 1rem;
+    color: #475569;
+    font-size: 0.92rem;
     font-weight: 800;
-    line-height: 1.85;
-    box-shadow: 0 18px 45px rgba(88, 28, 135, 0.08);
-  }
-
-  #lead .rounded-\[34px\].bg-gradient-to-br::before {
-    content: "Finzo בודקת את התמונה הרחבה לפני פנייה לבנק";
-    display: block;
-    order: -1;
-    margin-bottom: 1rem;
-    border-radius: 999px;
-    background: rgba(124, 58, 237, 0.10);
-    padding: 0.7rem 1rem;
-    color: #5b21b6;
-    font-size: 0.86rem;
-    font-weight: 900;
-    text-align: center;
+    line-height: 1.9;
   }
 
   .animate-slide-up {
     animation: slideUp 0.25s ease-out forwards;
-  }
-
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out forwards;
-  }
-
-  .animate-score-bar {
-    animation: growWidth 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   @keyframes slideUp {
@@ -178,43 +122,5 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes growWidth {
-    from { width: 0%; }
-    to { width: var(--score-width, 0%); }
-  }
-
-  .faq-open {
-    animation: faqOpen 0.2s ease-out forwards;
-  }
-
-  @keyframes faqOpen {
-    from {
-      opacity: 0;
-      transform: translateY(-6px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-}
-
-@layer components {
-  .mort-two-card-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
-    align-items: stretch;
-  }
-  .mort-two-card-grid > * { height: 100%; min-width: 0; }
-  @media (min-width: 768px) {
-    .mort-two-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 }
