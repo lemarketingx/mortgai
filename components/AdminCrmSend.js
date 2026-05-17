@@ -82,6 +82,9 @@ export default function AdminCrmSend() {
   const [loading, setLoading] = useState(false);
   const [newAdvisor, setNewAdvisor] = useState({ name: "", phone: "", email: "", commissionAmount: "" });
 
+  const [deletingIds, setDeletingIds] = useState([]);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
   const selectedLeads = useMemo(() => leads.filter((lead) => selectedIds.includes(lead.id)), [leads, selectedIds]);
   const selectedAdvisor = useMemo(() => advisors.find((advisor) => advisorId(advisor) === selectedAdvisorId), [advisors, selectedAdvisorId]);
 
@@ -201,6 +204,51 @@ export default function AdminCrmSend() {
     window.open("/api/admin/export", "_blank");
   }
 
+  async function deleteLead(id) {
+    if (!id) return;
+    if (!window.confirm("האם למחוק את הליד לצמיתות?")) return;
+    const prevLeads = leads;
+    const prevSelected = selectedIds;
+    setDeletingIds((current) => current.includes(id) ? current : [...current, id]);
+    setLeads((current) => current.filter((lead) => lead.id !== id));
+    setSelectedIds((current) => current.filter((item) => item !== id));
+    try {
+      const response = await fetch("/api/admin/leads", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || data.error || "מחיקת ליד נכשלה");
+      show("הליד נמחק");
+    } catch (err) {
+      setLeads(prevLeads);
+      setSelectedIds(prevSelected);
+      show(err.message || "מחיקת ליד נכשלה", true);
+    } finally {
+      setDeletingIds((current) => current.filter((item) => item !== id));
+    }
+  }
+
+  async function bulkDeleteSelected() {
+    if (!selectedIds.length) { show("בחר לפחות ליד אחד", true); return; }
+    if (!window.confirm("האם למחוק את הליד לצמיתות?")) return;
+    const idsToDelete = [...selectedIds];
+    const prevLeads = leads;
+    const prevSelected = selectedIds;
+    setBulkDeleting(true);
+    setLeads((current) => current.filter((lead) => !idsToDelete.includes(lead.id)));
+    setSelectedIds((current) => current.filter((item) => !idsToDelete.includes(item)));
+    try {
+      const response = await fetch("/api/admin/leads", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids: idsToDelete }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || data.error || "מחיקה מרוכזת נכשלה");
+      show(`נמחקו ${idsToDelete.length} לידים`);
+    } catch (err) {
+      setLeads(prevLeads);
+      setSelectedIds(prevSelected);
+      show(err.message || "מחיקה מרוכזת נכשלה", true);
+    } finally {
+      setBulkDeleting(false);
+    }
+  }
+
   function toggle(id) { setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]); }
   function toggleAll() { setSelectedIds((current) => current.length === filteredLeads.length ? [] : filteredLeads.map((lead) => lead.id)); }
 
@@ -216,8 +264,8 @@ export default function AdminCrmSend() {
       {message && <div className={`mt-4 rounded-2xl border p-3 text-sm font-black ${error ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>{message}</div>}
     </section>
 
-    <section className="mt-5 grid gap-4 lg:grid-cols-[1fr_380px]"><div className="grid gap-4"><div className="fintech-card flex flex-wrap items-center justify-between gap-3 p-4"><label className="flex items-center gap-2 font-black"><input type="checkbox" checked={filteredLeads.length > 0 && selectedIds.length === filteredLeads.length} onChange={toggleAll} /> בחר הכל ({filteredLeads.length})</label><div className="flex flex-wrap gap-2"><button className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 font-black text-emerald-800 disabled:opacity-50" disabled={!selectedIds.length} onClick={() => bulkPatch({ leadQuality: "חם", leadPriority: "גבוה" })}>סמן חם</button><button className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 font-black text-amber-800 disabled:opacity-50" disabled={!selectedIds.length} onClick={() => bulkPatch({ followUpStage: "ניסיון 1" })}>מעקב ניסיון 1</button></div></div>
-      {filteredLeads.map((lead) => <article key={lead.id} className="fintech-card p-5"><div className="flex flex-col gap-3 border-b border-slate-200 pb-4 lg:flex-row lg:items-start lg:justify-between"><div className="flex gap-3"><input className="mt-2" type="checkbox" checked={selectedIds.includes(lead.id)} onChange={() => toggle(lead.id)} /><div><div className="flex flex-wrap items-center gap-2"><h2 className="text-2xl font-black text-mort-ink">{lead.name || "ללא שם"}</h2><span className={`pill ${statusClass(lead.leadStatus || lead.status)}`}>{lead.leadStatus || lead.status || "חדש"}</span><span className={`pill ${qualityClass(lead.leadQuality)}`}>{lead.leadQuality || "לא סווג"}</span></div><p className="mt-1 text-sm font-bold text-mort-muted">יועץ: {lead.assignedAdvisor || "לא שויך"}</p></div></div><a href={lead.phone ? `tel:${lead.phone}` : undefined} className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-center font-black">חיוג</a></div><div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"><Detail label="טלפון" value={lead.phone} /><Detail label="עיר" value={lead.city || lead.propertyCity} /><Detail label="משכנתא" value={money(lead.mortgageAmount)} /><Detail label="סיכוי" value={lead.approvalScore || lead.estimatedApprovalResult ? `${lead.approvalScore || lead.estimatedApprovalResult}%` : "-"} /><Detail label="הכנסה" value={money(lead.monthlyIncome)} /><Detail label="הון עצמי" value={money(lead.equityAmount)} /><Detail label="חוזה" value={lead.contractStatus || lead.purchaseStatus} /><Detail label="חזרה" value={lead.requestedContactTime} /></div><div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"><Select value={lead.leadStatus || lead.status || "חדש"} onChange={(v) => patchLead(lead.id, { leadStatus: v, status: v })}>{STATUSES.map((s) => <option key={s}>{s}</option>)}</Select><Select value={lead.leadQuality || "לא סווג"} onChange={(v) => patchLead(lead.id, { leadQuality: v })}>{QUALITIES.filter(Boolean).map((q) => <option key={q}>{q}</option>)}</Select><Select value={lead.followUpStage || "לא טופל"} onChange={(v) => patchLead(lead.id, { followUpStage: v })}>{FOLLOW_UP.map((s) => <option key={s}>{s}</option>)}</Select><Select value={lead.commissionStatus || "pending"} onChange={(v) => patchLead(lead.id, { commissionStatus: v })}>{COMMISSIONS.map((s) => <option key={s}>{s}</option>)}</Select></div><textarea className="focus-field mt-4 min-h-20 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold" defaultValue={lead.internalNotes || ""} onBlur={(e) => { if (e.target.value !== (lead.internalNotes || "")) patchLead(lead.id, { internalNotes: e.target.value }); }} placeholder="הערות פנימיות לצוות" /></article>)}
+    <section className="mt-5 grid gap-4 lg:grid-cols-[1fr_380px]"><div className="grid gap-4"><div className="fintech-card flex flex-wrap items-center justify-between gap-3 p-4"><label className="flex items-center gap-2 font-black"><input type="checkbox" checked={filteredLeads.length > 0 && selectedIds.length === filteredLeads.length} onChange={toggleAll} /> בחר הכל ({filteredLeads.length})</label><div className="flex flex-wrap gap-2"><button className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 font-black text-emerald-800 disabled:opacity-50" disabled={!selectedIds.length} onClick={() => bulkPatch({ leadQuality: "חם", leadPriority: "גבוה" })}>סמן חם</button><button className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 font-black text-amber-800 disabled:opacity-50" disabled={!selectedIds.length} onClick={() => bulkPatch({ followUpStage: "ניסיון 1" })}>מעקב ניסיון 1</button><button className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 font-black text-red-800 disabled:opacity-50" disabled={!selectedIds.length || bulkDeleting} onClick={bulkDeleteSelected}>{bulkDeleting ? "מוחק..." : "מחק נבחרים"}</button></div></div>
+      {filteredLeads.map((lead) => <article key={lead.id} className="fintech-card p-5"><div className="flex flex-col gap-3 border-b border-slate-200 pb-4 lg:flex-row lg:items-start lg:justify-between"><div className="flex gap-3"><input className="mt-2" type="checkbox" checked={selectedIds.includes(lead.id)} onChange={() => toggle(lead.id)} /><div><div className="flex flex-wrap items-center gap-2"><h2 className="text-2xl font-black text-mort-ink">{lead.name || "ללא שם"}</h2><span className={`pill ${statusClass(lead.leadStatus || lead.status)}`}>{lead.leadStatus || lead.status || "חדש"}</span><span className={`pill ${qualityClass(lead.leadQuality)}`}>{lead.leadQuality || "לא סווג"}</span></div><p className="mt-1 text-sm font-bold text-mort-muted">יועץ: {lead.assignedAdvisor || "לא שויך"}</p></div></div><div className="flex gap-2"><a href={lead.phone ? `tel:${lead.phone}` : undefined} className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-center font-black">חיוג</a><button className="rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-center font-black text-red-800 disabled:opacity-50" disabled={bulkDeleting || deletingIds.includes(lead.id)} onClick={() => deleteLead(lead.id)}>{deletingIds.includes(lead.id) ? "מוחק..." : "מחק ליד"}</button></div></div><div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"><Detail label="טלפון" value={lead.phone} /><Detail label="עיר" value={lead.city || lead.propertyCity} /><Detail label="משכנתא" value={money(lead.mortgageAmount)} /><Detail label="סיכוי" value={lead.approvalScore || lead.estimatedApprovalResult ? `${lead.approvalScore || lead.estimatedApprovalResult}%` : "-"} /><Detail label="הכנסה" value={money(lead.monthlyIncome)} /><Detail label="הון עצמי" value={money(lead.equityAmount)} /><Detail label="חוזה" value={lead.contractStatus || lead.purchaseStatus} /><Detail label="חזרה" value={lead.requestedContactTime} /></div><div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"><Select value={lead.leadStatus || lead.status || "חדש"} onChange={(v) => patchLead(lead.id, { leadStatus: v, status: v })}>{STATUSES.map((s) => <option key={s}>{s}</option>)}</Select><Select value={lead.leadQuality || "לא סווג"} onChange={(v) => patchLead(lead.id, { leadQuality: v })}>{QUALITIES.filter(Boolean).map((q) => <option key={q}>{q}</option>)}</Select><Select value={lead.followUpStage || "לא טופל"} onChange={(v) => patchLead(lead.id, { followUpStage: v })}>{FOLLOW_UP.map((s) => <option key={s}>{s}</option>)}</Select><Select value={lead.commissionStatus || "pending"} onChange={(v) => patchLead(lead.id, { commissionStatus: v })}>{COMMISSIONS.map((s) => <option key={s}>{s}</option>)}</Select></div><textarea className="focus-field mt-4 min-h-20 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold" defaultValue={lead.internalNotes || ""} onBlur={(e) => { if (e.target.value !== (lead.internalNotes || "")) patchLead(lead.id, { internalNotes: e.target.value }); }} placeholder="הערות פנימיות לצוות" /></article>)}
     </div><aside className="grid content-start gap-4"><section className="fintech-card p-5"><h2 className="text-xl font-black text-mort-ink">הוספת יועץ</h2><form className="mt-4 grid gap-3" onSubmit={createAdvisor}><Input value={newAdvisor.name} onChange={(v) => setNewAdvisor((c) => ({ ...c, name: v }))} placeholder="שם יועץ" /><Input value={newAdvisor.phone} onChange={(v) => setNewAdvisor((c) => ({ ...c, phone: v }))} placeholder="טלפון" /><Input value={newAdvisor.email} onChange={(v) => setNewAdvisor((c) => ({ ...c, email: v }))} placeholder="אימייל אופציונלי" /><Input value={newAdvisor.commissionAmount} onChange={(v) => setNewAdvisor((c) => ({ ...c, commissionAmount: v }))} placeholder="עמלה אופציונלית" /><button className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white" disabled={loading}>הוסף יועץ</button></form></section><section className="fintech-card p-5"><h2 className="text-xl font-black text-mort-ink">יועצים</h2><div className="mt-4 grid gap-3">{advisors.map((a) => <div key={advisorId(a)} className="rounded-2xl border border-slate-200 bg-white p-3"><strong>{advisorName(a)}</strong><span className="block text-sm font-bold text-mort-muted">{advisorPhone(a)}</span><span className="block text-sm font-bold text-mort-muted">{advisorEmail(a)}</span></div>)}</div></section></aside></section>
   </div></main>;
 }
