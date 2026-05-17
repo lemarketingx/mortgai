@@ -1247,6 +1247,8 @@ function Footer({ onCtaClick }) {
           </a>
           <a href="/blog" className="text-sm font-bold text-violet-700 hover:underline">בלוג משכנתאות ←</a>
           <a href="/guides" className="text-sm font-bold text-violet-700 hover:underline">מדריכי משכנתא ←</a>
+          <a href="/transaction-cost" className="text-sm font-bold text-violet-700 hover:underline">עלות עסקה ←</a>
+          <a href="/refinance-check" className="text-sm font-bold text-violet-700 hover:underline">מחזור משכנתא ←</a>
         </div>
       </div>
     </footer>

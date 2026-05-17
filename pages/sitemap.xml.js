@@ -5,6 +5,7 @@ import { absoluteUrl } from "../lib/seo";
 const publicPages = [
   { path: "/", priority: "1.0", changefreq: "weekly" },
   { path: "/refinance-check", priority: "0.8", changefreq: "weekly" },
+  { path: "/transaction-cost", priority: "0.8", changefreq: "monthly" },
   { path: "/guides", priority: "0.8", changefreq: "weekly" },
   { path: "/blog", priority: "0.9", changefreq: "weekly" },
   ...guides.map((guide) => ({ path: guide.path, priority: "0.7", changefreq: "monthly" })),
