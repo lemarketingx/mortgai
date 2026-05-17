@@ -1203,17 +1203,17 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
       <div className="rounded-[30px] border border-violet-200/70 bg-gradient-to-br from-slate-950 via-violet-950 to-violet-900 p-6 text-white shadow-[0_28px_70px_rgba(46,16,101,0.35)] sm:p-8">
         <h2 className="text-2xl font-black sm:text-3xl">רוצים לבדוק זכאות בצורה מקצועית?</h2>
         <p className="mt-2 text-sm font-semibold text-violet-100 sm:text-base">השאירו פרטים ונציג מקצועי יחזור אליכם להמשך בדיקה.</p>
-        <form onSubmit={submitBottomLead} className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-4">
-          <TextField label="שם מלא" value={bottomLead.name} onChange={(value) => updateBottomLead("name", value)} autoComplete="name" required />
-          <TextField label="טלפון" value={bottomLead.phone} onChange={(value) => updateBottomLead("phone", value)} autoComplete="tel" placeholder="05X-XXXXXXX" required />
-          <TextField label="עיר" value={bottomLead.city} onChange={(value) => updateBottomLead("city", value)} autoComplete="address-level2" />
-          <button type="submit" disabled={bottomLeadLoading || bottomLeadSent} className="min-h-12 rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 transition hover:bg-violet-50 disabled:opacity-70">
+        <form onSubmit={submitBottomLead} className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-4" dir="rtl">
+          <TextField label="שם מלא" value={bottomLead.name} onChange={(value) => updateBottomLead("name", value)} autoComplete="name" required contrastMode="dark" />
+          <TextField label="טלפון" value={bottomLead.phone} onChange={(value) => updateBottomLead("phone", value)} autoComplete="tel" placeholder="05X-XXXXXXX" required contrastMode="dark" />
+          <TextField label="עיר" value={bottomLead.city} onChange={(value) => updateBottomLead("city", value)} autoComplete="address-level2" contrastMode="dark" />
+          <button type="submit" disabled={bottomLeadLoading || bottomLeadSent} className="min-h-12 rounded-2xl border border-violet-300 bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-[0_12px_28px_rgba(76,29,149,0.35)] transition hover:bg-violet-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-200 disabled:opacity-70">
             {bottomLeadLoading ? "שולח..." : bottomLeadSent ? "נשלח בהצלחה" : "שליחה לנציג מקצועי"}
           </button>
         </form>
         {bottomLeadError && <p role="alert" className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{bottomLeadError}</p>}
         {bottomLeadSent && <p role="status" className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
-        <p className="mt-3 text-xs font-bold text-violet-100">ללא התחייבות. הפרטים ישמשו לחזרה אליכם בלבד.</p>
+        <p className="mt-3 text-xs font-bold text-violet-50">ללא התחייבות. הפרטים ישמשו לחזרה אליכם בלבד.</p>
       </div>
     </section>
   );
@@ -1308,11 +1308,12 @@ function MoneyField({ label, value, onChange, helper, className = "" }) {
   );
 }
 
-function TextField({ label, value, onChange, placeholder = "", required = false, className = "", autoComplete }) {
+function TextField({ label, value, onChange, placeholder = "", required = false, className = "", autoComplete, contrastMode = "light" }) {
   const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
+  const isDark = contrastMode === "dark";
   return (
     <label className={`block ${className}`}>
-      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
+      <span className={`text-sm font-black ${isDark ? "text-violet-50" : "text-slate-700"}`} id={`${fieldId}-label`}>{label}</span>
       <input
         id={fieldId}
         aria-labelledby={`${fieldId}-label`}
@@ -1321,7 +1322,9 @@ function TextField({ label, value, onChange, placeholder = "", required = false,
         placeholder={placeholder}
         autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 sm:h-14"
+        className={`mt-2 h-12 w-full rounded-2xl px-4 text-base font-bold outline-none transition sm:h-14 ${isDark
+          ? "border border-violet-200 bg-white text-slate-950 placeholder:text-slate-500 focus:border-violet-300 focus:ring-4 focus:ring-violet-200"
+          : "border border-slate-200 bg-slate-50 text-slate-950 placeholder:text-slate-400 focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"}`}
       />
     </label>
   );
