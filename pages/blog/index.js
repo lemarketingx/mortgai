@@ -67,8 +67,15 @@ function ArticleCard({ post }) {
 export default function BlogIndexPage() {
   const categories = ["הכל", ...new Set(blogPosts.map((p) => p.category))];
   const [active, setActive] = useState("הכל");
+  const [query, setQuery] = useState("");
 
-  const filtered = active === "הכל" ? blogPosts : blogPosts.filter((p) => p.category === active);
+  const filteredByCategory = active === "הכל" ? blogPosts : blogPosts.filter((p) => p.category === active);
+  const normalizedQuery = query.trim().toLowerCase();
+  const filtered = filteredByCategory.filter((p) => {
+    if (!normalizedQuery) return true;
+    const haystack = [p.h1, p.excerpt, p.category, ...(p.keywords || [])].join(" ").toLowerCase();
+    return haystack.includes(normalizedQuery);
+  });
 
   return (
     <>
@@ -111,6 +118,19 @@ export default function BlogIndexPage() {
         </div>
 
         <div className="max-w-5xl mx-auto px-4 py-10">
+          <div className="mb-6">
+            <label htmlFor="blog-search" className="block text-sm font-bold text-mort-ink mb-2">
+              חיפוש בתוך הבלוג
+            </label>
+            <input
+              id="blog-search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="לדוגמה: הון עצמי, אישור עקרוני, יחס החזר..."
+              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+            />
+          </div>
+
           {/* ── Category filter ── */}
           <div className="flex gap-2 flex-wrap mb-8">
             {categories.map((cat) => (
@@ -132,7 +152,7 @@ export default function BlogIndexPage() {
           </div>
 
           {filtered.length === 0 && (
-            <p className="text-center text-mort-muted py-16">אין מאמרים בקטגוריה זו עדיין.</p>
+            <p className="text-center text-mort-muted py-16">לא נמצאו מאמרים שתואמים לחיפוש או לקטגוריה.</p>
           )}
 
           {/* ── Bottom CTA ── */}
