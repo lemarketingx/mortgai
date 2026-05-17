@@ -112,17 +112,24 @@
   body:has(select:focus) .mobile-sticky-cta {
     display: none;
   }
-
-  #lead .grid.items-stretch {
-    align-items: start;
-  }
-
-  #lead .grid.items-stretch > * {
-    align-self: start;
-  }
 }
 
 @layer utilities {
+  #lead .grid.items-stretch {
+    align-items: start !important;
+  }
+
+  #lead .grid.items-stretch > * {
+    align-self: start !important;
+    height: auto !important;
+  }
+
+  #lead .rounded-\[34px\].bg-gradient-to-br {
+    align-self: start !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
   .animate-slide-up {
     animation: slideUp 0.25s ease-out forwards;
   }
