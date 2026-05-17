@@ -1207,7 +1207,7 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
           <TextField label="שם מלא" value={bottomLead.name} onChange={(value) => updateBottomLead("name", value)} autoComplete="name" required contrastMode="dark" />
           <TextField label="טלפון" value={bottomLead.phone} onChange={(value) => updateBottomLead("phone", value)} autoComplete="tel" placeholder="05X-XXXXXXX" required contrastMode="dark" />
           <TextField label="עיר" value={bottomLead.city} onChange={(value) => updateBottomLead("city", value)} autoComplete="address-level2" contrastMode="dark" />
-          <button type="submit" disabled={bottomLeadLoading || bottomLeadSent} className="min-h-12 rounded-2xl border border-violet-300 bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-[0_12px_28px_rgba(76,29,149,0.35)] transition hover:bg-violet-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-200 disabled:opacity-70">
+          <button type="submit" disabled={bottomLeadLoading || bottomLeadSent} className="min-h-12 rounded-2xl border border-white/80 bg-white px-5 py-3 text-sm font-black text-violet-900 shadow-[0_12px_28px_rgba(0,0,0,0.25)] transition hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40 disabled:opacity-70">
             {bottomLeadLoading ? "שולח..." : bottomLeadSent ? "נשלח בהצלחה" : "שליחה לנציג מקצועי"}
           </button>
         </form>

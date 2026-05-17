@@ -1,6 +1,6 @@
 export default function BrandLogo({ withTagline = true, className = "" }) {
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`inline-flex items-center gap-3 ${className}`} dir="ltr">
       <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
         <defs>
           <linearGradient id="finzoGrad" x1="0" y1="0" x2="1" y2="1">
@@ -14,13 +14,9 @@ export default function BrandLogo({ withTagline = true, className = "" }) {
       </svg>
       <span className="leading-tight">
         <span className="inline-flex items-end text-2xl font-black tracking-tight text-[#0B1B45]">
-          Finz
-          <span className="relative inline-flex pl-0.5">
-            o
-            <span className="absolute -top-0.5 -right-1 h-1.5 w-1.5 rounded-full bg-[#2563EB]" />
-          </span>
+          Finz<span className="relative inline-flex pl-0.5">o<span className="absolute -top-0.5 -right-1 h-1.5 w-1.5 rounded-full bg-[#2563EB]" /></span>
         </span>
-        {withTagline && <span className="hidden text-xs font-bold text-slate-500 sm:block">בדיקת זכאות חכמה למשכנתא בישראל</span>}
+        {withTagline && <span className="hidden text-xs font-bold text-slate-500 sm:block" dir="rtl">בדיקת זכאות חכמה למשכנתא בישראל</span>}
       </span>
     </div>
   );
