@@ -51,6 +51,7 @@ const navLinks = [
   ["דף הבית", "#home"],
   ["מחשבון משכנתא", "#eligibility-check"],
   ["מחזור משכנתא", "#refinance"],
+  ["עלות עסקה", "/transaction-cost"],
   ["איך זה עובד", "#how-it-works"],
   ["שאלות נפוצות", "#faq"],
   ["בלוג", "/blog"],
@@ -535,6 +536,7 @@ export default function Home() {
         <TrustContentSection />
         <SeoContentSection />
         <RefinanceSection />
+        <TransactionCostToolCard />
         <LeadSection
           lead={lead}
           updateLead={updateLead}
@@ -991,6 +993,61 @@ function RefinanceSection() {
   );
 }
 
+function TransactionCostToolCard() {
+  return (
+    <section className="border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white py-14 sm:py-16">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="grid items-center gap-6 rounded-[32px] border border-violet-100 bg-white p-6 shadow-[0_16px_50px_rgba(15,23,42,0.07)] sm:p-8 lg:grid-cols-2">
+          <div>
+            <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-800">
+              כלי חישוב
+            </span>
+            <h2 className="mt-4 text-2xl font-black leading-tight text-slate-950 sm:text-3xl">
+              מחשבון עלות עסקה מלאה
+            </h2>
+            <p className="mt-3 text-base leading-7 text-slate-600">
+              גלו כמה באמת תעלה הדירה כולל מס רכישה, עו״ד, תיווך ועלויות נלוות.
+            </p>
+            <ul className="mt-4 space-y-2 text-sm font-bold text-slate-600">
+              <li>• מס רכישה לפי מדרגות 2024</li>
+              <li>• שכר טרחת עו״ד + מע״מ</li>
+              <li>• דמי תיווך, שמאות, רישום ועוד</li>
+            </ul>
+          </div>
+          <div className="flex flex-col items-start gap-4 lg:items-end">
+            <div className="w-full rounded-[24px] border border-slate-100 bg-slate-50 p-5 lg:max-w-xs">
+              <p className="text-xs font-black text-slate-500">דוגמה: דירה ב-2 מיליון ₪</p>
+              <div className="mt-3 space-y-2">
+                {[
+                  ["מס רכישה (דירה יחידה)", "₪731"],
+                  ['שכ"ט עו"ד (0.75% + מע"מ)', "₪17,550"],
+                  ['תיווך (2% + מע"מ)', "₪46,800"],
+                  ["שמאות + עלויות נלוות", "₪11,000"],
+                ].map(([label, val]) => (
+                  <div key={label} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="font-semibold text-slate-600">{label}</span>
+                    <span className="shrink-0 font-black text-slate-900">{val}</span>
+                  </div>
+                ))}
+                <div className="mt-1 flex items-center justify-between gap-2 border-t border-slate-200 pt-2 text-sm">
+                  <span className="font-black text-slate-700">סה״כ עלויות נוספות</span>
+                  <span className="font-black text-violet-700">~₪76,081</span>
+                </div>
+              </div>
+            </div>
+            <a
+              href="/transaction-cost"
+              className="inline-flex w-full items-center justify-center rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:-translate-y-0.5 hover:bg-violet-800 lg:w-auto"
+            >
+              חשב עלות עסקה
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function TrustContentSection() {
   const trustBlocks = [
     {
@@ -1271,6 +1328,11 @@ function MobileStickyCta({ onCtaClick, hidden }) {
           className="rounded-full border border-violet-200 bg-violet-50 px-4 py-3 text-center text-sm font-black text-violet-800"
         >
           השאר פרטים
+        </a>
+      </div>
+      <div className="mx-auto mt-2 flex max-w-sm justify-center">
+        <a href="/transaction-cost" className="text-xs font-black text-violet-600 hover:text-violet-800">
+          מחשבון עלות עסקה ←
         </a>
       </div>
     </div>
