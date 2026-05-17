@@ -517,6 +517,7 @@ export default function Home() {
         <a href="#eligibility-check" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:right-3 focus:z-[60] focus:rounded-full focus:bg-white focus:px-4 focus:py-2">דילוג למחשבון</a>
         <Header onCtaClick={handleCtaClick} />
         <Hero onCtaClick={handleCtaClick} />
+        <CommandCenterSection onCtaClick={handleCtaClick} />
         <TrustStrip />
         <HowItWorks />
         <CalculatorSection
@@ -681,6 +682,69 @@ function HeroIllustration() {
   );
 }
 
+function CommandCenterSection({ onCtaClick }) {
+  const actions = [
+    {
+      title: "בדיקת זכאות",
+      text: "המסלול הראשי לרוכשי דירה: הון עצמי, החזר חודשי ויחס מימון.",
+      href: "#eligibility-check",
+      cta: "להתחיל בדיקה",
+      tone: "bg-violet-700 text-white border-violet-700 shadow-[0_18px_44px_rgba(109,40,217,0.24)]",
+    },
+    {
+      title: "מחזור משכנתא",
+      text: "כבר יש משכנתא? בדקו חיסכון, נקודת איזון ועלויות מחזור.",
+      href: "/refinance-check",
+      cta: "בדיקת מחזור",
+      tone: "bg-white text-slate-950 border-slate-200 shadow-sm",
+    },
+    {
+      title: "מדריכים ובלוג",
+      text: "הסברים קצרים לפני החלטות: LTV, יחס החזר, ריביות ותמהיל.",
+      href: "/blog",
+      cta: "לקריאה",
+      tone: "bg-white text-slate-950 border-slate-200 shadow-sm",
+    },
+  ];
+
+  return (
+    <section aria-label="מרכז פעולות משכנתא" className="border-b border-slate-200 bg-slate-50/80 py-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-black text-violet-700">מרכז פעולות מהיר</p>
+            <h2 className="mt-1 text-2xl font-black text-slate-950">בחרו את הבדיקה שמתאימה לשלב שלכם</h2>
+          </div>
+          <p className="max-w-xl text-sm font-bold leading-6 text-slate-600">
+            קודם מקבלים תמונת מצב עצמאית וברורה. רק אם תרצו, ממשיכים לבדיקה מקצועית עם פרטים שכבר מסודרים.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {actions.map((item, index) => (
+            <a
+              key={item.title}
+              href={item.href}
+              onClick={() => item.href.startsWith("#") && onCtaClick?.(`command_center_${index + 1}`)}
+              className={`group flex h-full flex-col justify-between rounded-[24px] border p-5 transition hover:-translate-y-0.5 ${item.tone}`}
+            >
+              <div>
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-current/10 text-sm font-black">
+                  {index + 1}
+                </span>
+                <h3 className="mt-5 text-xl font-black">{item.title}</h3>
+                <p className={`mt-2 leading-7 ${index === 0 ? "text-violet-100" : "text-slate-600"}`}>{item.text}</p>
+              </div>
+              <span className={`mt-5 text-sm font-black ${index === 0 ? "text-white" : "text-violet-700"}`}>
+                {item.cta} <span aria-hidden="true">←</span>
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function TrustStrip() {
   return (
     <section className="border-y border-slate-200 bg-slate-50/80">
@@ -771,12 +835,27 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation, 
           text="ממלאים רק נתונים בסיסיים, ומקבלים אומדן ראשוני שמתעדכן בזמן אמת."
         />
 
+        <div className="mt-8 grid gap-3 md:grid-cols-3">
+          <InfoPill title="מה צריך להכין?" text="מחיר נכס, הון עצמי, הכנסה נטו והתחייבויות קיימות." />
+          <InfoPill title="מה מקבלים?" text="אומדן זכאות, החזר חודשי, יחס החזר ו-LTV בזמן אמת." />
+          <InfoPill title="מה לא קורה כאן?" text="אין פגיעה בדירוג אשראי ואין התחייבות להמשך תהליך." />
+        </div>
+
         <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
           <MortgageForm data={data} updateData={updateData} analysis={analysis} ready={ready} recommendation={recommendation} trackEvent={trackEvent} eventSentRef={eventSentRef} />
           <LiveResultPanel analysis={analysis} ready={ready} recommendation={recommendation} />
         </div>
       </div>
     </section>
+  );
+}
+
+function InfoPill({ title, text }) {
+  return (
+    <article className="rounded-[22px] border border-slate-200 bg-white/85 p-5 shadow-sm">
+      <h3 className="text-base font-black text-slate-950">{title}</h3>
+      <p className="mt-2 text-sm font-bold leading-6 text-slate-600">{text}</p>
+    </article>
   );
 }
 
