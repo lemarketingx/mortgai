@@ -308,7 +308,7 @@ export default function LeadPage() {
             </p>
           </form>
 
-          <aside className="grid content-start gap-4">
+          <aside className="grid content-start gap-4 self-start">
             <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-sm font-black text-slate-600">ניקוד ליד בזמן אמת</p>
               <div className="mt-3 flex items-end gap-3">
@@ -339,6 +339,21 @@ export default function LeadPage() {
                 sub={scoring.debtRatio > 35 ? "⚠ גבולי" : scoring.debtRatio > 0 ? "תקין" : ""}
               />
               <Metric label="עדיפות טיפול" value={scoring.priority} />
+            </div>
+
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-sm font-black text-slate-800">מה קורה אחרי השליחה?</p>
+              <ol className="mt-3 grid gap-2 text-sm font-semibold text-slate-600">
+                <li>1. נבדוק את הנתונים שהזנת</li>
+                <li>2. נזהה נקודות שיכולות להשפיע על אישור</li>
+                <li>3. נציג מקצועי יחזור אליך להמשך בדיקה</li>
+                <li>4. תקבל הכוונה ראשונית ללא התחייבות</li>
+              </ol>
+              <div className="mt-4 grid gap-2 text-xs font-bold text-slate-500">
+                <span className="inline-flex w-fit rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-800">ללא התחייבות</span>
+                <span className="inline-flex w-fit rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-800">לא מהווה אישור בנקאי</span>
+                <span className="inline-flex w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">הפרטים ישמשו לחזרה אליך בלבד</span>
+              </div>
             </div>
           </aside>
         </div>

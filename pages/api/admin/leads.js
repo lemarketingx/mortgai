@@ -1,4 +1,4 @@
-import { COMMISSION_STATUSES, LEAD_STATUSES, LeadStoreError, getSupabaseConfigStatus, readAdvisors, readLeads, updateLead } from "../../../lib/leadsStore";
+import { COMMISSION_STATUSES, LEAD_STATUSES, LeadStoreError, deleteLead, getSupabaseConfigStatus, readAdvisors, readLeads, updateLead } from "../../../lib/leadsStore";
 import { hasAdminSession } from "../../../lib/adminAuth";
 import { adminLeadBulkPatchSchema, adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
 
@@ -105,6 +105,27 @@ export default async function handler(req, res) {
       return res.status(200).json({ lead });
     } catch (error) {
       return storeError(res, error, "LEAD_UPDATE_FAILED");
+    }
+  }
+
+  if (req.method === "DELETE") {
+    const body = req.body || {};
+    try {
+      if (Array.isArray(body.ids)) {
+        const ids = body.ids.filter(Boolean);
+        if (!ids.length) return apiError(res, 400, "LEAD_DELETE_FAILED", "No lead ids provided");
+        const results = await Promise.allSettled(ids.map((id) => deleteLead(id)));
+        const deleted = results.filter((result) => result.status === "fulfilled").length;
+        const failed = results.length - deleted;
+        return res.status(200).json({ ok: true, deleted, failed });
+      }
+
+      if (!body.id) return apiError(res, 400, "LEAD_DELETE_FAILED", "Lead id is required");
+      const deletedLead = await deleteLead(body.id);
+      if (!deletedLead) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
+      return res.status(200).json({ ok: true, deleted: 1, lead: deletedLead });
+    } catch (error) {
+      return storeError(res, error, "LEAD_DELETE_FAILED");
     }
   }
 
