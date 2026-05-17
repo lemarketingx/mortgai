@@ -1,3 +1,7 @@
+// LOCKED BRAND COMPONENT
+// Do not rewrite this logo in future feature tasks.
+// The site is RTL, so the English wordmark must remain isolated with dir="ltr" + unicodeBidi.
+// Changing this component previously caused the logo to render incorrectly as oFinz.
 export default function BrandLogo({ withTagline = true, className = "" }) {
   return (
     <div className={`inline-flex items-center gap-3 ${className}`} dir="ltr" aria-label="Finzo" style={{ unicodeBidi: "isolate" }}>
