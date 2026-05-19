@@ -30,6 +30,13 @@ const QUALITY_TAG_VARIANT = {
   "חלש": "danger",   // bg-red-50 text-red-700 border-red-100 — risk signal preserved
 };
 
+// Consumer-safe display labels for internal quality values
+const QUALITY_CONSUMER_LABEL = {
+  "חם": "נראה חזק",
+  "בינוני": "יש מה לשפר",
+  "חלש": "דורש התייחסות",
+};
+
 // Map priority to StatusDot status
 const PRIORITY_TO_STATUS = {
   "גבוה": "won",
@@ -203,7 +210,7 @@ export default function LeadPage() {
       setSent(true);
       addToast({ title: "הפנייה נשלחה בהצלחה", description: "נחזור אליכם בהקדם.", variant: "success" });
     } catch {
-      addToast({ title: "הפנייה לא נשלחה", description: "בדוק את חיבור ה־CRM או נסה שוב.", variant: "danger" });
+      addToast({ title: "הפנייה לא נשלחה", description: "נסו שוב, או צרו קשר ישירות.", variant: "danger" });
     } finally {
       setLoading(false);
     }
@@ -226,11 +233,11 @@ export default function LeadPage() {
             className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl sm:p-8"
           >
             <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-black text-violet-800">
-              טופס סינון לידים חכם
+              בדיקת זכאות ראשונית
             </span>
             <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">בדיקת זכאות מורחבת למשכנתא</h1>
             <p className="mt-2 max-w-2xl text-sm font-bold leading-7 text-slate-600">
-              הטופס אוסף פרטים מלאים כדי לדרג את איכות הליד ולהעריך התאמה לטיפול מול יועץ.
+              הטופס עוזר לנו להבין את מצבך הפיננסי ולהציג בדיקת זכאות ראשונית למשכנתא או למחזור.
             </p>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -321,10 +328,7 @@ export default function LeadPage() {
                 </div>
                 <p className="mt-3 text-xl font-black text-emerald-800">הפנייה נשלחה בהצלחה</p>
                 <p className="mt-1 text-sm font-semibold text-emerald-700">נבדוק את הנתונים ונחזור אליכם בהקדם האפשרי.</p>
-                <div className="mt-4 flex items-center justify-center gap-3">
-                  <span className="text-sm font-black text-emerald-700">ניקוד: {scoring.score}/100</span>
-                  <Tag variant={QUALITY_TAG_VARIANT[scoring.quality] ?? "default"}>{scoring.quality}</Tag>
-                </div>
+                <p className="mt-3 text-sm font-bold text-emerald-700">נציג מקצועי יחזור אליכם בהקדם.</p>
               </div>
             )}
 
@@ -346,16 +350,15 @@ export default function LeadPage() {
           >
             {/* Score panel */}
             <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-sm font-black text-slate-600">ניקוד ליד בזמן אמת</p>
+              <p className="text-sm font-black text-slate-600">סיכום הנתונים שלך</p>
               <div className="mt-3 flex items-end gap-3">
                 <span className={`text-5xl font-black text-slate-950 ${loading ? "animate-pulse" : ""}`}>
                   {scoring.score}
                 </span>
                 <span className="text-sm font-black text-slate-500">/ 100</span>
               </div>
-              {/* Tag replaces the ad-hoc qualityBadge function + inline badge */}
               <Tag variant={QUALITY_TAG_VARIANT[scoring.quality] ?? "default"} className="mt-3">
-                {scoring.quality}
+                {QUALITY_CONSUMER_LABEL[scoring.quality] ?? scoring.quality}
               </Tag>
               <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100">
                 <div
@@ -383,7 +386,7 @@ export default function LeadPage() {
               />
               {/* Priority metric with StatusDot indicator */}
               <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                <span className="block text-xs font-black text-slate-500">עדיפות טיפול</span>
+                <span className="block text-xs font-black text-slate-500">רמת מוכנות</span>
                 <div className="mt-1 flex items-center gap-2">
                   <StatusDot status={PRIORITY_TO_STATUS[scoring.priority] ?? "new"} label="" />
                   <strong className="text-xl font-black text-slate-950">{scoring.priority}</strong>
