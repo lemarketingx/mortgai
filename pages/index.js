@@ -759,6 +759,9 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
             <li className="flex items-center gap-2"><CheckIcon /><span>פרטיות מלאה ושימוש במידע לצורך חזרה בלבד</span></li>
             <li className="flex items-center gap-2"><CheckIcon /><span>שיחה מקצועית קצרה להבנת הצעד הבא</span></li>
           </ul>
+          <a href="/lead" className="mt-5 block text-center text-sm font-bold text-violet-700 hover:text-violet-800 hover:underline">
+            רוצים בדיקה מעמיקה יותר? עברו לטופס המפורט ←
+          </a>
         </div>
 
         <form
