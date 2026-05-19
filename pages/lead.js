@@ -1,6 +1,8 @@
 import Head from "next/head";
 import { useMemo, useState } from "react";
 import { cleanNumber, formatILS, formatPct } from "../lib/format";
+import { Tag, StatusDot } from "../components/ui/Tag";
+import { ToastContainer, useToast } from "../components/ui/Toast";
 
 const initialLead = {
   name: "",
@@ -19,6 +21,20 @@ const initialLead = {
   requestedContactTime: "בוקר",
   creditStatus: "תקין",
   notes: "",
+};
+
+// Map lead quality to Tag variant (infrastructure use of shared primitive)
+const QUALITY_TAG_VARIANT = {
+  "חם": "upgrade",   // bg-[#edfaf3] text-[#0F7A48] — green, matches current emerald style
+  "בינוני": "refi",  // bg-[#fff3ec] text-[#C25E2A] — amber-orange, matches current amber style
+  "חלש": "default",  // neutral — weak leads get a calm neutral badge
+};
+
+// Map priority to StatusDot status
+const PRIORITY_TO_STATUS = {
+  "גבוה": "won",
+  "רגיל": "progress",
+  "נמוך": "lost",
 };
 
 function toNumber(value) {
@@ -93,12 +109,13 @@ function MoneyField({ label, value, onChange, placeholder }) {
   );
 }
 
-function TextField({ label, value, onChange, placeholder, type = "text" }) {
+function TextField({ label, value, onChange, placeholder, type = "text", inputMode }) {
   return (
     <label className="block">
       <span className="mb-1 block text-xs font-black text-slate-500">{label}</span>
       <input
         type={type}
+        inputMode={inputMode}
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || label}
@@ -133,17 +150,12 @@ function Metric({ label, value, sub }) {
   );
 }
 
-function qualityBadge(quality) {
-  if (quality === "חם") return "border-emerald-200 bg-emerald-50 text-emerald-800";
-  if (quality === "בינוני") return "border-amber-200 bg-amber-50 text-amber-800";
-  return "border-red-200 bg-red-50 text-red-800";
-}
-
 export default function LeadPage() {
   const [lead, setLead] = useState(initialLead);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const { toasts, addToast, removeToast } = useToast();
 
   const scoring = useMemo(() => scoreLead(lead), [lead]);
   const mortgageAmount = toNumber(lead.mortgageAmount) || Math.max(0, toNumber(lead.propertyPrice) - toNumber(lead.equityAmount));
@@ -189,8 +201,9 @@ export default function LeadPage() {
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result?.ok !== true) throw new Error(result?.message || result?.error || "LEAD_FAILED");
       setSent(true);
+      addToast({ title: "הפנייה נשלחה בהצלחה", description: "נחזור אליכם בהקדם.", variant: "success" });
     } catch {
-      setError("הפנייה לא נשלחה. בדוק את חיבור ה־CRM או נסה שוב.");
+      addToast({ title: "הפנייה לא נשלחה", description: "בדוק את חיבור ה־CRM או נסה שוב.", variant: "danger" });
     } finally {
       setLoading(false);
     }
@@ -205,7 +218,13 @@ export default function LeadPage() {
 
       <section className="mx-auto max-w-6xl">
         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-          <form onSubmit={submit} className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl sm:p-8">
+
+          {/* ── FORM ── */}
+          <form
+            onSubmit={submit}
+            aria-busy={loading ? "true" : "false"}
+            className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl sm:p-8"
+          >
             <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-black text-violet-800">
               טופס סינון לידים חכם
             </span>
@@ -216,7 +235,7 @@ export default function LeadPage() {
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <TextField label="שם מלא" value={lead.name} onChange={(v) => update("name", v)} placeholder="ישראל ישראלי" />
-              <TextField label="טלפון" value={lead.phone} onChange={(v) => update("phone", v)} placeholder="05X-XXXXXXX" />
+              <TextField label="טלפון" value={lead.phone} onChange={(v) => update("phone", v)} placeholder="05X-XXXXXXX" inputMode="tel" />
               <TextField label="עיר מגורים" value={lead.city} onChange={(v) => update("city", v)} placeholder="תל אביב" />
               <TextField label="עיר הנכס" value={lead.propertyCity} onChange={(v) => update("propertyCity", v)} placeholder="רחובות" />
               <MoneyField label="מחיר הנכס" value={lead.propertyPrice} onChange={(v) => update("propertyPrice", v)} />
@@ -287,13 +306,26 @@ export default function LeadPage() {
               </label>
             </div>
 
+            {/* Validation error — stays inline near the form */}
             {error && (
               <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>
             )}
+
+            {/* Success state card — replaces the inline success paragraph */}
             {sent && (
-              <p role="status" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-700">
-                הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.
-              </p>
+              <div role="status" className="mt-4 rounded-[28px] border border-emerald-200 bg-emerald-50 p-6 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <p className="mt-3 text-xl font-black text-emerald-800">הפנייה נשלחה בהצלחה</p>
+                <p className="mt-1 text-sm font-semibold text-emerald-700">נבדוק את הנתונים ונחזור אליכם בהקדם האפשרי.</p>
+                <div className="mt-4 flex items-center justify-center gap-3">
+                  <span className="text-sm font-black text-emerald-700">ניקוד: {scoring.score}/100</span>
+                  <Tag variant={QUALITY_TAG_VARIANT[scoring.quality] ?? "default"}>{scoring.quality}</Tag>
+                </div>
+              </div>
             )}
 
             <button
@@ -301,28 +333,39 @@ export default function LeadPage() {
               disabled={loading || sent}
               className="mt-5 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {loading ? "שולח..." : sent ? "נשלח בהצלחה" : "שליחת פנייה לבדיקת זכאות"}
+              {loading ? "שולח..." : sent ? "נשלח בהצלחה ✓" : "שליחת פנייה לבדיקת זכאות"}
             </button>
             <p className="mt-3 text-center text-xs font-bold text-slate-500">
               בדיקת זכאות ללא התחייבות. המידע נשמר לצורך חזרה בלבד.
             </p>
           </form>
 
-          <aside className="grid content-start gap-4 self-start">
+          {/* ── SCORING SIDEBAR ── */}
+          <aside
+            className={`grid content-start gap-4 self-start transition-opacity ${loading ? "pointer-events-none opacity-60" : ""}`}
+          >
+            {/* Score panel */}
             <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-sm font-black text-slate-600">ניקוד ליד בזמן אמת</p>
               <div className="mt-3 flex items-end gap-3">
-                <span className="text-5xl font-black text-slate-950">{scoring.score}</span>
+                <span className={`text-5xl font-black text-slate-950 ${loading ? "animate-pulse" : ""}`}>
+                  {scoring.score}
+                </span>
                 <span className="text-sm font-black text-slate-500">/ 100</span>
               </div>
-              <span className={`mt-3 inline-flex rounded-full border px-3 py-1 text-sm font-black ${qualityBadge(scoring.quality)}`}>
+              {/* Tag replaces the ad-hoc qualityBadge function + inline badge */}
+              <Tag variant={QUALITY_TAG_VARIANT[scoring.quality] ?? "default"} className="mt-3">
                 {scoring.quality}
-              </span>
+              </Tag>
               <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-violet-700 transition-all duration-300" style={{ width: `${scoring.score}%` }} />
+                <div
+                  className="h-full rounded-full bg-violet-700 transition-all duration-300"
+                  style={{ width: `${scoring.score}%` }}
+                />
               </div>
             </div>
 
+            {/* Metrics */}
             <div className="grid gap-3">
               <Metric
                 label="סכום משכנתא"
@@ -338,9 +381,17 @@ export default function LeadPage() {
                 value={scoring.debtRatio > 0 ? pct(scoring.debtRatio) : "-"}
                 sub={scoring.debtRatio > 35 ? "⚠ גבולי" : scoring.debtRatio > 0 ? "תקין" : ""}
               />
-              <Metric label="עדיפות טיפול" value={scoring.priority} />
+              {/* Priority metric with StatusDot indicator */}
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <span className="block text-xs font-black text-slate-500">עדיפות טיפול</span>
+                <div className="mt-1 flex items-center gap-2">
+                  <StatusDot status={PRIORITY_TO_STATUS[scoring.priority] ?? "new"} label="" />
+                  <strong className="text-xl font-black text-slate-950">{scoring.priority}</strong>
+                </div>
+              </div>
             </div>
 
+            {/* Info card */}
             <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-sm font-black text-slate-800">מה קורה אחרי השליחה?</p>
               <ol className="mt-3 grid gap-2 text-sm font-semibold text-slate-600">
@@ -358,6 +409,8 @@ export default function LeadPage() {
           </aside>
         </div>
       </section>
+
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </main>
   );
 }
