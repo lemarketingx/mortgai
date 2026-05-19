@@ -58,12 +58,10 @@ const navLinks = [
 ];
 
 const trustItems = [
-  { text: "לפי כללי בנק ישראל", icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" },
-  { text: "תוצאה ראשונית תוך דקות", icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" },
-  { text: "100% מאובטח", icon: "M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" },
-  { text: "ללא התחייבות", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
-,
-  { text: "מותאם לישראלים", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
+  { text: "הנתונים נשארים אצלנו ולא נשלחים לבנק ללא אישורך", icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" },
+  { text: "הבדיקה היא אומדן ראשוני בלבד — לא אישור בנקאי", icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" },
+  { text: "המטרה היא לעזור לך להבין איפה אתה עומד לפני פנייה ליועץ או לבנק", icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+  { text: "תוצאה ראשונית תוך דקה — ללא עלות", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
 ];
 
 const steps = [
@@ -113,47 +111,42 @@ const repaymentOptions = [
 ];
 
 const wizardSteps = [
-  { key: "property", title: "פרטי הנכס" },
-  { key: "profile", title: "הכנסות והתחייבויות" },
-  { key: "terms", title: "תנאי משכנתא" },
-  { key: "review", title: "סיכום והמשך" },
+  { key: "property", title: "א. פרטי הנכס" },
+  { key: "profile", title: "ב. הכנסות והתחייבויות" },
+  { key: "terms", title: "ג. מצב אישי" },
+  { key: "review", title: "סיכום" },
 ];
 
 const faqItems = [
   {
-    question: "האם זו בדיקת זכאות רשמית?",
+    question: "האם FINZO מאשרת משכנתא?",
     answer:
-      "לא. זו סימולציה ראשונית לפי הנתונים שהוזנו. אישור בנקאי, אם יינתן, כפוף לבדיקת מסמכים, שמאות, נתוני אשראי ותנאי הבנק.",
+      "לא. FINZO היא כלי לאומדן ראשוני בלבד. הבדיקה מציגה חיווי התחלתי לפי הנתונים שהזנת, אבל אישור משכנתא בפועל ניתן רק על ידי בנק, לאחר בדיקת מסמכים, שמאות ונתוני אשראי.",
   },
   {
-    question: "כמה הון עצמי צריך בישראל?",
+    question: "האם הבדיקה מחייבת אותי?",
     answer:
-      "בדרך כלל, מגבלות המימון המקובלות לדירה ראשונה יכולות להגיע עד כ-75%, למשפרי דיור עד כ-70%, ולדירה להשקעה עד כ-50%, בכפוף למדיניות הגוף המממן. המחשבון מציג אומדן ראשוני אם חסר הון עצמי לפי סוג העסקה.",
+      "לא. הבדיקה היא ראשונית ואינה מחייבת לשום פעולה. אין עלות, אין חוזה ואין שום התחייבות מצדך — גם אם תשאיר פרטים.",
+  },
+  {
+    question: "האם הנתונים נשלחים לבנק?",
+    answer:
+      "לא. הנתונים שאתה מזין נשמרים אצלנו בלבד ולא מועברים לאף בנק ללא אישורך המפורש. אנחנו לא חולקים מידע אישי עם גורמים חיצוניים ללא הסכמה.",
+  },
+  {
+    question: "מה קורה אחרי שאני משאיר פרטים?",
+    answer:
+      "יועץ מקצועי חוזר אליך לשיחה קצרה, עובר איתך על האומדן הראשוני ומכוון אותך לצעד הבא — ללא התחייבות ולפי הצורך שלך. אין לחץ ואין מכירות אגרסיביות.",
+  },
+  {
+    question: "כמה הון עצמי צריך?",
+    answer:
+      "בדרך כלל, מגבלות המימון המקובלות לדירה ראשונה מגיעות עד כ-75%, למשפרי דיור עד כ-70%, ולדירה להשקעה עד כ-50%, בכפוף למדיניות הגוף המממן. המחשבון מציג אומדן ראשוני אם חסר הון עצמי לפי סוג העסקה.",
   },
   {
     question: "מהו יחס החזר תקין?",
     answer:
-      "ברוב המקרים נהוג לראות יחס החזר סביב 30%-35% כטווח נוח יותר לבדיקה. יחס החזר גבוה, סביב 35%-40% ומעלה, עשוי להקשות על קבלת אישור או להשפיע על תנאי ההלוואה, לצד בדיקת הלוואות קיימות, יציבות הכנסה ויתרה למחיה.",
-  },
-  {
-    question: "מתי כדאי לדבר עם יועץ?",
-    answer:
-      "כאשר יחס ההחזר גבולי, חסר הון עצמי, יש הלוואות קיימות או כשאתם רוצים להשוות תמהיל וריביות לפני פנייה לבנק.",
-  },
-  {
-    question: "איך מחשבים החזר חודשי משוער למשכנתא?",
-    answer:
-      "החזר חודשי מושפע מסכום המשכנתא, תקופת ההחזר, הריבית, סוג ההצמדה ושיטת ההחזר. המחשבון מציג אומדן לפי הנתונים שהוזנו, אך הריבית בפועל תיקבע רק לאחר בדיקה מול בנק או יועץ.",
-  },
-  {
-    question: "מהו אחוז מימון LTV ולמה הוא חשוב?",
-    answer:
-      "LTV הוא היחס בין סכום המשכנתא לבין שווי הנכס. בישראל נהוגות מגבלות מימון לפי סוג העסקה ולפי מדיניות הגוף המממן, ולכן אחוז מימון גבוה עשוי להשפיע על בדיקת הבקשה ועל התנאים שהבנק עשוי להציע.",
-  },
-  {
-    question: "האם המחשבון מתאים גם לפני חתימת חוזה?",
-    answer:
-      "כן. הבדיקה נועדה לתת תמונת מצב ראשונית לפני פנייה לבנק או חתימת חוזה, כדי להבין החזר חודשי, הון עצמי נדרש, יחס החזר ונקודות שעשויות להשפיע על בדיקת הבקשה.",
+      "ברוב המקרים נהוג לראות יחס החזר סביב 30%-35% כטווח נוח לבדיקה. יחס החזר גבוה מ-40% עשוי להקשות על קבלת אישור, תלוי בהכנסה, בהלוואות קיימות וביתרה למחיה.",
   },
 ];
 
@@ -584,7 +577,7 @@ function Header({ onCtaClick }) {
           aria-label="מעבר מהיר למחשבון זכאות"
           className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800"
         >
-          בדיקת זכאות חינם
+          בדקו זכאות עכשיו
         </a>
       </div>
     </header>
@@ -598,13 +591,13 @@ function Hero({ onCtaClick }) {
       <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2">
         <div className="mx-auto max-w-2xl text-center lg:text-right">
           <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-black text-violet-800">
-            בדיקת זכאות חכמה למשכנתא בישראל
+            בדיקה ראשונית · ללא עלות · ללא התחייבות
           </span>
           <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-            האם יאשרו לכם משכנתא?
+            בדיקת זכאות למשכנתא בתוך דקה — בלי התחייבות
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg font-semibold leading-8 text-slate-600 lg:mx-0">
-            בדיקת זכאות חכמה למשכנתא לפי נתונים פיננסיים, יחס החזר והנחיות בנק ישראל.
+            FINZO מנתחת את הנתונים שלך ומציגה אומדן ראשוני לסיכוי אישור, החזר חודשי ויחס החזר — בצורה פשוטה וברורה.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
             <a
@@ -613,18 +606,11 @@ function Hero({ onCtaClick }) {
               aria-label="התחלת בדיקת זכאות"
               className="rounded-full bg-violet-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-violet-800"
             >
-              בדיקת זכאות חינם
-            </a>
-            <a
-              href="/refinance-check"
-              aria-label="מעבר לבדיקת מחזור משכנתא"
-              className="rounded-full border border-violet-200 bg-white px-8 py-4 text-center text-base font-black text-violet-800 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
-            >
-              בדיקת מחזור משכנתא
+              בדקו זכאות עכשיו
             </a>
           </div>
           <p className="mt-5 text-sm font-bold text-slate-500">
-            אומדן ראשוני · ללא התחייבות · לא מהווה אישור בנקאי
+            ללא עלות · ללא התחייבות · לא מועבר לבנק ללא אישורך
           </p>
           <a href="#eligibility-check" onClick={() => onCtaClick?.("hero")} className="mt-4 inline-flex items-center gap-2 text-sm font-black text-violet-700 hover:text-violet-800">
             <span>הבדיקה מתחילה כאן</span>
@@ -637,7 +623,7 @@ function Hero({ onCtaClick }) {
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
               <p className="text-xs font-black text-slate-500">תוצאה מיידית</p>
-              <p className="mt-1 text-lg font-black text-slate-900">יחס החזר + LTV</p>
+              <p className="mt-1 text-lg font-black text-slate-900">סיכוי אישור + החזר חודשי</p>
             </div>
           </div>
         </div>
@@ -701,8 +687,8 @@ function HowItWorks() {
     <section id="how-it-works" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
         eyebrow="איך זה עובד"
-        title="ארבעה צעדים פשוטים לפני שפונים לבנק"
-        text="תהליך קצר שמייצר תמונת מצב פיננסית ברורה, בלי עומס ובלי לחץ לפני קבלת החלטה."
+        title="מדקה אחת לתמונת מצב ראשונית"
+        text="תהליך קצר וברור — בלי ניירת, בלי בנקים ובלי לחץ. רק מידע שיעזור לך להחליט."
       />
       <div className="mt-10 grid gap-4 md:grid-cols-2">
         {steps.map((step, index) => (
@@ -762,9 +748,9 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation, 
     <section id="eligibility-check" className="bg-gradient-to-b from-slate-50 via-violet-50/40 to-white py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
-          eyebrow="מחשבון משכנתא"
-          title="בדיקה חכמה לפי הנתונים שלכם"
-          text="ממלאים רק נתונים בסיסיים, ומקבלים אומדן ראשוני שמתעדכן בזמן אמת."
+          eyebrow="בדיקת זכאות"
+          title="מלאו נתונים — קבלו אומדן ראשוני מיד"
+          text="כמה שאלות פיננסיות בסיסיות. תוצאה מיידית. ללא עלות ובלי שאף אחד מתקשר אליכם."
         />
 
         <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
@@ -846,12 +832,13 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
       </div>}
 
       {step === 3 && <div className="space-y-3 rounded-2xl bg-slate-50 p-4">
-        <p className="text-sm font-black text-slate-700">סיכום אומדן ראשוני לפני המשך</p>
-        <ResultSummaryRow label="אומדן בדיקה ראשונית" value={ready ? `${Math.round(analysis.approval)}%` : "--"} highlight={ready && analysis.approval >= 65} />
-        <ResultSummaryRow label="החזר חודשי" value={displayMoney(analysis.monthly, ready)} />
+        <p className="text-sm font-black text-slate-700">אומדן ראשוני — לא מחייב ולא אישור בנקאי</p>
+        <ResultSummaryRow label="אומדן סיכוי אישור" value={ready ? `${Math.round(analysis.approval)}%` : "--"} highlight={ready && analysis.approval >= 65} />
+        <ResultSummaryRow label="החזר חודשי משוער" value={displayMoney(analysis.monthly, ready)} />
         <ResultSummaryRow label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} warn={ready && analysis.mortgageOnlyRatio > 40} />
+        <ResultSummaryRow label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
         <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-600">{ready ? recommendation : "השלימו נתונים לקבלת חיווי מלא."}</p>
-        <a href="#lead" className="block rounded-full bg-violet-700 px-5 py-3 text-center text-sm font-black text-white">בדיקת זכאות חינם</a>
+        <a href="#lead" className="block rounded-full bg-violet-700 px-5 py-3 text-center text-sm font-black text-white">רוצים להבין איך לשפר? דברו איתנו</a>
       </div>}
 
       <div className="mt-5 flex gap-3">
@@ -867,10 +854,10 @@ function LiveResultPanel({ analysis, ready, recommendation }) {
 
   return (
     <aside className="rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-700 to-violet-950 p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.28)] sm:p-8">
-      <p className="text-sm font-black text-violet-100">{ready ? "ניתוח פיננסי בזמן אמת" : "מלאו נתונים לבדיקה חכמה"}</p>
+      <p className="text-sm font-black text-violet-100">{ready ? "תוצאה מתעדכנת בזמן אמת" : "מלאו נתונים לבדיקה ראשונית"}</p>
       <div className="mt-6 flex items-end justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-black">אומדן ראשוני לבדיקת משכנתא</h3>
+          <h3 className="text-2xl font-black">אומדן סיכוי אישור</h3>
           <p className="mt-2 text-violet-100">{approvalLabel(analysis, ready)}</p>
         </div>
         <div className="text-left">
@@ -888,23 +875,23 @@ function LiveResultPanel({ analysis, ready, recommendation }) {
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
         <DarkMetric label="החזר חודשי משוער" value={displayMoney(analysis.monthly, ready)} />
         <DarkMetric label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} />
-        <DarkMetric label="אחוז מימון LTV" value={displayPercent(analysis.ltv, ready)} />
         <DarkMetric label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
+        <DarkMetric label="אחוז מימון LTV" value={displayPercent(analysis.ltv, ready)} />
       </div>
 
       <div className="mt-6 rounded-3xl bg-white/10 p-5 ring-1 ring-white/10">
-        <p className="text-sm font-black text-violet-100">הבעיה המרכזית</p>
+        <p className="text-sm font-black text-violet-100">נקודת שיפור מרכזית</p>
         <p className="mt-2 text-lg font-black">{ready ? analysis.mainIssue : "הזינו נתונים כדי לקבל חיווי"}</p>
-        <p className="mt-3 leading-7 text-violet-50">{recommendation}</p>
+        <p className="mt-3 leading-7 text-violet-50">{ready ? recommendation : ""}</p>
       </div>
 
       <a
         href="#lead"
         className="mt-5 block rounded-full bg-white px-6 py-4 text-center text-base font-black text-violet-800 shadow-lg transition hover:bg-violet-50"
       >
-        בדיקת זכאות חינם
+        רוצים לשפר את הסיכוי? דברו איתנו
       </a>
-      <p className="mt-3 text-center text-xs font-bold text-violet-100">אומדן ראשוני בלבד • לא מהווה אישור בנקאי • ללא התחייבות</p>
+      <p className="mt-3 text-center text-xs font-bold text-violet-100">אומדן ראשוני בלבד · לא אישור בנקאי · ללא התחייבות</p>
     </aside>
   );
 }
@@ -919,22 +906,22 @@ function ResultsSection({ analysis, ready }) {
         : "לפי הנתונים, העסקה מכבידה על התקציב החודשי.";
 
   const resultCards = [
-    ["אומדן בדיקה ראשונית", ready ? `${Math.round(analysis.approval)}%` : "--", approvalLabel(analysis, ready)],
-    ["החזר חודשי משוער", displayMoney(analysis.monthly, ready), "לפי תקופה, ריבית ושיטת החזר"],
-    ["אינדיקציית סיכון (יחס החזר)", displayPercent(analysis.mortgageOnlyRatio, ready), "משכנתא בלבד מתוך הכנסה נטו"],
+    ["אומדן סיכוי אישור", ready ? `${Math.round(analysis.approval)}%` : "--", approvalLabel(analysis, ready)],
+    ["החזר חודשי משוער", displayMoney(analysis.monthly, ready), "אומדן לפי תקופה, ריבית ושיטת החזר — לא מחיר סופי"],
+    ["יחס החזר", displayPercent(analysis.mortgageOnlyRatio, ready), "אחוז מההכנסה נטו שמוקדש להחזר המשכנתא"],
+    ["יתרה למחיה", displayMoney(analysis.afterHousing, ready), "מה נשאר מדי חודש לאחר הוצאות, הלוואות ומשכנתא"],
+    ["נקודת שיפור מרכזית", ready ? analysis.mainIssue : "--", ready ? "פעולה אחת שעשויה לשפר את תוצאת הבדיקה" : ""],
     ["הון עצמי", ready ? (analysis.missingEquity > 0 ? `חסר ${formatILS(analysis.missingEquity)}` : "נראה תקין") : "--", "לפי אומדן LTV לסוג העסקה"],
-    ["יתרה למחיה", displayMoney(analysis.afterHousing, ready), "לאחר הוצאות, הלוואות ומשכנתא"],
-    ["סך ריבית צפויה", displayMoney(analysis.totalInterestEstimate, ready), "לאורך כל תקופת המשכנתא"],
-    ["סך תשלום צפוי", displayMoney(analysis.totalPaidEstimate, ready), "החזר כולל לאורך התקופה"],
-    ["מצב נוכחי מול חדש", ready ? formatILS(analysis.monthlyGap) : "--", flowText],
+    ["סך ריבית צפויה", displayMoney(analysis.totalInterestEstimate, ready), "אומדן עלות ריבית כוללת לאורך כל התקופה"],
+    ["מצב תזרים חודשי", ready ? formatILS(analysis.monthlyGap) : "--", flowText],
   ];
 
   return (
     <section id="results" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
-        eyebrow="תוצאות"
-        title="תוצאה ברורה לקבלת החלטה ראשונית"
-        text="הפרדה ברורה בין אומדן זכאות, החזר חודשי ואינדיקציית סיכון — לפני בדיקה מקצועית מול גורם אנושי."
+        eyebrow="אומדן ראשוני"
+        title="סיכום הבדיקה — בצורה פשוטה וברורה"
+        text="כל הנתונים המרכזיים במקום אחד. זכרו — זהו אומדן ראשוני בלבד ולא אישור בנקאי."
       />
 
       <div className="mt-10 grid gap-4 md:grid-cols-2">
@@ -995,32 +982,43 @@ function RefinanceSection() {
 function TrustContentSection() {
   const trustBlocks = [
     {
-      title: "איך אומדן הזכאות עובד",
-      text: "האומדן משלב יחס החזר, הון עצמי, אחוז מימון (LTV), התחייבויות ויציבות תזרים - כדי לתת תמונת מצב ראשונית בלבד לפני פנייה לבנק.",
+      icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z",
+      title: "הנתונים נשארים אצלנו",
+      text: "הנתונים שאתה מזין לא מועברים לאף בנק, יועץ או גורם חיצוני ללא אישורך המפורש. המידע משמש לבדיקה הראשונית בלבד.",
     },
     {
-      title: "מה עשוי להשפיע על הבדיקה",
-      text: "הבנקים בוחנים בדרך כלל הכנסה נטו, הלוואות קיימות, אחוז מימון, היסטוריית אשראי ויכולת החזר לאורך זמן. שינוי קטן בנתונים עשוי לשפר את תוצאת הבדיקה הראשונית.",
+      icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z",
+      title: "אומדן ראשוני — לא הבטחה",
+      text: "הבדיקה מבוססת על הנתונים שהזנת ונועדה לתת תמונת מצב התחלתית. אישור בנקאי בפועל כרוך בבדיקת מסמכים, שמאות ונתוני אשראי.",
     },
     {
-      title: "מה זה מחזור משכנתא",
-      text: "מחזור הוא החלפת תנאי המשכנתא הקיימת כדי להפחית החזר חודשי או עלות כוללת. בדיקה ראשונית מסייעת להבין אם הפוטנציאל מצדיק המשך תהליך.",
+      icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+      title: "המטרה שלנו — לעזור לך להבין",
+      text: "FINZO לא מוכרת משכנתאות ולא מרוויחה מהחלטות שלך. המטרה היא לעזור לך להבין איפה אתה עומד לפני פנייה ליועץ או לבנק.",
     },
     {
-      title: "ללא התחייבות",
-      text: "השימוש במחשבון ובפנייה ליועץ הוא ראשוני בלבד. אין התחייבות לתהליך, והמידע משמש לחזרה מקצועית בהתאם לבקשה שלכם.",
+      icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+      title: "ללא התחייבות בשום שלב",
+      text: "השימוש במחשבון ואפילו השארת פרטים לא מחייבים אותך לשום דבר. אתה בשליטה מלאה על ההמשך.",
     },
   ];
 
   return (
-    <section aria-labelledby="trust-content-title" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-      <SectionHeader eyebrow="שקיפות ואמינות" title="הבסיס המקצועי מאחורי האומדן" text="תוכן קצר וברור שמסביר מה נבדק, מה עשוי להשפיע על בדיקת הבקשה ומה המשמעות של בדיקה ללא התחייבות." />
-      <h2 id="trust-content-title" className="sr-only">מידע אמון והסבר מקצועי</h2>
+    <section id="why-finzo" aria-labelledby="trust-content-title" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+      <SectionHeader eyebrow="למה FINZO" title="שקיפות מלאה — לפני שמתחילים" text="אנחנו מאמינים שהחלטה פיננסית טובה מתחילה בהבנה ברורה של המצב, לא בלחץ מכירתי." />
+      <h2 id="trust-content-title" className="sr-only">למה לבחור בבדיקה עם FINZO</h2>
       <div className="mt-10 grid gap-4 md:grid-cols-2">
         {trustBlocks.map((item) => (
-          <article key={item.title} className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-xl font-black text-slate-950">{item.title}</h3>
-            <p className="mt-3 leading-7 text-slate-600">{item.text}</p>
+          <article key={item.title} className="flex gap-5 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
+              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d={item.icon} strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <div>
+              <h3 className="text-xl font-black text-slate-950">{item.title}</h3>
+              <p className="mt-2 leading-7 text-slate-600">{item.text}</p>
+            </div>
           </article>
         ))}
       </div>
@@ -1032,9 +1030,9 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
   return (
     <section id="lead" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
-        eyebrow="המשך מקצועי"
-        title="קבלו המשך בדיקה מקצועית"
-        text="השאירו פרטים ונציג מקצועי יוכל לחזור אליכם להמשך בדיקה."
+        eyebrow="כיוון ראשוני"
+        title="רוצים להבין איך לשפר את הסיכוי לאישור?"
+        text="השאירו פרטים ונחזור אליכם עם כיוון ראשוני לבדיקה מול יועץ מתאים."
       />
       <div className="mt-10 grid items-stretch gap-6 lg:grid-cols-2">
         <div className="rounded-[34px] bg-gradient-to-br from-violet-50 to-white p-7 ring-1 ring-violet-100">
@@ -1071,22 +1069,18 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
           aria-busy={leadLoading ? "true" : "false"}
           className="rounded-[34px] border border-slate-200 bg-white p-7 shadow-[0_24px_70px_rgba(15,23,42,0.10)]"
         >
+          <p className="mb-4 text-sm font-black text-slate-700">פרטים ליצירת קשר</p>
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField label="שם מלא" value={lead.name} onChange={(value) => updateLead("name", value)} autoComplete="name" required />
             <TextField label="טלפון" value={lead.phone} onChange={(value) => updateLead("phone", value)} placeholder="05X-XXXXXXX" autoComplete="tel" required />
-            <TextField label="עיר" value={lead.city} onChange={(value) => updateLead("city", value)} autoComplete="address-level2" />
-            <MoneyField label="סכום משכנתא" value={lead.mortgageAmount} onChange={(value) => updateLead("mortgageAmount", value)} />
+            <TextField label="עיר" value={lead.city} onChange={(value) => updateLead("city", value)} autoComplete="address-level2" className="sm:col-span-2" />
+          </div>
+
+          <p className="mb-4 mt-6 text-sm font-black text-slate-700">פרטי העסקה (אופציונלי — עוזר לנו להגיע מוכנים)</p>
+          <div className="grid gap-4 sm:grid-cols-2">
             <MoneyField label="מחיר נכס" value={lead.propertyPrice} onChange={(value) => updateLead("propertyPrice", value)} />
             <MoneyField label="הון עצמי" value={lead.equityAmount} onChange={(value) => updateLead("equityAmount", value)} />
             <MoneyField label="הכנסה חודשית נטו" value={lead.monthlyIncome} onChange={(value) => updateLead("monthlyIncome", value)} />
-            <MoneyField label="החזרי הלוואות קיימים" value={lead.debtLevel} onChange={(value) => updateLead("debtLevel", value)} />
-            <TextField label="סטטוס תעסוקה" value={lead.employmentStatus} onChange={(value) => updateLead("employmentStatus", value)} placeholder="שכיר / עצמאי / אחר" />
-            <TextField
-              label="סטטוס רכישה"
-              value={lead.purchaseStatus}
-              onChange={(value) => updateLead("purchaseStatus", value)}
-              placeholder="לפני חוזה / אחרי חוזה"
-            />
             <SelectField
               label="סטטוס חוזה"
               value={lead.contractStatus}
@@ -1097,47 +1091,21 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
                 ["signed", "חוזה חתום"],
               ]}
             />
-            <SelectField
-              label="האם קיימת משכנתא"
-              value={lead.hasExistingMortgage}
-              onChange={(value) => updateLead("hasExistingMortgage", value)}
-              options={[
-                ["no", "לא"],
-                ["yes", "כן"],
-              ]}
-            />
-            <SelectField
-              label="מצב אשראי"
-              value={lead.creditStatus}
-              onChange={(value) => updateLead("creditStatus", value)}
-              options={[
-                ["unknown", "לא ידוע"],
-                ["clean", "תקין"],
-                ["medium", "גבולי"],
-                ["bad", "בעייתי"],
-              ]}
-            />
             <TextField
               label="מועד נוח לחזרה"
               value={lead.requestedContactTime}
               onChange={(value) => updateLead("requestedContactTime", value)}
               placeholder="למשל: א'-ה' 17:00-20:00"
-            />
-            <TextField
-              label="הערות נוספות"
-              value={lead.notes}
-              onChange={(value) => updateLead("notes", value)}
-              placeholder="מידע נוסף שחשוב שנדע"
               className="sm:col-span-2"
             />
           </div>
 
           {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
-          {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-700">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
+          {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-700">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם עם כיוון ראשוני.</p>}
 
           <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
             <p className="text-sm font-black text-slate-700">מה קורה אחרי השליחה?</p>
-            <p className="mt-1 text-sm font-semibold text-slate-600">יועץ מקצועי חוזר אליכם לתיאום שיחה קצרה, מעבר על האומדן הראשוני והכוונה לצעד הבא. ללא התחייבות.</p>
+            <p className="mt-1 text-sm font-semibold text-slate-600">יועץ חוזר אליכם לשיחה קצרה, עובר על האומדן הראשוני ומכוון לצעד הבא. ללא התחייבות.</p>
           </div>
 
           <button
@@ -1145,10 +1113,10 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
             disabled={leadLoading || leadSent}
             className="mt-4 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "בדיקת זכאות חינם"}
+            {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה ✓" : "שלחו פרטים — נחזור אליכם"}
           </button>
           <p className="mt-3 text-center text-xs font-bold text-slate-500">
-            בדיקת זכאות חינם היא אומדן ראשוני בלבד, לא מהווה אישור בנקאי, וללא כל התחייבות. המידע נשמר באופן מאובטח לצורך חזרה בלבד.
+            ללא עלות · ללא התחייבות · המידע לא נשלח לבנק ללא אישורך
           </p>
         </form>
       </div>
@@ -1169,7 +1137,7 @@ function FaqSection({ openFaq, setOpenFaq }) {
   return (
     <section id="faq" className="bg-slate-100/60 py-16 sm:py-20">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
-        <SectionHeader eyebrow="שאלות נפוצות" title="מה חשוב לדעת לפני בדיקת משכנתא?" text="תשובות קצרות לשאלות שעולות לפני פנייה לבנק או ליועץ." />
+        <SectionHeader eyebrow="שאלות נפוצות" title="שאלות שכולם שואלים לפני שמתחילים" text="תשובות ישירות ופשוטות — בלי עמימות ובלי שיווק." />
         <div className="mt-10 space-y-3">
           {faqItems.map((item, index) => {
             const isOpen = openFaq === index;
@@ -1202,8 +1170,8 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
   return (
     <section id="bottom-lead" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
       <div className="rounded-[30px] border border-violet-200/70 bg-gradient-to-br from-slate-950 via-violet-950 to-violet-900 p-6 text-white shadow-[0_28px_70px_rgba(46,16,101,0.35)] sm:p-8">
-        <h2 className="text-2xl font-black sm:text-3xl">רוצים לבדוק זכאות בצורה מקצועית?</h2>
-        <p className="mt-2 text-sm font-semibold text-violet-100 sm:text-base">השאירו פרטים ונציג מקצועי יחזור אליכם להמשך בדיקה.</p>
+        <h2 className="text-2xl font-black sm:text-3xl">רוצים להבין איך לשפר את הסיכוי לאישור?</h2>
+        <p className="mt-2 text-sm font-semibold text-violet-100 sm:text-base">השאירו פרטים ונחזור אליכם עם כיוון ראשוני לבדיקה מול יועץ מתאים.</p>
         <form onSubmit={submitBottomLead} className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-4" dir="rtl">
           <TextField label="שם מלא" value={bottomLead.name} onChange={(value) => updateBottomLead("name", value)} autoComplete="name" required contrastMode="dark" />
           <TextField label="טלפון" value={bottomLead.phone} onChange={(value) => updateBottomLead("phone", value)} autoComplete="tel" placeholder="05X-XXXXXXX" required contrastMode="dark" />
@@ -1241,10 +1209,10 @@ function Footer({ onCtaClick }) {
       <div className="mx-auto mt-6 max-w-6xl px-4 sm:px-6">
         <div className="flex flex-wrap gap-3 items-center">
           <a href="#eligibility-check" onClick={() => onCtaClick?.("footer")} className="inline-flex rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
-            בדיקת זכאות חינם
+            בדקו זכאות עכשיו
           </a>
           <a href="#bottom-lead" onClick={() => onCtaClick?.("footer_bottom_lead")} className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800 transition hover:bg-violet-100">
-            השאר פרטים
+            השאירו פרטים
           </a>
           <a href="/blog" className="text-sm font-bold text-violet-700 hover:underline">בלוג משכנתאות ←</a>
           <a href="/guides" className="text-sm font-bold text-violet-700 hover:underline">מדריכי משכנתא ←</a>
@@ -1264,13 +1232,13 @@ function MobileStickyCta({ onCtaClick, hidden }) {
           onClick={() => onCtaClick?.("sticky_mobile")}
           className="rounded-full bg-violet-700 px-4 py-3 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(109,40,217,0.28)]"
         >
-          בדיקת זכאות חינם
+          בדקו זכאות עכשיו
         </a>
         <a
           href="#bottom-lead"
           className="rounded-full border border-violet-200 bg-violet-50 px-4 py-3 text-center text-sm font-black text-violet-800"
         >
-          השאר פרטים
+          השאירו פרטים
         </a>
       </div>
     </div>
