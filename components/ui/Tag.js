@@ -19,6 +19,7 @@ const TAG_VARIANTS = {
   upgrade:   "bg-[#edfaf3] text-[#0F7A48]",
   hot:       "bg-finzo-cobalt text-white",
   exclusive: "bg-finzo-ink text-white",
+  danger:    "bg-red-50 text-red-700 border border-red-100",
 };
 
 export function Tag({ variant = "default", children, className = "" }) {

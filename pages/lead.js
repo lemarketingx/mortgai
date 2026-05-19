@@ -27,7 +27,7 @@ const initialLead = {
 const QUALITY_TAG_VARIANT = {
   "חם": "upgrade",   // bg-[#edfaf3] text-[#0F7A48] — green, matches current emerald style
   "בינוני": "refi",  // bg-[#fff3ec] text-[#C25E2A] — amber-orange, matches current amber style
-  "חלש": "default",  // neutral — weak leads get a calm neutral badge
+  "חלש": "danger",   // bg-red-50 text-red-700 border-red-100 — risk signal preserved
 };
 
 // Map priority to StatusDot status
