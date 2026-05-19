@@ -54,7 +54,6 @@ const navLinks = [
   ["איך זה עובד", "#how-it-works"],
   ["שאלות נפוצות", "#faq"],
   ["בלוג", "/blog"],
-  ["לידים ליועצים", "/advisors"],
 ];
 
 const trustItems = [
@@ -1216,7 +1215,6 @@ function Footer({ onCtaClick }) {
           </a>
           <a href="/blog" className="text-sm font-bold text-violet-700 hover:underline">בלוג משכנתאות ←</a>
           <a href="/guides" className="text-sm font-bold text-violet-700 hover:underline">מדריכי משכנתא ←</a>
-          <a href="/advisors" className="text-sm font-bold text-violet-700 hover:underline">ליועצי משכנתאות ←</a>
         </div>
       </div>
     </footer>
