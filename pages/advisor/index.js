@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatILS } from "../../lib/format";
 
@@ -136,6 +137,27 @@ function LeadCard({ lead, onUpdate }) {
   );
 }
 
+function AdvisorNav({ active }) {
+  const links = [
+    { href: "/advisor", label: "סקירה כללית" },
+    { href: "/advisor/leads", label: "חנות לידים" },
+    { href: "/advisor/my-leads", label: "הלידים שלי" },
+  ];
+  return (
+    <nav className="flex gap-1 mt-3 border-b border-slate-800 px-4">
+      {links.map(({ href, label }) => (
+        <Link
+          key={href}
+          href={href}
+          className={`px-4 py-2.5 text-sm font-bold rounded-t-lg transition-colors ${active === href ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"}`}
+        >
+          {label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
 export default function AdvisorDashboard() {
   const [leads, setLeads] = useState([]);
   const [msg, setMsg] = useState("");
@@ -173,23 +195,29 @@ export default function AdvisorDashboard() {
 
   return (
     <>
-      <Head><title>פורטל לידים | MortgAI</title></Head>
+      <Head>
+        <title>פורטל יועצים | FINZO</title>
+        <meta name="robots" content="noindex,nofollow" />
+      </Head>
 
       <main dir="rtl" className="min-h-screen bg-surface-DEFAULT">
 
         {/* ── Top bar ── */}
-        <header className="bg-mort-ink text-white px-4 py-4 sticky top-0 z-40">
-          <div className="max-w-5xl mx-auto flex items-center justify-between">
-            <div>
-              <span className="text-lg font-black">MortgAI</span>
-              <span className="text-xs text-violet-400 font-bold mr-2">פורטל לידים</span>
+        <header className="bg-mort-ink text-white px-4 pb-0 pt-4 sticky top-0 z-40">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center justify-between pb-3">
+              <div className="flex items-center gap-3">
+                <span className="text-lg font-black">FINZO</span>
+                <span className="text-xs text-violet-400 font-bold">פורטל יועצים</span>
+              </div>
+              <button
+                onClick={() => { fetch("/api/advisor/login", { method: "DELETE" }).finally(() => { window.location.href = "/advisor/login"; }); }}
+                className="text-xs text-slate-400 hover:text-white font-bold transition-colors"
+              >
+                יציאה
+              </button>
             </div>
-            <button
-              onClick={() => { document.cookie = "advisor_token=; max-age=0; path=/"; window.location.href = "/advisor/login"; }}
-              className="text-xs text-slate-400 hover:text-white font-bold transition-colors"
-            >
-              יציאה
-            </button>
+            <AdvisorNav active="/advisor" />
           </div>
         </header>
 
