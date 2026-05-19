@@ -64,26 +64,10 @@ const trustItems = [
 ];
 
 const steps = [
-  {
-    title: "ממלאים נתונים",
-    text: "הכנסה, הוצאות, מחיר נכס, הון עצמי ותקופת החזר.",
-    icon: "M12 6v12m6-6H6",
-  },
-  {
-    title: "מקבלים בדיקה חכמה",
-    text: "המערכת מבצעת ניתוח פיננסי ראשוני של יחס החזר, LTV והתחייבויות קיימות.",
-    icon: "M5 13l4 4L19 7",
-  },
-  {
-    title: "רואים אומדן ראשוני",
-    text: "מקבלים הפרדה ברורה בין אומדן זכאות, החזר חודשי ואינדיקציית סיכון.",
-    icon: "M4 19h16M7 15l3-3 3 2 4-6",
-  },
-  {
-    title: "ממשיכים ליועץ מקצועי",
-    text: "רק אם תרצו, הנתונים עוברים להמשך בדיקה אנושית ללא התחייבות.",
-    icon: "M8 11a4 4 0 118 0M4 20a8 8 0 0116 0",
-  },
+  { title: "ממלאים נתונים", text: "הכנסה, הוצאות, מחיר נכס, הון עצמי ותקופת החזר.", icon: "M12 6v12m6-6H6" },
+  { title: "מקבלים בדיקה חכמה", text: "המערכת מבצעת ניתוח פיננסי ראשוני של יחס החזר, LTV והתחייבויות קיימות.", icon: "M5 13l4 4L19 7" },
+  { title: "רואים אומדן ראשוני", text: "מקבלים הפרדה ברורה בין אומדן זכאות, החזר חודשי ואינדיקציית סיכון.", icon: "M4 19h16M7 15l3-3 3 2 4-6" },
+  { title: "ממשיכים ליועץ מקצועי", text: "רק אם תרצו, הנתונים עוברים להמשך בדיקה אנושית ללא התחייבות.", icon: "M8 11a4 4 0 118 0M4 20a8 8 0 0116 0" },
 ];
 
 const propertyOptions = [
@@ -119,33 +103,27 @@ const wizardSteps = [
 const faqItems = [
   {
     question: "האם FINZO מאשרת משכנתא?",
-    answer:
-      "לא. FINZO היא כלי לאומדן ראשוני בלבד. הבדיקה מציגה חיווי התחלתי לפי הנתונים שהזנת, אבל אישור משכנתא בפועל ניתן רק על ידי בנק, לאחר בדיקת מסמכים, שמאות ונתוני אשראי.",
+    answer: "לא. FINZO היא כלי לאומדן ראשוני בלבד. הבדיקה מציגה חיווי התחלתי לפי הנתונים שהזנת, אבל אישור משכנתא בפועל ניתן רק על ידי בנק, לאחר בדיקת מסמכים, שמאות ונתוני אשראי.",
   },
   {
     question: "האם הבדיקה מחייבת אותי?",
-    answer:
-      "לא. הבדיקה היא ראשונית ואינה מחייבת לשום פעולה. אין עלות, אין חוזה ואין שום התחייבות מצדך — גם אם תשאיר פרטים.",
+    answer: "לא. הבדיקה היא ראשונית ואינה מחייבת לשום פעולה. אין עלות, אין חוזה ואין שום התחייבות מצדך — גם אם תשאיר פרטים.",
   },
   {
     question: "האם הנתונים נשלחים לבנק?",
-    answer:
-      "לא. הנתונים שאתה מזין נשמרים אצלנו בלבד ולא מועברים לאף בנק ללא אישורך המפורש. אנחנו לא חולקים מידע אישי עם גורמים חיצוניים ללא הסכמה.",
+    answer: "לא. הנתונים שאתה מזין נשמרים אצלנו בלבד ולא מועברים לאף בנק ללא אישורך המפורש. אנחנו לא חולקים מידע אישי עם גורמים חיצוניים ללא הסכמה.",
   },
   {
     question: "מה קורה אחרי שאני משאיר פרטים?",
-    answer:
-      "יועץ מקצועי חוזר אליך לשיחה קצרה, עובר איתך על האומדן הראשוני ומכוון אותך לצעד הבא — ללא התחייבות ולפי הצורך שלך. אין לחץ ואין מכירות אגרסיביות.",
+    answer: "יועץ מקצועי חוזר אליך לשיחה קצרה, עובר איתך על האומדן הראשוני ומכוון אותך לצעד הבא — ללא התחייבות ולפי הצורך שלך. אין לחץ ואין מכירות אגרסיביות.",
   },
   {
     question: "כמה הון עצמי צריך?",
-    answer:
-      "בדרך כלל, מגבלות המימון המקובלות לדירה ראשונה מגיעות עד כ-75%, למשפרי דיור עד כ-70%, ולדירה להשקעה עד כ-50%, בכפוף למדיניות הגוף המממן. המחשבון מציג אומדן ראשוני אם חסר הון עצמי לפי סוג העסקה.",
+    answer: "בדרך כלל, מגבלות המימון המקובלות לדירה ראשונה מגיעות עד כ-75%, למשפרי דיור עד כ-70%, ולדירה להשקעה עד כ-50%, בכפוף למדיניות הגוף המממן. המחשבון מציג אומדן ראשוני אם חסר הון עצמי לפי סוג העסקה.",
   },
   {
     question: "מהו יחס החזר תקין?",
-    answer:
-      "ברוב המקרים נהוג לראות יחס החזר סביב 30%-35% כטווח נוח לבדיקה. יחס החזר גבוה מ-40% עשוי להקשות על קבלת אישור, תלוי בהכנסה, בהלוואות קיימות וביתרה למחיה.",
+    answer: "ברוב המקרים נהוג לראות יחס החזר סביב 30%-35% כטווח נוח לבדיקה. יחס החזר גבוה מ-40% עשוי להקשות על קבלת אישור, תלוי בהכנסה, בהלוואות קיימות וביתרה למחיה.",
   },
 ];
 
@@ -298,8 +276,6 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
-
-
   useEffect(() => {
     const section = document.getElementById("bottom-lead");
     if (!section || typeof IntersectionObserver === "undefined") return undefined;
@@ -312,6 +288,7 @@ export default function Home() {
     observer.observe(section);
     return () => observer.disconnect();
   }, []);
+
   function trackEvent(eventName, payload = {}) {
     trackAnalyticsEvent(eventName, payload, {
       source: "homepage",
@@ -381,7 +358,6 @@ export default function Home() {
       if (!response.ok || result?.ok !== true || result?.success === false) {
         throw new Error(result?.message || result?.error || "BOTTOM_LEAD_SUBMIT_FAILED");
       }
-
       setBottomLeadSent(true);
       trackEvent("bottom_lead_submit_success");
     } catch {
@@ -497,11 +473,7 @@ export default function Home() {
           dangerouslySetInnerHTML={{
             __html: stringifyJsonLd([
               organizationSchema(),
-              financialServiceSchema({
-                url: absoluteUrl(HOME_SEO.path),
-                name: "Finzo",
-                description: HOME_SEO.description,
-              }),
+              financialServiceSchema({ url: absoluteUrl(HOME_SEO.path), name: "Finzo", description: HOME_SEO.description }),
               webPageSchema(HOME_SEO),
               faqSchema(faqItems),
             ]),
@@ -509,11 +481,13 @@ export default function Home() {
         />
       </Head>
 
-      <main id="home" dir="rtl" className="min-h-screen bg-slate-50 pb-24 text-slate-950 md:pb-0">
-        <a href="#eligibility-check" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:right-3 focus:z-[60] focus:rounded-full focus:bg-white focus:px-4 focus:py-2">דילוג למחשבון</a>
+      <main id="home" dir="rtl" className="min-h-screen bg-finzo-paper pb-24 text-finzo-ink md:pb-0">
+        <a href="#eligibility-check" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:right-3 focus:z-[60] focus:rounded-finzo-pill focus:bg-finzo-white focus:px-4 focus:py-2 focus:text-finzo-ink">
+          דילוג למחשבון
+        </a>
         <Header onCtaClick={handleCtaClick} />
         <Hero onCtaClick={handleCtaClick} />
-        <TrustStrip />
+        <TickerStrip />
         <HowItWorks />
         <CalculatorSection
           data={data}
@@ -540,6 +514,7 @@ export default function Home() {
           ready={ready}
           trackEvent={trackEvent}
         />
+        <FinzoProTeaser />
         <FaqSection openFaq={openFaq} setOpenFaq={setOpenFaq} />
         <BottomLeadSection
           bottomLead={bottomLead}
@@ -556,15 +531,18 @@ export default function Home() {
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   HEADER
+───────────────────────────────────────────────────────────────────────────── */
 function Header({ onCtaClick }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-finzo-line bg-finzo-white/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <a href="#home"><BrandLogo /></a>
 
-        <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 text-sm font-bold text-slate-600 lg:flex">
+        <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 lg:flex">
           {navLinks.map(([label, href]) => (
-            <a key={href} href={href} className="transition hover:text-violet-700">
+            <a key={href} href={href} className="text-[14px] text-finzo-ink-2 transition hover:text-finzo-ink">
               {label}
             </a>
           ))}
@@ -572,114 +550,188 @@ function Header({ onCtaClick }) {
 
         <a
           href="#eligibility-check"
-          onClick={() => onCtaClick?.("hero")}
+          onClick={() => onCtaClick?.("header")}
           aria-label="מעבר מהיר למחשבון זכאות"
-          className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800"
+          className="inline-flex items-center gap-2 rounded-finzo-pill bg-finzo-cobalt px-5 py-3 text-[14px] font-medium text-white shadow-e-cobalt transition hover:bg-finzo-cobalt-d"
         >
-          בדקו זכאות עכשיו
+          בדיקת זכאות חינם למשכנתא
         </a>
       </div>
     </header>
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   HERO
+───────────────────────────────────────────────────────────────────────────── */
 function Hero({ onCtaClick }) {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200/70 bg-white">
-      <div className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,0.18),transparent_45%)]" />
-      <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2">
-        <div className="mx-auto max-w-2xl text-center lg:text-right">
-          <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-black text-violet-800">
+    <section className="relative overflow-hidden bg-finzo-paper py-14 sm:py-20">
+      {/* decorative sky blob */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-32 end-0 h-[520px] w-[520px] rounded-full bg-finzo-sky opacity-60"
+        style={{ filter: "blur(2px)" }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-[-80px] start-[40%] h-[220px] w-[220px] rounded-full bg-finzo-cobalt opacity-30"
+        style={{ filter: "blur(1px)" }}
+      />
+
+      <div className="relative mx-auto grid max-w-6xl items-end gap-14 px-4 sm:px-6 lg:grid-cols-2">
+        {/* left col — copy */}
+        <div>
+          <div className="inline-flex items-center gap-[10px] font-mono text-[12px] uppercase tracking-[0.12em] text-finzo-ink-3">
+            <span className="h-[7px] w-[7px] rounded-full bg-finzo-cobalt" aria-hidden="true" />
             בדיקה ראשונית · ללא עלות · ללא התחייבות
-          </span>
-          <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-            בדיקת זכאות למשכנתא בתוך דקה — בלי התחייבות
+          </div>
+
+          <h1 className="mt-5 font-serif text-[clamp(40px,5.2vw,72px)] font-medium leading-[1.04] tracking-[-0.028em] text-finzo-ink">
+            בדיקת זכאות{" "}
+            <span className="rounded-[6px] bg-finzo-cobalt px-[0.12em] text-white" style={{ boxDecorationBreak: "clone", WebkitBoxDecorationBreak: "clone" }}>
+              למשכנתא
+            </span>{" "}
+            <span className="italic text-finzo-ink-2 font-normal">תוך דקה</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-lg font-semibold leading-8 text-slate-600 lg:mx-0">
+
+          <p className="mt-6 max-w-lg text-[18px] leading-[1.55] text-finzo-ink-2">
             FINZO מנתחת את הנתונים שלך ומציגה אומדן ראשוני לסיכוי אישור, החזר חודשי ויחס החזר — בצורה פשוטה וברורה.
           </p>
-          <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <a
               href="#eligibility-check"
-              onClick={() => onCtaClick?.("hero")}
-              aria-label="התחלת בדיקת זכאות"
-              className="rounded-full bg-violet-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-violet-800"
+              onClick={() => onCtaClick?.("hero_primary")}
+              aria-label="התחלת בדיקת זכאות למשכנתא"
+              className="inline-flex items-center gap-2 rounded-finzo-pill bg-finzo-cobalt px-7 py-4 text-[16px] font-medium text-white shadow-e-cobalt transition hover:bg-finzo-cobalt-d"
             >
-              בדקו זכאות עכשיו
+              בדיקת זכאות חינם למשכנתא
+            </a>
+            <a
+              href="#how-it-works"
+              className="inline-flex items-center gap-2 rounded-finzo-pill border border-finzo-ink bg-transparent px-6 py-4 text-[15px] font-medium text-finzo-ink transition hover:bg-finzo-ink hover:text-white"
+            >
+              איך זה עובד
             </a>
           </div>
-          <p className="mt-5 text-sm font-bold text-slate-500">
-            ללא עלות · ללא התחייבות · לא מועבר לבנק ללא אישורך
-          </p>
-          <a href="#eligibility-check" onClick={() => onCtaClick?.("hero")} className="mt-4 inline-flex items-center gap-2 text-sm font-black text-violet-700 hover:text-violet-800">
-            <span>הבדיקה מתחילה כאן</span>
-            <span aria-hidden="true">↓</span>
-          </a>
-          <div className="mt-7 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
-              <p className="text-xs font-black text-slate-500">זמן מילוי</p>
-              <p className="mt-1 text-lg font-black text-slate-900">כדקה אחת</p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
-              <p className="text-xs font-black text-slate-500">תוצאה מיידית</p>
-              <p className="mt-1 text-lg font-black text-slate-900">סיכוי אישור + החזר חודשי</p>
-            </div>
+
+          <div className="mt-6 flex flex-wrap gap-5 text-[13.5px] text-finzo-ink-2">
+            {["ללא עלות", "ללא התחייבות", "לא מועבר לבנק ללא אישורך"].map((item) => (
+              <span key={item} className="flex items-center gap-2">
+                <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-finzo-cobalt text-[10px] text-white" aria-hidden="true">✓</span>
+                {item}
+              </span>
+            ))}
           </div>
         </div>
 
-        <HeroIllustration />
+        {/* right col — neo calculator card */}
+        <div className="mx-auto w-full max-w-md">
+          <div className="rounded-finzo-lg border-[1.5px] border-finzo-ink bg-finzo-paper shadow-neo">
+            {/* card head */}
+            <div className="flex items-center justify-between border-b border-finzo-line px-6 py-4">
+              <span className="font-serif text-[18px] text-finzo-ink">מחשבון משכנתא</span>
+              <span className="font-mono text-[12px] tracking-[0.08em] text-finzo-mute">שלב 1 מתוך 4</span>
+            </div>
+
+            {/* mock calc fields */}
+            <div className="grid gap-4 px-6 py-5">
+              {[
+                { label: "מחיר הנכס", value: "1,850,000", unit: "₪" },
+                { label: "הון עצמי", value: "450,000",   unit: "₪" },
+                { label: "הכנסה חודשית", value: "22,000", unit: "₪" },
+              ].map(({ label, value, unit }) => (
+                <div key={label} className="grid gap-[6px]">
+                  <span className="text-[13px] text-finzo-ink-2">{label}</span>
+                  <div className="flex items-center justify-between rounded-finzo-md border border-finzo-line bg-finzo-cream px-4 py-3">
+                    <span className="font-mono text-[17px] text-finzo-ink" style={{ fontFeatureSettings: '"tnum" 1' }}>{value}</span>
+                    <span className="font-mono text-[14px] text-finzo-mute">{unit}</span>
+                  </div>
+                </div>
+              ))}
+
+              {/* slider mockup */}
+              <div className="mt-1">
+                <div className="h-[6px] w-full rounded-full bg-finzo-cream-2 relative">
+                  <div className="absolute inset-y-0 start-0 w-[62%] rounded-full bg-finzo-ink" />
+                  <div className="absolute top-1/2 start-[62%] h-[18px] w-[18px] -translate-y-1/2 translate-x-1/2 rounded-full border-2 border-finzo-ink bg-finzo-cobalt" />
+                </div>
+              </div>
+            </div>
+
+            {/* card foot — result */}
+            <div className="flex items-center justify-between border-t border-dashed border-finzo-line-2 px-6 py-4">
+              <div>
+                <p className="font-mono text-[12px] text-finzo-mute">החזר חודשי משוער</p>
+                <p className="mt-1 font-mono text-[22px] text-finzo-ink" style={{ fontFeatureSettings: '"tnum" 1' }}>8,240 ₪</p>
+              </div>
+              <a
+                href="#eligibility-check"
+                onClick={() => onCtaClick?.("hero_calc_cta")}
+                className="inline-flex items-center gap-2 rounded-finzo-pill bg-finzo-cobalt px-5 py-3 text-[14px] font-medium text-white shadow-e-cobalt transition hover:bg-finzo-cobalt-d"
+              >
+                בדיקה מלאה
+              </a>
+            </div>
+          </div>
+
+          <p className="mt-4 text-center font-mono text-[11.5px] tracking-[0.04em] text-finzo-mute">
+            אומדן ראשוני בלבד · לא אישור בנקאי · ללא התחייבות
+          </p>
+        </div>
       </div>
     </section>
   );
 }
 
-function HeroIllustration() {
+/* ─────────────────────────────────────────────────────────────────────────────
+   TICKER STRIP
+───────────────────────────────────────────────────────────────────────────── */
+const tickerItems = [
+  "בדיקת זכאות ראשונית ללא עלות",
+  "לא מועבר לבנק ללא אישורך",
+  "ניתוח יחס החזר מיידי",
+  "התאמה להון העצמי",
+  "אומדן LTV לפי סוג עסקה",
+  "ללא התחייבות בשום שלב",
+];
+
+function TickerStrip() {
+  const items = [...tickerItems, ...tickerItems];
   return (
-    <div className="relative mx-auto w-full max-w-lg">
-      <div className="absolute -inset-6 rounded-[56px] bg-violet-200/30 blur-3xl" />
-      <div className="relative rounded-[44px] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-violet-50 p-6 shadow-[0_28px_80px_rgba(15,23,42,0.12)]">
-        <svg viewBox="0 0 480 380" className="h-auto w-full" role="img" aria-label="איור בדיקת משכנתא">
-          <defs>
-            <linearGradient id="purpleLine" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stopColor="#8b5cf6" />
-              <stop offset="100%" stopColor="#6d28d9" />
-            </linearGradient>
-          </defs>
-          <path d="M78 298h324" stroke="#d8dee9" strokeWidth="8" strokeLinecap="round" />
-          <path d="M125 184 240 92l115 92v116H125Z" fill="#fff" stroke="#cbd5e1" strokeWidth="8" strokeLinejoin="round" />
-          <path d="M178 300v-78h58v78" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="8" strokeLinejoin="round" />
-          <path d="M254 226h54v42h-54Z" fill="#f5f3ff" stroke="#c4b5fd" strokeWidth="7" strokeLinejoin="round" />
-          <path d="M150 166 240 94l90 72" fill="none" stroke="url(#purpleLine)" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
-          <rect x="312" y="72" width="108" height="154" rx="26" fill="#fff" stroke="#d8dee9" strokeWidth="7" />
-          <path d="M338 112h54M338 142h38M338 172h48" stroke="#94a3b8" strokeWidth="7" strokeLinecap="round" />
-          <circle cx="394" cy="194" r="15" fill="#ede9fe" stroke="#8b5cf6" strokeWidth="7" />
-          <path d="M82 118c34-42 84-65 139-68M392 274c-28 32-70 51-121 58" fill="none" stroke="#d8dee9" strokeWidth="7" strokeLinecap="round" strokeDasharray="12 18" />
-          <circle cx="93" cy="110" r="18" fill="#ede9fe" stroke="#8b5cf6" strokeWidth="7" />
-          <path d="M87 110h12M93 104v12" stroke="#6d28d9" strokeWidth="6" strokeLinecap="round" />
-        </svg>
+    <div className="overflow-hidden border-y-[1.5px] border-finzo-ink bg-finzo-ink py-[18px]" aria-hidden="true">
+      <div
+        className="flex gap-14 whitespace-nowrap font-mono text-[13px] tracking-[0.08em] text-finzo-paper"
+        style={{ animation: "ticker 36s linear infinite" }}
+      >
+        {items.map((text, i) => (
+          <span key={i} className="flex items-center gap-[14px] shrink-0">
+            <span className="h-2 w-2 rounded-full bg-finzo-cobalt shrink-0" />
+            {text}
+          </span>
+        ))}
       </div>
+
+      <style>{`
+        @keyframes ticker {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+      `}</style>
     </div>
   );
 }
 
-function TrustStrip() {
-  return (
-    <section className="border-y border-slate-200 bg-slate-50/80">
-      <div className="mx-auto grid max-w-6xl gap-3 px-4 py-6 sm:grid-cols-2 sm:px-6">
-        {trustItems.map(({ text, icon }) => (
-          <div key={text} className="flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-sm">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d={icon} strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </span>
-            <span className="font-black text-slate-800">{text}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+/* ─────────────────────────────────────────────────────────────────────────────
+   HOW IT WORKS
+───────────────────────────────────────────────────────────────────────────── */
+const stepBgs = [
+  "bg-finzo-paper",
+  "bg-finzo-cream",
+  "bg-finzo-cobalt-l",
+  "bg-finzo-ink text-white",
+];
 
 function HowItWorks() {
   return (
@@ -687,73 +739,65 @@ function HowItWorks() {
       <SectionHeader
         eyebrow="איך זה עובד"
         title="מדקה אחת לתמונת מצב ראשונית"
-        text="תהליך קצר וברור — בלי ניירת, בלי בנקים ובלי לחץ. רק מידע שיעזור לך להחליט."
+        text="תהליך קצר וברור — בלי ניירת, בלי בנקים ובלי לחץ."
       />
-      <div className="mt-10 grid gap-4 md:grid-cols-2">
-        {steps.map((step, index) => (
-          <div key={step.title} className="flex h-full gap-5 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
-              <LineIcon path={step.icon} />
-            </span>
-            <div>
-              <p className="text-sm font-black text-violet-700">שלב {index + 1}</p>
-              <h3 className="mt-1 text-xl font-black text-slate-950">{step.title}</h3>
-              <p className="mt-2 leading-7 text-slate-600">{step.text}</p>
+
+      <div className="mt-10 overflow-hidden rounded-finzo-lg border-[1.5px] border-finzo-ink" style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+        {steps.map((step, index) => {
+          const isDark = index === 3;
+          return (
+            <div
+              key={step.title}
+              className={[
+                "p-8 relative",
+                stepBgs[index],
+                index % 2 === 0 && index < 2 ? "border-e border-finzo-line" : "",
+                index < 2 ? "border-b border-finzo-line" : "",
+              ].filter(Boolean).join(" ")}
+            >
+              <p className={`font-mono text-[13px] tracking-[0.08em] ${isDark ? "text-white/60" : "text-finzo-ink-3"}`}>
+                0{index + 1}
+              </p>
+              <h3 className={`mt-3 font-serif text-[26px] leading-[1.18] ${isDark ? "text-white" : "text-finzo-ink"}`}>
+                {step.title}
+              </h3>
+              <p className={`mt-3 text-[15px] leading-[1.6] max-w-[380px] ${isDark ? "text-white/70" : "text-finzo-ink-2"}`}>
+                {step.text}
+              </p>
+              <div className={`mt-5 flex items-center gap-2 font-mono text-[12px] tracking-[0.04em] ${isDark ? "text-finzo-cobalt" : "text-finzo-ink-2"}`}>
+                <span className={`h-[6px] w-[6px] rounded-full ${isDark ? "bg-finzo-cobalt" : "bg-finzo-azure"}`} />
+                שלב {index + 1}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
 }
 
-function SeoContentSection() {
-  return (
-    <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20" aria-labelledby="mortgage-seo-title">
-      <div className="rounded-[34px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div>
-            <span className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
-              בדיקת משכנתא בישראל
-            </span>
-            <h2 id="mortgage-seo-title" className="mt-5 text-3xl font-black leading-tight text-slate-950">
-              מה בודקים לפני שלוקחים משכנתא?
-            </h2>
-            <p className="mt-4 leading-8 text-slate-600">
-              לפני שפונים לבנק כדאי להבין אם המספרים עובדים: מה סכום המשכנתא הדרוש, מה ההחזר החודשי המשוער, כמה הון עצמי חסר אם בכלל, ומה יחס ההחזר ביחס להכנסה. בדיקה מוקדמת יכולה לעזור לזהות נקודות סיכון לפני חתימת חוזה או הגשת בקשה לאישור עקרוני, אך היא אומדן בלבד וכפופה לבדיקה סופית.
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[
-              ["יחס החזר", "בודק כמה מההכנסה נטו מיועד להחזר המשכנתא והתחייבויות קיימות."],
-              ["אחוז מימון LTV", "משווה בין סכום המשכנתא לשווי הנכס לפי סוג העסקה."],
-              ["הון עצמי", "מציג אם ההון העצמי מספיק ביחס למחיר הנכס ולמגבלות המימון."],
-              ["תזרים אחרי העסקה", "בודק כמה נשאר למחיה אחרי הוצאות, הלוואות והחזר משכנתא."],
-            ].map(([title, text]) => (
-              <article key={title} className="rounded-3xl bg-slate-50 p-5">
-                <h3 className="font-black text-slate-950">{title}</h3>
-                <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{text}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
+/* ─────────────────────────────────────────────────────────────────────────────
+   CALCULATOR SECTION
+───────────────────────────────────────────────────────────────────────────── */
 function CalculatorSection({ data, updateData, analysis, ready, recommendation, trackEvent, eventSentRef }) {
   return (
-    <section id="eligibility-check" className="bg-gradient-to-b from-slate-50 via-violet-50/40 to-white py-16 sm:py-20">
+    <section id="eligibility-check" className="border-y border-finzo-line bg-finzo-white py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
           eyebrow="בדיקת זכאות"
           title="מלאו נתונים — קבלו אומדן ראשוני מיד"
-          text="כמה שאלות פיננסיות בסיסיות. תוצאה מיידית. ללא עלות ובלי שאף אחד מתקשר אליכם."
+          text="כמה שאלות פיננסיות בסיסיות. תוצאה מיידית. ללא עלות."
         />
-
         <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
-          <MortgageForm data={data} updateData={updateData} analysis={analysis} ready={ready} recommendation={recommendation} trackEvent={trackEvent} eventSentRef={eventSentRef} />
+          <MortgageForm
+            data={data}
+            updateData={updateData}
+            analysis={analysis}
+            ready={ready}
+            recommendation={recommendation}
+            trackEvent={trackEvent}
+            eventSentRef={eventSentRef}
+          />
           <LiveResultPanel analysis={analysis} ready={ready} recommendation={recommendation} />
         </div>
       </div>
@@ -761,6 +805,9 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation, 
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   MORTGAGE FORM WIZARD
+───────────────────────────────────────────────────────────────────────────── */
 function MortgageForm({ data, updateData, analysis, ready, recommendation, trackEvent, eventSentRef }) {
   const [step, setStep] = useState(0);
   const scrollYRef = useRef(0);
@@ -795,106 +842,160 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
     });
   }
 
+  const pct = Math.round(((step + 1) / wizardSteps.length) * 100);
+
   return (
-    <form aria-label="אשף בדיקת זכאות למשכנתא" className="rounded-[34px] border border-slate-200 bg-white p-4 shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-7">
-      <div className="mb-5 rounded-2xl bg-slate-100 p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-xs font-black text-violet-700">שלב {step + 1} מתוך {wizardSteps.length}</p>
-          <p className="text-sm font-black text-slate-700">{wizardSteps[step].title}</p>
+    <form
+      aria-label="אשף בדיקת זכאות למשכנתא"
+      className="rounded-finzo-lg border border-finzo-line bg-finzo-white p-5 shadow-e-2 sm:p-7"
+    >
+      {/* progress */}
+      <div className="mb-6 rounded-finzo-md bg-finzo-paper p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="font-mono text-[12px] tracking-[0.08em] text-finzo-cobalt">
+            שלב {step + 1} מתוך {wizardSteps.length}
+          </span>
+          <span className="text-[13px] font-medium text-finzo-ink-2">{wizardSteps[step].title}</span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-white">
-          <div className="h-full rounded-full bg-violet-700 transition-all duration-300" style={{ ...PROGRESS_BAR_STYLE, width: `${((step + 1) / wizardSteps.length) * 100}%` }} />
+        <div className="h-[6px] w-full overflow-hidden rounded-full bg-finzo-cream-2">
+          <div
+            className="h-full rounded-full bg-finzo-cobalt transition-all duration-300"
+            style={{ ...PROGRESS_BAR_STYLE, width: `${pct}%` }}
+          />
         </div>
       </div>
 
-      {step === 0 && <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField label="סוג עסקה" value={data.propertyType} onChange={(value) => updateData("propertyType", value)} options={propertyOptions} />
-        <MoneyField label="מחיר הנכס" value={data.price} onChange={(value) => updateData("price", value)} />
-        <MoneyField label="הון עצמי" value={data.equity} onChange={(value) => updateData("equity", value)} />
-        <MoneyField label="סכום משכנתא" helper="אפשר להשאיר ריק — נחושב אוטומטית לפי מחיר פחות הון עצמי" value={data.mortgageAmount} onChange={(value) => updateData("mortgageAmount", value)} />
-      </div>}
+      {step === 0 && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <SelectField label="סוג עסקה" value={data.propertyType} onChange={(v) => updateData("propertyType", v)} options={propertyOptions} />
+          <MoneyField label="מחיר הנכס" value={data.price} onChange={(v) => updateData("price", v)} />
+          <MoneyField label="הון עצמי" value={data.equity} onChange={(v) => updateData("equity", v)} />
+          <MoneyField label="סכום משכנתא" helper="אפשר להשאיר ריק — נחושב אוטומטית" value={data.mortgageAmount} onChange={(v) => updateData("mortgageAmount", v)} />
+        </div>
+      )}
 
-      {step === 1 && <div className="grid gap-4 sm:grid-cols-2">
-        <MoneyField label="הכנסה חודשית נטו" value={data.income} onChange={(value) => updateData("income", value)} />
-        <MoneyField label="הוצאות קבועות" value={data.expenses} onChange={(value) => updateData("expenses", value)} />
-        <MoneyField label="הלוואות קיימות היום" value={data.loans} onChange={(value) => updateData("loans", value)} />
-        <MoneyField label="הלוואות שייסגרו עם הרכישה" value={data.loansToClose} onChange={(value) => updateData("loansToClose", value)} />
-        <MoneyField label="החזר דיור נוכחי" helper="שכירות או משכנתא שאתם משלמים היום" value={data.currentHousing} onChange={(value) => updateData("currentHousing", value)} className="sm:col-span-2" />
-      </div>}
+      {step === 1 && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <MoneyField label="הכנסה חודשית נטו" value={data.income} onChange={(v) => updateData("income", v)} />
+          <MoneyField label="הוצאות קבועות" value={data.expenses} onChange={(v) => updateData("expenses", v)} />
+          <MoneyField label="הלוואות קיימות היום" value={data.loans} onChange={(v) => updateData("loans", v)} />
+          <MoneyField label="הלוואות שייסגרו עם הרכישה" value={data.loansToClose} onChange={(v) => updateData("loansToClose", v)} />
+          <MoneyField label="החזר דיור נוכחי" helper="שכירות או משכנתא שאתם משלמים היום" value={data.currentHousing} onChange={(v) => updateData("currentHousing", v)} className="sm:col-span-2" />
+        </div>
+      )}
 
-      {step === 2 && <div className="grid gap-4 sm:grid-cols-2">
-        <NumberField label="תקופה בשנים" min="5" max="30" value={data.years} onChange={(value) => updateData("years", value)} />
-        <RateField label="ריבית שנתית משוערת" value={data.annualRate} onChange={(value) => updateData("annualRate", value)} />
-        <SelectField label="סטטוס אשראי" value={data.credit} onChange={(value) => updateData("credit", value)} options={creditOptions} />
-        <SelectField label="סוג הצמדה" value={data.indexation} onChange={(value) => updateData("indexation", value)} options={indexationOptions} />
-        <SelectField label="שיטת החזר" value={data.repaymentMethod} onChange={(value) => updateData("repaymentMethod", value)} options={repaymentOptions} className="sm:col-span-2" />
-      </div>}
+      {step === 2 && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <NumberField label="תקופה בשנים" min="5" max="30" value={data.years} onChange={(v) => updateData("years", v)} />
+          <RateField label="ריבית שנתית משוערת" value={data.annualRate} onChange={(v) => updateData("annualRate", v)} />
+          <SelectField label="סטטוס אשראי" value={data.credit} onChange={(v) => updateData("credit", v)} options={creditOptions} />
+          <SelectField label="סוג הצמדה" value={data.indexation} onChange={(v) => updateData("indexation", v)} options={indexationOptions} />
+          <SelectField label="שיטת החזר" value={data.repaymentMethod} onChange={(v) => updateData("repaymentMethod", v)} options={repaymentOptions} className="sm:col-span-2" />
+        </div>
+      )}
 
-      {step === 3 && <div className="space-y-3 rounded-2xl bg-slate-50 p-4">
-        <p className="text-sm font-black text-slate-700">אומדן ראשוני — לא מחייב ולא אישור בנקאי</p>
-        <ResultSummaryRow label="אומדן סיכוי אישור" value={ready ? `${Math.round(analysis.approval)}%` : "--"} highlight={ready && analysis.approval >= 65} />
-        <ResultSummaryRow label="החזר חודשי משוער" value={displayMoney(analysis.monthly, ready)} />
-        <ResultSummaryRow label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} warn={ready && analysis.mortgageOnlyRatio > 40} />
-        <ResultSummaryRow label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
-        <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-600">{ready ? recommendation : "השלימו נתונים לקבלת חיווי מלא."}</p>
-        <a href="#lead" className="block rounded-full bg-violet-700 px-5 py-3 text-center text-sm font-black text-white">רוצים להבין איך לשפר? דברו איתנו</a>
-      </div>}
+      {step === 3 && (
+        <div className="rounded-finzo-md bg-finzo-paper p-5 space-y-3">
+          <p className="font-mono text-[12px] tracking-[0.06em] text-finzo-mute uppercase">אומדן ראשוני — לא מחייב ולא אישור בנקאי</p>
+          <ResultSummaryRow label="אומדן סיכוי אישור" value={ready ? `${Math.round(analysis.approval)}%` : "--"} highlight={ready && analysis.approval >= 65} />
+          <ResultSummaryRow label="החזר חודשי משוער" value={displayMoney(analysis.monthly, ready)} />
+          <ResultSummaryRow label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} warn={ready && analysis.mortgageOnlyRatio > 40} />
+          <ResultSummaryRow label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
+          <p className="rounded-finzo-md bg-finzo-white p-3 text-[14px] text-finzo-ink-2 leading-[1.6]">
+            {ready ? recommendation : "השלימו נתונים לקבלת חיווי מלא."}
+          </p>
+          <a
+            href="#lead"
+            className="block rounded-finzo-pill bg-finzo-cobalt px-5 py-3 text-center text-[14px] font-medium text-white shadow-e-cobalt transition hover:bg-finzo-cobalt-d"
+          >
+            רוצים להבין איך לשפר? דברו איתנו
+          </a>
+        </div>
+      )}
 
       <div className="mt-5 flex gap-3">
-        <button type="button" onClick={() => moveStep(step - 1)} disabled={step === 0} className="h-12 flex-1 rounded-full border border-slate-300 bg-white font-black text-slate-700 disabled:opacity-50">חזרה</button>
-        <button type="button" onClick={() => moveStep(step + 1)} disabled={step === wizardSteps.length - 1} className="h-12 flex-1 rounded-full bg-violet-700 font-black text-white disabled:opacity-50">המשך</button>
+        <button
+          type="button"
+          onClick={() => moveStep(step - 1)}
+          disabled={step === 0}
+          className="h-12 flex-1 rounded-finzo-pill border border-finzo-line bg-finzo-white font-medium text-finzo-ink transition hover:bg-finzo-cream disabled:opacity-40"
+        >
+          חזרה
+        </button>
+        <button
+          type="button"
+          onClick={() => moveStep(step + 1)}
+          disabled={step === wizardSteps.length - 1}
+          className="h-12 flex-1 rounded-finzo-pill bg-finzo-cobalt font-medium text-white shadow-e-cobalt transition hover:bg-finzo-cobalt-d disabled:opacity-40"
+        >
+          המשך
+        </button>
       </div>
     </form>
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   LIVE RESULT PANEL
+───────────────────────────────────────────────────────────────────────────── */
 function LiveResultPanel({ analysis, ready, recommendation }) {
   const score = ready ? Math.round(analysis.approval) : 0;
 
   return (
-    <aside className="rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-700 to-violet-950 p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.28)] sm:p-8">
-      <p className="text-sm font-black text-violet-100">{ready ? "תוצאה מתעדכנת בזמן אמת" : "מלאו נתונים לבדיקה ראשונית"}</p>
-      <div className="mt-6 flex items-end justify-between gap-4">
+    <aside className="rounded-finzo-lg border border-finzo-ink bg-finzo-ink p-6 text-white shadow-e-4 sm:p-8">
+      <p className="font-mono text-[12px] tracking-[0.06em] text-white/60">
+        {ready ? "תוצאה מתעדכנת בזמן אמת" : "מלאו נתונים לבדיקה ראשונית"}
+      </p>
+
+      <div className="mt-5 flex items-end justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-black">אומדן סיכוי אישור</h3>
-          <p className="mt-2 text-violet-100">{approvalLabel(analysis, ready)}</p>
+          <h3 className="font-serif text-[24px] leading-[1.2] text-white">אומדן סיכוי אישור</h3>
+          <p className="mt-1 font-mono text-[13px] text-white/65">{approvalLabel(analysis, ready)}</p>
         </div>
-        <div className="text-left">
-          <span className="number-display text-5xl font-black">{ready ? `${score}%` : "--"}</span>
-        </div>
+        <span
+          className="font-serif text-[52px] leading-none tracking-[-0.02em] text-white"
+          style={{ fontFeatureSettings: '"tnum" 1' }}
+        >
+          {ready ? `${score}%` : "--"}
+        </span>
       </div>
 
-      <div className="mt-7 h-3 overflow-hidden rounded-full bg-white/15">
+      <div className="mt-5 h-[6px] w-full overflow-hidden rounded-full bg-white/15">
         <div
           className="h-full rounded-full bg-white transition-all duration-500"
           style={{ width: ready ? `${Math.min(100, Math.max(0, score))}%` : "0%" }}
         />
       </div>
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
         <DarkMetric label="החזר חודשי משוער" value={displayMoney(analysis.monthly, ready)} />
         <DarkMetric label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} />
         <DarkMetric label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
         <DarkMetric label="אחוז מימון LTV" value={displayPercent(analysis.ltv, ready)} />
       </div>
 
-      <div className="mt-6 rounded-3xl bg-white/10 p-5 ring-1 ring-white/10">
-        <p className="text-sm font-black text-violet-100">נקודת שיפור מרכזית</p>
-        <p className="mt-2 text-lg font-black">{ready ? analysis.mainIssue : "הזינו נתונים כדי לקבל חיווי"}</p>
-        <p className="mt-3 leading-7 text-violet-50">{ready ? recommendation : ""}</p>
+      <div className="mt-5 rounded-finzo-md border border-white/10 bg-white/08 p-5">
+        <p className="font-mono text-[12px] text-white/60 uppercase tracking-[0.06em]">נקודת שיפור מרכזית</p>
+        <p className="mt-2 font-serif text-[20px] leading-[1.3] text-white">
+          {ready ? analysis.mainIssue : "הזינו נתונים כדי לקבל חיווי"}
+        </p>
+        {ready && <p className="mt-3 text-[14px] leading-[1.6] text-white/70">{recommendation}</p>}
       </div>
 
       <a
         href="#lead"
-        className="mt-5 block rounded-full bg-white px-6 py-4 text-center text-base font-black text-violet-800 shadow-lg transition hover:bg-violet-50"
+        className="mt-5 block rounded-finzo-pill bg-finzo-cobalt px-6 py-4 text-center text-[15px] font-medium text-white shadow-e-cobalt transition hover:bg-finzo-cobalt-d"
       >
         רוצים לשפר את הסיכוי? דברו איתנו
       </a>
-      <p className="mt-3 text-center text-xs font-bold text-violet-100">אומדן ראשוני בלבד · לא אישור בנקאי · ללא התחייבות</p>
+      <p className="mt-3 text-center font-mono text-[11px] text-white/50">אומדן ראשוני בלבד · לא אישור בנקאי · ללא התחייבות</p>
     </aside>
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESULTS SECTION
+───────────────────────────────────────────────────────────────────────────── */
 function ResultsSection({ analysis, ready }) {
   const flowText = !ready
     ? "הזינו נתונים כדי לראות השוואה."
@@ -920,55 +1021,187 @@ function ResultsSection({ analysis, ready }) {
       <SectionHeader
         eyebrow="אומדן ראשוני"
         title="סיכום הבדיקה — בצורה פשוטה וברורה"
-        text="כל הנתונים המרכזיים במקום אחד. זכרו — זהו אומדן ראשוני בלבד ולא אישור בנקאי."
+        text="כל הנתונים המרכזיים במקום אחד. זהו אומדן ראשוני בלבד ולא אישור בנקאי."
       />
-
       <div className="mt-10 grid gap-4 md:grid-cols-2">
         {resultCards.map(([label, value, note]) => (
           <ResultCard key={label} label={label} value={value} note={note} />
         ))}
       </div>
 
-      {ready && <details className="mt-6 rounded-[28px] border border-slate-200 bg-slate-50 p-5 open:bg-white sm:p-7">
-        <summary className="cursor-pointer text-lg font-black text-violet-800">צפייה בניתוח פיננסי מלא</summary>
-        <div className="mt-6 grid gap-3 md:grid-cols-2">
-          <DetailRow label="יחס התחייבויות כולל" value={displayPercent(analysis.totalObligationsRatio, ready)} />
-          <DetailRow label="יחס שמרני אחרי הוצאות והלוואות" value={displayPercent(analysis.disposableRepaymentRatio, ready)} />
-          <DetailRow label="סכום משכנתא" value={displayMoney(analysis.mortgage, ready)} />
-          <DetailRow label="הכנסה נטו" value={displayMoney(analysis.income, ready)} />
-          <DetailRow label="הלוואות שיישארו אחרי העסקה" value={displayMoney(analysis.remainingLoansMonthly, ready)} />
-          <DetailRow label="חיסכון חודשי מסגירת הלוואות" value={displayMoney(analysis.loanClosureMonthlySaving, ready)} />
-          <DetailRow label="תרחיש עליית ריבית" value={displayMoney(analysis.monthlyHigh, ready)} />
-          <DetailRow label="הכנסה נדרשת לאומדן זה" value={displayMoney(analysis.requiredIncomeForMortgage, ready)} />
-        </div>
-      </details>}
+      {ready && (
+        <details className="mt-6 rounded-finzo-lg border border-finzo-line bg-finzo-paper p-5 open:bg-finzo-white sm:p-7">
+          <summary className="cursor-pointer text-[17px] font-medium text-finzo-cobalt">צפייה בניתוח פיננסי מלא</summary>
+          <div className="mt-6 grid gap-3 md:grid-cols-2">
+            <DetailRow label="יחס התחייבויות כולל" value={displayPercent(analysis.totalObligationsRatio, ready)} />
+            <DetailRow label="יחס שמרני אחרי הוצאות והלוואות" value={displayPercent(analysis.disposableRepaymentRatio, ready)} />
+            <DetailRow label="סכום משכנתא" value={displayMoney(analysis.mortgage, ready)} />
+            <DetailRow label="הכנסה נטו" value={displayMoney(analysis.income, ready)} />
+            <DetailRow label="הלוואות שיישארו אחרי העסקה" value={displayMoney(analysis.remainingLoansMonthly, ready)} />
+            <DetailRow label="חיסכון חודשי מסגירת הלוואות" value={displayMoney(analysis.loanClosureMonthlySaving, ready)} />
+            <DetailRow label="תרחיש עליית ריבית" value={displayMoney(analysis.monthlyHigh, ready)} />
+            <DetailRow label="הכנסה נדרשת לאומדן זה" value={displayMoney(analysis.requiredIncomeForMortgage, ready)} />
+          </div>
+        </details>
+      )}
     </section>
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   TRUST CONTENT SECTION
+───────────────────────────────────────────────────────────────────────────── */
+const trustBlocks = [
+  {
+    icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z",
+    title: "הנתונים נשארים אצלנו",
+    text: "הנתונים שאתה מזין לא מועברים לאף בנק, יועץ או גורם חיצוני ללא אישורך המפורש.",
+    iconBg: "bg-finzo-ink",
+  },
+  {
+    icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z",
+    title: "אומדן ראשוני — לא הבטחה",
+    text: "הבדיקה מבוססת על הנתונים שהזנת ונועדה לתת תמונת מצב התחלתית. אישור בנקאי בפועל כרוך בבדיקת מסמכים ושמאות.",
+    iconBg: "bg-finzo-cobalt",
+  },
+  {
+    icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+    title: "המטרה שלנו — לעזור לך להבין",
+    text: "FINZO לא מוכרת משכנתאות. המטרה היא לעזור לך להבין איפה אתה עומד לפני פנייה ליועץ או לבנק.",
+    iconBg: "bg-finzo-coral",
+  },
+  {
+    icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+    title: "ללא התחייבות בשום שלב",
+    text: "השימוש במחשבון ואפילו השארת פרטים לא מחייבים אותך לשום דבר. אתה בשליטה מלאה על ההמשך.",
+    iconBg: "bg-finzo-ink",
+  },
+];
+
+function TrustContentSection() {
+  return (
+    <section id="why-finzo" aria-labelledby="trust-content-title" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+      <h2 id="trust-content-title" className="sr-only">למה לבחור בבדיקה עם FINZO</h2>
+      <SectionHeader
+        eyebrow="למה FINZO"
+        title="שקיפות מלאה — לפני שמתחילים"
+        text="אנחנו מאמינים שהחלטה פיננסית טובה מתחילה בהבנה ברורה של המצב, לא בלחץ מכירתי."
+      />
+      <div className="mt-10 grid gap-4 md:grid-cols-2">
+        {trustBlocks.map((item) => (
+          <article key={item.title} className="flex gap-5 rounded-finzo-lg border border-finzo-line bg-finzo-white p-6">
+            <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-finzo-sm ${item.iconBg} text-white`}>
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d={item.icon} strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <div>
+              <h3 className="font-serif text-[20px] text-finzo-ink">{item.title}</h3>
+              <p className="mt-2 text-[15px] leading-[1.6] text-finzo-ink-2">{item.text}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SEO CONTENT SECTION
+───────────────────────────────────────────────────────────────────────────── */
+function SeoContentSection() {
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20" aria-labelledby="mortgage-seo-title">
+      <div className="rounded-finzo-lg border border-finzo-line bg-finzo-white p-6 sm:p-8">
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div>
+            <span className="inline-flex items-center gap-[10px] font-mono text-[12px] uppercase tracking-[0.12em] text-finzo-ink-3">
+              <span className="h-[7px] w-[7px] rounded-full bg-finzo-cobalt" aria-hidden="true" />
+              בדיקת משכנתא בישראל
+            </span>
+            <h2 id="mortgage-seo-title" className="mt-4 font-serif text-[32px] leading-[1.12] text-finzo-ink">
+              מה בודקים לפני שלוקחים משכנתא?
+            </h2>
+            <p className="mt-4 text-[15px] leading-[1.7] text-finzo-ink-2">
+              לפני שפונים לבנק כדאי להבין אם המספרים עובדים: מה סכום המשכנתא הדרוש, מה ההחזר החודשי המשוער, כמה הון עצמי חסר אם בכלל, ומה יחס ההחזר ביחס להכנסה. בדיקה מוקדמת יכולה לעזור לזהות נקודות סיכון לפני חתימת חוזה.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              ["יחס החזר", "בודק כמה מההכנסה נטו מיועד להחזר המשכנתא והתחייבויות קיימות."],
+              ["אחוז מימון LTV", "משווה בין סכום המשכנתא לשווי הנכס לפי סוג העסקה."],
+              ["הון עצמי", "מציג אם ההון העצמי מספיק ביחס למחיר הנכס ולמגבלות המימון."],
+              ["תזרים אחרי העסקה", "בודק כמה נשאר למחיה אחרי הוצאות, הלוואות והחזר משכנתא."],
+            ].map(([title, text]) => (
+              <article key={title} className="rounded-finzo-md bg-finzo-paper p-5">
+                <h3 className="font-serif text-[17px] text-finzo-ink">{title}</h3>
+                <p className="mt-2 text-[13.5px] leading-[1.6] text-finzo-ink-2">{text}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   REFINANCE SECTION
+───────────────────────────────────────────────────────────────────────────── */
 function RefinanceSection() {
   return (
-    <section id="refinance" className="bg-violet-950 py-16 text-white sm:py-20">
+    <section id="refinance" className="bg-finzo-ink py-16 text-white sm:py-20">
       <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-2">
         <div>
-          <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-black text-violet-100">
+          <span className="inline-flex items-center gap-2 rounded-finzo-pill border border-finzo-coral/40 bg-finzo-coral/10 px-4 py-2 font-mono text-[12px] tracking-[0.08em] text-finzo-coral">
             מחזור משכנתא
           </span>
-          <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">בדיקת כדאיות למחזור משכנתא</h2>
-          <p className="mt-4 max-w-xl text-lg leading-8 text-violet-100">
-            כבר יש לכם משכנתא? בדקו אם שינוי ריבית, תקופה או תמהיל עשוי להפחית החזר או ריבית כוללת. בהמשך ניתן להעלות דוח משכנתא לבדיקה נוחה יותר.
+          <h2 className="mt-5 font-serif text-[clamp(28px,3.5vw,40px)] leading-[1.1] text-white">
+            בדיקת כדאיות למחזור משכנתא
+          </h2>
+          <p className="mt-4 max-w-lg text-[16px] leading-[1.6] text-white/70">
+            כבר יש לכם משכנתא? בדקו אם שינוי ריבית, תקופה או תמהיל עשוי להפחית החזר או ריבית כוללת.
           </p>
-        </div>
-        <div className="rounded-[32px] border border-white/10 bg-white/10 p-6">
-          <p className="text-xl font-black">מה בודקים?</p>
-          <ul className="mt-4 space-y-3 text-violet-50">
-            <li>• החזר חודשי נוכחי מול החזר חדש</li>
-            <li>• חיסכון ריבית משוער לאחר עלויות מחזור</li>
-            <li>• נקודת איזון והאם היא בתוך התקופה שנותרה</li>
+          <ul className="mt-6 space-y-3">
+            {[
+              "החזר חודשי נוכחי מול החזר חדש",
+              "חיסכון ריבית משוער לאחר עלויות מחזור",
+              "נקודת איזון והאם היא בתוך התקופה שנותרה",
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-3 text-[15px] text-white/80">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-finzo-cobalt text-[10px] text-white">✓</span>
+                {item}
+              </li>
+            ))}
           </ul>
+        </div>
+
+        <div className="rounded-finzo-lg border-[1.5px] border-white/10 bg-white/05 p-6">
+          <p className="font-serif text-[22px] text-white">האם המחזור כדאי?</p>
+          <p className="mt-2 text-[14px] text-white/60">השוואה בין משכנתא קיימת לחדשה</p>
+
+          <div className="mt-5 space-y-3">
+            {[
+              ["החזר נוכחי", "8,900 ₪", "now"],
+              ["החזר אחרי מחזור", "7,400 ₪", "after"],
+            ].map(([label, val, type]) => (
+              <div key={label} className="flex items-center justify-between">
+                <span className="font-mono text-[13px] text-white/70">{label}</span>
+                <div className="mx-4 flex-1 h-[10px] rounded-full bg-white/08 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${type === "after" ? "bg-finzo-cobalt w-[52%]" : "bg-white/30 w-[78%]"}`}
+                  />
+                </div>
+                <span className="font-mono text-[14px] text-white" style={{ fontFeatureSettings: '"tnum" 1' }}>{val}</span>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-4 font-mono text-[12px] text-white/50">חיסכון חודשי משוער: 1,500 ₪ · נקודת איזון: 18 חודשים</p>
+
           <a
             href="/refinance-check"
-            className="mt-6 block rounded-full bg-white px-6 py-4 text-center font-black text-violet-900 transition hover:bg-violet-50"
+            className="mt-5 block rounded-finzo-pill bg-finzo-cobalt px-6 py-4 text-center font-medium text-white shadow-e-cobalt transition hover:bg-finzo-cobalt-d"
           >
             בדיקת מחזור משכנתא
           </a>
@@ -978,183 +1211,237 @@ function RefinanceSection() {
   );
 }
 
-function TrustContentSection() {
-  const trustBlocks = [
-    {
-      icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z",
-      title: "הנתונים נשארים אצלנו",
-      text: "הנתונים שאתה מזין לא מועברים לאף בנק, יועץ או גורם חיצוני ללא אישורך המפורש. המידע משמש לבדיקה הראשונית בלבד.",
-    },
-    {
-      icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z",
-      title: "אומדן ראשוני — לא הבטחה",
-      text: "הבדיקה מבוססת על הנתונים שהזנת ונועדה לתת תמונת מצב התחלתית. אישור בנקאי בפועל כרוך בבדיקת מסמכים, שמאות ונתוני אשראי.",
-    },
-    {
-      icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
-      title: "המטרה שלנו — לעזור לך להבין",
-      text: "FINZO לא מוכרת משכנתאות ולא מרוויחה מהחלטות שלך. המטרה היא לעזור לך להבין איפה אתה עומד לפני פנייה ליועץ או לבנק.",
-    },
-    {
-      icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
-      title: "ללא התחייבות בשום שלב",
-      text: "השימוש במחשבון ואפילו השארת פרטים לא מחייבים אותך לשום דבר. אתה בשליטה מלאה על ההמשך.",
-    },
-  ];
-
-  return (
-    <section id="why-finzo" aria-labelledby="trust-content-title" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-      <SectionHeader eyebrow="למה FINZO" title="שקיפות מלאה — לפני שמתחילים" text="אנחנו מאמינים שהחלטה פיננסית טובה מתחילה בהבנה ברורה של המצב, לא בלחץ מכירתי." />
-      <h2 id="trust-content-title" className="sr-only">למה לבחור בבדיקה עם FINZO</h2>
-      <div className="mt-10 grid gap-4 md:grid-cols-2">
-        {trustBlocks.map((item) => (
-          <article key={item.title} className="flex gap-5 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d={item.icon} strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </span>
-            <div>
-              <h3 className="text-xl font-black text-slate-950">{item.title}</h3>
-              <p className="mt-2 leading-7 text-slate-600">{item.text}</p>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
+/* ─────────────────────────────────────────────────────────────────────────────
+   LEAD SECTION
+───────────────────────────────────────────────────────────────────────────── */
 function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, successRef, analysis, ready, trackEvent }) {
   return (
-    <section id="lead" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-      <SectionHeader
-        eyebrow="כיוון ראשוני"
-        title="רוצים להבין איך לשפר את הסיכוי לאישור?"
-        text="השאירו פרטים ונחזור אליכם עם כיוון ראשוני לבדיקה מול יועץ מתאים."
-      />
-      <div className="mt-10 grid items-stretch gap-6 lg:grid-cols-2">
-        <div className="rounded-[34px] bg-gradient-to-br from-violet-50 to-white p-7 ring-1 ring-violet-100">
-          <div className="space-y-3">
-            {ready ? (
-              <>
-                <ResultSummaryRow label="אומדן בדיקה ראשונית" value={`${Math.round(analysis.approval)}%`} highlight={analysis.approval >= 65} />
-                <ResultSummaryRow label="החזר חודשי משוער" value={formatILS(analysis.monthly)} />
-                <ResultSummaryRow label="יחס החזר" value={formatPct(analysis.mortgageOnlyRatio)} warn={analysis.mortgageOnlyRatio > 40} />
-                <ResultSummaryRow label="יתרה למחיה" value={formatILS(analysis.afterHousing)} warn={analysis.afterHousing < 3000} />
-                {analysis.mainIssue && (
-                  <div className="mt-2 rounded-2xl bg-white px-4 py-3 shadow-sm">
-                    <p className="text-xs font-black text-slate-500">הנושא המרכזי לטיפול</p>
-                    <p className="mt-1 font-black text-violet-900">{analysis.mainIssue}</p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="rounded-2xl bg-white px-4 py-5 text-center shadow-sm">
-                <p className="font-black text-slate-500">מלאו נתונים במחשבון כדי לראות כאן את סיכום הסימולציה.</p>
-              </div>
-            )}
+    <section id="lead" className="bg-finzo-ink py-16 sm:py-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="mb-10 text-center">
+          <div className="inline-flex items-center gap-[10px] font-mono text-[12px] uppercase tracking-[0.12em] text-white/60">
+            <span className="h-[7px] w-[7px] rounded-full bg-finzo-cobalt" aria-hidden="true" />
+            כיוון ראשוני
           </div>
-          <ul className="mt-6 space-y-2 text-sm font-bold text-slate-600">
-            <li className="flex items-center gap-2"><CheckIcon /><span>בדיקת זכאות חינם וללא התחייבות</span></li>
-            <li className="flex items-center gap-2"><CheckIcon /><span>אינה פוגעת בדירוג אשראי</span></li>
-            <li className="flex items-center gap-2"><CheckIcon /><span>פרטיות מלאה ושימוש במידע לצורך חזרה בלבד</span></li>
-            <li className="flex items-center gap-2"><CheckIcon /><span>שיחה מקצועית קצרה להבנת הצעד הבא</span></li>
-          </ul>
+          <h2 className="mt-4 font-serif text-[clamp(28px,4vw,44px)] leading-[1.1] text-white">
+            רוצים להבין איך לשפר את הסיכוי לאישור?
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-[16px] leading-[1.6] text-white/70">
+            השאירו פרטים ונחזור אליכם עם כיוון ראשוני לבדיקה מול יועץ מתאים.
+          </p>
         </div>
 
-        <form
-          onSubmit={submitLead}
-          aria-busy={leadLoading ? "true" : "false"}
-          className="rounded-[34px] border border-slate-200 bg-white p-7 shadow-[0_24px_70px_rgba(15,23,42,0.10)]"
-        >
-          <p className="mb-4 text-sm font-black text-slate-700">פרטים ליצירת קשר</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField label="שם מלא" value={lead.name} onChange={(value) => updateLead("name", value)} autoComplete="name" required />
-            <TextField label="טלפון" value={lead.phone} onChange={(value) => updateLead("phone", value)} placeholder="05X-XXXXXXX" autoComplete="tel" required />
-            <TextField label="עיר" value={lead.city} onChange={(value) => updateLead("city", value)} autoComplete="address-level2" className="sm:col-span-2" />
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          {/* left — summary panel */}
+          <div className="rounded-finzo-lg border border-white/10 bg-white/05 p-6">
+            {ready ? (
+              <div className="space-y-3">
+                <ResultSummaryRow label="אומדן בדיקה ראשונית" value={`${Math.round(analysis.approval)}%`} highlight={analysis.approval >= 65} dark />
+                <ResultSummaryRow label="החזר חודשי משוער" value={formatILS(analysis.monthly)} dark />
+                <ResultSummaryRow label="יחס החזר" value={formatPct(analysis.mortgageOnlyRatio)} warn={analysis.mortgageOnlyRatio > 40} dark />
+                <ResultSummaryRow label="יתרה למחיה" value={formatILS(analysis.afterHousing)} warn={analysis.afterHousing < 3000} dark />
+                {analysis.mainIssue && (
+                  <div className="mt-2 rounded-finzo-md border border-white/10 bg-white/08 px-4 py-3">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-white/50">הנושא המרכזי לטיפול</p>
+                    <p className="mt-1 font-medium text-white">{analysis.mainIssue}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-finzo-md border border-white/10 bg-white/08 px-4 py-5 text-center">
+                <p className="text-white/60">מלאו נתונים במחשבון כדי לראות כאן את סיכום הסימולציה.</p>
+              </div>
+            )}
+
+            <ul className="mt-6 space-y-2">
+              {[
+                "בדיקת זכאות חינם וללא התחייבות",
+                "אינה פוגעת בדירוג אשראי",
+                "פרטיות מלאה ושימוש במידע לצורך חזרה בלבד",
+                "שיחה מקצועית קצרה להבנת הצעד הבא",
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-2 text-[14px] text-white/70">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-finzo-cobalt text-[10px] text-white">✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <p className="mb-4 mt-6 text-sm font-black text-slate-700">פרטי העסקה (אופציונלי — עוזר לנו להגיע מוכנים)</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <MoneyField label="מחיר נכס" value={lead.propertyPrice} onChange={(value) => updateLead("propertyPrice", value)} />
-            <MoneyField label="הון עצמי" value={lead.equityAmount} onChange={(value) => updateLead("equityAmount", value)} />
-            <MoneyField label="הכנסה חודשית נטו" value={lead.monthlyIncome} onChange={(value) => updateLead("monthlyIncome", value)} />
-            <SelectField
-              label="סטטוס חוזה"
-              value={lead.contractStatus}
-              onChange={(value) => updateLead("contractStatus", value)}
-              options={[
-                ["before", "לפני חוזה"],
-                ["negotiation", "במו\"מ / טיוטות"],
-                ["signed", "חוזה חתום"],
-              ]}
-            />
-            <TextField
-              label="מועד נוח לחזרה"
-              value={lead.requestedContactTime}
-              onChange={(value) => updateLead("requestedContactTime", value)}
-              placeholder="למשל: א'-ה' 17:00-20:00"
-              className="sm:col-span-2"
-            />
-          </div>
-
-          {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
-          {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-700">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם עם כיוון ראשוני.</p>}
-
-          <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm font-black text-slate-700">מה קורה אחרי השליחה?</p>
-            <p className="mt-1 text-sm font-semibold text-slate-600">יועץ חוזר אליכם לשיחה קצרה, עובר על האומדן הראשוני ומכוון לצעד הבא. ללא התחייבות.</p>
-          </div>
-
-          <button
-            type="submit"
-            disabled={leadLoading || leadSent}
-            className="mt-4 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
+          {/* right — form */}
+          <form
+            onSubmit={submitLead}
+            aria-busy={leadLoading ? "true" : "false"}
+            className="rounded-finzo-lg border border-white/10 bg-finzo-white p-6"
           >
-            {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה ✓" : "שלחו פרטים — נחזור אליכם"}
-          </button>
-          <p className="mt-3 text-center text-xs font-bold text-slate-500">
-            ללא עלות · ללא התחייבות · המידע לא נשלח לבנק ללא אישורך
-          </p>
-        </form>
+            <p className="mb-5 font-mono text-[12px] uppercase tracking-[0.08em] text-finzo-ink-3">פרטים ליצירת קשר</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField label="שם מלא" value={lead.name} onChange={(v) => updateLead("name", v)} autoComplete="name" required />
+              <TextField label="טלפון" value={lead.phone} onChange={(v) => updateLead("phone", v)} placeholder="05X-XXXXXXX" autoComplete="tel" required />
+              <TextField label="עיר" value={lead.city} onChange={(v) => updateLead("city", v)} autoComplete="address-level2" className="sm:col-span-2" />
+            </div>
+
+            <p className="mb-4 mt-6 font-mono text-[12px] uppercase tracking-[0.08em] text-finzo-ink-3">פרטי העסקה (אופציונלי)</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <MoneyField label="מחיר נכס" value={lead.propertyPrice} onChange={(v) => updateLead("propertyPrice", v)} />
+              <MoneyField label="הון עצמי" value={lead.equityAmount} onChange={(v) => updateLead("equityAmount", v)} />
+              <MoneyField label="הכנסה חודשית נטו" value={lead.monthlyIncome} onChange={(v) => updateLead("monthlyIncome", v)} />
+              <SelectField
+                label="סטטוס חוזה"
+                value={lead.contractStatus}
+                onChange={(v) => updateLead("contractStatus", v)}
+                options={[
+                  ["before", "לפני חוזה"],
+                  ["negotiation", "במו\"מ / טיוטות"],
+                  ["signed", "חוזה חתום"],
+                ]}
+              />
+              <TextField
+                label="מועד נוח לחזרה"
+                value={lead.requestedContactTime}
+                onChange={(v) => updateLead("requestedContactTime", v)}
+                placeholder="למשל: א'-ה' 17:00-20:00"
+                className="sm:col-span-2"
+              />
+            </div>
+
+            {leadError && (
+              <p role="alert" className="mt-4 rounded-finzo-md border border-finzo-danger/20 bg-finzo-danger/08 px-4 py-3 text-[14px] text-finzo-danger">
+                {leadError}
+              </p>
+            )}
+            {leadSent && (
+              <p ref={successRef} role="status" className="mt-4 rounded-finzo-md border border-finzo-success/20 bg-finzo-success/08 px-4 py-4 text-center text-[14px] text-finzo-success">
+                הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם עם כיוון ראשוני.
+              </p>
+            )}
+
+            <div className="mt-5 rounded-finzo-md bg-finzo-paper px-4 py-3">
+              <p className="text-[13px] font-medium text-finzo-ink">מה קורה אחרי השליחה?</p>
+              <p className="mt-1 text-[13px] text-finzo-ink-2">יועץ חוזר אליכם לשיחה קצרה, עובר על האומדן הראשוני ומכוון לצעד הבא. ללא התחייבות.</p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={leadLoading || leadSent}
+              className="mt-4 min-h-12 w-full rounded-finzo-pill bg-finzo-cobalt px-7 py-4 text-[15px] font-medium text-white shadow-e-cobalt transition hover:bg-finzo-cobalt-d disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה ✓" : "שלחו פרטים — נחזור אליכם"}
+            </button>
+            <p className="mt-3 text-center font-mono text-[11px] text-finzo-mute">
+              ללא עלות · ללא התחייבות · המידע לא נשלח לבנק ללא אישורך
+            </p>
+          </form>
+        </div>
       </div>
     </section>
   );
 }
 
-function ResultSummaryRow({ label, value, highlight = false, warn = false }) {
+/* ─────────────────────────────────────────────────────────────────────────────
+   FINZO PRO TEASER (new)
+───────────────────────────────────────────────────────────────────────────── */
+function FinzoProTeaser() {
   return (
-    <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm">
-      <span className="font-bold text-slate-600">{label}</span>
-      <span className={`number-display font-black ${highlight ? "text-emerald-700" : warn ? "text-amber-700" : "text-slate-950"}`}>{value}</span>
-    </div>
+    <section className="bg-finzo-cream py-16 sm:py-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div>
+            <div className="inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.12em] text-finzo-ink-3">
+              <span className="h-[7px] w-[7px] rounded-full bg-finzo-cobalt" aria-hidden="true" />
+              FINZO Pro
+            </div>
+            <h2 className="mt-4 font-serif text-[clamp(28px,3.5vw,42px)] leading-[1.1] text-finzo-ink">
+              יועצי משכנתא — הצטרפו לפלטפורמה
+            </h2>
+            <p className="mt-4 max-w-lg text-[16px] leading-[1.6] text-finzo-ink-2">
+              FINZO Pro מחבר יועצים מוסמכים עם לידים איכותיים. לוח בקרה מלא, ניהול תיקים, וגישה לשוק הלידים.
+            </p>
+            <ul className="mt-6 space-y-3">
+              {["גישה ללידים מסווגים לפי אזור וסוג עסקה", "לוח בקרה עם KPI בזמן אמת", "ניהול תיקי לקוחות במקום אחד"].map((item) => (
+                <li key={item} className="flex items-center gap-3 text-[14px] text-finzo-ink-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-finzo-ink text-[10px] text-white">✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href="/advisor/register"
+                className="inline-flex items-center gap-2 rounded-finzo-pill bg-finzo-cobalt px-6 py-3 text-[14px] font-medium text-white shadow-e-cobalt transition hover:bg-finzo-cobalt-d"
+              >
+                הצטרפו בחינם
+              </a>
+              <a
+                href="/advisor/login"
+                className="inline-flex items-center gap-2 rounded-finzo-pill border border-finzo-ink bg-transparent px-6 py-3 text-[14px] font-medium text-finzo-ink transition hover:bg-finzo-ink hover:text-white"
+              >
+                כניסה ליועצים
+              </a>
+            </div>
+          </div>
+
+          {/* advisor card preview */}
+          <div className="rounded-finzo-lg border-[1.5px] border-finzo-ink bg-finzo-white shadow-neo">
+            <div className="border-b border-finzo-line px-5 py-4 flex items-center justify-between">
+              <span className="font-serif text-[16px] text-finzo-ink">לוח בקרה · יועץ</span>
+              <span className="font-mono text-[10.5px] tracking-[0.1em] bg-finzo-ink text-white px-2 py-1 rounded-finzo-xs">PRO</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 p-5">
+              {[
+                { label: "לידים חדשים", value: "12", delta: "+3 השבוע", up: true },
+                { label: "בתהליך", value: "5", delta: "2 בהמתנה", up: false },
+                { label: "הכנסה חודשית", value: "18,400 ₪", delta: "+8.2%", up: true },
+                { label: "שיעור סגירה", value: "38%", delta: "ממוצע אחרון", up: true },
+              ].map(({ label, value, delta, up }) => (
+                <div key={label} className="rounded-finzo-md border border-finzo-line p-4">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-finzo-ink-3">{label}</p>
+                  <p className="mt-2 font-serif text-[26px] text-finzo-ink" style={{ fontFeatureSettings: '"tnum" 1' }}>{value}</p>
+                  <p className={`mt-1 font-mono text-[11.5px] ${up ? "text-finzo-success" : "text-finzo-mute"}`}>{delta}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   FAQ SECTION
+───────────────────────────────────────────────────────────────────────────── */
 function FaqSection({ openFaq, setOpenFaq }) {
   return (
-    <section id="faq" className="bg-slate-100/60 py-16 sm:py-20">
+    <section id="faq" className="bg-finzo-paper py-16 sm:py-20">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
-        <SectionHeader eyebrow="שאלות נפוצות" title="שאלות שכולם שואלים לפני שמתחילים" text="תשובות ישירות ופשוטות — בלי עמימות ובלי שיווק." />
-        <div className="mt-10 space-y-3">
+        <SectionHeader
+          eyebrow="שאלות נפוצות"
+          title="שאלות שכולם שואלים לפני שמתחילים"
+          text="תשובות ישירות ופשוטות — בלי עמימות ובלי שיווק."
+        />
+        <div className="mt-10 space-y-2">
           {faqItems.map((item, index) => {
             const isOpen = openFaq === index;
             return (
-              <div key={item.question} className="rounded-[24px] border border-slate-200 bg-white shadow-sm">
-          <button
+              <div key={item.question} className="rounded-finzo-lg border border-finzo-line bg-finzo-white overflow-hidden">
+                <button
                   type="button"
                   onClick={() => setOpenFaq(isOpen ? null : index)}
                   aria-expanded={isOpen}
                   aria-controls={`faq-answer-${index}`}
-                  className="flex w-full items-center justify-between gap-4 px-6 py-5 text-right"
+                  className="flex w-full items-center justify-between gap-4 px-6 py-5 text-start"
                 >
-                  <span className="text-lg font-black text-slate-950">{item.question}</span>
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-violet-50 text-xl font-black text-violet-700">
-                    {isOpen ? "-" : "+"}
+                  <span className="font-serif text-[18px] text-finzo-ink">{item.question}</span>
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-finzo-sm bg-finzo-paper font-mono text-[18px] font-medium text-finzo-ink-2 transition">
+                    {isOpen ? "−" : "+"}
                   </span>
                 </button>
-                {isOpen && <p id={`faq-answer-${index}`} className="px-6 pb-6 leading-8 text-slate-600">{item.answer}</p>}
+                {isOpen && (
+                  <p id={`faq-answer-${index}`} className="px-6 pb-6 text-[15px] leading-[1.7] text-finzo-ink-2">
+                    {item.answer}
+                  </p>
+                )}
               </div>
             );
           })}
@@ -1164,77 +1451,113 @@ function FaqSection({ openFaq, setOpenFaq }) {
   );
 }
 
-
+/* ─────────────────────────────────────────────────────────────────────────────
+   BOTTOM LEAD SECTION
+───────────────────────────────────────────────────────────────────────────── */
 function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bottomLeadLoading, bottomLeadSent, bottomLeadError }) {
   return (
     <section id="bottom-lead" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-      <div className="rounded-[30px] border border-violet-200/70 bg-gradient-to-br from-slate-950 via-violet-950 to-violet-900 p-6 text-white shadow-[0_28px_70px_rgba(46,16,101,0.35)] sm:p-8">
-        <h2 className="text-2xl font-black sm:text-3xl">רוצים להבין איך לשפר את הסיכוי לאישור?</h2>
-        <p className="mt-2 text-sm font-semibold text-violet-100 sm:text-base">השאירו פרטים ונחזור אליכם עם כיוון ראשוני לבדיקה מול יועץ מתאים.</p>
-        <form onSubmit={submitBottomLead} className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-4" dir="rtl">
-          <TextField label="שם מלא" value={bottomLead.name} onChange={(value) => updateBottomLead("name", value)} autoComplete="name" required contrastMode="dark" />
-          <TextField label="טלפון" value={bottomLead.phone} onChange={(value) => updateBottomLead("phone", value)} autoComplete="tel" placeholder="05X-XXXXXXX" required contrastMode="dark" />
-          <TextField label="עיר" value={bottomLead.city} onChange={(value) => updateBottomLead("city", value)} autoComplete="address-level2" contrastMode="dark" />
-          <button type="submit" disabled={bottomLeadLoading || bottomLeadSent} className="min-h-12 rounded-2xl border border-violet-300 bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-[0_12px_28px_rgba(76,29,149,0.35)] transition hover:bg-violet-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-200 disabled:opacity-70">
-            {bottomLeadLoading ? "שולח..." : bottomLeadSent ? "נשלח בהצלחה" : "שליחה לנציג מקצועי"}
+      <div className="rounded-finzo-lg border-[1.5px] border-finzo-ink bg-finzo-ink p-6 sm:p-8">
+        <h2 className="font-serif text-[clamp(22px,3vw,32px)] text-white">
+          רוצים להבין איך לשפר את הסיכוי לאישור?
+        </h2>
+        <p className="mt-2 text-[15px] text-white/70">השאירו פרטים ונחזור אליכם עם כיוון ראשוני.</p>
+
+        <form onSubmit={submitBottomLead} className="mt-6 grid gap-3 sm:grid-cols-4" dir="rtl">
+          <TextField label="שם מלא" value={bottomLead.name} onChange={(v) => updateBottomLead("name", v)} autoComplete="name" required contrastMode="dark" />
+          <TextField label="טלפון" value={bottomLead.phone} onChange={(v) => updateBottomLead("phone", v)} autoComplete="tel" placeholder="05X-XXXXXXX" required contrastMode="dark" />
+          <TextField label="עיר" value={bottomLead.city} onChange={(v) => updateBottomLead("city", v)} autoComplete="address-level2" contrastMode="dark" />
+          <button
+            type="submit"
+            disabled={bottomLeadLoading || bottomLeadSent}
+            className="min-h-12 self-end rounded-finzo-pill bg-finzo-cobalt px-5 py-3 text-[14px] font-medium text-white shadow-e-cobalt transition hover:bg-finzo-cobalt-d disabled:opacity-60"
+          >
+            {bottomLeadLoading ? "שולח..." : bottomLeadSent ? "נשלח ✓" : "שליחה לנציג מקצועי"}
           </button>
         </form>
-        {bottomLeadError && <p role="alert" className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{bottomLeadError}</p>}
-        {bottomLeadSent && <p role="status" className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
-        <p className="mt-3 text-xs font-bold text-violet-50">ללא התחייבות. הפרטים ישמשו לחזרה אליכם בלבד.</p>
+
+        {bottomLeadError && (
+          <p role="alert" className="mt-3 rounded-finzo-md bg-finzo-danger/10 px-4 py-3 text-[14px] text-finzo-danger">
+            {bottomLeadError}
+          </p>
+        )}
+        {bottomLeadSent && (
+          <p role="status" className="mt-3 rounded-finzo-md bg-finzo-success/10 px-4 py-3 text-[14px] text-finzo-success">
+            הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.
+          </p>
+        )}
+
+        <p className="mt-4 font-mono text-[11px] text-white/40">ללא התחייבות. הפרטים ישמשו לחזרה אליכם בלבד.</p>
       </div>
     </section>
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   FOOTER
+───────────────────────────────────────────────────────────────────────────── */
 function Footer({ onCtaClick }) {
   return (
-    <footer className="border-t border-slate-200 bg-white py-10">
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 text-sm font-semibold text-slate-500 sm:px-6 lg:grid-cols-3">
-        <div className="space-y-2">
-        <BrandLogo withTagline={false} />
-          <p>המידע באתר הוא לצורך מידע כללי בלבד ואינו מהווה ייעוץ פיננסי, ייעוץ משכנתאות או אישור בנקאי.</p>
+    <footer className="border-t border-finzo-line bg-finzo-white py-10">
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 sm:px-6 lg:grid-cols-3">
+        <div className="space-y-3">
+          <BrandLogo withTagline={false} />
+          <p className="text-[13px] leading-[1.6] text-finzo-ink-3">המידע באתר הוא לצורך מידע כללי בלבד ואינו מהווה ייעוץ פיננסי, ייעוץ משכנתאות או אישור בנקאי.</p>
         </div>
         <div className="space-y-2">
-          <p className="font-black text-slate-900">פרטיות ושימוש במידע</p>
-          <p>המידע נמסר מרצון ומשמש לצורך אומדן ראשוני וחזרה מקצועית בלבד. לא מתבצעת התחייבות לפעולה פיננסית.</p>
+          <p className="font-serif text-[16px] text-finzo-ink">פרטיות ושימוש במידע</p>
+          <p className="text-[13px] leading-[1.6] text-finzo-ink-3">המידע נמסר מרצון ומשמש לצורך אומדן ראשוני וחזרה מקצועית בלבד. לא מתבצעת התחייבות לפעולה פיננסית.</p>
         </div>
         <address className="not-italic space-y-2">
-          <p className="font-black text-slate-900">יצירת קשר</p>
-          <p>לשאלות או הבהרות ניתן להשאיר פנייה בטופס ונחזור בהקדם.</p>
-          <p className="text-xs">התוכן באתר הינו מידע כללי בלבד ואינו ייעוץ פיננסי או משפטי.</p>
+          <p className="font-serif text-[16px] text-finzo-ink">יצירת קשר</p>
+          <p className="text-[13px] leading-[1.6] text-finzo-ink-3">לשאלות או הבהרות ניתן להשאיר פנייה בטופס ונחזור בהקדם.</p>
+          <p className="text-[11px] text-finzo-mute">התוכן באתר הינו מידע כללי בלבד ואינו ייעוץ פיננסי או משפטי.</p>
         </address>
       </div>
-      <div className="mx-auto mt-6 max-w-6xl px-4 sm:px-6">
-        <div className="flex flex-wrap gap-3 items-center">
-          <a href="#eligibility-check" onClick={() => onCtaClick?.("footer")} className="inline-flex rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
-            בדקו זכאות עכשיו
+
+      <div className="mx-auto mt-8 max-w-6xl border-t border-finzo-line px-4 pt-6 sm:px-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <a
+            href="#eligibility-check"
+            onClick={() => onCtaClick?.("footer")}
+            className="inline-flex items-center gap-2 rounded-finzo-pill bg-finzo-cobalt px-5 py-3 text-[14px] font-medium text-white shadow-e-cobalt transition hover:bg-finzo-cobalt-d"
+          >
+            בדיקת זכאות חינם למשכנתא
           </a>
-          <a href="#bottom-lead" onClick={() => onCtaClick?.("footer_bottom_lead")} className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800 transition hover:bg-violet-100">
+          <a
+            href="#bottom-lead"
+            onClick={() => onCtaClick?.("footer_bottom_lead")}
+            className="inline-flex items-center gap-2 rounded-finzo-pill border border-finzo-line px-5 py-3 text-[14px] font-medium text-finzo-ink transition hover:bg-finzo-cream"
+          >
             השאירו פרטים
           </a>
-          <a href="/blog" className="text-sm font-bold text-violet-700 hover:underline">בלוג משכנתאות ←</a>
-          <a href="/guides" className="text-sm font-bold text-violet-700 hover:underline">מדריכי משכנתא ←</a>
+          <a href="/blog" className="text-[13px] text-finzo-cobalt hover:underline">בלוג משכנתאות</a>
+          <a href="/guides" className="text-[13px] text-finzo-cobalt hover:underline">מדריכי משכנתא</a>
         </div>
       </div>
     </footer>
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   MOBILE STICKY CTA
+───────────────────────────────────────────────────────────────────────────── */
 function MobileStickyCta({ onCtaClick, hidden }) {
   return (
-    <div className={`mobile-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 bg-white/95 px-4 pt-2 pb-2 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl transition md:hidden ${hidden ? "pointer-events-none translate-y-full opacity-0" : "translate-y-0 opacity-100"}`}>
+    <div
+      className={`fixed inset-x-0 bottom-0 z-40 border-t border-finzo-line bg-finzo-white/95 px-4 pb-safe pt-2 pb-2 backdrop-blur-xl transition-transform md:hidden ${hidden ? "translate-y-full" : "translate-y-0"}`}
+    >
       <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
         <a
           href="#eligibility-check"
           onClick={() => onCtaClick?.("sticky_mobile")}
-          className="rounded-full bg-violet-700 px-4 py-3 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(109,40,217,0.28)]"
+          className="rounded-finzo-pill bg-finzo-cobalt px-4 py-3 text-center text-[14px] font-medium text-white shadow-e-cobalt"
         >
-          בדקו זכאות עכשיו
+          בדיקת זכאות חינם
         </a>
         <a
           href="#bottom-lead"
-          className="rounded-full border border-violet-200 bg-violet-50 px-4 py-3 text-center text-sm font-black text-violet-800"
+          className="rounded-finzo-pill border border-finzo-ink bg-transparent px-4 py-3 text-center text-[14px] font-medium text-finzo-ink"
         >
           השאירו פרטים
         </a>
@@ -1243,22 +1566,75 @@ function MobileStickyCta({ onCtaClick, hidden }) {
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   SHARED PRIMITIVES
+───────────────────────────────────────────────────────────────────────────── */
 function SectionHeader({ eyebrow, title, text }) {
   return (
     <div className="mx-auto max-w-3xl text-center">
-      <span className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">{eyebrow}</span>
-      <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950 sm:text-4xl">{title}</h2>
-      <p className="mt-4 text-lg leading-8 text-slate-600">{text}</p>
+      <div className="inline-flex items-center gap-[10px] font-mono text-[12px] uppercase tracking-[0.12em] text-finzo-ink-3">
+        <span className="h-[7px] w-[7px] rounded-full bg-finzo-cobalt" aria-hidden="true" />
+        {eyebrow}
+      </div>
+      <h2 className="mt-4 font-serif text-[clamp(28px,4vw,44px)] leading-[1.08] tracking-[-0.022em] text-finzo-ink">
+        {title}
+      </h2>
+      <p className="mt-4 text-[17px] leading-[1.6] text-finzo-ink-2">{text}</p>
     </div>
   );
 }
 
+function ResultSummaryRow({ label, value, highlight = false, warn = false, dark = false }) {
+  const valColor = highlight ? "text-finzo-success" : warn ? "text-finzo-warning" : dark ? "text-white" : "text-finzo-ink";
+  const rowBg = dark ? "border border-white/10 bg-white/08" : "border border-finzo-line bg-finzo-white";
+  return (
+    <div className={`flex items-center justify-between rounded-finzo-md px-4 py-3 ${rowBg}`}>
+      <span className={`text-[13.5px] ${dark ? "text-white/70" : "text-finzo-ink-2"}`}>{label}</span>
+      <span className={`font-mono text-[15px] font-medium ${valColor}`} style={{ fontFeatureSettings: '"tnum" 1' }}>{value}</span>
+    </div>
+  );
+}
+
+function DarkMetric({ label, value }) {
+  return (
+    <div className="rounded-finzo-md border border-white/10 bg-white/08 p-4">
+      <p className="font-mono text-[11.5px] text-white/60 uppercase tracking-[0.06em]">{label}</p>
+      <p className="mt-2 font-mono text-[20px] font-medium text-white" style={{ fontFeatureSettings: '"tnum" 1' }}>{value}</p>
+    </div>
+  );
+}
+
+function ResultCard({ label, value, note }) {
+  return (
+    <article className="flex h-full flex-col justify-between rounded-finzo-lg border border-finzo-line bg-finzo-white p-6">
+      <div>
+        <p className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-finzo-ink-3">{label}</p>
+        <p className="mt-3 font-serif text-[32px] leading-none text-finzo-ink" style={{ fontFeatureSettings: '"tnum" 1' }}>{value}</p>
+      </div>
+      <p className="mt-4 text-[14px] leading-[1.6] text-finzo-ink-2">{note}</p>
+    </article>
+  );
+}
+
+function DetailRow({ label, value }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-finzo-md bg-finzo-paper px-4 py-3">
+      <span className="text-[13.5px] text-finzo-ink-2">{label}</span>
+      <span className="font-mono text-[14px] text-finzo-ink" style={{ fontFeatureSettings: '"tnum" 1' }}>{value}</span>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FORM FIELD COMPONENTS — logic preserved, visual updated
+───────────────────────────────────────────────────────────────────────────── */
 function MoneyField({ label, value, onChange, helper, className = "" }) {
   const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   return (
     <label className={`block ${className}`}>
-      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
-      <span className="relative mt-2 block">
+      <span className="text-[13px] text-finzo-ink-2" id={`${fieldId}-label`}>{label}</span>
+      <span className="relative mt-[6px] flex items-center overflow-hidden rounded-finzo-md border border-finzo-line bg-finzo-white transition focus-within:border-finzo-ink focus-within:ring-2 focus-within:ring-finzo-cobalt-l">
+        <span className="shrink-0 px-3 font-mono text-[13px] text-finzo-mute select-none">₪</span>
         <input
           id={fieldId}
           aria-labelledby={`${fieldId}-label`}
@@ -1267,11 +1643,11 @@ function MoneyField({ label, value, onChange, helper, className = "" }) {
           pattern="[0-9,]*"
           value={displayNumber(value || "")}
           onChange={(event) => onChange(cleanNumber(event.target.value))}
-          className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 sm:h-14"
+          className="h-12 min-w-0 flex-1 bg-transparent py-3 pl-3 pr-2 font-mono text-[15px] text-finzo-ink outline-none"
+          style={{ fontFeatureSettings: '"tnum" 1' }}
         />
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">₪</span>
       </span>
-      {helper && <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{helper}</span>}
+      {helper && <span className="mt-1 block font-mono text-[11px] leading-5 text-finzo-mute">{helper}</span>}
     </label>
   );
 }
@@ -1281,7 +1657,7 @@ function TextField({ label, value, onChange, placeholder = "", required = false,
   const isDark = contrastMode === "dark";
   return (
     <label className={`block ${className}`}>
-      <span className={`text-sm font-black ${isDark ? "text-violet-50" : "text-slate-700"}`} id={`${fieldId}-label`}>{label}</span>
+      <span className={`text-[13px] ${isDark ? "text-white/80" : "text-finzo-ink-2"}`} id={`${fieldId}-label`}>{label}</span>
       <input
         id={fieldId}
         aria-labelledby={`${fieldId}-label`}
@@ -1290,9 +1666,11 @@ function TextField({ label, value, onChange, placeholder = "", required = false,
         placeholder={placeholder}
         autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
-        className={`mt-2 h-12 w-full rounded-2xl px-4 text-base font-bold outline-none transition sm:h-14 ${isDark
-          ? "border border-violet-200 bg-white text-slate-950 placeholder:text-slate-500 focus:border-violet-300 focus:ring-4 focus:ring-violet-200"
-          : "border border-slate-200 bg-slate-50 text-slate-950 placeholder:text-slate-400 focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"}`}
+        className={`mt-[6px] h-12 w-full rounded-finzo-md px-4 text-[15px] outline-none transition ${
+          isDark
+            ? "border border-white/20 bg-finzo-white text-finzo-ink placeholder:text-finzo-mute focus:border-finzo-cobalt focus:ring-2 focus:ring-finzo-cobalt-l"
+            : "border border-finzo-line bg-finzo-white text-finzo-ink placeholder:text-finzo-mute focus:border-finzo-ink focus:ring-2 focus:ring-finzo-cobalt-l"
+        }`}
       />
     </label>
   );
@@ -1302,7 +1680,7 @@ function NumberField({ label, value, onChange, min, max }) {
   const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   return (
     <label className="block">
-      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
+      <span className="text-[13px] text-finzo-ink-2" id={`${fieldId}-label`}>{label}</span>
       <input
         id={fieldId}
         aria-labelledby={`${fieldId}-label`}
@@ -1311,7 +1689,8 @@ function NumberField({ label, value, onChange, min, max }) {
         max={max}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+        className="mt-[6px] h-12 w-full rounded-finzo-md border border-finzo-line bg-finzo-white px-4 font-mono text-[15px] text-finzo-ink outline-none transition focus:border-finzo-ink focus:ring-2 focus:ring-finzo-cobalt-l"
+        style={{ fontFeatureSettings: '"tnum" 1' }}
       />
     </label>
   );
@@ -1321,17 +1700,18 @@ function RateField({ label, value, onChange }) {
   const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   return (
     <label className="block">
-      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
-      <span className="relative mt-2 block">
+      <span className="text-[13px] text-finzo-ink-2" id={`${fieldId}-label`}>{label}</span>
+      <span className="relative mt-[6px] flex items-center overflow-hidden rounded-finzo-md border border-finzo-line bg-finzo-white transition focus-within:border-finzo-ink focus-within:ring-2 focus-within:ring-finzo-cobalt-l">
         <input
           id={fieldId}
           aria-labelledby={`${fieldId}-label`}
           inputMode="decimal"
           value={value}
           onChange={(event) => onChange(cleanNumber(event.target.value, true))}
-          className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 sm:h-14"
+          className="h-12 min-w-0 flex-1 bg-transparent px-4 font-mono text-[15px] text-finzo-ink outline-none"
+          style={{ fontFeatureSettings: '"tnum" 1' }}
         />
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">%</span>
+        <span className="shrink-0 px-3 font-mono text-[13px] text-finzo-mute select-none">%</span>
       </span>
     </label>
   );
@@ -1341,66 +1721,20 @@ function SelectField({ label, value, onChange, options, className = "" }) {
   const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   return (
     <label className={`block ${className}`}>
-      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
+      <span className="text-[13px] text-finzo-ink-2" id={`${fieldId}-label`}>{label}</span>
       <select
         id={fieldId}
         aria-labelledby={`${fieldId}-label`}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+        className="mt-[6px] h-12 w-full cursor-pointer appearance-none rounded-finzo-md border border-finzo-line bg-finzo-white px-4 text-[15px] text-finzo-ink outline-none transition focus:border-finzo-ink focus:ring-2 focus:ring-finzo-cobalt-l"
       >
-        {options.map(([optionValue, label]) => (
+        {options.map(([optionValue, optionLabel]) => (
           <option key={optionValue} value={optionValue}>
-            {label}
+            {optionLabel}
           </option>
         ))}
       </select>
     </label>
-  );
-}
-
-function DarkMetric({ label, value }) {
-  return (
-    <div className="rounded-3xl bg-white/10 p-4 ring-1 ring-white/10">
-      <p className="text-xs font-black text-violet-100">{label}</p>
-      <p className="number-display mt-2 text-xl font-black text-white">{value}</p>
-    </div>
-  );
-}
-
-function ResultCard({ label, value, note }) {
-  return (
-    <article className="flex h-full flex-col justify-between rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-      <div>
-        <p className="text-sm font-black text-slate-500">{label}</p>
-        <p className="number-display mt-3 text-3xl font-black text-slate-950">{value}</p>
-      </div>
-      <p className="mt-4 leading-7 text-slate-600">{note}</p>
-    </article>
-  );
-}
-
-function DetailRow({ label, value }) {
-  return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3">
-      <span className="font-bold text-slate-600">{label}</span>
-      <span className="number-display font-black text-slate-950">{value}</span>
-    </div>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="3">
-      <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function LineIcon({ path }) {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.4">
-      <path d={path} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }
