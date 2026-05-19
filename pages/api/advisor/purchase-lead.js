@@ -1,8 +1,8 @@
 import { LeadStoreError, readStoreLeads, createLeadPurchase } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 
-function apiError(res, status, code, message) {
-  return res.status(status).json({ error: code, message });
+function apiError(res, status, code, message, details = "") {
+  return res.status(status).json({ error: code, message, ...(details ? { details } : {}) });
 }
 
 export default async function handler(req, res) {
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
         return apiError(res, 503, "TABLE_MISSING", "Lead store not configured — run SQL migration");
       }
       const status = error.code === "SUPABASE_ENV_MISSING" ? 503 : 502;
-      return apiError(res, status, error.code, error.message);
+      return apiError(res, status, error.code, error.message, error.details || "");
     }
     return apiError(res, 500, "PURCHASE_FAILED", "Unexpected purchase error");
   }
