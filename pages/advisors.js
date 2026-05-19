@@ -230,7 +230,7 @@ export default function FinzoProLanding() {
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href="/advisor/register" className="rounded-full bg-violet-600 hover:bg-violet-500 px-9 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.4)] transition hover:-translate-y-0.5">
-                הצטרפות ל־FINZO PRO
+                פתיחת חשבון ב־FINZO PRO
               </Link>
               <Link href="/advisor/login" className="rounded-full border border-white/20 bg-white/10 hover:bg-white/15 px-9 py-4 text-base font-black text-white transition">
                 כניסה ליועצים
@@ -494,7 +494,7 @@ export default function FinzoProLanding() {
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href="/advisor/register" className="rounded-full bg-violet-600 hover:bg-violet-500 px-10 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.4)] transition hover:-translate-y-0.5">
-                הצטרפות ל־FINZO PRO
+                פתיחת חשבון ב־FINZO PRO
               </Link>
               <Link href="/advisor/login" className="rounded-full border border-white/20 bg-white/10 hover:bg-white/15 px-10 py-4 text-base font-black text-white transition">
                 כניסה ליועצים

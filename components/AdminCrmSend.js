@@ -66,36 +66,11 @@ function Detail({ label, value }) {
   return <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3"><span className="block text-xs font-black text-mort-muted">{label}</span><strong className="mt-1 block break-words text-sm font-black text-mort-ink">{value || "-"}</strong></div>;
 }
 
-const APPLICATION_STATUS_LABELS = { pending: "ממתין לאישור", approved: "אושר", rejected: "נדחה" };
-const APPLICATION_STATUS_CLS = {
-  pending: "border-amber-200 bg-amber-50 text-amber-800",
-  approved: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  rejected: "border-red-200 bg-red-50 text-red-800",
-};
-
-function generateTempPassword() {
-  const chars = "abcdefghjkmnpqrstuvwxyz23456789";
-  let out = "";
-  const arr = new Uint8Array(10);
-  if (typeof window !== "undefined" && window.crypto) window.crypto.getRandomValues(arr);
-  else for (let i = 0; i < 10; i++) arr[i] = Math.floor(Math.random() * 255);
-  for (const b of arr) out += chars[b % chars.length];
-  return out;
-}
-
 export default function AdminCrmSend() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
-  const [tab, setTab] = useState("leads");
   const [leads, setLeads] = useState([]);
   const [advisors, setAdvisors] = useState([]);
-  const [applications, setApplications] = useState([]);
-  const [appsLoaded, setAppsLoaded] = useState(false);
-  const [appsLoading, setAppsLoading] = useState(false);
-  const [approvingId, setApprovingId] = useState(null);
-  const [tempPasswords, setTempPasswords] = useState({}); // { [appId]: string }
-  const [appActionMsg, setAppActionMsg] = useState("");
-  const [appActionError, setAppActionError] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectedAdvisorId, setSelectedAdvisorId] = useState("");
   const [query, setQuery] = useState("");
@@ -149,82 +124,6 @@ export default function AdminCrmSend() {
   }
 
   useEffect(() => { load(); }, []);
-
-  async function loadApplications() {
-    setAppsLoading(true);
-    try {
-      const response = await fetch("/api/admin/advisor-applications");
-      if (response.status === 401) { setAuthenticated(false); return; }
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || "שגיאת טעינה");
-      setApplications(Array.isArray(data.applications) ? data.applications : []);
-      setAppsLoaded(true);
-    } catch (err) {
-      setAppActionMsg(err.message || "שגיאה בטעינת בקשות"); setAppActionError(true);
-    } finally {
-      setAppsLoading(false);
-    }
-  }
-
-  function switchTab(t) {
-    setTab(t);
-    if (t === "applications" && !appsLoaded) loadApplications();
-  }
-
-  async function approveApplication(app) {
-    const tp = tempPasswords[app.id] || generateTempPassword();
-    setTempPasswords((prev) => ({ ...prev, [app.id]: tp }));
-    setApprovingId(app.id);
-  }
-
-  async function confirmApprove(app) {
-    const tp = tempPasswords[app.id];
-    if (!tp) return;
-    setAppActionMsg(""); setAppActionError(false);
-    try {
-      const response = await fetch("/api/admin/advisor-applications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: app.id, action: "approve", tempPassword: tp }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || "אישור נכשל");
-      setApplications((prev) => prev.map((a) => a.id === app.id ? { ...a, status: "approved" } : a));
-      setApprovingId(null);
-      setAppActionMsg(`הבקשה של ${app.fullName} אושרה. מזהה יועץ: ${data.advisorId}`);
-      setAppActionError(false);
-    } catch (err) {
-      setAppActionMsg(err.message || "שגיאה באישור"); setAppActionError(true);
-    }
-  }
-
-  async function rejectApplication(app) {
-    if (!window.confirm(`לדחות את הבקשה של ${app.fullName}?`)) return;
-    setAppActionMsg(""); setAppActionError(false);
-    try {
-      const response = await fetch("/api/admin/advisor-applications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: app.id, action: "reject" }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || "דחייה נכשלה");
-      setApplications((prev) => prev.map((a) => a.id === app.id ? { ...a, status: "rejected" } : a));
-      setAppActionMsg(`הבקשה של ${app.fullName} נדחתה.`);
-    } catch (err) {
-      setAppActionMsg(err.message || "שגיאה בדחייה"); setAppActionError(true);
-    }
-  }
-
-  async function saveAppNotes(app, adminNotes) {
-    try {
-      await fetch("/api/admin/advisor-applications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: app.id, action: "notes", adminNotes }),
-      });
-    } catch { /* silently ignore */ }
-  }
 
   async function login(event) {
     event.preventDefault();
@@ -357,86 +256,8 @@ export default function AdminCrmSend() {
     return <main dir="rtl" className="min-h-screen px-4 py-8 text-mort-text sm:px-6 lg:px-8"><Head><title>Admin CRM | Finzo</title><meta name="robots" content="noindex,nofollow" /></Head><section className="mx-auto max-w-xl glass-card p-6 sm:p-8"><h1 className="text-3xl font-black text-mort-ink">כניסת אדמין</h1><form className="mt-5 grid gap-3" onSubmit={login}><input className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="סיסמת אדמין" /><button className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white" disabled={loading}>{loading ? "מתחבר..." : "כניסה"}</button></form>{message && <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 font-black text-red-800">{message}</div>}</section></main>;
   }
 
-  const pendingApps = applications.filter((a) => a.status === "pending");
-
   return <main dir="rtl" className="min-h-screen px-4 py-6 text-mort-text sm:px-6 lg:px-8"><Head><title>Admin CRM | Finzo</title><meta name="robots" content="noindex,nofollow" /></Head><div className="mx-auto max-w-[1560px]">
-
-    {/* Tab navigation */}
-    <div className="flex gap-2 mb-5 border-b border-slate-200 pb-0">
-      {[["leads", "לידים ויועצים"], ["applications", `בקשות הצטרפות${pendingApps.length ? ` (${pendingApps.length})` : ""}`]].map(([key, label]) => (
-        <button key={key} onClick={() => switchTab(key)} className={`px-5 py-3 text-sm font-black rounded-t-xl border-b-2 transition-colors ${tab === key ? "border-violet-600 text-violet-700 bg-violet-50" : "border-transparent text-slate-500 hover:text-slate-700"}`}>{label}</button>
-      ))}
-    </div>
-
-    {tab === "applications" && (
-      <section className="glass-card p-5 sm:p-7">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-2xl font-black text-mort-ink">בקשות הצטרפות ל־FINZO PRO</h2>
-          <button className="rounded-2xl bg-mort-ink px-4 py-2 text-sm font-black text-white" onClick={loadApplications}>{appsLoading ? "טוען..." : "רענון"}</button>
-        </div>
-        {appActionMsg && <div className={`mb-4 rounded-2xl border p-3 text-sm font-black ${appActionError ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>{appActionMsg}</div>}
-        {appsLoading && <div className="text-center py-12 text-mort-muted font-bold">טוען בקשות...</div>}
-        {!appsLoading && applications.length === 0 && <div className="text-center py-12 text-mort-muted font-bold">אין בקשות הצטרפות</div>}
-        <div className="grid gap-4">
-          {applications.map((app) => (
-            <article key={app.id} className="fintech-card p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className={`pill text-xs ${APPLICATION_STATUS_CLS[app.status] || APPLICATION_STATUS_CLS.pending}`}>{APPLICATION_STATUS_LABELS[app.status] || app.status}</span>
-                    {app.advisorType && <span className="pill border-slate-200 bg-slate-50 text-slate-700 text-xs">{app.advisorType}</span>}
-                  </div>
-                  <h3 className="text-xl font-black text-mort-ink">{app.fullName}</h3>
-                  <div className="flex flex-wrap gap-4 mt-1 text-sm font-bold text-mort-muted">
-                    {app.phone && <a href={`tel:${app.phone}`} className="hover:text-mort-ink">{app.phone}</a>}
-                    {app.email && <a href={`mailto:${app.email}`} className="hover:text-mort-ink">{app.email}</a>}
-                  </div>
-                </div>
-                <span className="text-xs text-mort-muted font-bold">{app.createdAt ? new Date(app.createdAt).toLocaleDateString("he-IL") : ""}</span>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-3 mb-4 text-sm">
-                {app.region && <Detail label="אזור" value={app.region} />}
-                {app.businessName && <Detail label="שם עסק" value={app.businessName} />}
-                {app.experienceYears && <Detail label="ניסיון" value={app.experienceYears} />}
-              </div>
-              {app.notes && <div className="mb-4 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700">{app.notes}</div>}
-              <div className="mb-4">
-                <label className="block text-xs font-black text-mort-muted mb-1">הערות אדמין</label>
-                <textarea
-                  className="focus-field w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold min-h-14 resize-none"
-                  defaultValue={app.adminNotes || ""}
-                  onBlur={(e) => { if (e.target.value !== (app.adminNotes || "")) saveAppNotes(app, e.target.value); }}
-                  placeholder="הוסיפו הערות פנימיות..."
-                />
-              </div>
-              {app.status === "pending" && (
-                approvingId === app.id ? (
-                  <div className="rounded-2xl bg-violet-50 border border-violet-200 p-4">
-                    <p className="text-sm font-black text-violet-900 mb-1">אישור הבקשה של {app.fullName}</p>
-                    <p className="text-xs text-violet-700 mb-2">סיסמה זמנית שתישלח ליועץ (העתיקו לפני אישור):</p>
-                    <div className="flex items-center gap-2 mb-3">
-                      <code className="bg-white border border-violet-200 rounded-xl px-4 py-2 font-black text-violet-800 text-sm flex-1 select-all">{tempPasswords[app.id]}</code>
-                      <button className="text-xs font-black text-violet-600 border border-violet-200 rounded-xl px-3 py-2 hover:bg-violet-100" onClick={() => navigator.clipboard?.writeText(tempPasswords[app.id])}>העתק</button>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => confirmApprove(app)} className="flex-1 rounded-full bg-emerald-600 text-white font-black px-4 py-2.5 text-sm hover:bg-emerald-700 transition-colors">אשר ויצור חשבון</button>
-                      <button onClick={() => setApprovingId(null)} className="rounded-full border border-slate-200 text-slate-600 font-bold px-4 py-2.5 text-sm hover:bg-slate-50">ביטול</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <button onClick={() => approveApplication(app)} className="flex-1 rounded-full bg-emerald-600 text-white font-black px-4 py-2.5 text-sm hover:bg-emerald-700 transition-colors">אשר הבקשה</button>
-                    <button onClick={() => rejectApplication(app)} className="rounded-full border border-red-200 text-red-700 font-black px-4 py-2.5 text-sm hover:bg-red-50 transition-colors">דחה</button>
-                  </div>
-                )
-              )}
-            </article>
-          ))}
-        </div>
-      </section>
-    )}
-
-    {tab === "leads" && <><section className="glass-card p-5 sm:p-7"><div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><span className="pill border-slate-200 bg-white text-mort-muted">CRM</span><h1 className="mt-3 text-3xl font-black text-mort-ink">ניהול לידים ושליחה ליועצים</h1><p className="mt-2 text-sm font-bold text-mort-muted">בחר לידים, שייך ליועץ ושלח הודעת WhatsApp או מייל מוכנה.</p></div><button className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white" onClick={load}>{loading ? "טוען..." : "רענון"}</button></div>
+    <><section className="glass-card p-5 sm:p-7"><div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><span className="pill border-slate-200 bg-white text-mort-muted">CRM</span><h1 className="mt-3 text-3xl font-black text-mort-ink">ניהול לידים ושליחה ליועצים</h1><p className="mt-2 text-sm font-bold text-mort-muted">בחר לידים, שייך ליועץ ושלח הודעת WhatsApp או מייל מוכנה.</p></div><button className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white" onClick={load}>{loading ? "טוען..." : "רענון"}</button></div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"><Metric label="סה״כ" value={stats.total} /><Metric label="חמים" value={stats.hot} /><Metric label="נשלחו" value={stats.sent} /><Metric label="משויכים" value={stats.assigned} /><Metric label="נסגרו" value={stats.closed} /></div>
       <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_180px_180px_220px]"><Input value={query} onChange={setQuery} placeholder="חיפוש שם / טלפון / עיר" /><Select value={statusFilter} onChange={setStatusFilter}><option value="">כל הסטטוסים</option>{STATUSES.map((s) => <option key={s}>{s}</option>)}</Select><Select value={qualityFilter} onChange={setQualityFilter}>{QUALITIES.map((q) => <option key={q} value={q}>{q || "כל האיכויות"}</option>)}</Select><Select value={advisorFilter} onChange={setAdvisorFilter}><option value="">כל היועצים</option>{advisors.map((a) => <option key={advisorId(a)} value={advisorId(a)}>{advisorName(a)}</option>)}</Select></div>
       <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_190px_170px_170px_170px]"><Select value={selectedAdvisorId} onChange={setSelectedAdvisorId}><option value="">בחר יועץ לשליחה</option>{advisors.map((a) => <option key={advisorId(a)} value={advisorId(a)}>{advisorName(a)}</option>)}</Select><button className="rounded-2xl bg-violet-700 px-4 py-3 font-black text-white disabled:opacity-50" disabled={!selectedIds.length || !selectedAdvisorId} onClick={() => assignSelectedToAdvisor(false)}>שייך ליועץ</button><button className="rounded-2xl bg-emerald-600 px-4 py-3 font-black text-white disabled:opacity-50" disabled={!selectedIds.length || !selectedAdvisorId} onClick={sendWhatsApp}>שלח WhatsApp</button><button className="rounded-2xl bg-blue-700 px-4 py-3 font-black text-white disabled:opacity-50" disabled={!selectedIds.length || !selectedAdvisorId} onClick={sendEmail}>שלח מייל</button><button className="rounded-2xl bg-slate-700 px-4 py-3 font-black text-white" onClick={exportCsv}>Export CSV</button></div>
@@ -446,6 +267,6 @@ export default function AdminCrmSend() {
     <section className="mt-5 grid gap-4 lg:grid-cols-[1fr_380px]"><div className="grid gap-4"><div className="fintech-card flex flex-wrap items-center justify-between gap-3 p-4"><label className="flex items-center gap-2 font-black"><input type="checkbox" checked={filteredLeads.length > 0 && selectedIds.length === filteredLeads.length} onChange={toggleAll} /> בחר הכל ({filteredLeads.length})</label><div className="flex flex-wrap gap-2"><button className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 font-black text-emerald-800 disabled:opacity-50" disabled={!selectedIds.length} onClick={() => bulkPatch({ leadQuality: "חם", leadPriority: "גבוה" })}>סמן חם</button><button className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 font-black text-amber-800 disabled:opacity-50" disabled={!selectedIds.length} onClick={() => bulkPatch({ followUpStage: "ניסיון 1" })}>מעקב ניסיון 1</button><button className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 font-black text-red-800 disabled:opacity-50" disabled={!selectedIds.length || bulkDeleting} onClick={bulkDeleteSelected}>{bulkDeleting ? "מוחק..." : "מחק נבחרים"}</button></div></div>
       {filteredLeads.map((lead) => <article key={lead.id} className="fintech-card p-5"><div className="flex flex-col gap-3 border-b border-slate-200 pb-4 lg:flex-row lg:items-start lg:justify-between"><div className="flex gap-3"><input className="mt-2" type="checkbox" checked={selectedIds.includes(lead.id)} onChange={() => toggle(lead.id)} /><div><div className="flex flex-wrap items-center gap-2"><h2 className="text-2xl font-black text-mort-ink">{lead.name || "ללא שם"}</h2><span className={`pill ${statusClass(lead.leadStatus || lead.status)}`}>{lead.leadStatus || lead.status || "חדש"}</span><span className={`pill ${qualityClass(lead.leadQuality)}`}>{lead.leadQuality || "לא סווג"}</span></div><p className="mt-1 text-sm font-bold text-mort-muted">יועץ: {lead.assignedAdvisor || "לא שויך"}</p></div></div><div className="flex gap-2"><a href={lead.phone ? `tel:${lead.phone}` : undefined} className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-center font-black">חיוג</a><button className="rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-center font-black text-red-800 disabled:opacity-50" disabled={bulkDeleting || deletingIds.includes(lead.id)} onClick={() => deleteLead(lead.id)}>{deletingIds.includes(lead.id) ? "מוחק..." : "מחק ליד"}</button></div></div><div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"><Detail label="טלפון" value={lead.phone} /><Detail label="עיר" value={lead.city || lead.propertyCity} /><Detail label="משכנתא" value={money(lead.mortgageAmount)} /><Detail label="סיכוי" value={lead.approvalScore || lead.estimatedApprovalResult ? `${lead.approvalScore || lead.estimatedApprovalResult}%` : "-"} /><Detail label="הכנסה" value={money(lead.monthlyIncome)} /><Detail label="הון עצמי" value={money(lead.equityAmount)} /><Detail label="חוזה" value={lead.contractStatus || lead.purchaseStatus} /><Detail label="חזרה" value={lead.requestedContactTime} /></div><div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"><Select value={lead.leadStatus || lead.status || "חדש"} onChange={(v) => patchLead(lead.id, { leadStatus: v, status: v })}>{STATUSES.map((s) => <option key={s}>{s}</option>)}</Select><Select value={lead.leadQuality || "לא סווג"} onChange={(v) => patchLead(lead.id, { leadQuality: v })}>{QUALITIES.filter(Boolean).map((q) => <option key={q}>{q}</option>)}</Select><Select value={lead.followUpStage || "לא טופל"} onChange={(v) => patchLead(lead.id, { followUpStage: v })}>{FOLLOW_UP.map((s) => <option key={s}>{s}</option>)}</Select><Select value={lead.commissionStatus || "pending"} onChange={(v) => patchLead(lead.id, { commissionStatus: v })}>{COMMISSIONS.map((s) => <option key={s}>{s}</option>)}</Select></div><textarea className="focus-field mt-4 min-h-20 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold" defaultValue={lead.internalNotes || ""} onBlur={(e) => { if (e.target.value !== (lead.internalNotes || "")) patchLead(lead.id, { internalNotes: e.target.value }); }} placeholder="הערות פנימיות לצוות" /></article>)}
     </div><aside className="grid content-start gap-4"><section className="fintech-card p-5"><h2 className="text-xl font-black text-mort-ink">הוספת יועץ</h2><form className="mt-4 grid gap-3" onSubmit={createAdvisor}><Input value={newAdvisor.name} onChange={(v) => setNewAdvisor((c) => ({ ...c, name: v }))} placeholder="שם יועץ" /><Input value={newAdvisor.phone} onChange={(v) => setNewAdvisor((c) => ({ ...c, phone: v }))} placeholder="טלפון" /><Input value={newAdvisor.email} onChange={(v) => setNewAdvisor((c) => ({ ...c, email: v }))} placeholder="אימייל אופציונלי" /><Input value={newAdvisor.commissionAmount} onChange={(v) => setNewAdvisor((c) => ({ ...c, commissionAmount: v }))} placeholder="עמלה אופציונלית" /><button className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white" disabled={loading}>הוסף יועץ</button></form></section><section className="fintech-card p-5"><h2 className="text-xl font-black text-mort-ink">יועצים</h2><div className="mt-4 grid gap-3">{advisors.map((a) => <div key={advisorId(a)} className="rounded-2xl border border-slate-200 bg-white p-3"><strong>{advisorName(a)}</strong><span className="block text-sm font-bold text-mort-muted">{advisorPhone(a)}</span><span className="block text-sm font-bold text-mort-muted">{advisorEmail(a)}</span></div>)}</div></section></aside></section>
-  </>}
+  </>
   </div></main>;
 }

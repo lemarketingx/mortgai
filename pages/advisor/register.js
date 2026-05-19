@@ -1,8 +1,11 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/router";
 
-function Field({ label, value, onChange, placeholder = "", type = "text", required = false }) {
+const ADVISOR_TYPES = ["", "יועץ עצמאי", "משרד יועצים", "אחר"];
+
+function Field({ label, value, onChange, placeholder = "", type = "text", required = false, hint = "" }) {
   return (
     <div>
       <label className="block text-sm font-black text-slate-700 mb-1.5">
@@ -15,23 +18,23 @@ function Field({ label, value, onChange, placeholder = "", type = "text", requir
         placeholder={placeholder}
         required={required}
         onChange={(e) => onChange(e.target.value)}
+        autoComplete={type === "email" ? "email" : type === "password" ? "new-password" : "off"}
         className="w-full border border-slate-200 bg-slate-50 rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 h-12"
       />
+      {hint && <p className="text-xs text-slate-400 mt-1 font-bold">{hint}</p>}
     </div>
   );
 }
 
-const ADVISOR_TYPES = ["", "יועץ עצמאי", "משרד יועצים", "אחר"];
-const EXPERIENCE_OPTIONS = ["", "פחות משנה", "1–3 שנים", "3–7 שנים", "7 שנים ומעלה"];
-
 export default function AdvisorRegister() {
+  const router = useRouter();
   const [form, setForm] = useState({
     fullName: "", phone: "", email: "",
-    region: "", businessName: "",
-    experienceYears: "", advisorType: "",
-    notes: "", consent: false,
+    password: "", region: "",
+    businessName: "", advisorType: "",
+    terms: false,
   });
-  const [sent, setSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -42,10 +45,13 @@ export default function AdvisorRegister() {
 
   async function submit(e) {
     e.preventDefault();
-    if (loading || sent) return;
+    if (loading) return;
+
     if (form.fullName.trim().length < 2) { setError("יש להזין שם מלא (לפחות 2 תווים)."); return; }
     if (form.phone.trim().length < 9) { setError("יש להזין מספר טלפון תקין."); return; }
-    if (!form.consent) { setError("יש לאשר הסכמה ליצירת קשר."); return; }
+    if (!form.email.trim() || !form.email.includes("@")) { setError("יש להזין כתובת אימייל תקינה."); return; }
+    if (form.password.length < 8) { setError("הסיסמה חייבת להכיל לפחות 8 תווים."); return; }
+    if (!form.terms) { setError("יש לאשר את תנאי השימוש."); return; }
 
     setLoading(true);
     try {
@@ -54,13 +60,15 @@ export default function AdvisorRegister() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form }),
       });
+      const j = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j.message || "REGISTER_FAILED");
+        setError(j.message || "הרשמה נכשלה. נסו שוב.");
+        return;
       }
-      setSent(true);
-    } catch (err) {
-      setError(err.message === "REGISTER_FAILED" ? "הבקשה לא נשלחה. נסו שוב." : err.message);
+      // Auto-login: session cookie set by server → redirect to lead store
+      router.push("/advisor/leads");
+    } catch {
+      setError("שגיאת רשת. בדקו את החיבור ונסו שוב.");
     } finally {
       setLoading(false);
     }
@@ -69,7 +77,7 @@ export default function AdvisorRegister() {
   return (
     <>
       <Head>
-        <title>בקשת הצטרפות ל־FINZO PRO</title>
+        <title>פתיחת חשבון ב־FINZO PRO</title>
         <meta name="robots" content="noindex,nofollow" />
       </Head>
 
@@ -86,133 +94,126 @@ export default function AdvisorRegister() {
           </div>
         </header>
 
-        <div className="max-w-xl mx-auto px-4 py-14">
+        <div className="max-w-xl mx-auto px-4 py-12">
           <div className="mb-8">
-            <span className="inline-block text-xs font-black text-violet-600 bg-violet-50 border border-violet-200 px-3 py-1 rounded-full mb-4">בקשת הצטרפות</span>
-            <h1 className="text-3xl font-black text-slate-950">בקשת הצטרפות ל־FINZO PRO</h1>
-            <p className="mt-3 text-slate-500 leading-7 text-sm">
-              מלאו את הפרטים ונבדוק את הבקשה. הגישה לפלטפורמה ניתנת ליועצי משכנתאות מורשים בלבד — לאחר אישור נחזור אליכם עם פרטי כניסה.
+            <h1 className="text-3xl font-black text-slate-950">פתיחת חשבון ב־FINZO PRO</h1>
+            <p className="mt-2 text-slate-500 text-sm leading-6">
+              גישה מיידית לחנות לידים, ניהול לקוחות ופורטל יועצים.
             </p>
           </div>
 
-          {sent ? (
-            <div className="rounded-3xl bg-emerald-50 border border-emerald-200 px-8 py-12 text-center">
-              <div className="text-5xl mb-4">✓</div>
-              <p className="text-2xl font-black text-emerald-800 mb-3">הבקשה התקבלה</p>
-              <p className="text-emerald-700 leading-7">
-                נבדוק את הפרטים ונחזור אליך בהקדם.
-              </p>
-              <Link href="/advisors" className="mt-8 inline-block text-sm font-bold text-emerald-700 hover:underline">
-                ← חזרה לדף הבית
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={submit} className="space-y-5 bg-white border border-slate-200 rounded-3xl p-7 shadow-sm">
+          <form onSubmit={submit} className="space-y-4 bg-white border border-slate-200 rounded-3xl p-7 shadow-sm">
 
-              <Field
-                label="שם מלא"
-                value={form.fullName}
-                onChange={(v) => update("fullName", v)}
-                placeholder="ישראל ישראלי"
-                required
-              />
-              <Field
-                label="טלפון"
-                value={form.phone}
-                onChange={(v) => update("phone", v)}
-                placeholder="05X-XXXXXXX"
-                type="tel"
-                required
-              />
-              <Field
-                label="אימייל"
-                value={form.email}
-                onChange={(v) => update("email", v)}
-                placeholder="you@example.com"
-                type="email"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <Field
-                  label="עיר / אזור פעילות"
-                  value={form.region}
-                  onChange={(v) => update("region", v)}
-                  placeholder="תל אביב, מרכז..."
-                />
-                <Field
-                  label="שם העסק"
-                  value={form.businessName}
-                  onChange={(v) => update("businessName", v)}
-                  placeholder="שם המשרד / עסק"
-                />
+            <Field
+              label="שם מלא"
+              value={form.fullName}
+              onChange={(v) => update("fullName", v)}
+              placeholder="ישראל ישראלי"
+              required
+            />
+            <Field
+              label="טלפון"
+              value={form.phone}
+              onChange={(v) => update("phone", v)}
+              placeholder="05X-XXXXXXX"
+              type="tel"
+              required
+            />
+            <Field
+              label="אימייל"
+              value={form.email}
+              onChange={(v) => update("email", v)}
+              placeholder="you@example.com"
+              type="email"
+              required
+            />
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-black text-slate-700">
+                  סיסמה<span className="text-red-500 mr-1">*</span>
+                </label>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-black text-slate-700 mb-1.5">שנות ניסיון</label>
-                  <select
-                    value={form.experienceYears}
-                    onChange={(e) => update("experienceYears", e.target.value)}
-                    className="w-full border border-slate-200 bg-slate-50 rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 h-12"
-                  >
-                    {EXPERIENCE_OPTIONS.map((o) => <option key={o} value={o}>{o || "בחרו..."}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-black text-slate-700 mb-1.5">סוג פעילות</label>
-                  <select
-                    value={form.advisorType}
-                    onChange={(e) => update("advisorType", e.target.value)}
-                    className="w-full border border-slate-200 bg-slate-50 rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 h-12"
-                  >
-                    {ADVISOR_TYPES.map((o) => <option key={o} value={o}>{o || "בחרו..."}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-black text-slate-700 mb-1.5">הערות</label>
-                <textarea
-                  value={form.notes}
-                  onChange={(e) => update("notes", e.target.value)}
-                  rows={3}
-                  placeholder="מידע נוסף, שאלות, מה אתם מחפשים..."
-                  className="w-full border border-slate-200 bg-slate-50 rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 resize-none"
-                />
-              </div>
-
-              <label className="flex items-start gap-3 cursor-pointer">
+              <div className="relative">
                 <input
-                  type="checkbox"
-                  checked={form.consent}
-                  onChange={(e) => update("consent", e.target.checked)}
-                  className="mt-1 w-4 h-4 accent-violet-600 shrink-0"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) => update("password", e.target.value)}
+                  placeholder="לפחות 8 תווים"
+                  autoComplete="new-password"
+                  className="w-full border border-slate-200 bg-slate-50 rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 h-12 pl-16"
                 />
-                <span className="text-sm text-slate-600 font-bold leading-6">
-                  אני מסכים/ה שצוות FINZO יצור איתי קשר בנוגע לבקשת ההצטרפות
-                  <span className="text-red-500 mr-1">*</span>
-                </span>
-              </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600"
+                  tabIndex={-1}
+                >
+                  {showPassword ? "הסתר" : "הצג"}
+                </button>
+              </div>
+              <p className="text-xs text-slate-400 mt-1 font-bold">לפחות 8 תווים</p>
+            </div>
 
-              {error && (
-                <p role="alert" className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-bold text-red-700">
-                  {error}
-                </p>
-              )}
+            <div className="grid grid-cols-2 gap-4">
+              <Field
+                label="עיר / אזור פעילות"
+                value={form.region}
+                onChange={(v) => update("region", v)}
+                placeholder="תל אביב, מרכז..."
+              />
+              <Field
+                label="שם העסק (אופציונלי)"
+                value={form.businessName}
+                onChange={(v) => update("businessName", v)}
+                placeholder="שם המשרד"
+              />
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-full bg-violet-700 hover:bg-violet-800 px-6 py-4 font-black text-white transition-colors disabled:opacity-70 text-sm"
+            <div>
+              <label className="block text-sm font-black text-slate-700 mb-1.5">סוג פעילות</label>
+              <select
+                value={form.advisorType}
+                onChange={(e) => update("advisorType", e.target.value)}
+                className="w-full border border-slate-200 bg-slate-50 rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 h-12"
               >
-                {loading ? "שולח בקשה..." : "שלח בקשת הצטרפות"}
-              </button>
+                {ADVISOR_TYPES.map((o) => <option key={o} value={o}>{o || "בחרו..."}</option>)}
+              </select>
+            </div>
 
-              <p className="text-center text-xs text-slate-400">
-                הגישה ל־FINZO PRO ניתנת ליועצי משכנתאות מורשים בלבד לאחר בדיקה ואישור.
+            <label className="flex items-start gap-3 cursor-pointer pt-1">
+              <input
+                type="checkbox"
+                checked={form.terms}
+                onChange={(e) => update("terms", e.target.checked)}
+                className="mt-1 w-4 h-4 accent-violet-600 shrink-0"
+              />
+              <span className="text-sm text-slate-600 font-bold leading-6">
+                קראתי ואני מסכים/ה לתנאי השימוש של FINZO PRO
+                <span className="text-red-500 mr-1">*</span>
+              </span>
+            </label>
+
+            {error && (
+              <p role="alert" className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-bold text-red-700">
+                {error}
               </p>
-            </form>
-          )}
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-full bg-violet-700 hover:bg-violet-800 px-6 py-4 font-black text-white transition-colors disabled:opacity-70 text-sm"
+            >
+              {loading ? "יוצר חשבון..." : "פתיחת חשבון ב־FINZO PRO ←"}
+            </button>
+
+            <p className="text-center text-xs text-slate-400">
+              כבר יש לכם חשבון?{" "}
+              <Link href="/advisor/login" className="text-violet-600 hover:underline font-bold">
+                כניסה לפורטל
+              </Link>
+            </p>
+          </form>
         </div>
       </main>
     </>

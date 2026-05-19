@@ -1,5 +1,6 @@
-import { createAdvisorSessionCookie, clearAdvisorSessionCookie, verifyPassword } from "../../../lib/advisorAuth";
+import { supabaseSignIn } from "../../../lib/supabaseAuth";
 import { LeadStoreError, readAdvisors } from "../../../lib/leadsStore";
+import { createAdvisorSessionCookie, clearAdvisorSessionCookie } from "../../../lib/advisorAuth";
 
 function apiError(res, status, code, message) {
   return res.status(status).json({ error: code, message });
@@ -21,21 +22,31 @@ export default async function handler(req, res) {
     return apiError(res, 400, "MISSING_CREDENTIALS", "אימייל וסיסמה הם שדות חובה");
   }
 
+  // Authenticate against Supabase Auth
+  const { error: authError, user: authUser } = await supabaseSignIn(email, password);
+  if (authError || !authUser?.id) {
+    return apiError(res, 401, "INVALID_CREDENTIALS", "אימייל או סיסמה שגויים");
+  }
+
+  // Find advisor profile
   let advisors;
   try {
     advisors = await readAdvisors();
-  } catch (err) {
-    const status = err instanceof LeadStoreError && err.code === "SUPABASE_ENV_MISSING" ? 503 : 502;
-    return apiError(res, status, err.code || "ADVISOR_LOOKUP_FAILED", err.message || "שגיאת שרת");
+  } catch (e) {
+    const status = e instanceof LeadStoreError && e.code === "SUPABASE_ENV_MISSING" ? 503 : 502;
+    return apiError(res, status, e.code || "ADVISOR_LOOKUP_FAILED", e.message);
   }
 
-  const advisor = advisors.find(
-    (a) => String(a.email || "").trim().toLowerCase() === email && a.active === true,
-  );
+  // Match by auth_user_id first, fallback to email for legacy manually-created advisors
+  const advisor = advisors.find((a) => a.auth_user_id === authUser.id) ||
+    advisors.find((a) => String(a.email || "").toLowerCase() === email && a.active === true);
 
-  // Constant-time failure path — don't reveal whether the email exists
-  if (!advisor || !verifyPassword(password, advisor.password_hash || "")) {
-    return apiError(res, 401, "INVALID_CREDENTIALS", "אימייל או סיסמה שגויים");
+  if (!advisor) {
+    return apiError(res, 404, "ADVISOR_NOT_FOUND", "חשבון היועץ לא נמצא. אנא צרו קשר עם התמיכה.");
+  }
+
+  if (advisor.active === false) {
+    return apiError(res, 403, "ADVISOR_INACTIVE", "החשבון אינו פעיל. אנא צרו קשר עם התמיכה.");
   }
 
   const advisorId = String(advisor.advisor_id || "");
