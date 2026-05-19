@@ -122,8 +122,16 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
         <p className="text-xs font-bold text-slate-500">שם וטלפון נחשפים לאחר רכישה</p>
       </div>
 
+      {/* Already purchased by this advisor */}
+      {lead._purchased && (
+        <div className="mt-4 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center gap-2">
+          <span className="text-emerald-600 font-black text-sm">✓</span>
+          <p className="text-sm font-black text-emerald-700">נרכש — ראו בלשונית הלידים שלי</p>
+        </div>
+      )}
+
       {/* Purchase section */}
-      {!isSold && !confirm && (
+      {!isSold && !lead._purchased && !confirm && (
         <div className="grid grid-cols-2 gap-2 mt-4">
           <button
             onClick={() => setConfirm("regular")}
@@ -144,7 +152,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
         </div>
       )}
 
-      {confirm && (
+      {confirm && !lead._purchased && (
         <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 px-4 py-4">
           <p className="text-sm font-black text-violet-900 mb-1">
             אישור רכישת ליד {confirm === "exclusive" ? "בלעדי" : "רגיל"}

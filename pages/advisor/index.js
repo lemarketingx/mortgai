@@ -166,7 +166,7 @@ export default function AdvisorDashboard() {
 
   async function load() {
     setLoading(true);
-    const r = await fetch("/api/advisor/leads");
+    const r = await fetch("/api/advisor/my-leads");
     if (!r.ok) { window.location.href = "/advisor/login"; return; }
     const j = await r.json();
     setLeads(j.leads || []);
@@ -176,7 +176,7 @@ export default function AdvisorDashboard() {
   useEffect(() => { load(); }, []);
 
   async function update(id, changes) {
-    const r = await fetch("/api/advisor/leads", {
+    const r = await fetch("/api/advisor/my-leads", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, changes }),
