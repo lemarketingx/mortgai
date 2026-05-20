@@ -148,13 +148,13 @@ export default function AdvisorDashboard() {
       <main dir="rtl" className="min-h-screen bg-slate-50">
         <AdvisorHeader active="/advisor" />
 
-        <div className="max-w-7xl mx-auto px-4 py-5">
+        <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5">
 
           {/* Greeting */}
           <div className="flex items-end justify-between gap-4 mb-5">
             <div>
               <p className="text-xs font-bold text-slate-400 mb-1.5">{todayStr}</p>
-              <h1 className="text-2xl md:text-3xl font-black text-slate-950 leading-tight">
+              <h1 className="text-xl md:text-2xl lg:text-[2rem] font-black text-slate-950 leading-tight">
                 {!loading && hot.length > 0 ? (
                   <>יש לכם <span className="text-violet-700">{hot.length} לידים חמים</span> לטיפול.</>
                 ) : !loading && leads.length > 0 ? (
@@ -175,7 +175,7 @@ export default function AdvisorDashboard() {
           </div>
 
           {/* KPI strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2.5">
@@ -194,7 +194,7 @@ export default function AdvisorDashboard() {
           </div>
 
           {/* Two-column main */}
-          <div className="grid lg:grid-cols-[300px_1fr] gap-4">
+          <div className="grid xl:grid-cols-[320px_1fr] gap-3.5">
 
             {/* ── Left panel ── */}
             <div className="space-y-3">

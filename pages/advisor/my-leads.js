@@ -29,7 +29,7 @@ function ScoreBar({ score }) {
 
 function CardSkeleton() {
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl p-4 space-y-3">
+    <div className="bg-white border border-slate-100 rounded-2xl p-3.5 space-y-2.5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <div className="flex gap-2">
@@ -84,12 +84,12 @@ function MyLeadCard({ lead, onUpdate }) {
   }
 
   return (
-    <article className={`bg-white rounded-2xl p-4 shadow-sm border ${
+    <article className={`bg-white rounded-2xl p-3.5 shadow-sm border ${
       isHot ? "border-emerald-200" : "border-slate-100"
     }`}>
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-4">
+      <div className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-2">
             <Tag variant={tagVariant}>{quality}</Tag>
@@ -115,7 +115,7 @@ function MyLeadCard({ lead, onUpdate }) {
       </div>
 
       {/* Score */}
-      <div className="mb-4">
+      <div className="mb-3">
         <div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5">
           <span>ציון FINZO</span>
           <span className="tabular-nums font-black text-slate-600">{score}/100</span>
@@ -125,7 +125,7 @@ function MyLeadCard({ lead, onUpdate }) {
 
       {/* Meta — income + main issue only */}
       {(lead.monthlyIncome > 0 || lead.mainIssue) && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
+        <div className="flex flex-wrap gap-1.5 mb-3">
           {lead.monthlyIncome > 0 && (
             <span className="text-xs bg-slate-50 px-2.5 py-1 rounded-full font-bold text-slate-700">
               הכנסה: {formatILS(lead.monthlyIncome)}
@@ -140,11 +140,11 @@ function MyLeadCard({ lead, onUpdate }) {
       )}
 
       {/* Status + follow-up */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-3 mb-3">
         <div>
           <label className="block text-xs font-black text-slate-400 mb-1">סטטוס</label>
           <select
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold bg-white outline-none focus:ring-2 focus:ring-violet-400"
+            className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-sm font-bold bg-white outline-none focus:ring-2 focus:ring-violet-400"
             value={currentStatus}
             onChange={(e) => onUpdate(lead.id, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() })}
           >
@@ -155,7 +155,7 @@ function MyLeadCard({ lead, onUpdate }) {
           <label className="block text-xs font-black text-slate-400 mb-1">מועד מעקב</label>
           <input
             type="date"
-            className={`w-full border rounded-xl px-3 py-2 text-sm font-bold bg-white outline-none focus:ring-2 focus:ring-violet-400 ${
+            className={`w-full border rounded-lg px-2.5 py-2 text-sm font-bold bg-white outline-none focus:ring-2 focus:ring-violet-400 ${
               isOverdue ? "border-amber-300 bg-amber-50/40" : "border-slate-200"
             }`}
             defaultValue={followUpVal}
@@ -168,8 +168,8 @@ function MyLeadCard({ lead, onUpdate }) {
       <div>
         <label className="block text-xs font-black text-slate-400 mb-1">הערות</label>
         <textarea
-          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-violet-400 resize-none"
-          rows={2}
+          className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-violet-400 resize-none"
+          rows={3}
           value={notes}
           onChange={(e) => { setNotes(e.target.value); setSaved(false); }}
           onBlur={saveNotes}
@@ -244,10 +244,10 @@ export default function AdvisorMyLeads() {
       <main dir="rtl" className="min-h-screen bg-slate-50">
         <AdvisorHeader active="/advisor/my-leads" />
 
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5">
 
           {/* KPI strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2.5">
@@ -266,7 +266,7 @@ export default function AdvisorMyLeads() {
           </div>
 
           {/* Status filter tabs */}
-          <div className="flex gap-1.5 flex-wrap mb-5">
+          <div className="flex gap-1.5 flex-wrap mb-4">
             {statusTabs.map(({ key, label, count }) => (
               <button
                 key={key}
@@ -288,7 +288,7 @@ export default function AdvisorMyLeads() {
           </div>
 
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold flex items-center justify-between gap-3">
+            <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold flex items-center justify-between gap-3">
               <span>{error}</span>
               <button onClick={() => setError("")} className="text-red-400 hover:text-red-600 font-black text-lg leading-none">×</button>
             </div>

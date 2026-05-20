@@ -15,10 +15,10 @@ export default function AdvisorHeader({ active }) {
 
   return (
     <header className="bg-slate-950/95 backdrop-blur-sm text-white sticky top-0 z-40 border-b border-white/[0.06]">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-[92rem] mx-auto px-4 lg:px-6">
 
         {/* Desktop bar */}
-        <div className="hidden md:flex items-center h-12 gap-5">
+        <div className="hidden md:flex items-center h-14 gap-6">
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-sm font-black tracking-tight">FINZO</span>
             <span className="text-[10px] font-black text-violet-400 bg-violet-400/10 border border-violet-400/20 px-1.5 py-0.5 rounded-full tracking-widest">PRO</span>
@@ -29,7 +29,7 @@ export default function AdvisorHeader({ active }) {
               <Link
                 key={href}
                 href={href}
-                className={`px-3.5 py-1.5 text-sm rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
                   active === href
                     ? "bg-white/[0.13] text-white font-black"
                     : "text-slate-400 font-semibold hover:text-white hover:bg-white/[0.06]"
@@ -63,7 +63,7 @@ export default function AdvisorHeader({ active }) {
         </div>
 
         {/* Mobile bar */}
-        <div className="flex md:hidden items-center justify-between h-11 gap-3">
+        <div className="flex md:hidden items-center justify-between h-12 gap-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-black">FINZO</span>
             <span className="text-[10px] font-black text-violet-400 bg-violet-400/10 border border-violet-400/20 px-1.5 py-0.5 rounded-full tracking-widest">PRO</span>
@@ -78,7 +78,7 @@ export default function AdvisorHeader({ active }) {
             <Link
               key={href}
               href={href}
-              className={`flex-1 text-center py-2.5 text-xs transition-colors ${
+              className={`flex-1 text-center py-2 text-[11px] transition-colors ${
                 active === href ? "text-white font-black bg-white/[0.08]" : "text-slate-500 font-semibold hover:text-white"
               }`}
             >

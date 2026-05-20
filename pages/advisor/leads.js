@@ -28,7 +28,7 @@ function ScoreBar({ score }) {
 
 function CardSkeleton() {
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl p-4 space-y-3">
+    <div className="bg-white border border-slate-100 rounded-2xl p-3.5 space-y-2.5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <Skeleton variant="line" className="w-20 h-5 rounded-full" />
@@ -82,7 +82,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
     }`}>
 
       {/* Header row: tags left, price right */}
-      <div className="flex items-start justify-between gap-3 p-5 pb-3">
+      <div className="flex items-start justify-between gap-3 p-4 pb-2.5">
         <div>
           <div className="flex items-center gap-2 flex-wrap mb-1.5">
             {lead.leadQuality && <Tag variant={tagVariant}>{lead.leadQuality}</Tag>}
@@ -99,12 +99,12 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
 
       {/* Lead title from mainIssue */}
       {lead.mainIssue && (
-        <div className="px-5 pb-4">
+        <div className="px-4 pb-3">
           <p className="text-sm font-black text-slate-900 leading-snug">{lead.mainIssue}</p>
         </div>
       )}
 
-      <div className="px-5 pb-4 space-y-3">
+      <div className="px-4 pb-3 space-y-3">
 
         {/* Key numbers */}
         {(lead.mortgageAmount > 0 || lead.propertyPrice > 0) && (
@@ -164,7 +164,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
             <button
               onClick={() => setConfirm("regular")}
               disabled={purchasing}
-              className="text-sm font-black px-3 py-3 rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 transition-colors disabled:opacity-50 min-h-[52px]"
+              className="text-sm font-black px-3 py-2.5 rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 transition-colors disabled:opacity-50 min-h-[46px]"
             >
               <span className="block text-xs font-bold text-violet-500 mb-0.5">ליד רגיל</span>
               {formatPrice(lead.storePrice)}
@@ -172,7 +172,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
             <button
               onClick={() => setConfirm("exclusive")}
               disabled={purchasing}
-              className="text-sm font-black px-3 py-3 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[52px]"
+              className="text-sm font-black px-3 py-2.5 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[46px]"
             >
               <span className="block text-xs font-bold text-violet-300 mb-0.5">בלעדי</span>
               {formatPrice(lead.exclusivePrice)}
@@ -277,7 +277,7 @@ export default function AdvisorLeadsStore() {
       <main dir="rtl" className="min-h-screen bg-slate-50">
         <AdvisorHeader active="/advisor/leads" />
 
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5">
 
           {/* Hero */}
           <div className="mb-6">
