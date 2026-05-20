@@ -27,9 +27,38 @@ const STATUS_BADGE = {
 };
 
 const TODAY = () => new Date(new Date().toDateString());
+const DAY_MS = 1000 * 60 * 60 * 24;
+
+function diffDays(dateStr) {
+  if (!dateStr) return null;
+  const target = new Date(new Date(dateStr).toDateString());
+  const today = TODAY();
+  return Math.max(0, Math.floor((today.getTime() - target.getTime()) / DAY_MS));
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleString("he-IL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
 
 function getStatusBadgeClass(status) {
   return STATUS_BADGE[status] || STATUS_BADGE["חדש"];
+}
+
+function buildSignals(lead) {
+  const signals = [];
+  const idleDays = diffDays(lead.lastContactedAt || lead.lastUpdated || lead.updatedAt || lead.createdAt);
+  if (typeof idleDays === "number" && idleDays >= 3) signals.push({ text: `לא טופל ${idleDays} ימים`, variant: "danger" });
+  if (lead.leadStatus === "מחכים למסמכים") {
+    const waitingDays = diffDays(lead.lastUpdated || lead.updatedAt || lead.createdAt);
+    if (typeof waitingDays === "number" && waitingDays >= 1) signals.push({ text: `מחכה למסמכים ${waitingDays} ימים`, variant: "refi" });
+  }
+  const { isToday, isOverdue } = getFollowUpState(lead.followUpDate?.slice(0, 10));
+  if (isToday) signals.push({ text: "Follow-up היום", variant: "upgrade" });
+  if (isOverdue) signals.push({ text: "באיחור", variant: "danger" });
+  const score = Number(lead.approvalScore || lead.estimatedApprovalResult) || 0;
+  if (score >= 70 && (!lead.lastContactedAt || diffDays(lead.lastContactedAt) >= 2)) signals.push({ text: "ליד חם ללא מענה", variant: "danger" });
+  return signals.slice(0, 3);
 }
 
 function getFollowUpState(followUpDate) {
@@ -68,18 +97,24 @@ function MyLeadCard({ lead, onUpdate }) {
   const { isToday, isOverdue } = getFollowUpState(followUpVal);
 
   const timeline = useMemo(() => {
-    const items = [];
-    items.push(`נוצר ליד: ${created}`);
-    if (lead.lastUpdated) items.push(`עודכן סטטוס: ${new Date(lead.lastUpdated).toLocaleDateString("he-IL")}`);
-    if (lead.internalNotes) items.push("נוספה הערה");
-    if (lead.followUpDate) items.push(`נקבע מעקב: ${new Date(lead.followUpDate).toLocaleString("he-IL")}`);
-    return items.slice(0, 4);
-  }, [created, lead.followUpDate, lead.internalNotes, lead.lastUpdated]);
+    const base = Array.isArray(lead.crmActivityLog) ? lead.crmActivityLog : [];
+    if (!base.length) {
+      return [{ text: `הליד נוצר`, at: lead.createdAt || new Date().toISOString(), type: "create" }];
+    }
+    return [...base].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 6);
+  }, [lead.crmActivityLog, lead.createdAt]);
+  const signals = useMemo(() => buildSignals(lead), [lead]);
+
+  async function logActivity(text, extraChanges = {}) {
+    const current = Array.isArray(lead.crmActivityLog) ? lead.crmActivityLog : [];
+    const next = [{ text, at: new Date().toISOString() }, ...current].slice(0, 30);
+    await onUpdate(lead.id, { crmActivityLog: next, ...extraChanges });
+  }
 
   async function saveNotes() {
     if (notes === (lead.internalNotes || "")) return;
     setSaving(true);
-    await onUpdate(lead.id, { internalNotes: notes, lastContactedAt: new Date().toISOString() });
+    await logActivity("נוספה הערה", { internalNotes: notes, lastContactedAt: new Date().toISOString() });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -91,12 +126,13 @@ function MyLeadCard({ lead, onUpdate }) {
     const phone = raw.startsWith("0") ? `972${raw.slice(1)}` : raw;
     const text = message ? `&text=${encodeURIComponent(`${lead.name || ""} ${message}`.trim())}` : "";
     window.open(`https://wa.me/${phone}?${text.replace(/^&/, "")}`, "_blank", "noopener,noreferrer");
+    logActivity("נשלח WhatsApp", { lastContactedAt: new Date().toISOString() });
   }
 
   function saveFollowUp(nextDate, nextTime) {
-    if (!nextDate) return onUpdate(lead.id, { followUpDate: "" });
+    if (!nextDate) return logActivity("בוטל follow-up", { followUpDate: "" });
     const normalized = `${nextDate}T${nextTime || "09:00"}:00.000Z`;
-    return onUpdate(lead.id, { followUpDate: normalized });
+    return logActivity("נקבע follow-up", { followUpDate: normalized });
   }
 
   return (
@@ -110,6 +146,7 @@ function MyLeadCard({ lead, onUpdate }) {
             {isOverdue && <Tag variant="danger">באיחור</Tag>}
             {isToday && <Tag variant="refi">להיום</Tag>}
             <span className={`text-xs font-black px-2.5 py-0.5 rounded-full ${getStatusBadgeClass(currentStatus)}`}>{currentStatus}</span>
+            {signals.map((signal) => <Tag key={signal.text} variant={signal.variant}>{signal.text}</Tag>)}
           </div>
           <h2 className="text-base font-black text-slate-950 truncate mb-1">{lead.name || "—"}</h2>
           {lead.phone ? <a href={`tel:${lead.phone}`} className="text-base font-black text-violet-600 hover:underline tracking-wide">{lead.phone}</a> : <span className="text-sm text-slate-400">אין טלפון</span>}
@@ -122,8 +159,8 @@ function MyLeadCard({ lead, onUpdate }) {
       </div>
 
       <div className="grid grid-cols-3 gap-2 mb-3">
-        {lead.phone && <a href={`https://wa.me/${String(lead.phone).replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer" className="text-center text-sm font-black rounded-lg py-2 bg-emerald-50 text-emerald-700">WhatsApp</a>}
-        {lead.email ? <a href={`mailto:${lead.email}`} className="text-center text-sm font-black rounded-lg py-2 bg-sky-50 text-sky-700">Email</a> : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">Email</button>}
+        {lead.phone && <button type="button" onClick={() => openWhatsapp()} className="text-center text-sm font-black rounded-lg py-2 bg-emerald-50 text-emerald-700">WhatsApp</button>}
+        {lead.email ? <a href={`mailto:${lead.email}`} onClick={() => logActivity("נשלח מייל", { lastContactedAt: new Date().toISOString() })} className="text-center text-sm font-black rounded-lg py-2 bg-sky-50 text-sky-700">Email</a> : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">Email</button>}
         {lead.phone ? <a href={`tel:${lead.phone}`} className="text-center text-sm font-black rounded-lg py-2 bg-violet-50 text-violet-700">שיחה</a> : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">שיחה</button>}
       </div>
 
@@ -141,14 +178,24 @@ function MyLeadCard({ lead, onUpdate }) {
       <div className="mb-3"><div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5"><span>ציון FINZO</span><span className="tabular-nums font-black text-slate-600">{score}/100</span></div><ScoreBar score={score} /></div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-        <div><label className="block text-xs font-black text-slate-400 mb-1">סטטוס</label><select className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-sm font-bold" value={currentStatus} onChange={(e) => onUpdate(lead.id, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() })}>{STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}</select></div>
+        <div><label className="block text-xs font-black text-slate-400 mb-1">סטטוס</label><select className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-sm font-bold" value={currentStatus} onChange={(e) => logActivity(`סטטוס עודכן ל"${e.target.value}"`, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() })}>{STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}</select></div>
         <div><label className="block text-xs font-black text-slate-400 mb-1">תאריך מעקב</label><input type="date" className={`w-full border rounded-lg px-2.5 py-2 text-sm font-bold ${isOverdue ? "border-amber-300 bg-amber-50/40" : "border-slate-200"}`} defaultValue={followUpVal} onBlur={(e) => saveFollowUp(e.target.value, followUpTimeVal)} /></div>
         <div><label className="block text-xs font-black text-slate-400 mb-1">שעת מעקב</label><input type="time" className="w-full border rounded-lg px-2.5 py-2 text-sm font-bold border-slate-200" defaultValue={followUpTimeVal} onBlur={(e) => saveFollowUp(followUpVal, e.target.value)} /></div>
       </div>
 
       <div className="mb-3">
         <label className="block text-xs font-black text-slate-400 mb-1">ציר פעילות</label>
-        <div className="border border-slate-100 rounded-xl p-2.5 space-y-1.5 bg-slate-50/70">{timeline.map((item, idx) => <p key={idx} className="text-xs text-slate-600 font-semibold">• {item}</p>)}</div>
+        <div className="border border-slate-100 rounded-xl p-2.5 bg-slate-50/70">
+          {timeline.map((item, idx) => (
+            <div key={`${item.at}-${idx}`} className={`flex gap-2.5 py-1.5 ${idx < timeline.length - 1 ? "border-b border-slate-200/70" : ""}`}>
+              <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-violet-400 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-700">{item.text}</p>
+                <p className="text-[11px] text-slate-400">{formatDateTime(item.at)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div>

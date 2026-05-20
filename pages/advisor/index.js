@@ -129,6 +129,18 @@ export default function AdvisorDashboard() {
   const hot  = leads.filter((l) => (l.leadQuality === "חם")     || (!l.leadQuality && Number(l.approvalScore) >= 70));
   const warm = leads.filter((l) => (l.leadQuality === "בינוני") || (!l.leadQuality && Number(l.approvalScore) >= 40 && Number(l.approvalScore) < 70));
   const needsAction = leads.filter((l) => !l.leadStatus || l.leadStatus === "חדש");
+  const followUpsToday = leads.filter((l) => {
+    if (!l.followUpDate) return false;
+    return new Date(l.followUpDate).toDateString() === new Date().toDateString();
+  }).length;
+  const overdueLeads = leads.filter((l) => l.followUpDate && new Date(l.followUpDate) < new Date(new Date().toDateString())).length;
+  const waitingDocs = leads.filter((l) => l.leadStatus === "מחכים למסמכים").length;
+  const activeLeads = leads.filter((l) => !["נסגר", "אבוד", "לא רלוונטי"].includes(l.leadStatus || "")).length;
+  const recentlyUpdated = leads.filter((l) => {
+    const stamp = l.lastUpdated || l.updatedAt || l.lastContactedAt;
+    if (!stamp) return false;
+    return Date.now() - new Date(stamp).getTime() <= 1000 * 60 * 60 * 24 * 2;
+  }).length;
   const focusItems = getFocusItems(leads);
 
   const tabs = [
@@ -185,13 +197,21 @@ export default function AdvisorDashboard() {
               ))
             ) : (
               <>
-                <KpiTile label="לידים שלי" value={leads.length} />
-                <KpiTile label="חמים" value={hot.length} delta={hot.length > 0 ? "פוטנציאל גבוה" : undefined} deltaDir="up" />
-                <KpiTile label="בינוניים" value={warm.length} />
-                <KpiTile label="ממתינים לטיפול" value={needsAction.length} />
+                <KpiTile label="Follow-ups היום" value={followUpsToday} />
+                <KpiTile label="לידים באיחור" value={overdueLeads} />
+                <KpiTile label="מחכים למסמכים" value={waitingDocs} />
+                <KpiTile label="לידים פעילים" value={activeLeads} />
               </>
             )}
           </div>
+          {!loading && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+              <KpiTile label="עודכנו לאחרונה" value={recentlyUpdated} />
+              <KpiTile label="חמים" value={hot.length} delta={hot.length > 0 ? "פוטנציאל גבוה" : undefined} deltaDir="up" />
+              <KpiTile label="בינוניים" value={warm.length} />
+              <KpiTile label="ממתינים לטיפול" value={needsAction.length} />
+            </div>
+          )}
 
           {/* Two-column main */}
           <div className="grid xl:grid-cols-[320px_1fr] gap-3.5">
