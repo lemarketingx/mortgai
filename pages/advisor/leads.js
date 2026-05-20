@@ -209,7 +209,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
                 disabled={purchasing}
                 className="flex-1 text-sm font-black px-4 py-2.5 rounded-full bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-70 min-h-[44px]"
               >
-                {purchasing ? "מעבד..." : "אשר רכישה"}
+                {purchasing ? "מעבד..." : (confirm === "partner_claim" ? "אשר לקיחה" : "אשר רכישה")}
               </button>
               <button
                 onClick={() => setConfirm(null)}
