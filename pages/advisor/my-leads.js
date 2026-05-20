@@ -394,12 +394,15 @@ export default function AdvisorMyLeads() {
           {/* Search + status tabs */}
           <div className="mb-4 space-y-2">
             <input
-              type="search"
+              type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="חיפוש לפי שם או טלפון..."
               className="w-full max-w-sm border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 bg-white"
               dir="rtl"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
             />
             <div className="flex gap-1.5 flex-wrap">
               {statusTabs.map(({ key, label, count }) => (
