@@ -11,18 +11,15 @@ function ScoreBar({ score }) {
   const pct = Math.min(100, Math.max(0, Number(score) || 0));
   const color = pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-slate-300";
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
-      </div>
-      <span className="text-xs font-black text-slate-500 w-8 text-start tabular-nums">{pct}%</span>
+    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+      <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
     </div>
   );
 }
 
 function CardSkeleton() {
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+    <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <Skeleton variant="line" className="w-20 h-5 rounded-full" />
@@ -35,14 +32,11 @@ function CardSkeleton() {
         </div>
       </div>
       <Skeleton variant="line" />
-      <div className="flex gap-2">
-        <Skeleton variant="line" className="w-24 h-6 rounded-full" />
-        <Skeleton variant="line" className="w-20 h-6 rounded-full" />
-      </div>
       <div className="grid grid-cols-2 gap-3">
         <Skeleton variant="block" className="h-9" />
         <Skeleton variant="block" className="h-9" />
       </div>
+      <Skeleton variant="block" className="h-14" />
     </div>
   );
 }
@@ -71,64 +65,43 @@ function LeadCard({ lead, onUpdate }) {
     : "";
 
   return (
-    <article className={`bg-white rounded-2xl p-5 shadow-sm transition-colors border ${
-      isHot ? "border-emerald-200 hover:border-emerald-300" : "border-slate-200 hover:border-violet-200"
+    <article className={`bg-white rounded-2xl p-5 shadow-sm border ${
+      isHot ? "border-emerald-200" : "border-slate-100"
     }`}>
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-4">
+      <div className="flex items-start justify-between gap-3 mb-5">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+          <div className="flex items-center gap-2 flex-wrap mb-2">
             <Tag variant={tagVariant}>{quality}</Tag>
             {lead.isExclusive && <Tag variant="exclusive">בלעדי</Tag>}
-            {lead.city && <span className="text-xs text-slate-500 font-bold">📍 {lead.city}</span>}
           </div>
-          <h2 className="text-base font-black text-slate-950 truncate">{lead.name}</h2>
-          <a href={`tel:${lead.phone}`} className="text-sm font-bold text-violet-600 hover:underline">
-            {lead.phone}
-          </a>
+          <h2 className="text-base font-black text-slate-950 truncate mb-1">{lead.name}</h2>
+          {lead.phone ? (
+            <a href={`tel:${lead.phone}`} className="text-base font-black text-violet-600 hover:underline tracking-wide">
+              {lead.phone}
+            </a>
+          ) : (
+            <span className="text-sm text-slate-400">אין טלפון</span>
+          )}
         </div>
         <div className="text-start shrink-0">
           <p className="text-lg font-black text-slate-950 tabular-nums">{formatILS(lead.mortgageAmount || 0)}</p>
-          <p className="text-xs text-slate-400 mt-0.5">{created}</p>
+          <p className="text-xs text-slate-400 mt-1">{created}</p>
           {purchasedAt && <p className="text-xs text-violet-500 mt-0.5">נרכש {purchasedAt}</p>}
         </div>
       </div>
 
-      {/* Score bar */}
-      <div className="mb-4">
-        <div className="flex justify-between text-xs font-bold text-slate-500 mb-1.5">
+      <div className="mb-5">
+        <div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5">
           <span>סיכוי אישור</span>
-          <span className="tabular-nums">{score}%</span>
+          <span className="tabular-nums">{score}/100</span>
         </div>
         <ScoreBar score={score} />
       </div>
 
-      {/* Meta pills */}
-      {(lead.monthlyIncome || lead.purchaseStatus || lead.employmentStatus) && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {lead.monthlyIncome && (
-            <span className="text-xs bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-bold text-slate-700">
-              הכנסה: {formatILS(lead.monthlyIncome)}
-            </span>
-          )}
-          {lead.purchaseStatus && (
-            <span className="text-xs bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-bold text-slate-700">
-              {lead.purchaseStatus}
-            </span>
-          )}
-          {lead.employmentStatus && (
-            <span className="text-xs bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-bold text-slate-700">
-              {lead.employmentStatus}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Status + follow-up */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-3 mb-5">
         <div>
-          <label className="block text-xs font-black text-slate-500 mb-1">סטטוס</label>
+          <label className="block text-xs font-black text-slate-400 mb-1">סטטוס</label>
           <select
             className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
             value={lead.leadStatus || lead.status || "חדש"}
@@ -138,7 +111,7 @@ function LeadCard({ lead, onUpdate }) {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-black text-slate-500 mb-1">מועד מעקב</label>
+          <label className="block text-xs font-black text-slate-400 mb-1">מועד מעקב</label>
           <input
             type="date"
             className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
@@ -148,9 +121,8 @@ function LeadCard({ lead, onUpdate }) {
         </div>
       </div>
 
-      {/* Notes */}
       <div>
-        <label className="block text-xs font-black text-slate-500 mb-1">הערות פנימיות</label>
+        <label className="block text-xs font-black text-slate-400 mb-1">הערות</label>
         <textarea
           className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white resize-none"
           rows={2}
@@ -221,8 +193,9 @@ export default function AdvisorDashboard() {
 
   const hot  = leads.filter((l) => (l.leadQuality === "חם")     || (!l.leadQuality && Number(l.approvalScore) >= 70));
   const warm = leads.filter((l) => (l.leadQuality === "בינוני") || (!l.leadQuality && Number(l.approvalScore) >= 40 && Number(l.approvalScore) < 70));
-  const cold = leads.filter((l) => (l.leadQuality === "חלש")    || (!l.leadQuality && Number(l.approvalScore) < 40));
-  const filtered = filter === "חם" ? hot : filter === "בינוני" ? warm : filter === "חלש" ? cold : leads;
+  const needsAction = leads.filter((l) => !l.leadStatus || l.leadStatus === "חדש");
+  const focusLeads = hot.filter((l) => !l.leadStatus || l.leadStatus === "חדש").slice(0, 3);
+  const filtered = filter === "חם" ? hot : filter === "בינוני" ? warm : leads;
 
   return (
     <>
@@ -253,11 +226,18 @@ export default function AdvisorDashboard() {
 
         <div className="max-w-5xl mx-auto px-4 py-8">
 
+          {/* Greeting */}
+          {!loading && hot.length > 0 && (
+            <p className="text-sm font-bold text-slate-500 mb-6">
+              יש לכם <span className="font-black text-violet-700">{hot.length} לידים חמים</span> שממתינים לטיפול
+            </p>
+          )}
+
           {/* KPI strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
+                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-5 space-y-3">
                   <Skeleton variant="line" className="w-20" />
                   <Skeleton variant="line" className="w-10 h-8" />
                 </div>
@@ -265,33 +245,54 @@ export default function AdvisorDashboard() {
             ) : (
               <>
                 <KpiTile label="לידים שלי" value={leads.length} />
-                <KpiTile label="חמים" value={hot.length} delta={hot.length > 0 ? "ממתינים לטיפול" : undefined} deltaDir="up" />
+                <KpiTile label="חמים" value={hot.length} delta={hot.length > 0 ? "פוטנציאל גבוה" : undefined} deltaDir="up" />
                 <KpiTile label="בינוניים" value={warm.length} />
-                <KpiTile label="חלשים" value={cold.length} />
+                <KpiTile label="ממתינים לטיפול" value={needsAction.length} />
               </>
             )}
           </div>
+
+          {/* Focus section — top hot leads needing action */}
+          {!loading && focusLeads.length > 0 && (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 mb-8">
+              <h2 className="text-sm font-black text-slate-950 mb-4">הפוקוס של היום</h2>
+              <div className="space-y-3.5">
+                {focusLeads.map((lead) => (
+                  <div key={lead.id} className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                      <span className="text-sm font-black text-slate-950 truncate">{lead.name || "—"}</span>
+                    </div>
+                    {lead.phone ? (
+                      <a href={`tel:${lead.phone}`} className="text-sm font-bold text-violet-600 hover:underline shrink-0 tabular-nums">
+                        {lead.phone}
+                      </a>
+                    ) : (
+                      <span className="text-xs text-slate-400 shrink-0">אין טלפון</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Filter pills */}
           <div className="flex gap-2 flex-wrap mb-6">
             <Pill active={filter === "הכל"}    count={leads.length} onClick={() => setFilter("הכל")}>הכל</Pill>
             <Pill active={filter === "חם"}     count={hot.length}   onClick={() => setFilter("חם")}>חמים</Pill>
             <Pill active={filter === "בינוני"} count={warm.length}  onClick={() => setFilter("בינוני")}>בינוניים</Pill>
-            <Pill active={filter === "חלש"}    count={cold.length}  onClick={() => setFilter("חלש")}>חלשים</Pill>
           </div>
 
           {msg && (
             <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold">{msg}</div>
           )}
 
-          {/* Skeleton cards */}
           {loading && (
-            <div className="grid gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
               {Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           )}
 
-          {/* Empty states */}
           {!loading && filtered.length === 0 && filter === "הכל" && (
             <EmptyState
               glyph="📋"
@@ -312,7 +313,7 @@ export default function AdvisorDashboard() {
             />
           )}
 
-          <div className="grid gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
             {filtered.map((lead) => (
               <LeadCard key={lead.id} lead={lead} onUpdate={update} />
             ))}

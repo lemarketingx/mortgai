@@ -19,34 +19,31 @@ function ScoreBar({ score }) {
   const pct = Math.min(100, Math.max(0, Number(score) || 0));
   const color = pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-slate-300";
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
-      </div>
-      <span className="text-xs font-black text-slate-500 w-8 text-start tabular-nums">{pct}%</span>
+    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+      <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
     </div>
   );
 }
 
 function CardSkeleton() {
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+    <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <Skeleton variant="line" className="w-20 h-5 rounded-full" />
           <Skeleton variant="line" className="w-16" />
         </div>
-        <Skeleton variant="line" className="w-16 h-5 rounded-full" />
+        <Skeleton variant="line" className="w-20 h-6" />
       </div>
+      <Skeleton variant="line" className="w-3/4" />
       <div className="grid grid-cols-2 gap-3">
         <Skeleton variant="block" className="h-14" />
         <Skeleton variant="block" className="h-14" />
       </div>
       <Skeleton variant="line" />
-      <Skeleton variant="block" className="h-10" />
       <div className="grid grid-cols-2 gap-2">
-        <Skeleton variant="block" className="h-10 rounded-full" />
-        <Skeleton variant="block" className="h-10 rounded-full" />
+        <Skeleton variant="block" className="h-12 rounded-2xl" />
+        <Skeleton variant="block" className="h-12 rounded-2xl" />
       </div>
     </div>
   );
@@ -55,10 +52,10 @@ function CardSkeleton() {
 function LeadStoreCard({ lead, onPurchase, purchasing }) {
   const [confirm, setConfirm] = useState(null);
 
-  const created = new Date(lead.createdAt).toLocaleDateString("he-IL", { day: "numeric", month: "short" });
   const isSold = lead.storeStatus === "sold";
   const tagVariant = QUALITY_TAG[lead.leadQuality] || "default";
   const isHot = lead.leadQuality === "חם";
+  const created = new Date(lead.createdAt).toLocaleDateString("he-IL", { day: "numeric", month: "short" });
 
   async function handleConfirm() {
     const result = await onPurchase(lead.id, confirm);
@@ -70,34 +67,44 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
       lead._purchased
         ? "border-emerald-200 bg-emerald-50/30"
         : isSold
-          ? "border-slate-200 opacity-60"
+          ? "border-slate-100 opacity-60"
           : isHot
-            ? "border-emerald-200 hover:border-emerald-300 hover:shadow-md"
-            : "border-slate-200 hover:border-violet-200 hover:shadow-sm"
+            ? "border-emerald-200 shadow-md hover:shadow-lg"
+            : "border-slate-100 hover:border-violet-200 hover:shadow-sm"
     }`}>
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          {lead.leadQuality && <Tag variant={tagVariant}>{lead.leadQuality}</Tag>}
-          {lead.city && <span className="text-xs font-bold text-slate-500">📍 {lead.city}</span>}
-          <span className="text-xs font-bold text-slate-400">{created}</span>
+      {/* Header — price at top right, quality left */}
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+            {lead.leadQuality && <Tag variant={tagVariant}>{lead.leadQuality}</Tag>}
+            {isSold && <Tag variant="danger">נמכר</Tag>}
+            {lead._purchased && <Tag variant="upgrade">נרכש ✓</Tag>}
+          </div>
+          {lead.city && <span className="text-xs font-bold text-slate-400">📍 {lead.city}</span>}
         </div>
-        {isSold && <Tag variant="danger">נמכר</Tag>}
-        {lead._purchased && <Tag variant="upgrade">נרכש ✓</Tag>}
+        <div className="text-start shrink-0">
+          <p className="text-base font-black text-slate-950 tabular-nums">{formatPrice(lead.storePrice)}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{created}</p>
+        </div>
       </div>
+
+      {/* Main issue as lead title */}
+      {lead.mainIssue && (
+        <p className="text-sm font-bold text-slate-700 mb-4 leading-snug">{lead.mainIssue}</p>
+      )}
 
       {/* Key numbers */}
       <div className="grid grid-cols-2 gap-3 mb-4">
         {lead.mortgageAmount > 0 && (
-          <div className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
-            <p className="text-xs text-slate-500 font-bold mb-0.5">סכום משכנתא</p>
+          <div className="bg-slate-50 rounded-xl px-3 py-2.5">
+            <p className="text-xs text-slate-400 font-bold mb-0.5">סכום משכנתא</p>
             <p className="font-black text-slate-950 text-sm tabular-nums">{formatILS(lead.mortgageAmount)}</p>
           </div>
         )}
         {lead.propertyPrice > 0 && (
-          <div className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
-            <p className="text-xs text-slate-500 font-bold mb-0.5">מחיר נכס</p>
+          <div className="bg-slate-50 rounded-xl px-3 py-2.5">
+            <p className="text-xs text-slate-400 font-bold mb-0.5">מחיר נכס</p>
             <p className="font-black text-slate-950 text-sm tabular-nums">{formatILS(lead.propertyPrice)}</p>
           </div>
         )}
@@ -105,19 +112,12 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
 
       {/* Approval score */}
       <div className="mb-4">
-        <div className="flex justify-between text-xs font-bold text-slate-500 mb-1.5">
-          <span>סיכוי אישור (אומדן)</span>
-          <span className="tabular-nums">{lead.approvalScore}%</span>
+        <div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5">
+          <span>סיכוי אישור</span>
+          <span className="tabular-nums">{lead.approvalScore}/100</span>
         </div>
         <ScoreBar score={lead.approvalScore} />
       </div>
-
-      {/* Main issue */}
-      {lead.mainIssue && (
-        <div className="mb-4 rounded-xl bg-violet-50 border border-violet-100 px-3 py-2">
-          <p className="text-xs font-bold text-violet-700">{lead.mainIssue}</p>
-        </div>
-      )}
 
       {/* Locked contact info */}
       {!lead._purchased && !isSold && (
@@ -308,7 +308,7 @@ export default function AdvisorLeadsStore() {
           <div className="grid grid-cols-3 gap-4 mb-8">
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
+                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-5 space-y-3">
                   <Skeleton variant="line" className="w-20" />
                   <Skeleton variant="line" className="w-10 h-8" />
                 </div>
@@ -346,14 +346,12 @@ export default function AdvisorLeadsStore() {
             </div>
           )}
 
-          {/* Skeleton cards */}
           {loading && (
             <div className="grid gap-4 md:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           )}
 
-          {/* Empty state */}
           {!loading && filtered.length === 0 && (
             <EmptyState
               glyph="🏪"

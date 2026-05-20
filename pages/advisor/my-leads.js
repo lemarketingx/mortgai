@@ -7,22 +7,28 @@ import { KpiTile, Pill, Tag, Skeleton, EmptyState } from "../../components/ui";
 const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi", "חלש": "danger" };
 const STATUS_OPTIONS = ["חדש", "בטיפול", "נקבעה שיחה", "אושר עקרונית", "נסגר", "לא רלוונטי"];
 
+const STATUS_BADGE = {
+  "חדש":           "bg-violet-50 text-violet-700",
+  "בטיפול":        "bg-amber-50 text-amber-700",
+  "נקבעה שיחה":    "bg-amber-50 text-amber-700",
+  "אושר עקרונית":  "bg-emerald-50 text-emerald-700",
+  "נסגר":          "bg-slate-100 text-slate-600",
+  "לא רלוונטי":    "bg-slate-100 text-slate-400",
+};
+
 function ScoreBar({ score }) {
   const pct = Math.min(100, Math.max(0, Number(score) || 0));
   const color = pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-slate-300";
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
-      </div>
-      <span className="text-xs font-black text-slate-500 w-8 text-start tabular-nums">{pct}%</span>
+    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+      <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
     </div>
   );
 }
 
 function CardSkeleton() {
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+    <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <div className="flex gap-2">
@@ -38,10 +44,6 @@ function CardSkeleton() {
         </div>
       </div>
       <Skeleton variant="line" />
-      <div className="flex gap-2">
-        <Skeleton variant="line" className="w-28 h-6 rounded-full" />
-        <Skeleton variant="line" className="w-20 h-6 rounded-full" />
-      </div>
       <div className="grid grid-cols-2 gap-3">
         <Skeleton variant="block" className="h-9" />
         <Skeleton variant="block" className="h-9" />
@@ -65,6 +67,12 @@ function MyLeadCard({ lead, onUpdate }) {
     ? new Date(lead.purchasedAt).toLocaleDateString("he-IL", { day: "numeric", month: "short" })
     : "";
 
+  const currentStatus = lead.leadStatus || lead.status || "חדש";
+  const statusBadgeClass = STATUS_BADGE[currentStatus] || STATUS_BADGE["חדש"];
+
+  const followUpVal = lead.followUpDate?.slice(0, 10) || "";
+  const isOverdue = followUpVal && new Date(followUpVal) < new Date(new Date().toDateString());
+
   async function saveNotes() {
     if (notes === (lead.internalNotes || "")) return;
     setSaving(true);
@@ -75,21 +83,23 @@ function MyLeadCard({ lead, onUpdate }) {
   }
 
   return (
-    <article className={`bg-white rounded-2xl p-5 shadow-sm transition-colors border ${
-      isHot ? "border-emerald-200 hover:border-emerald-300" : "border-slate-200 hover:border-violet-200"
+    <article className={`bg-white rounded-2xl p-5 shadow-sm border ${
+      isHot ? "border-emerald-200" : "border-slate-100"
     }`}>
 
-      {/* Header — full contact info visible */}
-      <div className="flex items-start justify-between gap-3 mb-4">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 mb-5">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+          <div className="flex items-center gap-2 flex-wrap mb-2">
             <Tag variant={tagVariant}>{quality}</Tag>
             {lead.isExclusive && <Tag variant="exclusive">בלעדי</Tag>}
-            {lead.city && <span className="text-xs font-bold text-slate-500">📍 {lead.city}</span>}
+            <span className={`text-xs font-black px-2.5 py-0.5 rounded-full ${statusBadgeClass}`}>
+              {currentStatus}
+            </span>
           </div>
-          <h2 className="text-base font-black text-slate-950 truncate">{lead.name || "—"}</h2>
+          <h2 className="text-base font-black text-slate-950 truncate mb-1">{lead.name || "—"}</h2>
           {lead.phone ? (
-            <a href={`tel:${lead.phone}`} className="text-sm font-bold text-violet-600 hover:underline">
+            <a href={`tel:${lead.phone}`} className="text-base font-black text-violet-600 hover:underline tracking-wide">
               {lead.phone}
             </a>
           ) : (
@@ -98,40 +108,30 @@ function MyLeadCard({ lead, onUpdate }) {
         </div>
         <div className="text-start shrink-0">
           <p className="text-lg font-black text-slate-950 tabular-nums">{formatILS(lead.mortgageAmount || 0)}</p>
-          <p className="text-xs text-slate-400 mt-0.5">נוצר {created}</p>
+          <p className="text-xs text-slate-400 mt-1">נוצר {created}</p>
           {purchasedAt && <p className="text-xs text-violet-500 mt-0.5">נרכש {purchasedAt}</p>}
         </div>
       </div>
 
-      {/* Approval score */}
-      <div className="mb-4">
-        <div className="flex justify-between text-xs font-bold text-slate-500 mb-1.5">
-          <span>סיכוי אישור (אומדן)</span>
-          <span className="tabular-nums">{score}%</span>
+      {/* Score bar */}
+      <div className="mb-5">
+        <div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5">
+          <span>סיכוי אישור</span>
+          <span className="tabular-nums">{score}/100</span>
         </div>
         <ScoreBar score={score} />
       </div>
 
-      {/* Meta pills */}
-      {(lead.monthlyIncome > 0 || lead.contractStatus || lead.employmentStatus || lead.mainIssue) && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
+      {/* Meta — income + main issue only */}
+      {(lead.monthlyIncome > 0 || lead.mainIssue) && (
+        <div className="flex flex-wrap gap-1.5 mb-5">
           {lead.monthlyIncome > 0 && (
-            <span className="text-xs bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-bold text-slate-700">
+            <span className="text-xs bg-slate-50 px-2.5 py-1 rounded-full font-bold text-slate-700">
               הכנסה: {formatILS(lead.monthlyIncome)}
             </span>
           )}
-          {lead.contractStatus && (
-            <span className="text-xs bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-bold text-slate-700">
-              {lead.contractStatus}
-            </span>
-          )}
-          {lead.employmentStatus && (
-            <span className="text-xs bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-bold text-slate-700">
-              {lead.employmentStatus}
-            </span>
-          )}
           {lead.mainIssue && (
-            <span className="text-xs bg-violet-50 border border-violet-100 px-2.5 py-1 rounded-full font-bold text-violet-700">
+            <span className="text-xs bg-violet-50 px-2.5 py-1 rounded-full font-bold text-violet-700">
               {lead.mainIssue}
             </span>
           )}
@@ -139,23 +139,25 @@ function MyLeadCard({ lead, onUpdate }) {
       )}
 
       {/* Status + follow-up */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-3 mb-5">
         <div>
-          <label className="block text-xs font-black text-slate-500 mb-1">סטטוס</label>
+          <label className="block text-xs font-black text-slate-400 mb-1">סטטוס</label>
           <select
             className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold bg-white outline-none focus:ring-2 focus:ring-violet-400"
-            value={lead.leadStatus || lead.status || "חדש"}
+            value={currentStatus}
             onChange={(e) => onUpdate(lead.id, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() })}
           >
             {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs font-black text-slate-500 mb-1">מועד מעקב</label>
+          <label className="block text-xs font-black text-slate-400 mb-1">מועד מעקב</label>
           <input
             type="date"
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold bg-white outline-none focus:ring-2 focus:ring-violet-400"
-            defaultValue={lead.followUpDate?.slice(0, 10) || ""}
+            className={`w-full border rounded-xl px-3 py-2 text-sm font-bold bg-white outline-none focus:ring-2 focus:ring-violet-400 ${
+              isOverdue ? "border-amber-300 bg-amber-50/40" : "border-slate-200"
+            }`}
+            defaultValue={followUpVal}
             onBlur={(e) => onUpdate(lead.id, { followUpDate: e.target.value })}
           />
         </div>
@@ -163,7 +165,7 @@ function MyLeadCard({ lead, onUpdate }) {
 
       {/* Notes */}
       <div>
-        <label className="block text-xs font-black text-slate-500 mb-1">הערות פנימיות</label>
+        <label className="block text-xs font-black text-slate-400 mb-1">הערות</label>
         <textarea
           className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-violet-400 resize-none"
           rows={2}
@@ -271,7 +273,7 @@ export default function AdvisorMyLeads() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
+                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-5 space-y-3">
                   <Skeleton variant="line" className="w-20" />
                   <Skeleton variant="line" className="w-10 h-8" />
                 </div>
@@ -303,14 +305,12 @@ export default function AdvisorMyLeads() {
             </div>
           )}
 
-          {/* Skeleton cards */}
           {loading && (
             <div className="grid gap-4 md:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           )}
 
-          {/* Empty states */}
           {!loading && filtered.length === 0 && filter === "הכל" && (
             <EmptyState
               glyph="📋"
