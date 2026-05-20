@@ -6,35 +6,64 @@ import { KpiTile, Tag } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
 
 const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi", "חלש": "danger" };
-const STATUS_OPTIONS = ["חדש", "נשלח ליועץ", "בטיפול", "אושר עקרונית", "נסגר", "לא רלוונטי"];
+const STATUS_OPTIONS = ["חדש", "נוצר קשר", "מחכים למסמכים", "פגישה נקבעה", "הוגש לבנק", "אישור עקרוני", "נסגר", "אבוד", "לא רלוונטי"];
+
+const TODAY = () => new Date(new Date().toDateString());
+const DAY_MS = 1000 * 60 * 60 * 24;
+function diffMins(dateStr) {
+  if (!dateStr) return null;
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+}
+function diffDays(dateStr) {
+  if (!dateStr) return null;
+  const t = new Date(new Date(dateStr).toDateString());
+  return Math.max(0, Math.floor((TODAY().getTime() - t.getTime()) / DAY_MS));
+}
+
+function buildDashboardSignals(leads) {
+  const signals = [];
+  const noContactNew = leads.filter((l) => {
+    const mins = diffMins(l.createdAt);
+    return (l.leadStatus === "חדש" || !l.leadStatus) && !l.lastContactedAt && mins !== null && mins >= 15;
+  });
+  if (noContactNew.length) signals.push({ key: "no_contact", text: `${noContactNew.length} ליד${noContactNew.length > 1 ? "ים" : ""} חדש${noContactNew.length > 1 ? "ים" : ""} ללא מענה`, variant: "danger", count: noContactNew.length });
+
+  const overdue = leads.filter((l) => l.followUpDate && new Date(l.followUpDate) < TODAY() && !["נסגר", "אבוד", "לא רלוונטי"].includes(l.leadStatus || ""));
+  if (overdue.length) signals.push({ key: "overdue", text: `${overdue.length} תזכורת${overdue.length > 1 ? "ות" : ""} באיחור`, variant: "danger", count: overdue.length });
+
+  const followToday = leads.filter((l) => l.followUpDate && new Date(l.followUpDate).toDateString() === new Date().toDateString());
+  if (followToday.length) signals.push({ key: "today", text: `${followToday.length} Follow-up להיום`, variant: "upgrade", count: followToday.length });
+
+  const waitDocs = leads.filter((l) => l.leadStatus === "מחכים למסמכים");
+  if (waitDocs.length) signals.push({ key: "docs", text: `${waitDocs.length} ממתין${waitDocs.length > 1 ? "ים" : ""} למסמכים`, variant: "refi", count: waitDocs.length });
+
+  const hotIdle = leads.filter((l) => l.leadQuality === "חם" && diffDays(l.lastContactedAt || l.lastActivityAt) >= 3);
+  if (hotIdle.length) signals.push({ key: "hot_idle", text: `${hotIdle.length} ליד חם ללא טיפול 3+ ימים`, variant: "danger", count: hotIdle.length });
+
+  return signals;
+}
 
 function getFocusItems(leads) {
   const items = [];
-  const today = new Date(new Date().toDateString());
+  const today = TODAY();
 
-  const hotNew = leads
-    .filter((l) => (l.leadQuality === "חם" || (!l.leadQuality && Number(l.approvalScore) >= 70)) && (!l.leadStatus || l.leadStatus === "חדש"))
-    .slice(0, 2);
-  hotNew.forEach((lead) => {
-    items.push({ lead, text: lead.mainIssue || "ליד חם שממתין לפנייה ראשונה.", sub: lead.city || null });
-  });
+  leads
+    .filter((l) => l.leadQuality === "חם" && (!l.leadStatus || l.leadStatus === "חדש"))
+    .slice(0, 2)
+    .forEach((lead) => items.push({ lead, text: lead.mainIssue || "ליד חם שממתין לפנייה ראשונה.", sub: lead.city || null }));
 
   if (items.length < 3) {
     leads
       .filter((l) => l.followUpDate && new Date(l.followUpDate.slice(0, 10)) < today && !items.find((i) => i.lead.id === l.id))
       .slice(0, 1)
-      .forEach((lead) => {
-        items.push({ lead, text: "מועד מעקב עבר – זמן לחזור ללקוח.", sub: lead.city || null });
-      });
+      .forEach((lead) => items.push({ lead, text: "מועד מעקב עבר – זמן לחזור ללקוח.", sub: lead.city || null }));
   }
 
   if (items.length < 3) {
     leads
-      .filter((l) => (l.leadStatus === "בטיפול" || l.leadStatus === "נקבעה שיחה") && !items.find((i) => i.lead.id === l.id))
+      .filter((l) => ["בטיפול", "נוצר קשר"].includes(l.leadStatus) && !items.find((i) => i.lead.id === l.id))
       .slice(0, 1)
-      .forEach((lead) => {
-        items.push({ lead, text: "ליד בטיפול פעיל – יש לעדכן סטטוס.", sub: lead.city || null });
-      });
+      .forEach((lead) => items.push({ lead, text: "ליד בטיפול פעיל – יש לעדכן סטטוס.", sub: lead.city || null }));
   }
 
   return items.slice(0, 3);
@@ -61,36 +90,67 @@ function LeadRow({ lead, onUpdate }) {
   const tagVariant = QUALITY_TAG[quality] || "default";
   const scoreColor = score >= 70 ? "bg-emerald-500" : score >= 40 ? "bg-amber-400" : "bg-slate-300";
   const currentStatus = lead.leadStatus || lead.status || "חדש";
+  const phone = lead.phone ? String(lead.phone).replace(/[^\d]/g, "") : "";
+  const waPhone = phone.startsWith("0") ? `972${phone.slice(1)}` : phone;
+
+  function logAction(type, channel) {
+    onUpdate(lead.id, { lastContactedAt: new Date().toISOString() });
+    fetch("/api/advisor/activities", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId: lead.id, activityType: type, title: type === "whatsapp_opened" ? "נפתח WhatsApp" : type === "call_logged" ? "בוצעה שיחה" : "נשלח מייל", channel }),
+    }).catch(() => {});
+  }
 
   return (
-    <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-50 last:border-0 hover:bg-slate-50/60 transition-colors">
-      <Tag variant={tagVariant}>{quality}</Tag>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-black text-slate-950 truncate">{lead.name || "—"}</p>
-        {lead.phone ? (
-          <a href={`tel:${lead.phone}`} className="text-xs font-bold text-violet-600 hover:underline tabular-nums">
-            {lead.phone}
-          </a>
-        ) : (
-          <span className="text-xs text-slate-400">אין טלפון</span>
-        )}
-      </div>
-      <div className="hidden lg:flex items-center gap-2 w-20 shrink-0">
-        <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full ${scoreColor}`} style={{ width: `${score}%` }} />
+    <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-50 last:border-0 hover:bg-slate-50/60 transition-colors">
+      <Link href={`/advisor/lead/${lead.id}`} className="flex-1 flex items-center gap-2 min-w-0">
+        <Tag variant={tagVariant}>{quality}</Tag>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-black text-slate-950 truncate">{lead.name || "—"}</p>
+          <p className="text-xs font-bold text-slate-400 tabular-nums">{lead.phone || "אין טלפון"}</p>
         </div>
-        <span className="text-xs text-slate-400 tabular-nums w-5">{score}</span>
+        <div className="hidden lg:flex items-center gap-2 w-20 shrink-0">
+          <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full ${scoreColor}`} style={{ width: `${score}%` }} />
+          </div>
+          <span className="text-xs text-slate-400 tabular-nums w-5">{score}</span>
+        </div>
+        <p className="hidden md:block text-sm font-black text-slate-950 tabular-nums shrink-0 w-24 text-start">
+          {formatILS(lead.mortgageAmount || 0)}
+        </p>
+      </Link>
+      <div className="flex items-center gap-1 shrink-0">
+        {lead.phone && (
+          <a
+            href={`tel:${lead.phone}`}
+            onClick={() => logAction("call_logged", "tel")}
+            title="התקשר"
+            className="w-8 h-8 rounded-lg bg-violet-50 text-violet-700 flex items-center justify-center text-xs font-black hover:bg-violet-100 transition-colors"
+          >
+            ☎
+          </a>
+        )}
+        {lead.phone && (
+          <a
+            href={`https://wa.me/${waPhone}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => logAction("whatsapp_opened", "whatsapp")}
+            title="WhatsApp"
+            className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center text-xs font-black hover:bg-emerald-100 transition-colors"
+          >
+            W
+          </a>
+        )}
+        <select
+          className="text-xs font-bold border border-slate-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-violet-300 shrink-0 max-w-[7.5rem]"
+          value={currentStatus}
+          onChange={(e) => onUpdate(lead.id, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() })}
+        >
+          {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
+        </select>
       </div>
-      <p className="hidden md:block text-sm font-black text-slate-950 tabular-nums shrink-0 w-24 text-start">
-        {formatILS(lead.mortgageAmount || 0)}
-      </p>
-      <select
-        className="text-xs font-bold border border-slate-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-violet-300 shrink-0 max-w-[7.5rem]"
-        value={currentStatus}
-        onChange={(e) => onUpdate(lead.id, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() })}
-      >
-        {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
-      </select>
     </div>
   );
 }
@@ -122,30 +182,23 @@ export default function AdvisorDashboard() {
     });
     if (!r.ok) { setMsg("שמירה נכשלה"); return; }
     const j = await r.json();
-    setLeads((arr) => arr.map((l) => (l.id === id ? j.lead : l)));
+    setLeads((arr) => arr.map((l) => (l.id === id ? { ...l, ...j.lead } : l)));
     setMsg("");
   }
 
-  const hot  = leads.filter((l) => (l.leadQuality === "חם")     || (!l.leadQuality && Number(l.approvalScore) >= 70));
-  const warm = leads.filter((l) => (l.leadQuality === "בינוני") || (!l.leadQuality && Number(l.approvalScore) >= 40 && Number(l.approvalScore) < 70));
+  const hot  = leads.filter((l) => l.leadQuality === "חם" || (!l.leadQuality && Number(l.approvalScore) >= 70));
+  const warm = leads.filter((l) => l.leadQuality === "בינוני" || (!l.leadQuality && Number(l.approvalScore) >= 40 && Number(l.approvalScore) < 70));
   const needsAction = leads.filter((l) => !l.leadStatus || l.leadStatus === "חדש");
-  const followUpsToday = leads.filter((l) => {
-    if (!l.followUpDate) return false;
-    return new Date(l.followUpDate).toDateString() === new Date().toDateString();
-  }).length;
-  const overdueLeads = leads.filter((l) => l.followUpDate && new Date(l.followUpDate) < new Date(new Date().toDateString())).length;
+  const followUpsToday = leads.filter((l) => l.followUpDate && new Date(l.followUpDate).toDateString() === new Date().toDateString()).length;
+  const overdueLeads = leads.filter((l) => l.followUpDate && new Date(l.followUpDate) < TODAY()).length;
   const waitingDocs = leads.filter((l) => l.leadStatus === "מחכים למסמכים").length;
   const activeLeads = leads.filter((l) => !["נסגר", "אבוד", "לא רלוונטי"].includes(l.leadStatus || "")).length;
-  const recentlyUpdated = leads.filter((l) => {
-    const stamp = l.lastUpdated || l.updatedAt || l.lastContactedAt;
-    if (!stamp) return false;
-    return Date.now() - new Date(stamp).getTime() <= 1000 * 60 * 60 * 24 * 2;
-  }).length;
   const focusItems = getFocusItems(leads);
+  const signals = buildDashboardSignals(leads);
 
   const tabs = [
-    { key: "הכל",     label: "הכל",     count: leads.length },
-    { key: "חמים",    label: "חמים",    count: hot.length },
+    { key: "הכל",      label: "הכל",      count: leads.length },
+    { key: "חמים",     label: "חמים",     count: hot.length },
     { key: "בינוניים", label: "בינוניים", count: warm.length },
   ];
   const filtered = tabFilter === "חמים" ? hot : tabFilter === "בינוניים" ? warm : leads;
@@ -157,10 +210,31 @@ export default function AdvisorDashboard() {
         <meta name="robots" content="noindex,nofollow" />
       </Head>
 
-      <main dir="rtl" className="min-h-screen bg-slate-50">
+      <main dir="rtl" className="min-h-screen bg-slate-50 pb-20 md:pb-0">
         <AdvisorHeader active="/advisor" />
 
         <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5">
+
+          {/* Smart signals strip */}
+          {!loading && signals.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {signals.map((s) => (
+                <div
+                  key={s.key}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black border ${
+                    s.variant === "danger"
+                      ? "bg-red-50 text-red-700 border-red-200"
+                      : s.variant === "upgrade"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-amber-50 text-amber-700 border-amber-200"
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${s.variant === "danger" ? "bg-red-500" : s.variant === "upgrade" ? "bg-emerald-500" : "bg-amber-500"}`} />
+                  {s.text}
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Greeting */}
           <div className="flex items-end justify-between gap-4 mb-5">
@@ -204,14 +278,6 @@ export default function AdvisorDashboard() {
               </>
             )}
           </div>
-          {!loading && (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
-              <KpiTile label="עודכנו לאחרונה" value={recentlyUpdated} />
-              <KpiTile label="חמים" value={hot.length} delta={hot.length > 0 ? "פוטנציאל גבוה" : undefined} deltaDir="up" />
-              <KpiTile label="בינוניים" value={warm.length} />
-              <KpiTile label="ממתינים לטיפול" value={needsAction.length} />
-            </div>
-          )}
 
           {/* Two-column main */}
           <div className="grid xl:grid-cols-[320px_1fr] gap-3.5">
@@ -223,7 +289,7 @@ export default function AdvisorDashboard() {
               <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <div className="px-5 pt-5 pb-4 border-b border-slate-50">
                   <h2 className="text-sm font-black text-slate-950">הפוקוס של היום</h2>
-                  <p className="text-xs text-slate-400 font-bold mt-0.5">פעולות שממליץ לסגור היום.</p>
+                  <p className="text-xs text-slate-400 font-bold mt-0.5">פעולות שכדאי לסגור עכשיו.</p>
                 </div>
                 {loading ? (
                   <div className="p-5 space-y-4">
@@ -245,24 +311,18 @@ export default function AdvisorDashboard() {
                 ) : (
                   <div className="divide-y divide-slate-50">
                     {focusItems.map(({ lead, text, sub }, i) => (
-                      <div key={lead.id} className="flex gap-3 px-5 py-4">
+                      <Link key={lead.id} href={`/advisor/lead/${lead.id}`} className="flex gap-3 px-5 py-4 hover:bg-slate-50 transition-colors">
                         <span className="text-sm font-black text-violet-400/60 tabular-nums shrink-0 mt-0.5 w-6">
                           {String(i + 1).padStart(2, "0")}
                         </span>
                         <div className="min-w-0">
                           <p className="text-sm font-black text-slate-900 leading-snug mb-1">{text}</p>
                           <p className="text-xs text-slate-400">
-                            {lead.phone ? (
-                              <a href={`tel:${lead.phone}`} className="text-violet-600 font-bold hover:underline">
-                                {lead.name || "[לקוח]"}
-                              </a>
-                            ) : (
-                              <span className="text-violet-600 font-bold">{lead.name || "[לקוח]"}</span>
-                            )}
+                            <span className="text-violet-600 font-bold">{lead.name || "[לקוח]"}</span>
                             {sub ? ` · ${sub}` : ""}
                           </p>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 )}
@@ -312,9 +372,7 @@ export default function AdvisorDashboard() {
                     }`}
                   >
                     {label}
-                    <span className={`tabular-nums px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                      tabFilter === key ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-500"
-                    }`}>
+                    <span className={`tabular-nums px-1.5 py-0.5 rounded-full text-[10px] font-black ${tabFilter === key ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-500"}`}>
                       {count}
                     </span>
                   </button>
@@ -359,6 +417,22 @@ export default function AdvisorDashboard() {
               לשוק הלידים ←
             </Link>
           </div>
+        </div>
+
+        {/* Mobile sticky action bar */}
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
+          <Link href="/advisor" className="flex-1 flex flex-col items-center gap-0.5 text-[10px] font-black text-violet-700">
+            <span className="text-lg leading-none">🏠</span>
+            <span>ראשי</span>
+          </Link>
+          <Link href="/advisor/my-leads" className="flex-1 flex flex-col items-center gap-0.5 text-[10px] font-black text-slate-500">
+            <span className="text-lg leading-none">📋</span>
+            <span>הלידים שלי</span>
+          </Link>
+          <Link href="/advisor/leads" className="flex-1 flex flex-col items-center gap-0.5 text-[10px] font-black text-slate-500">
+            <span className="text-lg leading-none">🛒</span>
+            <span>שוק</span>
+          </Link>
         </div>
       </main>
     </>

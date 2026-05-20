@@ -1,4 +1,5 @@
 import { LeadStoreError, readLeads, updateLead } from "../../../lib/leadsStore";
+import { createActivity } from "../../../lib/activitiesStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
 
@@ -45,13 +46,26 @@ export default async function handler(req, res) {
         return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
       }
 
+      const now = new Date().toISOString();
       const allowed = {
         leadStatus: changes.leadStatus,
         status: changes.leadStatus,
         internalNotes: changes.internalNotes,
         followUpDate: changes.followUpDate,
+        followUpStage: changes.followUpStage,
         lastContactedAt: changes.lastContactedAt,
+        lastActivityAt: now,
       };
+      if (changes.leadStatus && changes.leadStatus !== lead.leadStatus) {
+        if (!lead.firstContactAt && lead.leadStatus === "חדש") allowed.firstContactAt = now;
+        createActivity({
+          leadId: id,
+          advisorId: session.advisorId,
+          activityType: "status_changed",
+          title: `סטטוס שונה ל"${changes.leadStatus}"`,
+          metadata: { from: lead.leadStatus, to: changes.leadStatus },
+        }).catch(() => {});
+      }
       const patch = Object.fromEntries(Object.entries(allowed).filter(([, v]) => v !== undefined));
 
       try {

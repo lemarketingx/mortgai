@@ -6,7 +6,14 @@ import { KpiTile, Tag, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
 
 const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi", "חלש": "danger" };
-const STATUS_OPTIONS = ["חדש", "נוצר קשר", "מחכים למסמכים", "פגישה נקבעה", "הוגש לבנק", "אישור עקרוני", "נסגר", "אבוד"];
+const STATUS_OPTIONS = ["חדש", "נוצר קשר", "מחכים למסמכים", "פגישה נקבעה", "הוגש לבנק", "אישור עקרוני", "נסגר", "אבוד", "לא רלוונטי"];
+
+const DOC_TYPES = ["תעודת_זהות", "תלושי_שכר_3_אחרונים", "דפי_עו_ש_3_חודשים", "אישור_עבודה_ומשכורת", "חוזה_רכישה", "נסח_טאבו", "שומת_מס_אחרונה", "דוח_פנסיה", "אחר"];
+const DOC_LABELS = {
+  "תעודת_זהות": "תעודת זהות", "תלושי_שכר_3_אחרונים": "3 תלושי שכר", "דפי_עו_ש_3_חודשים": 'דפי עו"ש 3 חודשים',
+  "אישור_עבודה_ומשכורת": "אישור עבודה", "חוזה_רכישה": "חוזה רכישה", "נסח_טאבו": "נסח טאבו",
+  "שומת_מס_אחרונה": "שומת מס", "דוח_פנסיה": 'דו"ח פנסיה', "אחר": "מסמך אחר",
+};
 const TEMPLATE_MESSAGES = {
   "בקשת מסמכים": "היי, אשמח שתשלחו לי את המסמכים הנדרשים כדי לקדם את התיק.",
   "תיאום שיחה": "היי, מתי נוח לכם לשיחה קצרה היום/מחר לתיאום המשך הטיפול?",
@@ -29,28 +36,6 @@ const STATUS_BADGE = {
 const TODAY = () => new Date(new Date().toDateString());
 const DAY_MS = 1000 * 60 * 60 * 24;
 
-
-const isBrowser = typeof window !== "undefined";
-
-function loadLocalTimeline(leadId) {
-  if (!isBrowser || !leadId) return [];
-  try {
-    const raw = window.localStorage.getItem(`finzo.crm.timeline.${leadId}`);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveLocalTimeline(leadId, timeline) {
-  if (!isBrowser || !leadId) return;
-  try {
-    window.localStorage.setItem(`finzo.crm.timeline.${leadId}`, JSON.stringify(timeline.slice(0, 30)));
-  } catch {
-    // ignore storage errors
-  }
-}
 
 function diffDays(dateStr) {
   if (!dateStr) return null;
@@ -106,7 +91,11 @@ function MyLeadCard({ lead, onUpdate }) {
   const [notes, setNotes] = useState(lead.internalNotes || "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [localTimeline, setLocalTimeline] = useState([]);
+  const [localActivities, setLocalActivities] = useState([]);
+  const [docsOpen, setDocsOpen] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [selectedDocTypes, setSelectedDocTypes] = useState([]);
 
   const score = Math.round(Number(lead.approvalScore || lead.estimatedApprovalResult) || 0);
   const quality = lead.leadQuality || (score >= 70 ? "חם" : score >= 40 ? "בינוני" : "חלש");
@@ -121,31 +110,42 @@ function MyLeadCard({ lead, onUpdate }) {
   const { isToday, isOverdue } = getFollowUpState(followUpVal);
 
   useEffect(() => {
-    setLocalTimeline(loadLocalTimeline(lead.id));
-  }, [lead.id]);
+    fetch(`/api/advisor/activities?leadId=${lead.id}`)
+      .then((r) => r.ok ? r.json() : { activities: [] })
+      .then((j) => {
+        const acts = Array.isArray(j.activities) ? j.activities : [];
+        setLocalActivities(acts.length > 0 ? acts : [{ title: "הליד נוצר", created_at: lead.createdAt || new Date().toISOString(), activity_type: "lead_created" }]);
+      })
+      .catch(() => setLocalActivities([{ title: "הליד נוצר", created_at: lead.createdAt || new Date().toISOString(), activity_type: "lead_created" }]));
+  }, [lead.id, lead.createdAt]);
 
-  const timeline = useMemo(() => {
-    const base = [...(Array.isArray(lead.crmActivityLog) ? lead.crmActivityLog : []), ...localTimeline];
-    if (!base.length) {
-      return [{ text: `הליד נוצר`, at: lead.createdAt || new Date().toISOString(), type: "create" }];
-    }
-    return [...base].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 6);
-  }, [lead.crmActivityLog, lead.createdAt, localTimeline]);
+  const timeline = useMemo(() =>
+    [...localActivities].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 8),
+    [localActivities]
+  );
   const signals = useMemo(() => buildSignals(lead), [lead]);
 
-  async function logActivity(text, extraChanges = {}) {
-    const event = { text, at: new Date().toISOString() };
-    const current = [...(Array.isArray(lead.crmActivityLog) ? lead.crmActivityLog : []), ...localTimeline];
-    const next = [event, ...current].slice(0, 30);
-    setLocalTimeline(next);
-    saveLocalTimeline(lead.id, next);
-    await onUpdate(lead.id, { ...extraChanges });
+  function pushActivity(title, activityType = "note_added") {
+    const entry = { title, created_at: new Date().toISOString(), activity_type: activityType };
+    setLocalActivities((prev) => [entry, ...prev]);
+    fetch("/api/advisor/activities", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId: lead.id, activityType, title }),
+    }).catch(() => {});
+  }
+
+  async function logActivity(text, extraChanges = {}, activityType = "note_added") {
+    pushActivity(text, activityType);
+    if (Object.keys(extraChanges).length > 0) {
+      await onUpdate(lead.id, extraChanges);
+    }
   }
 
   async function saveNotes() {
     if (notes === (lead.internalNotes || "")) return;
     setSaving(true);
-    await logActivity("נוספה הערה", { internalNotes: notes, lastContactedAt: new Date().toISOString() });
+    await logActivity("הערה עודכנה", { internalNotes: notes, lastContactedAt: new Date().toISOString() }, "note_added");
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -155,15 +155,52 @@ function MyLeadCard({ lead, onUpdate }) {
     if (!lead.phone) return;
     const raw = String(lead.phone).replace(/[^\d]/g, "");
     const phone = raw.startsWith("0") ? `972${raw.slice(1)}` : raw;
-    const text = message ? `&text=${encodeURIComponent(`${lead.name || ""} ${message}`.trim())}` : "";
-    window.open(`https://wa.me/${phone}?${text.replace(/^&/, "")}`, "_blank", "noopener,noreferrer");
-    logActivity("נשלח WhatsApp", { lastContactedAt: new Date().toISOString() });
+    const url = message
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(message.trim())}`
+      : `https://wa.me/${phone}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    logActivity("נפתח WhatsApp", { lastContactedAt: new Date().toISOString() }, "whatsapp_opened");
   }
 
   function saveFollowUp(nextDate, nextTime) {
     if (!nextDate) return logActivity("בוטל follow-up", { followUpDate: "" });
     const normalized = `${nextDate}T${nextTime || "09:00"}:00.000Z`;
     return logActivity("נקבע follow-up", { followUpDate: normalized });
+  }
+
+  async function loadDocuments() {
+    setDocsLoading(true);
+    const r = await fetch(`/api/advisor/documents?leadId=${lead.id}`);
+    const j = r.ok ? await r.json() : { documents: [] };
+    setDocuments(j.documents || []);
+    setDocsLoading(false);
+  }
+
+  async function requestDocuments() {
+    if (!selectedDocTypes.length) return;
+    const r = await fetch("/api/advisor/documents", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId: lead.id, documentTypes: selectedDocTypes }),
+    });
+    if (r.ok) {
+      const j = await r.json();
+      setDocuments((prev) => [...prev, ...(j.documents || [])]);
+      pushActivity("נשלחה בקשת מסמכים", "document_requested");
+      setSelectedDocTypes([]);
+    }
+  }
+
+  async function markDocReceived(doc) {
+    const r = await fetch("/api/advisor/documents", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: doc.id, status: "received", leadId: lead.id, documentType: doc.document_type }),
+    });
+    if (r.ok) {
+      setDocuments((prev) => prev.map((d) => d.id === doc.id ? { ...d, status: "received" } : d));
+      pushActivity(`מסמך התקבל: ${DOC_LABELS[doc.document_type] || doc.document_type}`, "document_received");
+    }
   }
 
   return (
@@ -189,10 +226,17 @@ function MyLeadCard({ lead, onUpdate }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        {lead.phone && <button type="button" onClick={() => openWhatsapp()} className="text-center text-sm font-black rounded-lg py-2 bg-emerald-50 text-emerald-700">WhatsApp</button>}
-        {lead.email ? <a href={`mailto:${lead.email}`} onClick={() => logActivity("נשלח מייל", { lastContactedAt: new Date().toISOString() })} className="text-center text-sm font-black rounded-lg py-2 bg-sky-50 text-sky-700">Email</a> : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">Email</button>}
-        {lead.phone ? <a href={`tel:${lead.phone}`} onClick={() => logActivity("בוצעה שיחה", { lastContactedAt: new Date().toISOString() })} className="text-center text-sm font-black rounded-lg py-2 bg-violet-50 text-violet-700">שיחה</a> : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">שיחה</button>}
+      <div className="grid grid-cols-4 gap-2 mb-3">
+        {lead.phone
+          ? <a href={`tel:${lead.phone}`} onClick={() => logActivity("בוצעה שיחה", { lastContactedAt: new Date().toISOString() }, "call_logged")} className="text-center text-sm font-black rounded-lg py-2 bg-violet-50 text-violet-700">שיחה</a>
+          : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">שיחה</button>}
+        {lead.phone
+          ? <button type="button" onClick={() => openWhatsapp()} className="text-center text-sm font-black rounded-lg py-2 bg-emerald-50 text-emerald-700">WhatsApp</button>
+          : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">WhatsApp</button>}
+        {lead.advisorEmail || lead.email
+          ? <a href={`mailto:${lead.advisorEmail || lead.email}`} onClick={() => logActivity("נשלח מייל", { lastContactedAt: new Date().toISOString() }, "email_opened")} className="text-center text-sm font-black rounded-lg py-2 bg-sky-50 text-sky-700">מייל</a>
+          : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">מייל</button>}
+        <Link href={`/advisor/lead/${lead.id}`} className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-700">פרטים</Link>
       </div>
 
       <div className="mb-3">
@@ -209,7 +253,7 @@ function MyLeadCard({ lead, onUpdate }) {
       <div className="mb-3"><div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5"><span>ציון FINZO</span><span className="tabular-nums font-black text-slate-600">{score}/100</span></div><ScoreBar score={score} /></div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-        <div><label className="block text-xs font-black text-slate-400 mb-1">סטטוס</label><select className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-sm font-bold" value={currentStatus} onChange={(e) => logActivity(`סטטוס עודכן ל"${e.target.value}"`, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() })}>{STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}</select></div>
+        <div><label className="block text-xs font-black text-slate-400 mb-1">סטטוס</label><select className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-sm font-bold" value={currentStatus} onChange={(e) => logActivity(`סטטוס עודכן ל"${e.target.value}"`, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() }, "status_changed")}>{STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}</select></div>
         <div><label className="block text-xs font-black text-slate-400 mb-1">תאריך מעקב</label><input type="date" className={`w-full border rounded-lg px-2.5 py-2 text-sm font-bold ${isOverdue ? "border-amber-300 bg-amber-50/40" : "border-slate-200"}`} defaultValue={followUpVal} onBlur={(e) => saveFollowUp(e.target.value, followUpTimeVal)} /></div>
         <div><label className="block text-xs font-black text-slate-400 mb-1">שעת מעקב</label><input type="time" className="w-full border rounded-lg px-2.5 py-2 text-sm font-bold border-slate-200" defaultValue={followUpTimeVal} onBlur={(e) => saveFollowUp(followUpVal, e.target.value)} /></div>
       </div>
@@ -218,15 +262,63 @@ function MyLeadCard({ lead, onUpdate }) {
         <label className="block text-xs font-black text-slate-400 mb-1">ציר פעילות</label>
         <div className="border border-slate-100 rounded-xl p-2.5 bg-slate-50/70">
           {timeline.map((item, idx) => (
-            <div key={`${item.at}-${idx}`} className={`flex gap-2.5 py-1.5 ${idx < timeline.length - 1 ? "border-b border-slate-200/70" : ""}`}>
+            <div key={`${item.created_at || idx}-${idx}`} className={`flex gap-2.5 py-1.5 ${idx < timeline.length - 1 ? "border-b border-slate-200/70" : ""}`}>
               <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-violet-400 shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-700">{item.text}</p>
-                <p className="text-[11px] text-slate-400">{formatDateTime(item.at)}</p>
+                <p className="text-xs font-bold text-slate-700">{item.title || item.text}</p>
+                <p className="text-[11px] text-slate-400">{formatDateTime(item.created_at || item.at)}</p>
               </div>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Document checklist */}
+      <div className="mb-3 border border-slate-100 rounded-xl overflow-hidden">
+        <button
+          type="button"
+          className="w-full flex items-center justify-between px-3 py-2.5 bg-slate-50 text-xs font-black text-slate-600"
+          onClick={() => { setDocsOpen((v) => !v); if (!docsOpen) loadDocuments(); }}
+        >
+          <span>מסמכים נדרשים</span>
+          <span>{docsOpen ? "▲" : "▼"}</span>
+        </button>
+        {docsOpen && (
+          <div className="p-3">
+            {docsLoading && <p className="text-xs text-slate-400 font-bold">טוען...</p>}
+            {!docsLoading && documents.length > 0 && (
+              <div className="mb-2 grid gap-1">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-slate-700">{DOC_LABELS[doc.document_type] || doc.document_type}</span>
+                    {doc.status === "received" || doc.status === "approved"
+                      ? <span className="text-xs font-black text-emerald-600">✓ התקבל</span>
+                      : <button type="button" onClick={() => markDocReceived(doc)} className="text-[11px] font-black text-violet-600 hover:underline">סמן כהתקבל</button>}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-2">
+              <div className="flex flex-wrap gap-1 mb-2">
+                {DOC_TYPES.map((dt) => (
+                  <button
+                    key={dt}
+                    type="button"
+                    onClick={() => setSelectedDocTypes((prev) => prev.includes(dt) ? prev.filter((d) => d !== dt) : [...prev, dt])}
+                    className={`text-[11px] px-2 py-1 rounded-full border font-bold transition-colors ${selectedDocTypes.includes(dt) ? "bg-violet-700 text-white border-violet-700" : "bg-white text-slate-600 border-slate-200 hover:border-violet-300"}`}
+                  >
+                    {DOC_LABELS[dt]}
+                  </button>
+                ))}
+              </div>
+              {selectedDocTypes.length > 0 && (
+                <button type="button" onClick={requestDocuments} className="w-full rounded-lg bg-violet-700 text-white text-xs font-black py-2">
+                  בקש {selectedDocTypes.length} מסמך{selectedDocTypes.length > 1 ? "ים" : ""}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div>
