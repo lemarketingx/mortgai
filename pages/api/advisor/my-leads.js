@@ -35,25 +35,32 @@ export default async function handler(req, res) {
       if (!lead) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found in your purchased leads");
 
       const now = new Date().toISOString();
+      const newStage = changes.pipelineStage || changes.leadStatus;
+      const prevStage = lead.pipelineStage || lead.leadStatus;
       const allowed = {
-        leadStatus: changes.leadStatus,
-        status: changes.leadStatus,
+        pipelineStage: newStage,
+        leadStatus: newStage,
+        status: newStage,
         internalNotes: changes.internalNotes,
         followUpDate: changes.followUpDate,
         followUpStage: changes.followUpStage,
         lastContactedAt: changes.lastContactedAt,
         lastActivityAt: now,
+        nextAction: changes.nextAction,
+        nextActionAt: changes.nextActionAt,
+        bankName: changes.bankName,
+        mortgageType: changes.mortgageType,
+        documentsCompletionPercent: changes.documentsCompletionPercent,
       };
-      if (changes.leadStatus && changes.leadStatus !== lead.leadStatus) {
-        if (!lead.firstContactAt && lead.leadStatus === "חדש") {
-          allowed.firstContactAt = now;
-        }
+      if (newStage && newStage !== prevStage) {
+        allowed.stageUpdatedAt = now;
+        if (!lead.firstContactAt && prevStage === "ליד חדש") allowed.firstContactAt = now;
         createActivity({
           leadId: id,
           advisorId: session.advisorId,
           activityType: "status_changed",
-          title: `סטטוס שונה ל"${changes.leadStatus}"`,
-          metadata: { from: lead.leadStatus, to: changes.leadStatus },
+          title: `שלב עודכן: "${prevStage}" ← "${newStage}"`,
+          metadata: { from: prevStage, to: newStage },
         }).catch(() => {});
       }
       if (changes.internalNotes !== undefined && changes.internalNotes !== lead.internalNotes) {

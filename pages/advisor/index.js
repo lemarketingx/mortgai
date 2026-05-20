@@ -1,438 +1,330 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatILS } from "../../lib/format";
-import { KpiTile, Tag } from "../../components/ui";
+import { KpiTile, Tag, Skeleton } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
 
-const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi", "חלש": "danger" };
-const STATUS_OPTIONS = ["חדש", "נוצר קשר", "מחכים למסמכים", "פגישה נקבעה", "הוגש לבנק", "אישור עקרוני", "נסגר", "אבוד", "לא רלוונטי"];
+const PIPELINE_STAGES = [
+  "ליד חדש", "נוצר קשר", "נשלחה רשימת מסמכים", "מחכה למסמכים",
+  "מסמכים התקבלו", "בדיקת זכאות", "הוגש לבנק", "אישור עקרוני",
+  "משא ומתן מול בנקים", "נבחר תמהיל", "נקבעו חתימות", "נסגר בהצלחה",
+];
+const EXIT_STATUSES = new Set(["לא עונה", "לא רלוונטי", "נדחה בבנק", "עבר ליועץ אחר", "בוטל"]);
 
-const TODAY = () => new Date(new Date().toDateString());
-const DAY_MS = 1000 * 60 * 60 * 24;
-function diffMins(dateStr) {
-  if (!dateStr) return null;
-  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
-}
+const STAGE_COLORS = [
+  "bg-violet-500", "bg-violet-400", "bg-indigo-400", "bg-amber-400",
+  "bg-amber-500", "bg-sky-400", "bg-sky-500", "bg-blue-500",
+  "bg-blue-400", "bg-emerald-400", "bg-emerald-500", "bg-green-500",
+];
+const STAGE_BG = [
+  "bg-violet-50 text-violet-700 border-violet-200",
+  "bg-violet-50 text-violet-700 border-violet-200",
+  "bg-indigo-50 text-indigo-700 border-indigo-200",
+  "bg-amber-50 text-amber-700 border-amber-200",
+  "bg-amber-50 text-amber-700 border-amber-200",
+  "bg-sky-50 text-sky-700 border-sky-200",
+  "bg-sky-50 text-sky-700 border-sky-200",
+  "bg-blue-50 text-blue-700 border-blue-200",
+  "bg-blue-50 text-blue-700 border-blue-200",
+  "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "bg-green-50 text-green-800 border-green-200",
+];
+
+const TODAY_DATE = () => new Date(new Date().toDateString());
+const DAY_MS = 864e5;
+
 function diffDays(dateStr) {
   if (!dateStr) return null;
   const t = new Date(new Date(dateStr).toDateString());
-  return Math.max(0, Math.floor((TODAY().getTime() - t.getTime()) / DAY_MS));
+  return Math.max(0, Math.floor((TODAY_DATE().getTime() - t.getTime()) / DAY_MS));
+}
+function isToday(dateStr) {
+  if (!dateStr) return false;
+  return new Date(dateStr).toDateString() === new Date().toDateString();
+}
+function isOverdue(dateStr) {
+  if (!dateStr) return false;
+  return new Date(dateStr) < TODAY_DATE();
+}
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleDateString("he-IL", { day: "numeric", month: "short" });
 }
 
-function buildDashboardSignals(leads) {
-  const signals = [];
-  const noContactNew = leads.filter((l) => {
-    const mins = diffMins(l.createdAt);
-    return (l.leadStatus === "חדש" || !l.leadStatus) && !l.lastContactedAt && mins !== null && mins >= 15;
-  });
-  if (noContactNew.length) signals.push({ key: "no_contact", text: `${noContactNew.length} ליד${noContactNew.length > 1 ? "ים" : ""} חדש${noContactNew.length > 1 ? "ים" : ""} ללא מענה`, variant: "danger", count: noContactNew.length });
-
-  const overdue = leads.filter((l) => l.followUpDate && new Date(l.followUpDate) < TODAY() && !["נסגר", "אבוד", "לא רלוונטי"].includes(l.leadStatus || ""));
-  if (overdue.length) signals.push({ key: "overdue", text: `${overdue.length} תזכורת${overdue.length > 1 ? "ות" : ""} באיחור`, variant: "danger", count: overdue.length });
-
-  const followToday = leads.filter((l) => l.followUpDate && new Date(l.followUpDate).toDateString() === new Date().toDateString());
-  if (followToday.length) signals.push({ key: "today", text: `${followToday.length} Follow-up להיום`, variant: "upgrade", count: followToday.length });
-
-  const waitDocs = leads.filter((l) => l.leadStatus === "מחכים למסמכים");
-  if (waitDocs.length) signals.push({ key: "docs", text: `${waitDocs.length} ממתין${waitDocs.length > 1 ? "ים" : ""} למסמכים`, variant: "refi", count: waitDocs.length });
-
-  const hotIdle = leads.filter((l) => l.leadQuality === "חם" && diffDays(l.lastContactedAt || l.lastActivityAt) >= 3);
-  if (hotIdle.length) signals.push({ key: "hot_idle", text: `${hotIdle.length} ליד חם ללא טיפול 3+ ימים`, variant: "danger", count: hotIdle.length });
-
-  return signals;
+function stageIndex(lead) {
+  const s = lead.pipelineStage || lead.leadStatus || "ליד חדש";
+  const i = PIPELINE_STAGES.indexOf(s);
+  return i >= 0 ? i : 0;
+}
+function isActive(lead) {
+  const s = lead.pipelineStage || lead.leadStatus || "";
+  return !EXIT_STATUSES.has(s) && s !== "נסגר בהצלחה";
+}
+function isThisMonth(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
 }
 
-function getFocusItems(leads) {
-  const items = [];
-  const today = TODAY();
+function buildAlerts(leads) {
+  const alerts = [];
+  const active = leads.filter(isActive);
 
-  leads
-    .filter((l) => l.leadQuality === "חם" && (!l.leadStatus || l.leadStatus === "חדש"))
-    .slice(0, 2)
-    .forEach((lead) => items.push({ lead, text: lead.mainIssue || "ליד חם שממתין לפנייה ראשונה.", sub: lead.city || null }));
+  const noAction = active.filter((l) => !l.nextAction && !l.nextActionAt && !l.followUpDate && diffDays(l.lastActivityAt || l.createdAt) >= 2);
+  if (noAction.length) alerts.push({ type: "warning", text: `${noAction.length} עסקאות ללא פעולה מוגדרת`, sub: "הגדר פעולה הבאה", leads: noAction });
 
-  if (items.length < 3) {
-    leads
-      .filter((l) => l.followUpDate && new Date(l.followUpDate.slice(0, 10)) < today && !items.find((i) => i.lead.id === l.id))
-      .slice(0, 1)
-      .forEach((lead) => items.push({ lead, text: "מועד מעקב עבר – זמן לחזור ללקוח.", sub: lead.city || null }));
-  }
+  const overdueActions = active.filter((l) => (l.nextActionAt && isOverdue(l.nextActionAt)) || (l.followUpDate && isOverdue(l.followUpDate)));
+  if (overdueActions.length) alerts.push({ type: "danger", text: `${overdueActions.length} פעולות באיחור`, sub: "טיפול דחוף", leads: overdueActions });
 
-  if (items.length < 3) {
-    leads
-      .filter((l) => ["בטיפול", "נוצר קשר"].includes(l.leadStatus) && !items.find((i) => i.lead.id === l.id))
-      .slice(0, 1)
-      .forEach((lead) => items.push({ lead, text: "ליד בטיפול פעיל – יש לעדכן סטטוס.", sub: lead.city || null }));
-  }
+  const waitDocs = active.filter((l) => (l.pipelineStage || l.leadStatus) === "מחכה למסמכים");
+  if (waitDocs.length) alerts.push({ type: "info", text: `${waitDocs.length} לקוחות מחכים למסמכים`, sub: "שלח תזכורת", leads: waitDocs });
 
-  return items.slice(0, 3);
+  const todayActions = active.filter((l) => isToday(l.nextActionAt) || isToday(l.followUpDate));
+  if (todayActions.length) alerts.push({ type: "success", text: `${todayActions.length} פעולות להיום`, sub: "לו״ז היום", leads: todayActions });
+
+  return alerts;
 }
 
-function RowSkeleton() {
+function AlertCard({ alert }) {
+  const [open, setOpen] = useState(false);
+  const colors = {
+    danger: "border-rose-300 bg-rose-50",
+    warning: "border-amber-300 bg-amber-50",
+    info: "border-sky-300 bg-sky-50",
+    success: "border-emerald-300 bg-emerald-50",
+  };
+  const textColors = {
+    danger: "text-rose-800",
+    warning: "text-amber-800",
+    info: "text-sky-800",
+    success: "text-emerald-800",
+  };
+  const dots = {
+    danger: "bg-rose-500",
+    warning: "bg-amber-500",
+    info: "bg-sky-500",
+    success: "bg-emerald-500",
+  };
   return (
-    <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-50 last:border-0">
-      <div className="w-12 h-5 bg-slate-100 rounded-full animate-pulse shrink-0" />
-      <div className="flex-1 space-y-1.5 min-w-0">
-        <div className="h-3.5 bg-slate-100 rounded w-2/5 animate-pulse" />
-        <div className="h-3 bg-slate-100 rounded w-1/3 animate-pulse" />
-      </div>
-      <div className="hidden lg:block w-20 h-2 bg-slate-100 rounded animate-pulse" />
-      <div className="hidden md:block w-24 h-3.5 bg-slate-100 rounded animate-pulse" />
-      <div className="w-28 h-7 bg-slate-100 rounded-lg animate-pulse shrink-0" />
+    <div className={`border rounded-xl overflow-hidden ${colors[alert.type]}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 px-4 py-3 text-right"
+      >
+        <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${dots[alert.type]}`} />
+        <div className="flex-1 min-w-0">
+          <p className={`text-sm font-black ${textColors[alert.type]}`}>{alert.text}</p>
+          <p className={`text-xs font-bold opacity-70 ${textColors[alert.type]}`}>{alert.sub}</p>
+        </div>
+        <span className={`text-xs font-black ${textColors[alert.type]} opacity-50`}>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="border-t border-current border-opacity-10 divide-y divide-current divide-opacity-10">
+          {alert.leads.slice(0, 5).map((l) => (
+            <Link key={l.id} href={`/advisor/lead/${l.id}`} className={`flex items-center justify-between px-4 py-2 hover:bg-white/40 transition-colors ${textColors[alert.type]}`}>
+              <span className="text-sm font-bold">{l.name || "—"}</span>
+              <span className="text-xs opacity-70">{l.pipelineStage || l.leadStatus || "ליד חדש"}</span>
+            </Link>
+          ))}
+          {alert.leads.length > 5 && (
+            <Link href="/advisor/my-leads" className={`block px-4 py-2 text-xs font-black text-center opacity-60 hover:opacity-100 ${textColors[alert.type]}`}>
+              עוד {alert.leads.length - 5}...
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-function LeadRow({ lead, onUpdate }) {
-  const score = Math.round(Number(lead.approvalScore) || 0);
-  const quality = lead.leadQuality || (score >= 70 ? "חם" : score >= 40 ? "בינוני" : "חלש");
-  const tagVariant = QUALITY_TAG[quality] || "default";
-  const scoreColor = score >= 70 ? "bg-emerald-500" : score >= 40 ? "bg-amber-400" : "bg-slate-300";
-  const currentStatus = lead.leadStatus || lead.status || "חדש";
-  const phone = lead.phone ? String(lead.phone).replace(/[^\d]/g, "") : "";
-  const waPhone = phone.startsWith("0") ? `972${phone.slice(1)}` : phone;
+function PipelineFunnel({ leads }) {
+  const counts = useMemo(() => {
+    const map = {};
+    PIPELINE_STAGES.forEach((s) => { map[s] = 0; });
+    leads.forEach((l) => {
+      const s = l.pipelineStage || l.leadStatus || "ליד חדש";
+      if (map[s] !== undefined) map[s]++;
+    });
+    return PIPELINE_STAGES.map((s, i) => ({ stage: s, count: map[s], color: STAGE_COLORS[i], bg: STAGE_BG[i] }));
+  }, [leads]);
 
-  function logAction(type, channel) {
-    onUpdate(lead.id, { lastContactedAt: new Date().toISOString() });
-    fetch("/api/advisor/activities", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ leadId: lead.id, activityType: type, title: type === "whatsapp_opened" ? "נפתח WhatsApp" : type === "call_logged" ? "בוצעה שיחה" : "נשלח מייל", channel }),
-    }).catch(() => {});
-  }
+  const max = Math.max(...counts.map((c) => c.count), 1);
 
   return (
-    <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-50 last:border-0 hover:bg-slate-50/60 transition-colors">
-      <Link href={`/advisor/lead/${lead.id}`} className="flex-1 flex items-center gap-2 min-w-0">
-        <Tag variant={tagVariant}>{quality}</Tag>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-black text-slate-950 truncate">{lead.name || "—"}</p>
-          <p className="text-xs font-bold text-slate-400 tabular-nums">{lead.phone || "אין טלפון"}</p>
-        </div>
-        <div className="hidden lg:flex items-center gap-2 w-20 shrink-0">
-          <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
-            <div className={`h-full rounded-full ${scoreColor}`} style={{ width: `${score}%` }} />
-          </div>
-          <span className="text-xs text-slate-400 tabular-nums w-5">{score}</span>
-        </div>
-        <p className="hidden md:block text-sm font-black text-slate-950 tabular-nums shrink-0 w-24 text-start">
-          {formatILS(lead.mortgageAmount || 0)}
-        </p>
-      </Link>
-      <div className="flex items-center gap-1 shrink-0">
-        {lead.phone && (
-          <a
-            href={`tel:${lead.phone}`}
-            onClick={() => logAction("call_logged", "tel")}
-            title="התקשר"
-            className="w-8 h-8 rounded-lg bg-violet-50 text-violet-700 flex items-center justify-center text-xs font-black hover:bg-violet-100 transition-colors"
-          >
-            ☎
-          </a>
-        )}
-        {lead.phone && (
-          <a
-            href={`https://wa.me/${waPhone}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => logAction("whatsapp_opened", "whatsapp")}
-            title="WhatsApp"
-            className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center text-xs font-black hover:bg-emerald-100 transition-colors"
-          >
-            W
-          </a>
-        )}
-        <select
-          className="text-xs font-bold border border-slate-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-violet-300 shrink-0 max-w-[7.5rem]"
-          value={currentStatus}
-          onChange={(e) => onUpdate(lead.id, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() })}
-        >
-          {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
-        </select>
+    <div className="bg-white rounded-2xl border border-slate-100 p-5">
+      <h2 className="text-sm font-black text-slate-950 mb-4">Pipeline — התפלגות עסקאות</h2>
+      <div className="space-y-2">
+        {counts.filter((c) => c.count > 0 || PIPELINE_STAGES.indexOf(c.stage) < 4).map(({ stage, count, color, bg }) => (
+          <Link key={stage} href={`/advisor/my-leads?stage=${encodeURIComponent(stage)}`} className="flex items-center gap-3 group">
+            <span className="text-xs font-bold text-slate-500 w-44 shrink-0 truncate text-right">{stage}</span>
+            <div className="flex-1 h-5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${color}`}
+                style={{ width: count > 0 ? `${Math.max(6, (count / max) * 100)}%` : "0%" }}
+              />
+            </div>
+            <span className="text-xs font-black tabular-nums text-slate-700 w-6 text-left shrink-0">{count}</span>
+          </Link>
+        ))}
       </div>
     </div>
+  );
+}
+
+function LeadRow({ lead }) {
+  const si = stageIndex(lead);
+  const stage = lead.pipelineStage || lead.leadStatus || "ליד חדש";
+  const stageBg = STAGE_BG[si] || "bg-slate-50 text-slate-600 border-slate-200";
+  const hasOverdue = (lead.nextActionAt && isOverdue(lead.nextActionAt)) || (lead.followUpDate && isOverdue(lead.followUpDate));
+  const actionDue = lead.nextActionAt || lead.followUpDate;
+
+  return (
+    <Link href={`/advisor/lead/${lead.id}`} className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-50/80 transition-colors rounded-xl border ${hasOverdue ? "border-rose-200 bg-rose-50/40" : "border-slate-100 bg-white"}`}>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${stageBg}`}>{stage}</span>
+          {hasOverdue && <span className="text-[11px] font-black text-rose-600">⚠ באיחור</span>}
+        </div>
+        <p className="text-sm font-black text-slate-900 truncate">{lead.name || "—"}</p>
+        {lead.nextAction && <p className="text-xs text-slate-500 truncate mt-0.5">הבא: {lead.nextAction}</p>}
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="text-sm font-black text-slate-700 tabular-nums">{formatILS(lead.mortgageAmount || 0)}</p>
+        {actionDue && <p className="text-[11px] text-slate-400 mt-0.5">{formatDate(actionDue)}</p>}
+      </div>
+    </Link>
   );
 }
 
 export default function AdvisorDashboard() {
   const [leads, setLeads] = useState([]);
-  const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
-  const [tabFilter, setTabFilter] = useState("הכל");
 
-  const todayStr = new Date().toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "long" });
+  useEffect(() => {
+    fetch("/api/advisor/my-leads")
+      .then((r) => {
+        if (r.status === 401) { window.location.href = "/advisor/login"; return null; }
+        return r.ok ? r.json() : { leads: [] };
+      })
+      .then((j) => { if (j) { setLeads(j.leads || []); setLoading(false); } })
+      .catch(() => setLoading(false));
+  }, []);
 
-  async function load() {
-    setLoading(true);
-    const r = await fetch("/api/advisor/my-leads");
-    if (!r.ok) { window.location.href = "/advisor/login"; return; }
-    const j = await r.json();
-    setLeads(j.leads || []);
-    setLoading(false);
-  }
+  const active = useMemo(() => leads.filter(isActive), [leads]);
+  const closed = useMemo(() => leads.filter((l) => (l.pipelineStage || l.leadStatus) === "נסגר בהצלחה"), [leads]);
+  const closedThisMonth = useMemo(() => closed.filter((l) => isThisMonth(l.stageUpdatedAt || l.lastActivityAt)), [closed]);
+  const overdueCount = useMemo(() => active.filter((l) =>
+    (l.nextActionAt && isOverdue(l.nextActionAt)) || (l.followUpDate && isOverdue(l.followUpDate))
+  ).length, [active]);
+  const todayCount = useMemo(() => active.filter((l) => isToday(l.nextActionAt) || isToday(l.followUpDate)).length, [active]);
+  const conversionRate = leads.length > 0 ? Math.round((closed.length / leads.length) * 100) : 0;
+  const alerts = useMemo(() => buildAlerts(leads), [leads]);
 
-  useEffect(() => { load(); }, []);
-
-  async function update(id, changes) {
-    const r = await fetch("/api/advisor/my-leads", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, changes }),
-    });
-    if (!r.ok) { setMsg("שמירה נכשלה"); return; }
-    const j = await r.json();
-    setLeads((arr) => arr.map((l) => (l.id === id ? { ...l, ...j.lead } : l)));
-    setMsg("");
-  }
-
-  const hot  = leads.filter((l) => l.leadQuality === "חם" || (!l.leadQuality && Number(l.approvalScore) >= 70));
-  const warm = leads.filter((l) => l.leadQuality === "בינוני" || (!l.leadQuality && Number(l.approvalScore) >= 40 && Number(l.approvalScore) < 70));
-  const needsAction = leads.filter((l) => !l.leadStatus || l.leadStatus === "חדש");
-  const followUpsToday = leads.filter((l) => l.followUpDate && new Date(l.followUpDate).toDateString() === new Date().toDateString()).length;
-  const overdueLeads = leads.filter((l) => l.followUpDate && new Date(l.followUpDate) < TODAY()).length;
-  const waitingDocs = leads.filter((l) => l.leadStatus === "מחכים למסמכים").length;
-  const activeLeads = leads.filter((l) => !["נסגר", "אבוד", "לא רלוונטי"].includes(l.leadStatus || "")).length;
-  const focusItems = getFocusItems(leads);
-  const signals = buildDashboardSignals(leads);
-
-  const tabs = [
-    { key: "הכל",      label: "הכל",      count: leads.length },
-    { key: "חמים",     label: "חמים",     count: hot.length },
-    { key: "בינוניים", label: "בינוניים", count: warm.length },
-  ];
-  const filtered = tabFilter === "חמים" ? hot : tabFilter === "בינוניים" ? warm : leads;
+  const urgentLeads = useMemo(() => active
+    .filter((l) => (l.nextActionAt && isOverdue(l.nextActionAt)) || (l.followUpDate && isOverdue(l.followUpDate)) || isToday(l.nextActionAt) || isToday(l.followUpDate))
+    .sort((a, b) => new Date(a.nextActionAt || a.followUpDate || 0) - new Date(b.nextActionAt || b.followUpDate || 0))
+    .slice(0, 8),
+  [active]);
 
   return (
     <>
-      <Head>
-        <title>לוח בקרה | FINZO PRO</title>
-        <meta name="robots" content="noindex,nofollow" />
-      </Head>
-
-      <main dir="rtl" className="min-h-screen bg-slate-50 pb-20 md:pb-0">
+      <Head><title>דשבורד | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
+      <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
         <AdvisorHeader active="/advisor" />
+        <div className="max-w-6xl mx-auto px-4 lg:px-6 py-5">
 
-        <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5">
-
-          {/* Smart signals strip */}
-          {!loading && signals.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {signals.map((s) => (
-                <div
-                  key={s.key}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black border ${
-                    s.variant === "danger"
-                      ? "bg-red-50 text-red-700 border-red-200"
-                      : s.variant === "upgrade"
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : "bg-amber-50 text-amber-700 border-amber-200"
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${s.variant === "danger" ? "bg-red-500" : s.variant === "upgrade" ? "bg-emerald-500" : "bg-amber-500"}`} />
-                  {s.text}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Greeting */}
-          <div className="flex items-end justify-between gap-4 mb-5">
-            <div>
-              <p className="text-xs font-bold text-slate-400 mb-1.5">{todayStr}</p>
-              <h1 className="text-xl md:text-2xl lg:text-[2rem] font-black text-slate-950 leading-tight">
-                {!loading && hot.length > 0 ? (
-                  <>יש לכם <span className="text-violet-700">{hot.length} לידים חמים</span> לטיפול.</>
-                ) : !loading && leads.length > 0 ? (
-                  <>ברוכים הבאים, <span className="text-violet-700">FINZO PRO</span>.</>
-                ) : !loading ? (
-                  <>מוכנים לרכוש <span className="text-violet-700">לידים חדשים</span>?</>
-                ) : (
-                  <span className="inline-block h-9 w-72 bg-slate-200 rounded-xl animate-pulse" />
-                )}
-              </h1>
-            </div>
-            <Link
-              href="/advisor/leads"
-              className="hidden md:inline-flex items-center gap-2 bg-violet-700 text-white text-sm font-black px-4 py-2.5 rounded-xl hover:bg-violet-800 transition-colors shrink-0"
-            >
-              לשוק הלידים ←
-            </Link>
+          {/* KPIs */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            {loading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2">
+                    <Skeleton variant="line" className="w-20" /><Skeleton variant="line" className="w-10 h-8" />
+                  </div>
+                ))
+              : <>
+                  <KpiTile label="עסקאות פעילות" value={active.length} />
+                  <KpiTile label="נסגרו החודש" value={closedThisMonth.length} />
+                  <KpiTile label="פעולות להיום" value={todayCount} />
+                  <KpiTile label="המרה כוללת" value={`${conversionRate}%`} />
+                </>}
           </div>
 
-          {/* KPI strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
-            {loading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2.5">
-                  <div className="h-3 w-16 bg-slate-100 rounded animate-pulse" />
-                  <div className="h-8 w-12 bg-slate-100 rounded animate-pulse" />
-                </div>
-              ))
-            ) : (
-              <>
-                <KpiTile label="Follow-ups היום" value={followUpsToday} />
-                <KpiTile label="לידים באיחור" value={overdueLeads} />
-                <KpiTile label="מחכים למסמכים" value={waitingDocs} />
-                <KpiTile label="לידים פעילים" value={activeLeads} />
-              </>
-            )}
-          </div>
+          {/* Main grid */}
+          <div className="grid lg:grid-cols-[1fr_380px] gap-4">
 
-          {/* Two-column main */}
-          <div className="grid xl:grid-cols-[320px_1fr] gap-3.5">
+            {/* Left: Pipeline funnel */}
+            <div className="space-y-4">
+              {loading
+                ? <div className="bg-white rounded-2xl border border-slate-100 h-64 animate-pulse" />
+                : <PipelineFunnel leads={leads} />}
 
-            {/* ── Left panel ── */}
-            <div className="space-y-3">
-
-              {/* Focus section */}
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="px-5 pt-5 pb-4 border-b border-slate-50">
-                  <h2 className="text-sm font-black text-slate-950">הפוקוס של היום</h2>
-                  <p className="text-xs text-slate-400 font-bold mt-0.5">פעולות שכדאי לסגור עכשיו.</p>
-                </div>
-                {loading ? (
-                  <div className="p-5 space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex gap-3">
-                        <div className="w-5 h-3 bg-slate-100 rounded animate-pulse shrink-0 mt-1" />
-                        <div className="flex-1 space-y-1.5">
-                          <div className="h-3.5 bg-slate-100 rounded w-3/4 animate-pulse" />
-                          <div className="h-3 bg-slate-100 rounded w-1/2 animate-pulse" />
-                        </div>
-                      </div>
-                    ))}
+              {/* Urgent / today actions */}
+              {!loading && urgentLeads.length > 0 && (
+                <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
+                    <h2 className="text-sm font-black text-slate-950">פעולות דחופות ולהיום</h2>
+                    <Link href="/advisor/my-leads" className="text-xs font-black text-violet-600 hover:underline">הכל →</Link>
                   </div>
-                ) : focusItems.length === 0 ? (
-                  <div className="px-5 py-8 text-center">
-                    <p className="text-2xl mb-2">✓</p>
-                    <p className="text-sm font-bold text-slate-500">כל הלידים בטיפול</p>
+                  <div className="divide-y divide-slate-50 p-2 space-y-1">
+                    {urgentLeads.map((l) => <LeadRow key={l.id} lead={l} />)}
                   </div>
-                ) : (
-                  <div className="divide-y divide-slate-50">
-                    {focusItems.map(({ lead, text, sub }, i) => (
-                      <Link key={lead.id} href={`/advisor/lead/${lead.id}`} className="flex gap-3 px-5 py-4 hover:bg-slate-50 transition-colors">
-                        <span className="text-sm font-black text-violet-400/60 tabular-nums shrink-0 mt-0.5 w-6">
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-black text-slate-900 leading-snug mb-1">{text}</p>
-                          <p className="text-xs text-slate-400">
-                            <span className="text-violet-600 font-bold">{lead.name || "[לקוח]"}</span>
-                            {sub ? ` · ${sub}` : ""}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* FINZO MARKET widget */}
-              <div className="bg-[#0d1225] rounded-2xl p-5 text-white overflow-hidden relative">
-                <div className="absolute -bottom-10 -start-10 w-36 h-36 bg-violet-600/20 rounded-full pointer-events-none" />
-                <p className="text-[10px] font-black text-violet-400 tracking-widest mb-2">FINZO MARKET · שוק לידים</p>
-                <p className="text-base font-black leading-snug mb-1">לידים חדשים זמינים<br />עכשיו באזורכם.</p>
-                <p className="text-xs text-slate-500 mb-4">מסוננים לפי איכות ופוטנציאל אישור.</p>
-                <Link
-                  href="/advisor/leads"
-                  className="relative z-10 flex items-center justify-center gap-2 bg-white text-slate-950 text-sm font-black rounded-xl py-2.5 hover:bg-slate-100 transition-colors"
-                >
-                  צפייה בכל הלידים ←
-                </Link>
-              </div>
-            </div>
-
-            {/* ── Right: lead table panel ── */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 shrink-0">
-                <div>
-                  <h2 className="text-sm font-black text-slate-950">הלידים שלי</h2>
-                  {!loading && (
-                    <p className="text-xs text-slate-400 font-bold mt-0.5">
-                      {leads.length} פעילים · {needsAction.length} ממתינים לטיפול
-                    </p>
-                  )}
-                </div>
-                <Link href="/advisor/my-leads" className="text-xs font-bold text-violet-600 hover:underline shrink-0">
-                  ניהול מלא ←
-                </Link>
-              </div>
-
-              {/* Tab filter */}
-              <div className="flex border-b border-slate-100 shrink-0 overflow-x-auto">
-                {tabs.map(({ key, label, count }) => (
-                  <button
-                    key={key}
-                    onClick={() => setTabFilter(key)}
-                    className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold whitespace-nowrap border-b-2 transition-colors ${
-                      tabFilter === key
-                        ? "border-violet-600 text-violet-700"
-                        : "border-transparent text-slate-400 hover:text-slate-700"
-                    }`}
-                  >
-                    {label}
-                    <span className={`tabular-nums px-1.5 py-0.5 rounded-full text-[10px] font-black ${tabFilter === key ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-500"}`}>
-                      {count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {msg && (
-                <div className="px-5 py-2 bg-red-50 text-sm text-red-700 font-bold border-b border-red-100 shrink-0">
-                  {msg}
                 </div>
               )}
 
-              {/* Rows */}
-              <div className="flex-1 overflow-y-auto">
-                {loading ? (
-                  Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)
-                ) : filtered.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-14 px-5 text-center">
-                    {leads.length === 0 ? (
-                      <>
-                        <p className="text-3xl mb-3">📋</p>
-                        <p className="text-sm font-black text-slate-700 mb-1">עדיין אין לידים</p>
-                        <p className="text-xs text-slate-400 mb-4">רכשו לידים מחנות הלידים.</p>
-                        <Link href="/advisor/leads" className="rounded-full bg-violet-700 text-white px-5 py-2 text-sm font-black hover:bg-violet-800 transition-colors">
-                          לחנות הלידים ←
-                        </Link>
-                      </>
-                    ) : (
-                      <p className="text-sm font-bold text-slate-400">אין לידים בקטגוריה זו</p>
-                    )}
-                  </div>
-                ) : (
-                  filtered.map((lead) => <LeadRow key={lead.id} lead={lead} onUpdate={update} />)
-                )}
-              </div>
+              {!loading && urgentLeads.length === 0 && active.length > 0 && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-6 text-center">
+                  <p className="text-2xl mb-2">✅</p>
+                  <p className="text-sm font-black text-emerald-800">כל הפעולות מעודכנות — כל הכבוד!</p>
+                </div>
+              )}
             </div>
-          </div>
 
-          {/* Mobile CTA */}
-          <div className="mt-5 md:hidden">
-            <Link href="/advisor/leads" className="flex items-center justify-center gap-2 bg-violet-700 text-white text-sm font-black px-4 py-3 rounded-xl hover:bg-violet-800 transition-colors">
-              לשוק הלידים ←
-            </Link>
+            {/* Right: Alerts + quick stats */}
+            <div className="space-y-3">
+              <div className="bg-white rounded-2xl border border-slate-100 p-5">
+                <h2 className="text-sm font-black text-slate-950 mb-3">סטטוס Pipeline</h2>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {[
+                    ["סה״כ נרכשו", leads.length],
+                    ["פעילים", active.length],
+                    ["נסגרו", closed.length],
+                    ["באיחור", overdueCount],
+                  ].map(([l, v]) => (
+                    <div key={l} className="bg-slate-50 rounded-xl p-3">
+                      <p className="text-slate-400 font-black mb-0.5">{l}</p>
+                      <p className="text-2xl font-black text-slate-900 tabular-nums">{v}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {loading
+                ? <div className="bg-white rounded-2xl border border-slate-100 h-48 animate-pulse" />
+                : alerts.length > 0
+                  ? <div className="space-y-2">
+                      <p className="text-xs font-black text-slate-400 px-1">התראות</p>
+                      {alerts.map((a, i) => <AlertCard key={i} alert={a} />)}
+                    </div>
+                  : <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-5 text-center">
+                      <p className="text-sm font-black text-emerald-800">אין התראות פתוחות 🎉</p>
+                    </div>}
+
+              <Link href="/advisor/leads" className="block w-full text-center rounded-2xl bg-violet-700 text-white font-black py-3.5 text-sm hover:bg-violet-800 transition-colors">
+                לחנות הלידים ←
+              </Link>
+            </div>
           </div>
         </div>
 
-        {/* Mobile sticky action bar */}
+        {/* Mobile bottom nav */}
         <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
-          <Link href="/advisor" className="flex-1 flex flex-col items-center gap-0.5 text-[10px] font-black text-violet-700">
-            <span className="text-lg leading-none">🏠</span>
-            <span>ראשי</span>
-          </Link>
-          <Link href="/advisor/my-leads" className="flex-1 flex flex-col items-center gap-0.5 text-[10px] font-black text-slate-500">
-            <span className="text-lg leading-none">📋</span>
-            <span>הלידים שלי</span>
-          </Link>
-          <Link href="/advisor/leads" className="flex-1 flex flex-col items-center gap-0.5 text-[10px] font-black text-slate-500">
-            <span className="text-lg leading-none">🛒</span>
-            <span>שוק</span>
-          </Link>
+          <Link href="/advisor" className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">ראשי</Link>
+          <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">הלידים שלי</Link>
+          <Link href="/advisor/leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
         </div>
       </main>
     </>

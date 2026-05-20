@@ -5,8 +5,38 @@ import { formatILS } from "../../lib/format";
 import { KpiTile, Tag, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
 
-const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi", "חלש": "danger" };
-const STATUS_OPTIONS = ["חדש", "נוצר קשר", "מחכים למסמכים", "פגישה נקבעה", "הוגש לבנק", "אישור עקרוני", "נסגר", "אבוד", "לא רלוונטי"];
+const PIPELINE_STAGES = [
+  "ליד חדש", "נוצר קשר", "נשלחה רשימת מסמכים", "מחכה למסמכים",
+  "מסמכים התקבלו", "בדיקת זכאות", "הוגש לבנק", "אישור עקרוני",
+  "משא ומתן מול בנקים", "נבחר תמהיל", "נקבעו חתימות", "נסגר בהצלחה",
+];
+const EXIT_STATUSES = ["לא עונה", "לא רלוונטי", "נדחה בבנק", "עבר ליועץ אחר", "בוטל"];
+const ALL_STATUSES = [...PIPELINE_STAGES, ...EXIT_STATUSES];
+
+const STAGE_BADGE = {
+  "ליד חדש": "bg-violet-50 text-violet-700 border-violet-200",
+  "נוצר קשר": "bg-violet-50 text-violet-700 border-violet-200",
+  "נשלחה רשימת מסמכים": "bg-indigo-50 text-indigo-700 border-indigo-200",
+  "מחכה למסמכים": "bg-amber-50 text-amber-700 border-amber-200",
+  "מסמכים התקבלו": "bg-amber-50 text-amber-700 border-amber-200",
+  "בדיקת זכאות": "bg-sky-50 text-sky-700 border-sky-200",
+  "הוגש לבנק": "bg-sky-50 text-sky-700 border-sky-200",
+  "אישור עקרוני": "bg-blue-50 text-blue-700 border-blue-200",
+  "משא ומתן מול בנקים": "bg-blue-50 text-blue-700 border-blue-200",
+  "נבחר תמהיל": "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "נקבעו חתימות": "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "נסגר בהצלחה": "bg-green-50 text-green-800 border-green-200",
+  "לא עונה": "bg-slate-50 text-slate-500 border-slate-200",
+  "לא רלוונטי": "bg-slate-50 text-slate-500 border-slate-200",
+  "נדחה בבנק": "bg-rose-50 text-rose-700 border-rose-200",
+  "עבר ליועץ אחר": "bg-slate-50 text-slate-500 border-slate-200",
+  "בוטל": "bg-rose-50 text-rose-600 border-rose-200",
+};
+const STAGE_PROGRESS_COLOR = [
+  "bg-violet-500", "bg-violet-400", "bg-indigo-400", "bg-amber-400",
+  "bg-amber-500", "bg-sky-400", "bg-sky-500", "bg-blue-500",
+  "bg-blue-400", "bg-emerald-400", "bg-emerald-500", "bg-green-500",
+];
 
 const DOC_TYPES = ["תעודת_זהות", "תלושי_שכר_3_אחרונים", "דפי_עו_ש_3_חודשים", "אישור_עבודה_ומשכורת", "חוזה_רכישה", "נסח_טאבו", "שומת_מס_אחרונה", "דוח_פנסיה", "אחר"];
 const DOC_LABELS = {
@@ -14,78 +44,45 @@ const DOC_LABELS = {
   "אישור_עבודה_ומשכורת": "אישור עבודה", "חוזה_רכישה": "חוזה רכישה", "נסח_טאבו": "נסח טאבו",
   "שומת_מס_אחרונה": "שומת מס", "דוח_פנסיה": 'דו"ח פנסיה', "אחר": "מסמך אחר",
 };
-const TEMPLATE_MESSAGES = {
+const WA_TEMPLATES = {
   "בקשת מסמכים": "היי, אשמח שתשלחו לי את המסמכים הנדרשים כדי לקדם את התיק.",
-  "תיאום שיחה": "היי, מתי נוח לכם לשיחה קצרה היום/מחר לתיאום המשך הטיפול?",
+  "תיאום שיחה": "היי, מתי נוח לכם לשיחה קצרה היום/מחר?",
   "תזכורת": "רק תזכורת קצרה ממני לגבי המשך התהליך במשכנתא.",
-  "חסר מסמכים": "שימו לב שחסרים עדיין מסמכים בתיק. ברגע שישלחו נוכל להתקדם מיד.",
-  "עדכון סטטוס": "עדכון סטטוס: התיק התקדם, ואעדכן אתכם בכל שלב נוסף.",
+  "עדכון שלב": "עדכון: התיק התקדם לשלב הבא. אעדכן אתכם בכל התקדמות נוספת.",
 };
 
-const STATUS_BADGE = {
-  "חדש": "bg-violet-50 text-violet-700",
-  "נוצר קשר": "bg-sky-50 text-sky-700",
-  "מחכים למסמכים": "bg-amber-50 text-amber-700",
-  "פגישה נקבעה": "bg-indigo-50 text-indigo-700",
-  "הוגש לבנק": "bg-blue-50 text-blue-700",
-  "אישור עקרוני": "bg-emerald-50 text-emerald-700",
-  "נסגר": "bg-slate-100 text-slate-700",
-  "אבוד": "bg-rose-50 text-rose-700",
-};
+const TODAY_D = () => new Date(new Date().toDateString());
+const DAY_MS = 864e5;
 
-const TODAY = () => new Date(new Date().toDateString());
-const DAY_MS = 1000 * 60 * 60 * 24;
+function diffDays(d) { if (!d) return null; return Math.max(0, Math.floor((TODAY_D() - new Date(new Date(d).toDateString())) / DAY_MS)); }
+function isOverdue(d) { return d && new Date(d) < TODAY_D(); }
+function isToday(d) { return d && new Date(d).toDateString() === new Date().toDateString(); }
+function formatShort(d) { if (!d) return ""; return new Date(d).toLocaleDateString("he-IL", { day: "numeric", month: "short" }); }
+function formatDateTime(d) { if (!d) return ""; return new Date(d).toLocaleString("he-IL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
 
+function getStage(lead) { return lead.pipelineStage || lead.leadStatus || "ליד חדש"; }
+function getStageIndex(lead) { return PIPELINE_STAGES.indexOf(getStage(lead)); }
+function isExited(lead) { const s = getStage(lead); return EXIT_STATUSES.includes(s) || s === "נסגר בהצלחה"; }
 
-function diffDays(dateStr) {
-  if (!dateStr) return null;
-  const target = new Date(new Date(dateStr).toDateString());
-  const today = TODAY();
-  return Math.max(0, Math.floor((today.getTime() - target.getTime()) / DAY_MS));
+function CardSkeleton() { return <div className="bg-white border border-slate-100 rounded-2xl p-4"><Skeleton variant="block" className="h-40" /></div>; }
+
+function StageProgress({ lead }) {
+  const si = getStageIndex(lead);
+  if (si < 0) return null;
+  const pct = Math.round(((si + 1) / PIPELINE_STAGES.length) * 100);
+  const color = STAGE_PROGRESS_COLOR[si] || "bg-violet-400";
+  return (
+    <div className="mb-3">
+      <div className="flex justify-between text-[11px] font-bold text-slate-400 mb-1">
+        <span>שלב {si + 1} מתוך {PIPELINE_STAGES.length}</span>
+        <span className="tabular-nums">{pct}%</span>
+      </div>
+      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
 }
-
-function formatDateTime(dateStr) {
-  if (!dateStr) return "";
-  return new Date(dateStr).toLocaleString("he-IL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-}
-
-function getStatusBadgeClass(status) {
-  return STATUS_BADGE[status] || STATUS_BADGE["חדש"];
-}
-
-function buildSignals(lead) {
-  const signals = [];
-  const idleDays = diffDays(lead.lastContactedAt || lead.lastUpdated || lead.updatedAt || lead.createdAt);
-  if (typeof idleDays === "number" && idleDays >= 3) signals.push({ text: `לא טופל ${idleDays} ימים`, variant: "danger" });
-  if (lead.leadStatus === "מחכים למסמכים") {
-    const waitingDays = diffDays(lead.lastUpdated || lead.updatedAt || lead.createdAt);
-    if (typeof waitingDays === "number" && waitingDays >= 1) signals.push({ text: `מחכה למסמכים ${waitingDays} ימים`, variant: "refi" });
-  }
-  const { isToday, isOverdue } = getFollowUpState(lead.followUpDate?.slice(0, 10));
-  if (isToday) signals.push({ text: "Follow-up היום", variant: "upgrade" });
-  if (isOverdue) signals.push({ text: "באיחור", variant: "danger" });
-  const score = Number(lead.approvalScore || lead.estimatedApprovalResult) || 0;
-  if (score >= 70 && (!lead.lastContactedAt || diffDays(lead.lastContactedAt) >= 2)) signals.push({ text: "ליד חם ללא מענה", variant: "danger" });
-  return signals.slice(0, 3);
-}
-
-function getFollowUpState(followUpDate) {
-  if (!followUpDate) return { isToday: false, isOverdue: false };
-  const target = new Date(new Date(followUpDate).toDateString());
-  const today = TODAY();
-  return {
-    isToday: target.getTime() === today.getTime(),
-    isOverdue: target.getTime() < today.getTime(),
-  };
-}
-
-function ScoreBar({ score }) {
-  const pct = Math.min(100, Math.max(0, Number(score) || 0));
-  const color = pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-slate-300";
-  return <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} /></div>;
-}
-
-function CardSkeleton() { return <div className="bg-white border border-slate-100 rounded-2xl p-3.5"><Skeleton variant="block" className="h-36" /></div>; }
 
 function MyLeadCard({ lead, onUpdate }) {
   const [notes, setNotes] = useState(lead.internalNotes || "");
@@ -97,235 +94,213 @@ function MyLeadCard({ lead, onUpdate }) {
   const [docsLoading, setDocsLoading] = useState(false);
   const [selectedDocTypes, setSelectedDocTypes] = useState([]);
 
+  const stage = getStage(lead);
+  const si = getStageIndex(lead);
+  const stageBadge = STAGE_BADGE[stage] || "bg-slate-50 text-slate-600 border-slate-200";
+  const nextStage = si >= 0 && si < PIPELINE_STAGES.length - 1 ? PIPELINE_STAGES[si + 1] : null;
   const score = Math.round(Number(lead.approvalScore || lead.estimatedApprovalResult) || 0);
   const quality = lead.leadQuality || (score >= 70 ? "חם" : score >= 40 ? "בינוני" : "חלש");
-  const tagVariant = QUALITY_TAG[quality] || "default";
-  const isHot = quality === "חם";
-  const created = new Date(lead.createdAt).toLocaleDateString("he-IL", { day: "numeric", month: "short", year: "numeric" });
-  const purchasedAt = lead.purchasedAt ? new Date(lead.purchasedAt).toLocaleDateString("he-IL", { day: "numeric", month: "short" }) : "";
-
-  const currentStatus = STATUS_OPTIONS.includes(lead.leadStatus) ? lead.leadStatus : "חדש";
-  const followUpVal = lead.followUpDate?.slice(0, 10) || "";
-  const followUpTimeVal = lead.followUpDate?.slice(11, 16) || "";
-  const { isToday, isOverdue } = getFollowUpState(followUpVal);
+  const qualityColor = quality === "חם" ? "text-emerald-600" : quality === "בינוני" ? "text-amber-600" : "text-slate-400";
+  const hasOverdue = isOverdue(lead.nextActionAt) || isOverdue(lead.followUpDate);
+  const isExcl = lead.isExclusive;
+  const created = new Date(lead.createdAt).toLocaleDateString("he-IL", { day: "numeric", month: "short" });
 
   useEffect(() => {
     fetch(`/api/advisor/activities?leadId=${lead.id}`)
       .then((r) => r.ok ? r.json() : { activities: [] })
       .then((j) => {
         const acts = Array.isArray(j.activities) ? j.activities : [];
-        setLocalActivities(acts.length > 0 ? acts : [{ title: "הליד נוצר", created_at: lead.createdAt || new Date().toISOString(), activity_type: "lead_created" }]);
+        setLocalActivities(acts.length > 0 ? acts : [{ title: "הליד נוצר", created_at: lead.createdAt, activity_type: "lead_created" }]);
       })
-      .catch(() => setLocalActivities([{ title: "הליד נוצר", created_at: lead.createdAt || new Date().toISOString(), activity_type: "lead_created" }]));
+      .catch(() => setLocalActivities([{ title: "הליד נוצר", created_at: lead.createdAt, activity_type: "lead_created" }]));
   }, [lead.id, lead.createdAt]);
 
   const timeline = useMemo(() =>
-    [...localActivities].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 8),
+    [...localActivities].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5),
     [localActivities]
   );
-  const signals = useMemo(() => buildSignals(lead), [lead]);
 
   function pushActivity(title, activityType = "note_added") {
-    const entry = { title, created_at: new Date().toISOString(), activity_type: activityType };
-    setLocalActivities((prev) => [entry, ...prev]);
-    fetch("/api/advisor/activities", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ leadId: lead.id, activityType, title }),
-    }).catch(() => {});
+    setLocalActivities((prev) => [{ title, created_at: new Date().toISOString(), activity_type: activityType }, ...prev]);
+    fetch("/api/advisor/activities", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id, activityType, title }) }).catch(() => {});
   }
 
-  async function logActivity(text, extraChanges = {}, activityType = "note_added") {
-    pushActivity(text, activityType);
-    if (Object.keys(extraChanges).length > 0) {
-      await onUpdate(lead.id, extraChanges);
-    }
+  async function patch(changes, activityTitle, activityType) {
+    const r = await fetch("/api/advisor/my-leads", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: lead.id, changes }) });
+    if (!r.ok) return;
+    const j = await r.json();
+    onUpdate(lead.id, j.lead);
+    if (activityTitle) pushActivity(activityTitle, activityType || "note_added");
+  }
+
+  async function advanceStage() {
+    if (!nextStage) return;
+    await patch({ pipelineStage: nextStage, lastContactedAt: new Date().toISOString() }, `שלב: "${nextStage}"`, "status_changed");
   }
 
   async function saveNotes() {
     if (notes === (lead.internalNotes || "")) return;
     setSaving(true);
-    await logActivity("הערה עודכנה", { internalNotes: notes, lastContactedAt: new Date().toISOString() }, "note_added");
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    await patch({ internalNotes: notes, lastContactedAt: new Date().toISOString() }, "הערה עודכנה", "note_added");
+    setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2500);
   }
 
-  function openWhatsapp(message = "") {
+  function openWa(msg = "") {
     if (!lead.phone) return;
     const raw = String(lead.phone).replace(/[^\d]/g, "");
     const phone = raw.startsWith("0") ? `972${raw.slice(1)}` : raw;
-    const url = message
-      ? `https://wa.me/${phone}?text=${encodeURIComponent(message.trim())}`
-      : `https://wa.me/${phone}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-    logActivity("נפתח WhatsApp", { lastContactedAt: new Date().toISOString() }, "whatsapp_opened");
-  }
-
-  function saveFollowUp(nextDate, nextTime) {
-    if (!nextDate) return logActivity("בוטל follow-up", { followUpDate: "" });
-    const normalized = `${nextDate}T${nextTime || "09:00"}:00.000Z`;
-    return logActivity("נקבע follow-up", { followUpDate: normalized });
+    window.open(msg ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/${phone}`, "_blank", "noopener,noreferrer");
+    patch({ lastContactedAt: new Date().toISOString() }, "נפתח WhatsApp", "whatsapp_opened");
   }
 
   async function loadDocuments() {
     setDocsLoading(true);
     const r = await fetch(`/api/advisor/documents?leadId=${lead.id}`);
-    const j = r.ok ? await r.json() : { documents: [] };
-    setDocuments(j.documents || []);
+    setDocuments(r.ok ? (await r.json()).documents || [] : []);
     setDocsLoading(false);
   }
-
   async function requestDocuments() {
     if (!selectedDocTypes.length) return;
-    const r = await fetch("/api/advisor/documents", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ leadId: lead.id, documentTypes: selectedDocTypes }),
-    });
-    if (r.ok) {
-      const j = await r.json();
-      setDocuments((prev) => [...prev, ...(j.documents || [])]);
-      pushActivity("נשלחה בקשת מסמכים", "document_requested");
-      setSelectedDocTypes([]);
-    }
+    const r = await fetch("/api/advisor/documents", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id, documentTypes: selectedDocTypes }) });
+    if (r.ok) { const j = await r.json(); setDocuments((p) => [...p, ...(j.documents || [])]); pushActivity("נשלחה בקשת מסמכים", "document_requested"); setSelectedDocTypes([]); }
   }
-
   async function markDocReceived(doc) {
-    const r = await fetch("/api/advisor/documents", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: doc.id, status: "received", leadId: lead.id, documentType: doc.document_type }),
-    });
-    if (r.ok) {
-      setDocuments((prev) => prev.map((d) => d.id === doc.id ? { ...d, status: "received" } : d));
-      pushActivity(`מסמך התקבל: ${DOC_LABELS[doc.document_type] || doc.document_type}`, "document_received");
-    }
+    const r = await fetch("/api/advisor/documents", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: doc.id, status: "received", leadId: lead.id, documentType: doc.document_type }) });
+    if (r.ok) { setDocuments((p) => p.map((d) => d.id === doc.id ? { ...d, status: "received" } : d)); pushActivity(`מסמך התקבל: ${DOC_LABELS[doc.document_type] || doc.document_type}`, "document_received"); }
   }
 
   return (
-    <article className={`bg-white rounded-2xl p-4 shadow-sm border ${isOverdue ? "border-amber-300 bg-amber-50/30" : isHot ? "border-emerald-200" : "border-slate-100"}`}>
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-2">
-            <Tag variant={tagVariant}>{quality}</Tag>
-            {lead.isExclusive && <Tag variant="exclusive">בלעדי</Tag>}
-            {lead.purchaseType === "partner_claim" && <Tag variant="upgrade">שותף</Tag>}
-            {isOverdue && <Tag variant="danger">באיחור</Tag>}
-            {isToday && <Tag variant="refi">להיום</Tag>}
-            <span className={`text-xs font-black px-2.5 py-0.5 rounded-full ${getStatusBadgeClass(currentStatus)}`}>{currentStatus}</span>
-            {signals.map((signal) => <Tag key={signal.text} variant={signal.variant}>{signal.text}</Tag>)}
-          </div>
-          <h2 className="text-base font-black text-slate-950 truncate mb-1">{lead.name || "—"}</h2>
-          {lead.phone ? <a href={`tel:${lead.phone}`} className="text-base font-black text-violet-600 hover:underline tracking-wide">{lead.phone}</a> : <span className="text-sm text-slate-400">אין טלפון</span>}
-        </div>
-        <div className="text-start shrink-0">
-          <p className="text-lg font-black text-slate-950 tabular-nums">{formatILS(lead.mortgageAmount || 0)}</p>
-          <p className="text-xs text-slate-400 mt-1">נוצר {created}</p>
-          {purchasedAt && <p className="text-xs text-violet-500 mt-0.5">נרכש {purchasedAt}</p>}
-          {lead.purchasePrice > 0 && <p className="text-xs font-black text-slate-500 mt-0.5">שולם {formatILS(lead.purchasePrice)}</p>}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-4 gap-2 mb-3">
-        {lead.phone
-          ? <a href={`tel:${lead.phone}`} onClick={() => logActivity("בוצעה שיחה", { lastContactedAt: new Date().toISOString() }, "call_logged")} className="text-center text-sm font-black rounded-lg py-2 bg-violet-50 text-violet-700">שיחה</a>
-          : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">שיחה</button>}
-        {lead.phone
-          ? <button type="button" onClick={() => openWhatsapp()} className="text-center text-sm font-black rounded-lg py-2 bg-emerald-50 text-emerald-700">WhatsApp</button>
-          : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">WhatsApp</button>}
-        {lead.advisorEmail || lead.email
-          ? <a href={`mailto:${lead.advisorEmail || lead.email}`} onClick={() => logActivity("נשלח מייל", { lastContactedAt: new Date().toISOString() }, "email_opened")} className="text-center text-sm font-black rounded-lg py-2 bg-sky-50 text-sky-700">מייל</a>
-          : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">מייל</button>}
-        <Link href={`/advisor/lead/${lead.id}`} className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-700">פרטים</Link>
-      </div>
-
-      <div className="mb-3">
-        <label className="block text-xs font-black text-slate-400 mb-1">תבניות הודעה מהירות</label>
-        <div className="flex gap-2">
-          <select className="flex-1 border border-slate-200 rounded-lg px-2.5 py-2 text-sm font-bold" defaultValue="" onChange={(e) => { const m = TEMPLATE_MESSAGES[e.target.value]; if (m) { navigator.clipboard.writeText(m); logActivity(`הועתקה תבנית: ${e.target.value}`); } e.target.value = ""; }}>
-            <option value="" disabled>בחרו תבנית להעתקה...</option>
-            {Object.keys(TEMPLATE_MESSAGES).map((k) => <option key={k} value={k}>{k}</option>)}
-          </select>
-          <button className="px-3 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-black" onClick={() => openWhatsapp(TEMPLATE_MESSAGES["עדכון סטטוס"])}>שליחה מהירה</button>
-        </div>
-      </div>
-
-      <div className="mb-3"><div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5"><span>ציון FINZO</span><span className="tabular-nums font-black text-slate-600">{score}/100</span></div><ScoreBar score={score} /></div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-        <div><label className="block text-xs font-black text-slate-400 mb-1">סטטוס</label><select className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-sm font-bold" value={currentStatus} onChange={(e) => logActivity(`סטטוס עודכן ל"${e.target.value}"`, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() }, "status_changed")}>{STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}</select></div>
-        <div><label className="block text-xs font-black text-slate-400 mb-1">תאריך מעקב</label><input type="date" className={`w-full border rounded-lg px-2.5 py-2 text-sm font-bold ${isOverdue ? "border-amber-300 bg-amber-50/40" : "border-slate-200"}`} defaultValue={followUpVal} onBlur={(e) => saveFollowUp(e.target.value, followUpTimeVal)} /></div>
-        <div><label className="block text-xs font-black text-slate-400 mb-1">שעת מעקב</label><input type="time" className="w-full border rounded-lg px-2.5 py-2 text-sm font-bold border-slate-200" defaultValue={followUpTimeVal} onBlur={(e) => saveFollowUp(followUpVal, e.target.value)} /></div>
-      </div>
-
-      <div className="mb-3">
-        <label className="block text-xs font-black text-slate-400 mb-1">ציר פעילות</label>
-        <div className="border border-slate-100 rounded-xl p-2.5 bg-slate-50/70">
-          {timeline.map((item, idx) => (
-            <div key={`${item.created_at || idx}-${idx}`} className={`flex gap-2.5 py-1.5 ${idx < timeline.length - 1 ? "border-b border-slate-200/70" : ""}`}>
-              <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-violet-400 shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-700">{item.title || item.text}</p>
-                <p className="text-[11px] text-slate-400">{formatDateTime(item.created_at || item.at)}</p>
-              </div>
+    <article className={`bg-white rounded-2xl border shadow-sm ${hasOverdue ? "border-rose-300 bg-rose-50/20" : "border-slate-100"}`}>
+      {/* Header */}
+      <div className="p-4 pb-3">
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+              <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${stageBadge}`}>{stage}</span>
+              {isExcl && <Tag variant="exclusive">בלעדי</Tag>}
+              {hasOverdue && <span className="text-[11px] font-black text-rose-600">⚠ באיחור</span>}
+              <span className={`text-[11px] font-black ${qualityColor}`}>{quality}</span>
             </div>
-          ))}
+            <Link href={`/advisor/lead/${lead.id}`} className="block text-base font-black text-slate-950 hover:text-violet-700 truncate mb-0.5">{lead.name || "—"}</Link>
+            {lead.phone && <a href={`tel:${lead.phone}`} onClick={() => patch({ lastContactedAt: new Date().toISOString() }, "בוצעה שיחה", "call_logged")} className="text-sm font-black text-violet-600 hover:underline">{lead.phone}</a>}
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="text-base font-black text-slate-950 tabular-nums">{formatILS(lead.mortgageAmount || 0)}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">{created}</p>
+            {lead.purchasePrice > 0 && <p className="text-[11px] text-slate-500 font-bold mt-0.5">שולם {formatILS(lead.purchasePrice)}</p>}
+            {lead.bankName && <p className="text-[11px] text-slate-400 mt-0.5">{lead.bankName}</p>}
+          </div>
         </div>
-      </div>
 
-      {/* Document checklist */}
-      <div className="mb-3 border border-slate-100 rounded-xl overflow-hidden">
-        <button
-          type="button"
-          className="w-full flex items-center justify-between px-3 py-2.5 bg-slate-50 text-xs font-black text-slate-600"
-          onClick={() => { setDocsOpen((v) => !v); if (!docsOpen) loadDocuments(); }}
-        >
-          <span>מסמכים נדרשים</span>
-          <span>{docsOpen ? "▲" : "▼"}</span>
-        </button>
-        {docsOpen && (
-          <div className="p-3">
-            {docsLoading && <p className="text-xs text-slate-400 font-bold">טוען...</p>}
-            {!docsLoading && documents.length > 0 && (
-              <div className="mb-2 grid gap-1">
-                {documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-slate-700">{DOC_LABELS[doc.document_type] || doc.document_type}</span>
-                    {doc.status === "received" || doc.status === "approved"
-                      ? <span className="text-xs font-black text-emerald-600">✓ התקבל</span>
-                      : <button type="button" onClick={() => markDocReceived(doc)} className="text-[11px] font-black text-violet-600 hover:underline">סמן כהתקבל</button>}
-                  </div>
-                ))}
+        {/* Pipeline progress */}
+        <StageProgress lead={lead} />
+
+        {/* Next action */}
+        {(lead.nextAction || lead.nextActionAt) && (
+          <div className={`rounded-lg px-3 py-2 mb-3 text-xs ${isOverdue(lead.nextActionAt) ? "bg-rose-50 border border-rose-200" : isToday(lead.nextActionAt) ? "bg-emerald-50 border border-emerald-200" : "bg-slate-50 border border-slate-200"}`}>
+            <p className="font-black text-slate-700">{lead.nextAction || "פעולה הבאה"}</p>
+            {lead.nextActionAt && <p className="text-slate-500 mt-0.5">{formatShort(lead.nextActionAt)}{isOverdue(lead.nextActionAt) ? " — באיחור" : isToday(lead.nextActionAt) ? " — היום" : ""}</p>}
+          </div>
+        )}
+
+        {/* Quick actions */}
+        <div className="grid grid-cols-4 gap-1.5 mb-3">
+          {lead.phone
+            ? <a href={`tel:${lead.phone}`} onClick={() => patch({ lastContactedAt: new Date().toISOString() }, "בוצעה שיחה", "call_logged")} className="text-center text-xs font-black rounded-lg py-2 bg-violet-50 text-violet-700">שיחה</a>
+            : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 text-slate-400">שיחה</button>}
+          {lead.phone
+            ? <button type="button" onClick={() => openWa()} className="text-center text-xs font-black rounded-lg py-2 bg-emerald-50 text-emerald-700">WhatsApp</button>
+            : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 text-slate-400">WA</button>}
+          {lead.advisorEmail || lead.email
+            ? <a href={`mailto:${lead.advisorEmail || lead.email}`} onClick={() => patch({ lastContactedAt: new Date().toISOString() }, "נשלח מייל", "email_opened")} className="text-center text-xs font-black rounded-lg py-2 bg-sky-50 text-sky-700">מייל</a>
+            : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 text-slate-400">מייל</button>}
+          <Link href={`/advisor/lead/${lead.id}`} className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 text-slate-700">פרטים</Link>
+        </div>
+
+        {/* WhatsApp template */}
+        <div className="flex gap-1.5 mb-3">
+          <select className="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold" defaultValue="" onChange={(e) => { if (e.target.value) { openWa(WA_TEMPLATES[e.target.value]); } e.target.value = ""; }}>
+            <option value="" disabled>תבנית WA...</option>
+            {Object.keys(WA_TEMPLATES).map((k) => <option key={k} value={k}>{k}</option>)}
+          </select>
+          {nextStage && (
+            <button type="button" onClick={advanceStage} className="whitespace-nowrap px-3 rounded-lg bg-violet-700 text-white text-xs font-black hover:bg-violet-800 transition-colors">
+              הבא ←
+            </button>
+          )}
+        </div>
+
+        {/* Stage select (full) */}
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div>
+            <label className="block text-[11px] font-black text-slate-400 mb-1">שלב</label>
+            <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold" value={stage} onChange={(e) => patch({ pipelineStage: e.target.value, lastContactedAt: new Date().toISOString() }, `שלב: "${e.target.value}"`, "status_changed")}>
+              <optgroup label="Pipeline פעיל">
+                {PIPELINE_STAGES.map((s) => <option key={s}>{s}</option>)}
+              </optgroup>
+              <optgroup label="יצא מהתהליך">
+                {EXIT_STATUSES.map((s) => <option key={s}>{s}</option>)}
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-black text-slate-400 mb-1">follow-up</label>
+            <input type="date" className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold ${isOverdue(lead.followUpDate) ? "border-amber-300 bg-amber-50/40" : "border-slate-200"}`} defaultValue={lead.followUpDate?.slice(0, 10) || ""} onBlur={(e) => { if (e.target.value) patch({ followUpDate: e.target.value }, `נקבע follow-up`); }} />
+          </div>
+        </div>
+
+        {/* Activity timeline */}
+        <div className="mb-3">
+          <p className="text-[11px] font-black text-slate-400 mb-1">פעילות אחרונה</p>
+          <div className="border border-slate-100 rounded-xl divide-y divide-slate-100">
+            {timeline.map((item, idx) => (
+              <div key={`${item.created_at}-${idx}`} className="flex gap-2 px-2.5 py-1.5">
+                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-violet-300 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-slate-700">{item.title || item.text}</p>
+                  <p className="text-[10px] text-slate-400">{formatDateTime(item.created_at || item.at)}</p>
+                </div>
               </div>
-            )}
-            <div className="mt-2">
-              <div className="flex flex-wrap gap-1 mb-2">
+            ))}
+          </div>
+        </div>
+
+        {/* Documents */}
+        <div className="mb-3 border border-slate-100 rounded-xl overflow-hidden">
+          <button type="button" className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 text-[11px] font-black text-slate-600"
+            onClick={() => { setDocsOpen((v) => !v); if (!docsOpen) loadDocuments(); }}>
+            <span>מסמכים {lead.documentsCompletionPercent > 0 ? `(${lead.documentsCompletionPercent}%)` : ""}</span>
+            <span>{docsOpen ? "▲" : "▼"}</span>
+          </button>
+          {docsOpen && (
+            <div className="p-2.5">
+              {docsLoading && <p className="text-xs text-slate-400">טוען...</p>}
+              {!docsLoading && documents.map((doc) => (
+                <div key={doc.id} className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-xs font-bold text-slate-700">{DOC_LABELS[doc.document_type] || doc.document_type}</span>
+                  {doc.status === "received" || doc.status === "approved"
+                    ? <span className="text-xs font-black text-emerald-600">✓</span>
+                    : <button type="button" onClick={() => markDocReceived(doc)} className="text-[10px] font-black text-violet-600">התקבל</button>}
+                </div>
+              ))}
+              <div className="flex flex-wrap gap-1 mb-1.5">
                 {DOC_TYPES.map((dt) => (
-                  <button
-                    key={dt}
-                    type="button"
-                    onClick={() => setSelectedDocTypes((prev) => prev.includes(dt) ? prev.filter((d) => d !== dt) : [...prev, dt])}
-                    className={`text-[11px] px-2 py-1 rounded-full border font-bold transition-colors ${selectedDocTypes.includes(dt) ? "bg-violet-700 text-white border-violet-700" : "bg-white text-slate-600 border-slate-200 hover:border-violet-300"}`}
-                  >
+                  <button key={dt} type="button" onClick={() => setSelectedDocTypes((p) => p.includes(dt) ? p.filter((d) => d !== dt) : [...p, dt])}
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full border font-bold ${selectedDocTypes.includes(dt) ? "bg-violet-700 text-white border-violet-700" : "bg-white text-slate-600 border-slate-200"}`}>
                     {DOC_LABELS[dt]}
                   </button>
                 ))}
               </div>
-              {selectedDocTypes.length > 0 && (
-                <button type="button" onClick={requestDocuments} className="w-full rounded-lg bg-violet-700 text-white text-xs font-black py-2">
-                  בקש {selectedDocTypes.length} מסמך{selectedDocTypes.length > 1 ? "ים" : ""}
-                </button>
-              )}
+              {selectedDocTypes.length > 0 && <button type="button" onClick={requestDocuments} className="w-full rounded-lg bg-violet-700 text-white text-[11px] font-black py-1.5">בקש {selectedDocTypes.length} מסמכים</button>}
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      <div>
-        <label className="block text-xs font-black text-slate-400 mb-1">הערות</label>
-        <textarea className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white resize-y min-h-[88px]" value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} onBlur={saveNotes} placeholder="הערות, חסרים, תיאום שיחה, עדכון סטטוס..." />
-        <p className={`text-xs mt-1 font-bold h-4 transition-opacity ${saved || saving ? "opacity-100" : "opacity-0"} ${saved ? "text-emerald-600" : "text-slate-400"}`}>{saving ? "שומר..." : "נשמר ✓"}</p>
+        {/* Notes */}
+        <div>
+          <textarea className="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs bg-white resize-y min-h-[72px]" value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} onBlur={saveNotes} placeholder="הערות פנימיות..." />
+          <p className={`text-[11px] h-4 font-bold transition-opacity ${saved || saving ? "opacity-100" : "opacity-0"} ${saved ? "text-emerald-600" : "text-slate-400"}`}>{saving ? "שומר..." : "נשמר ✓"}</p>
+        </div>
       </div>
     </article>
   );
@@ -335,106 +310,173 @@ export default function AdvisorMyLeads() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [statusTab, setStatusTab] = useState("הכל");
+  const [view, setView] = useState("pipeline");
   const [search, setSearch] = useState("");
+  const [stageFilter, setStageFilter] = useState("הכל");
+
+  useEffect(() => {
+    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    const s = params.get("stage");
+    if (s && ALL_STATUSES.includes(s)) setStageFilter(s);
+  }, []);
 
   useEffect(() => { load(); }, []);
-  async function load() { setLoading(true); const r = await fetch("/api/advisor/my-leads"); if (r.status === 401) { window.location.href = "/advisor/login"; return; } if (!r.ok) { setError("שגיאה בטעינת הלידים."); setLoading(false); return; } const j = await r.json(); setLeads(j.leads || []); setLoading(false); }
-  async function update(id, changes) { const r = await fetch("/api/advisor/my-leads", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, changes }) }); if (!r.ok) { setError("שמירה נכשלה"); return; } const j = await r.json(); setLeads((arr) => arr.map((l) => l.id === id ? { ...l, ...j.lead } : l)); setError(""); }
 
-  const newLeads = leads.filter((l) => !l.leadStatus || l.leadStatus === "חדש");
-  const inProgress = leads.filter((l) => ["נוצר קשר", "מחכים למסמכים", "פגישה נקבעה", "הוגש לבנק"].includes(l.leadStatus));
-  const approved = leads.filter((l) => l.leadStatus === "אישור עקרוני");
-  const closed = leads.filter((l) => l.leadStatus === "נסגר");
+  async function load() {
+    setLoading(true);
+    const r = await fetch("/api/advisor/my-leads");
+    if (r.status === 401) { window.location.href = "/advisor/login"; return; }
+    if (!r.ok) { setError("שגיאה בטעינת הלידים."); setLoading(false); return; }
+    const j = await r.json();
+    setLeads(j.leads || []);
+    setLoading(false);
+  }
 
-  const totalSpent = leads.reduce((s, l) => s + (Number(l.purchasePrice) || 0), 0);
+  function update(id, updatedLead) {
+    setLeads((arr) => arr.map((l) => l.id === id ? { ...l, ...updatedLead } : l));
+  }
+
+  const q = search.trim().toLowerCase();
+  const active = useMemo(() => leads.filter((l) => !["לא עונה", "לא רלוונטי", "נדחה בבנק", "עבר ליועץ אחר", "בוטל", "נסגר בהצלחה"].includes(l.pipelineStage || l.leadStatus || "")), [leads]);
+  const closed = useMemo(() => leads.filter((l) => (l.pipelineStage || l.leadStatus) === "נסגר בהצלחה"), [leads]);
+  const exited = useMemo(() => leads.filter((l) => ["לא עונה", "לא רלוונטי", "נדחה בבנק", "עבר ליועץ אחר", "בוטל"].includes(l.pipelineStage || l.leadStatus || "")), [leads]);
+  const totalSpent = useMemo(() => leads.reduce((s, l) => s + (Number(l.purchasePrice) || 0), 0), [leads]);
   const conversionRate = leads.length > 0 ? Math.round((closed.length / leads.length) * 100) : 0;
 
-  const statusTabs = [
-    { key: "הכל", label: "הכל", count: leads.length },
-    { key: "חדש", label: "חדשים", count: newLeads.length },
-    { key: "בתהליך", label: "בתהליך", count: inProgress.length },
-    { key: "אישור", label: "אישור עקרוני", count: approved.length },
-    { key: "נסגר", label: "נסגר", count: closed.length },
-  ];
-
-  const filteredBase = statusTab === "חדש" ? newLeads : statusTab === "בתהליך" ? inProgress : statusTab === "אישור" ? approved : statusTab === "נסגר" ? closed : leads;
-  const q = search.trim().toLowerCase();
-  const filtered = [...filteredBase]
-    .filter((l) => !q || (l.name || "").toLowerCase().includes(q) || (l.phone || "").replace(/[^\d]/g, "").includes(q.replace(/[^\d]/g, "")))
-    .sort((a, b) => {
-      const af = a.followUpDate ? new Date(a.followUpDate).getTime() : Number.MAX_SAFE_INTEGER;
-      const bf = b.followUpDate ? new Date(b.followUpDate).getTime() : Number.MAX_SAFE_INTEGER;
-      return af - bf;
+  const filtered = useMemo(() => {
+    let base = stageFilter === "הכל" ? leads : stageFilter === "פעיל" ? active : stageFilter === "נסגר" ? closed : stageFilter === "יצא" ? exited : leads.filter((l) => (l.pipelineStage || l.leadStatus) === stageFilter);
+    if (q) base = base.filter((l) => (l.name || "").toLowerCase().includes(q) || (l.phone || "").replace(/\D/g, "").includes(q.replace(/\D/g, "")));
+    return [...base].sort((a, b) => {
+      const aOver = (a.nextActionAt && new Date(a.nextActionAt) < new Date()) || (a.followUpDate && new Date(a.followUpDate) < new Date());
+      const bOver = (b.nextActionAt && new Date(b.nextActionAt) < new Date()) || (b.followUpDate && new Date(b.followUpDate) < new Date());
+      if (aOver && !bOver) return -1;
+      if (!aOver && bOver) return 1;
+      const aDate = a.nextActionAt || a.followUpDate || a.createdAt || "";
+      const bDate = b.nextActionAt || b.followUpDate || b.createdAt || "";
+      return new Date(aDate) - new Date(bDate);
     });
+  }, [leads, stageFilter, q, active, closed, exited]);
+
+  // Pipeline grouped view
+  const pipelineGroups = useMemo(() => {
+    if (view !== "pipeline") return [];
+    return PIPELINE_STAGES
+      .map((stage, si) => ({
+        stage, si,
+        leads: filtered.filter((l) => (l.pipelineStage || l.leadStatus || "ליד חדש") === stage),
+      }))
+      .filter((g) => g.leads.length > 0);
+  }, [filtered, view]);
+
+  const exitGroup = useMemo(() => view === "pipeline" ? filtered.filter((l) => ["לא עונה", "לא רלוונטי", "נדחה בבנק", "עבר ליועץ אחר", "בוטל"].includes(l.pipelineStage || l.leadStatus || "")) : [], [filtered, view]);
+
+  const tabs = [
+    { key: "הכל", label: "הכל", count: leads.length },
+    { key: "פעיל", label: "פעיל", count: active.length },
+    { key: "נסגר", label: "נסגר בהצלחה", count: closed.length },
+    { key: "יצא", label: "יצא מהתהליך", count: exited.length },
+  ];
 
   return (
     <>
       <Head><title>הלידים שלי | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
-      <main dir="rtl" className="min-h-screen bg-slate-50">
+      <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
         <AdvisorHeader active="/advisor/my-leads" />
-        <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5">
+        <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4">
 
           {/* KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
             {loading
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2.5">
-                    <Skeleton variant="line" className="w-20" /><Skeleton variant="line" className="w-10 h-8" />
-                  </div>
-                ))
+              ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2"><Skeleton variant="line" className="w-20" /><Skeleton variant="line" className="w-10 h-8" /></div>)
               : <>
-                  <KpiTile label="סה״כ לידים שנקנו" value={leads.length} />
+                  <KpiTile label="סה״כ נרכשו" value={leads.length} />
                   <KpiTile label="הוצאה כוללת" value={formatILS(totalSpent)} />
                   <KpiTile label="נסגרו" value={closed.length} />
                   <KpiTile label="אחוז המרה" value={`${conversionRate}%`} />
                 </>}
           </div>
 
-          {/* Search + status tabs */}
-          <div className="mb-4 space-y-2">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="חיפוש לפי שם או טלפון..."
-              className="w-full max-w-sm border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 bg-white"
-              dir="rtl"
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-            />
-            <div className="flex gap-1.5 flex-wrap">
-              {statusTabs.map(({ key, label, count }) => (
-                <button key={key} onClick={() => setStatusTab(key)} className={`flex items-center gap-1.5 px-4 py-2 text-sm font-bold whitespace-nowrap rounded-full transition-colors ${statusTab === key ? "bg-violet-700 text-white" : "bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300"}`}>
-                  {label}
-                  <span className={`tabular-nums text-xs px-1.5 py-0.5 rounded-full font-black ${statusTab === key ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>{count}</span>
-                </button>
+          {/* Search + view toggle */}
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="חיפוש שם / טלפון..." autoComplete="off" autoCorrect="off" spellCheck="false" dir="rtl"
+              className="flex-1 min-w-[180px] max-w-sm border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 bg-white" />
+            <div className="flex rounded-xl border border-slate-200 overflow-hidden bg-white shrink-0">
+              {[{ k: "pipeline", l: "Pipeline" }, { k: "list", l: "רשימה" }].map(({ k, l }) => (
+                <button key={k} onClick={() => setView(k)} className={`px-4 py-2 text-xs font-black transition-colors ${view === k ? "bg-violet-700 text-white" : "text-slate-500 hover:text-slate-800"}`}>{l}</button>
               ))}
             </div>
           </div>
 
-          {error && (
-            <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold flex items-center justify-between gap-3">
-              <span>{error}</span>
-              <button onClick={() => setError("")} className="text-red-400 hover:text-red-600 font-black text-lg leading-none">×</button>
+          {/* Status tabs */}
+          <div className="flex gap-1.5 flex-wrap mb-4">
+            {tabs.map(({ key, label, count }) => (
+              <button key={key} onClick={() => setStageFilter(key)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold whitespace-nowrap rounded-full transition-colors ${stageFilter === key ? "bg-violet-700 text-white" : "bg-white border border-slate-200 text-slate-500 hover:text-slate-800"}`}>
+                {label}<span className={`tabular-nums text-[11px] px-1.5 py-0.5 rounded-full font-black ${stageFilter === key ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>{count}</span>
+              </button>
+            ))}
+          </div>
+
+          {error && <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold flex justify-between"><span>{error}</span><button onClick={() => setError("")} className="text-red-400 font-black">×</button></div>}
+
+          {loading && <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}</div>}
+
+          {!loading && filtered.length === 0 && stageFilter === "הכל" && !q && (
+            <EmptyState glyph="📋" title="עדיין לא רכשתם לידים" description="עברו לחנות הלידים כדי לקנות."
+              action={<Link href="/advisor/leads" className="inline-block rounded-full bg-violet-700 text-white px-6 py-3 text-sm font-black">לחנות הלידים ←</Link>} />
+          )}
+          {!loading && filtered.length === 0 && (stageFilter !== "הכל" || q) && (
+            <EmptyState glyph="🔍" title="אין תוצאות" description="נסו לשנות את החיפוש או הסינון." />
+          )}
+
+          {/* Pipeline grouped view */}
+          {!loading && view === "pipeline" && (
+            <div className="space-y-6">
+              {pipelineGroups.map(({ stage, si, leads: groupLeads }) => (
+                <div key={stage}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`h-3 w-3 rounded-full shrink-0 ${STAGE_PROGRESS_COLOR[si]}`} />
+                    <h3 className="text-sm font-black text-slate-800">{stage}</h3>
+                    <span className="text-xs font-black text-slate-400 bg-slate-100 rounded-full px-2 py-0.5">{groupLeads.length}</span>
+                    <div className="flex-1 h-px bg-slate-200" />
+                    <span className="text-[11px] font-bold text-slate-400">שלב {si + 1}/{PIPELINE_STAGES.length}</span>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {groupLeads.map((lead) => <MyLeadCard key={lead.id} lead={lead} onUpdate={update} />)}
+                  </div>
+                </div>
+              ))}
+              {exitGroup.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="h-3 w-3 rounded-full shrink-0 bg-slate-300" />
+                    <h3 className="text-sm font-black text-slate-500">יצאו מהתהליך</h3>
+                    <span className="text-xs font-black text-slate-400 bg-slate-100 rounded-full px-2 py-0.5">{exitGroup.length}</span>
+                    <div className="flex-1 h-px bg-slate-200" />
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {exitGroup.map((lead) => <MyLeadCard key={lead.id} lead={lead} onUpdate={update} />)}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {loading && <div className="grid gap-3 md:grid-cols-2">{Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}</div>}
-          {!loading && filtered.length === 0 && !q && statusTab === "הכל" && (
-            <EmptyState glyph="📋" title="עדיין לא רכשתם לידים" description="עברו לחנות הלידים כדי לגלוש בלידים הזמינים ולרכוש."
-              action={<Link href="/advisor/leads" className="inline-block rounded-full bg-violet-700 text-white px-6 py-3 text-sm font-black hover:bg-violet-800 transition-colors">לחנות הלידים ←</Link>} />
+          {/* Flat list view */}
+          {!loading && view === "list" && (
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((lead) => <MyLeadCard key={lead.id} lead={lead} onUpdate={update} />)}
+            </div>
           )}
-          {!loading && filtered.length === 0 && (q || statusTab !== "הכל") && (
-            <EmptyState glyph="🔍" title="אין תוצאות" description="נסו לשנות את החיפוש או הסינון." />
-          )}
-          <div className="grid gap-3 md:grid-cols-2">
-            {filtered.map((lead) => <MyLeadCard key={lead.id} lead={lead} onUpdate={update} />)}
-          </div>
 
         </div>
       </main>
+
+      {/* Mobile bottom nav */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
+        <Link href="/advisor" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">ראשי</Link>
+        <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">הלידים שלי</Link>
+        <Link href="/advisor/leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
+      </div>
     </>
   );
 }
