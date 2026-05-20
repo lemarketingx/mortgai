@@ -375,6 +375,9 @@ export default function LeadDetailPage() {
                   ["סטטוס חוזה", lead.contractStatus || lead.purchaseStatus],
                   ["נוצר", lead.createdAt ? new Date(lead.createdAt).toLocaleDateString("he-IL") : null],
                   ["קשר ראשון", lead.firstContactAt ? new Date(lead.firstContactAt).toLocaleDateString("he-IL") : "טרם נוצר"],
+                  ["שולם על הליד", lead.purchasePrice > 0 ? formatILS(lead.purchasePrice) : null],
+                  ["סוג רכישה", lead.isExclusive ? "בלעדי" : lead.purchaseType === "partner_claim" ? "שותף" : lead.purchaseType === "regular" ? "רגיל" : null],
+                  ["תאריך רכישה", lead.purchasedAt ? new Date(lead.purchasedAt).toLocaleDateString("he-IL") : null],
                 ].filter(([, v]) => v).map(([label, value]) => (
                   <div key={label} className="rounded-xl bg-slate-50 p-2.5">
                     <p className="text-slate-400 font-black mb-0.5">{label}</p>

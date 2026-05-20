@@ -223,6 +223,7 @@ function MyLeadCard({ lead, onUpdate }) {
           <p className="text-lg font-black text-slate-950 tabular-nums">{formatILS(lead.mortgageAmount || 0)}</p>
           <p className="text-xs text-slate-400 mt-1">נוצר {created}</p>
           {purchasedAt && <p className="text-xs text-violet-500 mt-0.5">נרכש {purchasedAt}</p>}
+          {lead.purchasePrice > 0 && <p className="text-xs font-black text-slate-500 mt-0.5">שולם {formatILS(lead.purchasePrice)}</p>}
         </div>
       </div>
 
@@ -335,6 +336,7 @@ export default function AdvisorMyLeads() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusTab, setStatusTab] = useState("הכל");
+  const [search, setSearch] = useState("");
 
   useEffect(() => { load(); }, []);
   async function load() { setLoading(true); const r = await fetch("/api/advisor/my-leads"); if (r.status === 401) { window.location.href = "/advisor/login"; return; } if (!r.ok) { setError("שגיאה בטעינת הלידים."); setLoading(false); return; } const j = await r.json(); setLeads(j.leads || []); setLoading(false); }
@@ -345,6 +347,9 @@ export default function AdvisorMyLeads() {
   const approved = leads.filter((l) => l.leadStatus === "אישור עקרוני");
   const closed = leads.filter((l) => l.leadStatus === "נסגר");
 
+  const totalSpent = leads.reduce((s, l) => s + (Number(l.purchasePrice) || 0), 0);
+  const conversionRate = leads.length > 0 ? Math.round((closed.length / leads.length) * 100) : 0;
+
   const statusTabs = [
     { key: "הכל", label: "הכל", count: leads.length },
     { key: "חדש", label: "חדשים", count: newLeads.length },
@@ -354,11 +359,79 @@ export default function AdvisorMyLeads() {
   ];
 
   const filteredBase = statusTab === "חדש" ? newLeads : statusTab === "בתהליך" ? inProgress : statusTab === "אישור" ? approved : statusTab === "נסגר" ? closed : leads;
-  const filtered = [...filteredBase].sort((a, b) => {
-    const af = a.followUpDate ? new Date(a.followUpDate).getTime() : Number.MAX_SAFE_INTEGER;
-    const bf = b.followUpDate ? new Date(b.followUpDate).getTime() : Number.MAX_SAFE_INTEGER;
-    return af - bf;
-  });
+  const q = search.trim().toLowerCase();
+  const filtered = [...filteredBase]
+    .filter((l) => !q || (l.name || "").toLowerCase().includes(q) || (l.phone || "").replace(/[^\d]/g, "").includes(q.replace(/[^\d]/g, "")))
+    .sort((a, b) => {
+      const af = a.followUpDate ? new Date(a.followUpDate).getTime() : Number.MAX_SAFE_INTEGER;
+      const bf = b.followUpDate ? new Date(b.followUpDate).getTime() : Number.MAX_SAFE_INTEGER;
+      return af - bf;
+    });
 
-  return <><Head><title>הלידים שלי | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head><main dir="rtl" className="min-h-screen bg-slate-50"><AdvisorHeader active="/advisor/my-leads" /><div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5"><div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">{loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2.5"><Skeleton variant="line" className="w-20" /><Skeleton variant="line" className="w-10 h-8" /></div>) : <><KpiTile label="סה״כ לידים" value={leads.length} /><KpiTile label="חדשים" value={newLeads.length} /><KpiTile label="בתהליך" value={inProgress.length} /><KpiTile label="נסגרו" value={closed.length} /></>}</div><div className="flex gap-1.5 flex-wrap mb-4">{statusTabs.map(({ key, label, count }) => <button key={key} onClick={() => setStatusTab(key)} className={`flex items-center gap-1.5 px-4 py-2 text-sm font-bold whitespace-nowrap rounded-full transition-colors ${statusTab === key ? "bg-violet-700 text-white" : "bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300"}`}>{label}<span className={`tabular-nums text-xs px-1.5 py-0.5 rounded-full font-black ${statusTab === key ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>{count}</span></button>)}</div>{error && <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold flex items-center justify-between gap-3"><span>{error}</span><button onClick={() => setError("")} className="text-red-400 hover:text-red-600 font-black text-lg leading-none">×</button></div>}{loading && <div className="grid gap-3 md:grid-cols-2">{Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}</div>}{!loading && filtered.length === 0 && statusTab === "הכל" && <EmptyState glyph="📋" title="עדיין לא רכשתם לידים" description="עברו לחנות הלידים כדי לגלוש בלידים הזמינים ולרכוש." action={<Link href="/advisor/leads" className="inline-block rounded-full bg-violet-700 text-white px-6 py-3 text-sm font-black hover:bg-violet-800 transition-colors">לחנות הלידים ←</Link>} />}{!loading && filtered.length === 0 && statusTab !== "הכל" && <EmptyState glyph="🔍" title="אין לידים בקטגוריה זו" description="נסו לשנות את הסינון." />}<div className="grid gap-3 md:grid-cols-2">{filtered.map((lead) => <MyLeadCard key={lead.id} lead={lead} onUpdate={update} />)}</div></div></main></>;
+  return (
+    <>
+      <Head><title>הלידים שלי | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
+      <main dir="rtl" className="min-h-screen bg-slate-50">
+        <AdvisorHeader active="/advisor/my-leads" />
+        <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5">
+
+          {/* KPIs */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+            {loading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2.5">
+                    <Skeleton variant="line" className="w-20" /><Skeleton variant="line" className="w-10 h-8" />
+                  </div>
+                ))
+              : <>
+                  <KpiTile label="סה״כ לידים שנקנו" value={leads.length} />
+                  <KpiTile label="הוצאה כוללת" value={formatILS(totalSpent)} />
+                  <KpiTile label="נסגרו" value={closed.length} />
+                  <KpiTile label="אחוז המרה" value={`${conversionRate}%`} />
+                </>}
+          </div>
+
+          {/* Search + status tabs */}
+          <div className="mb-4 space-y-2">
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="חיפוש לפי שם או טלפון..."
+              className="w-full max-w-sm border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 bg-white"
+              dir="rtl"
+            />
+            <div className="flex gap-1.5 flex-wrap">
+              {statusTabs.map(({ key, label, count }) => (
+                <button key={key} onClick={() => setStatusTab(key)} className={`flex items-center gap-1.5 px-4 py-2 text-sm font-bold whitespace-nowrap rounded-full transition-colors ${statusTab === key ? "bg-violet-700 text-white" : "bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300"}`}>
+                  {label}
+                  <span className={`tabular-nums text-xs px-1.5 py-0.5 rounded-full font-black ${statusTab === key ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>{count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && (
+            <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold flex items-center justify-between gap-3">
+              <span>{error}</span>
+              <button onClick={() => setError("")} className="text-red-400 hover:text-red-600 font-black text-lg leading-none">×</button>
+            </div>
+          )}
+
+          {loading && <div className="grid gap-3 md:grid-cols-2">{Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}</div>}
+          {!loading && filtered.length === 0 && !q && statusTab === "הכל" && (
+            <EmptyState glyph="📋" title="עדיין לא רכשתם לידים" description="עברו לחנות הלידים כדי לגלוש בלידים הזמינים ולרכוש."
+              action={<Link href="/advisor/leads" className="inline-block rounded-full bg-violet-700 text-white px-6 py-3 text-sm font-black hover:bg-violet-800 transition-colors">לחנות הלידים ←</Link>} />
+          )}
+          {!loading && filtered.length === 0 && (q || statusTab !== "הכל") && (
+            <EmptyState glyph="🔍" title="אין תוצאות" description="נסו לשנות את החיפוש או הסינון." />
+          )}
+          <div className="grid gap-3 md:grid-cols-2">
+            {filtered.map((lead) => <MyLeadCard key={lead.id} lead={lead} onUpdate={update} />)}
+          </div>
+
+        </div>
+      </main>
+    </>
+  );
 }
