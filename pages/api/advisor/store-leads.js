@@ -1,4 +1,4 @@
-import { LeadStoreError, readStoreLeads } from "../../../lib/leadsStore";
+import { LeadStoreError, readAdvisors, readStoreLeads } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 
 function apiError(res, status, code, message) {
@@ -13,7 +13,10 @@ export default async function handler(req, res) {
 
   try {
     const leads = await readStoreLeads();
-    return res.status(200).json({ leads });
+    const advisors = await readAdvisors();
+    const advisor = advisors.find((a) => String(a.advisor_id || "") === session.advisorId);
+    const isPartnerAdvisor = String(advisor?.advisor_type || "").trim().toLowerCase() === "partner";
+    return res.status(200).json({ leads, isPartnerAdvisor });
   } catch (error) {
     if (error instanceof LeadStoreError) {
       const status = error.code === "SUPABASE_ENV_MISSING" ? 503 : 502;

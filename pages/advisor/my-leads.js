@@ -94,6 +94,7 @@ function MyLeadCard({ lead, onUpdate }) {
           <div className="flex items-center gap-2 flex-wrap mb-2">
             <Tag variant={tagVariant}>{quality}</Tag>
             {lead.isExclusive && <Tag variant="exclusive">בלעדי</Tag>}
+            {lead.purchaseType === "partner_claim" && <Tag variant="upgrade">שותף</Tag>}
             <span className={`text-xs font-black px-2.5 py-0.5 rounded-full ${statusBadgeClass}`}>
               {currentStatus}
             </span>

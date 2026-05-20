@@ -50,7 +50,7 @@ function CardSkeleton() {
   );
 }
 
-function LeadStoreCard({ lead, onPurchase, purchasing }) {
+function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
   const [confirm, setConfirm] = useState(null);
 
   const isSold = lead.storeStatus === "sold";
@@ -160,36 +160,48 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
 
         {/* Purchase buttons */}
         {!isSold && !lead._purchased && !confirm && (
-          <div className="grid grid-cols-2 gap-2">
+          isPartnerAdvisor ? (
             <button
-              onClick={() => setConfirm("regular")}
+              onClick={() => setConfirm("partner_claim")}
               disabled={purchasing}
-              className="text-sm font-black px-3 py-2.5 rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 transition-colors disabled:opacity-50 min-h-[46px]"
+              className="w-full text-sm font-black px-3 py-2.5 rounded-2xl bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-50 min-h-[46px]"
             >
-              <span className="block text-xs font-bold text-violet-500 mb-0.5">ליד רגיל</span>
-              {formatPrice(lead.storePrice)}
+              קח לטיפול
             </button>
-            <button
-              onClick={() => setConfirm("exclusive")}
-              disabled={purchasing}
-              className="text-sm font-black px-3 py-2.5 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[46px]"
-            >
-              <span className="block text-xs font-bold text-violet-300 mb-0.5">בלעדי</span>
-              {formatPrice(lead.exclusivePrice)}
-            </button>
-          </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setConfirm("regular")}
+                disabled={purchasing}
+                className="text-sm font-black px-3 py-2.5 rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 transition-colors disabled:opacity-50 min-h-[46px]"
+              >
+                <span className="block text-xs font-bold text-violet-500 mb-0.5">ליד רגיל</span>
+                {formatPrice(lead.storePrice)}
+              </button>
+              <button
+                onClick={() => setConfirm("exclusive")}
+                disabled={purchasing}
+                className="text-sm font-black px-3 py-2.5 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[46px]"
+              >
+                <span className="block text-xs font-bold text-violet-300 mb-0.5">בלעדי</span>
+                {formatPrice(lead.exclusivePrice)}
+              </button>
+            </div>
+          )
         )}
 
         {/* Confirm dialog */}
         {confirm && !lead._purchased && (
           <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
             <p className="text-sm font-black text-violet-900 mb-1">
-              אישור רכישת ליד {confirm === "exclusive" ? "בלעדי" : "רגיל"}
+              {confirm === "partner_claim" ? "אישור לקיחת ליד לטיפול" : `אישור רכישת ליד ${confirm === "exclusive" ? "בלעדי" : "רגיל"}`}
             </p>
             <p className="text-xs text-violet-700 mb-4 leading-relaxed">
-              {confirm === "exclusive"
-                ? "ליד בלעדי יימכר לך בלבד ויחסם לרכישה נוספת."
-                : "לאחר רכישה תקבלו גישה לפרטי הקשר המלאים."}
+              {confirm === "partner_claim"
+                ? "הליד יוקצה לטיפולך ויוסר מהשוק ליועצים אחרים."
+                : confirm === "exclusive"
+                  ? "ליד בלעדי יימכר לך בלבד ויחסם לרכישה נוספת."
+                  : "לאחר רכישה תקבלו גישה לפרטי הקשר המלאים."}
             </p>
             <div className="flex gap-2">
               <button
@@ -218,6 +230,7 @@ export default function AdvisorLeadsStore() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isPartnerAdvisor, setIsPartnerAdvisor] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [successId, setSuccessId] = useState(null);
   const [filter, setFilter] = useState("הכל");
@@ -231,6 +244,7 @@ export default function AdvisorLeadsStore() {
     if (!r.ok) { setError("שגיאה בטעינת הלידים. נסו לרענן."); setLoading(false); return; }
     const j = await r.json();
     setLeads(j.leads || []);
+    setIsPartnerAdvisor(Boolean(j.isPartnerAdvisor));
     setLoading(false);
   }
 
@@ -238,10 +252,12 @@ export default function AdvisorLeadsStore() {
     setPurchasing(true);
     setError("");
     try {
-      const r = await fetch("/api/advisor/purchase-lead", {
+      const endpoint = purchaseType === "partner_claim" ? "/api/advisor/partner-claim-lead" : "/api/advisor/purchase-lead";
+      const payload = purchaseType === "partner_claim" ? { leadId } : { leadId, purchaseType };
+      const r = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId, purchaseType }),
+        body: JSON.stringify(payload),
       });
       const j = await r.json();
       if (!r.ok) {
@@ -249,7 +265,7 @@ export default function AdvisorLeadsStore() {
         return { ok: false };
       }
       setSuccessId(leadId);
-      if (purchaseType === "exclusive") {
+      if (purchaseType === "exclusive" || purchaseType === "partner_claim") {
         setLeads((arr) => arr.filter((l) => l.id !== leadId));
       } else {
         setLeads((arr) => arr.map((l) => l.id === leadId ? { ...l, _purchased: true } : l));
@@ -353,7 +369,7 @@ export default function AdvisorLeadsStore() {
 
           <div className="grid gap-3 md:grid-cols-2">
             {filtered.map((lead) => (
-              <LeadStoreCard key={lead.id} lead={lead} onPurchase={purchase} purchasing={purchasing} />
+              <LeadStoreCard key={lead.id} lead={lead} onPurchase={purchase} purchasing={purchasing} isPartnerAdvisor={isPartnerAdvisor} />
             ))}
           </div>
 
