@@ -2,44 +2,10 @@ import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatILS } from "../../lib/format";
+import { KpiTile, Pill, Tag, Skeleton, EmptyState } from "../../components/ui";
 
+const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi", "חלש": "danger" };
 const STATUS_OPTIONS = ["חדש", "בטיפול", "נקבעה שיחה", "אושר עקרונית", "נסגר", "לא רלוונטי"];
-
-const QUALITY_CONFIG = {
-  חם:     { cls: "bg-emerald-100 text-emerald-700 border-emerald-300", icon: "🔥" },
-  בינוני: { cls: "bg-amber-100 text-amber-700 border-amber-300",       icon: "☀️" },
-  חלש:    { cls: "bg-slate-100 text-slate-500 border-slate-200",       icon: "❄️" },
-};
-
-function AdvisorNav({ active }) {
-  const links = [
-    { href: "/advisor", label: "סקירה כללית" },
-    { href: "/advisor/leads", label: "חנות לידים" },
-    { href: "/advisor/my-leads", label: "הלידים שלי" },
-  ];
-  return (
-    <nav className="flex gap-1 mt-3 border-b border-slate-800 px-4">
-      {links.map(({ href, label }) => (
-        <Link
-          key={href}
-          href={href}
-          className={`px-4 py-2.5 text-sm font-bold rounded-t-lg transition-colors ${active === href ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"}`}
-        >
-          {label}
-        </Link>
-      ))}
-    </nav>
-  );
-}
-
-function QualityBadge({ quality }) {
-  const cfg = QUALITY_CONFIG[quality] || QUALITY_CONFIG["בינוני"];
-  return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full border ${cfg.cls}`}>
-      {cfg.icon} {quality || "בינוני"}
-    </span>
-  );
-}
 
 function ScoreBar({ score }) {
   const pct = Math.min(100, Math.max(0, Number(score) || 0));
@@ -49,7 +15,38 @@ function ScoreBar({ score }) {
       <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-xs font-black text-slate-500 w-8 text-left">{pct}%</span>
+      <span className="text-xs font-black text-slate-500 w-8 text-start tabular-nums">{pct}%</span>
+    </div>
+  );
+}
+
+function CardSkeleton() {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 space-y-2">
+          <div className="flex gap-2">
+            <Skeleton variant="line" className="w-16 h-5 rounded-full" />
+            <Skeleton variant="line" className="w-14 h-5 rounded-full" />
+          </div>
+          <Skeleton variant="title" />
+          <Skeleton variant="line" className="w-28" />
+        </div>
+        <div className="space-y-2 shrink-0">
+          <Skeleton variant="line" className="w-24 h-6" />
+          <Skeleton variant="line" className="w-20" />
+        </div>
+      </div>
+      <Skeleton variant="line" />
+      <div className="flex gap-2">
+        <Skeleton variant="line" className="w-28 h-6 rounded-full" />
+        <Skeleton variant="line" className="w-20 h-6 rounded-full" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Skeleton variant="block" className="h-9" />
+        <Skeleton variant="block" className="h-9" />
+      </div>
+      <Skeleton variant="block" className="h-14" />
     </div>
   );
 }
@@ -57,71 +54,89 @@ function ScoreBar({ score }) {
 function MyLeadCard({ lead, onUpdate }) {
   const [notes, setNotes] = useState(lead.internalNotes || "");
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const score = Math.round(Number(lead.approvalScore || lead.estimatedApprovalResult) || 0);
   const quality = lead.leadQuality || (score >= 70 ? "חם" : score >= 40 ? "בינוני" : "חלש");
+  const tagVariant = QUALITY_TAG[quality] || "default";
+  const isHot = quality === "חם";
   const created = new Date(lead.createdAt).toLocaleDateString("he-IL", { day: "numeric", month: "short", year: "numeric" });
-  const purchasedAt = lead.purchasedAt ? new Date(lead.purchasedAt).toLocaleDateString("he-IL", { day: "numeric", month: "short" }) : "";
+  const purchasedAt = lead.purchasedAt
+    ? new Date(lead.purchasedAt).toLocaleDateString("he-IL", { day: "numeric", month: "short" })
+    : "";
 
   async function saveNotes() {
+    if (notes === (lead.internalNotes || "")) return;
     setSaving(true);
     await onUpdate(lead.id, { internalNotes: notes, lastContactedAt: new Date().toISOString() });
     setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
   }
 
   return (
-    <article className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:border-violet-200 transition-colors">
+    <article className={`bg-white rounded-2xl p-5 shadow-sm transition-colors border ${
+      isHot ? "border-emerald-200 hover:border-emerald-300" : "border-slate-200 hover:border-violet-200"
+    }`}>
 
       {/* Header — full contact info visible */}
       <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <QualityBadge quality={quality} />
-            {lead.isExclusive && (
-              <span className="text-xs font-black text-violet-700 bg-violet-100 border border-violet-200 px-2 py-0.5 rounded-full">בלעדי</span>
-            )}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+            <Tag variant={tagVariant}>{quality}</Tag>
+            {lead.isExclusive && <Tag variant="exclusive">בלעדי</Tag>}
             {lead.city && <span className="text-xs font-bold text-slate-500">📍 {lead.city}</span>}
           </div>
-          <h2 className="text-lg font-black text-slate-950">{lead.name || "—"}</h2>
+          <h2 className="text-base font-black text-slate-950 truncate">{lead.name || "—"}</h2>
           {lead.phone ? (
-            <a href={`tel:${lead.phone}`} className="text-sm font-bold text-violet-600 hover:underline">{lead.phone}</a>
+            <a href={`tel:${lead.phone}`} className="text-sm font-bold text-violet-600 hover:underline">
+              {lead.phone}
+            </a>
           ) : (
             <span className="text-sm text-slate-400">אין טלפון</span>
           )}
         </div>
-        <div className="text-left shrink-0">
-          <p className="text-xl font-black text-slate-950">{formatILS(lead.mortgageAmount || 0)}</p>
-          <p className="text-xs text-slate-400 mt-0.5">ליד נוצר {created}</p>
+        <div className="text-start shrink-0">
+          <p className="text-lg font-black text-slate-950 tabular-nums">{formatILS(lead.mortgageAmount || 0)}</p>
+          <p className="text-xs text-slate-400 mt-0.5">נוצר {created}</p>
           {purchasedAt && <p className="text-xs text-violet-500 mt-0.5">נרכש {purchasedAt}</p>}
         </div>
       </div>
 
       {/* Approval score */}
       <div className="mb-4">
-        <div className="flex justify-between text-xs font-bold text-slate-500 mb-1">
+        <div className="flex justify-between text-xs font-bold text-slate-500 mb-1.5">
           <span>סיכוי אישור (אומדן)</span>
-          <span>{score}%</span>
+          <span className="tabular-nums">{score}%</span>
         </div>
         <ScoreBar score={score} />
       </div>
 
-      {/* Meta */}
-      <div className="flex flex-wrap gap-2 mb-4 text-xs">
-        {lead.monthlyIncome > 0 && (
-          <span className="bg-slate-50 border border-slate-200 px-3 py-1 rounded-full font-bold text-slate-700">
-            הכנסה: {formatILS(lead.monthlyIncome)}
-          </span>
-        )}
-        {lead.contractStatus && (
-          <span className="bg-slate-50 border border-slate-200 px-3 py-1 rounded-full font-bold text-slate-700">{lead.contractStatus}</span>
-        )}
-        {lead.employmentStatus && (
-          <span className="bg-slate-50 border border-slate-200 px-3 py-1 rounded-full font-bold text-slate-700">{lead.employmentStatus}</span>
-        )}
-        {lead.mainIssue && (
-          <span className="bg-violet-50 border border-violet-100 px-3 py-1 rounded-full font-bold text-violet-700">{lead.mainIssue}</span>
-        )}
-      </div>
+      {/* Meta pills */}
+      {(lead.monthlyIncome > 0 || lead.contractStatus || lead.employmentStatus || lead.mainIssue) && (
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {lead.monthlyIncome > 0 && (
+            <span className="text-xs bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-bold text-slate-700">
+              הכנסה: {formatILS(lead.monthlyIncome)}
+            </span>
+          )}
+          {lead.contractStatus && (
+            <span className="text-xs bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-bold text-slate-700">
+              {lead.contractStatus}
+            </span>
+          )}
+          {lead.employmentStatus && (
+            <span className="text-xs bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-bold text-slate-700">
+              {lead.employmentStatus}
+            </span>
+          )}
+          {lead.mainIssue && (
+            <span className="text-xs bg-violet-50 border border-violet-100 px-2.5 py-1 rounded-full font-bold text-violet-700">
+              {lead.mainIssue}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Status + follow-up */}
       <div className="grid grid-cols-2 gap-3 mb-4">
@@ -153,13 +168,38 @@ function MyLeadCard({ lead, onUpdate }) {
           className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-violet-400 resize-none"
           rows={2}
           value={notes}
-          onChange={(e) => setNotes(e.target.value)}
+          onChange={(e) => { setNotes(e.target.value); setSaved(false); }}
           onBlur={saveNotes}
           placeholder="הוסיפו הערות, תיאום שיחה, עדכון סטטוס..."
         />
-        {saving && <p className="text-xs text-slate-400 mt-1">שומר...</p>}
+        <p className={`text-xs mt-1 font-bold h-4 transition-opacity ${saved || saving ? "opacity-100" : "opacity-0"} ${saved ? "text-emerald-600" : "text-slate-400"}`}>
+          {saving ? "שומר..." : "נשמר ✓"}
+        </p>
       </div>
     </article>
+  );
+}
+
+function AdvisorNav({ active }) {
+  const links = [
+    { href: "/advisor", label: "סקירה כללית" },
+    { href: "/advisor/leads", label: "חנות לידים" },
+    { href: "/advisor/my-leads", label: "הלידים שלי" },
+  ];
+  return (
+    <nav className="flex gap-1 mt-3 border-b border-slate-800 px-4">
+      {links.map(({ href, label }) => (
+        <Link
+          key={href}
+          href={href}
+          className={`px-4 py-2.5 text-sm font-bold rounded-t-lg transition-colors ${
+            active === href ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"
+          }`}
+        >
+          {label}
+        </Link>
+      ))}
+    </nav>
   );
 }
 
@@ -195,7 +235,8 @@ export default function AdvisorMyLeads() {
 
   const hot    = leads.filter((l) => l.leadQuality === "חם");
   const warm   = leads.filter((l) => l.leadQuality === "בינוני");
-  const filtered = filter === "חם" ? hot : filter === "בינוני" ? warm : leads;
+  const excl   = leads.filter((l) => l.isExclusive);
+  const filtered = filter === "חם" ? hot : filter === "בינוני" ? warm : filter === "בלעדי" ? excl : leads;
 
   return (
     <>
@@ -211,7 +252,7 @@ export default function AdvisorMyLeads() {
             <div className="flex items-center justify-between pb-3">
               <div className="flex items-center gap-3">
                 <span className="text-lg font-black">FINZO</span>
-                <span className="text-xs text-violet-400 font-bold">פורטל יועצים</span>
+                <span className="text-xs font-black text-violet-400 bg-violet-400/10 border border-violet-400/20 px-2 py-0.5 rounded-full tracking-wide">PRO</span>
               </div>
               <button
                 onClick={() => { fetch("/api/advisor/login", { method: "DELETE" }).finally(() => { window.location.href = "/advisor/login"; }); }}
@@ -226,50 +267,68 @@ export default function AdvisorMyLeads() {
 
         <div className="max-w-5xl mx-auto px-4 py-8">
 
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            {[
-              { label: "סה״כ לידים", value: leads.length, color: "text-slate-950" },
-              { label: "🔥 חמים", value: hot.length, color: "text-emerald-600" },
-              { label: "☀️ בינוניים", value: warm.length, color: "text-amber-600" },
-            ].map((s) => (
-              <div key={s.label} className="bg-white border border-slate-200 rounded-2xl p-4 text-center shadow-sm">
-                <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
-                <p className="text-xs font-bold text-slate-500 mt-1">{s.label}</p>
-              </div>
-            ))}
+          {/* KPI strip */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
+                  <Skeleton variant="line" className="w-20" />
+                  <Skeleton variant="line" className="w-10 h-8" />
+                </div>
+              ))
+            ) : (
+              <>
+                <KpiTile label="סה״כ לידים" value={leads.length} />
+                <KpiTile label="חמים" value={hot.length} delta={hot.length > 0 ? "ממתינים לטיפול" : undefined} deltaDir="up" />
+                <KpiTile label="בינוניים" value={warm.length} />
+                <KpiTile label="בלעדיים" value={excl.length} />
+              </>
+            )}
           </div>
 
-          {/* Filter */}
+          {/* Filter pills */}
           <div className="flex gap-2 flex-wrap mb-6">
-            {[
-              { key: "הכל", label: `הכל (${leads.length})` },
-              { key: "חם", label: `🔥 חמים (${hot.length})` },
-              { key: "בינוני", label: `☀️ בינוניים (${warm.length})` },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setFilter(key)}
-                className={`text-sm font-bold px-4 py-2 rounded-full border transition-colors ${filter === key ? "bg-violet-600 text-white border-violet-600" : "bg-white text-slate-500 border-slate-200 hover:border-violet-300"}`}
-              >
-                {label}
-              </button>
-            ))}
+            <Pill active={filter === "הכל"}    count={leads.length} onClick={() => setFilter("הכל")}>הכל</Pill>
+            <Pill active={filter === "חם"}     count={hot.length}   onClick={() => setFilter("חם")}>חמים</Pill>
+            <Pill active={filter === "בינוני"} count={warm.length}  onClick={() => setFilter("בינוני")}>בינוניים</Pill>
+            {excl.length > 0 && (
+              <Pill active={filter === "בלעדי"} count={excl.length} onClick={() => setFilter("בלעדי")}>בלעדיים</Pill>
+            )}
           </div>
 
-          {error && <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold">{error}</div>}
-
-          {loading && <div className="text-center py-16 text-slate-500 font-bold">טוען לידים...</div>}
-
-          {!loading && filtered.length === 0 && (
-            <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl">
-              <p className="text-4xl mb-3">📋</p>
-              <p className="font-black text-slate-950 text-lg">עדיין לא רכשתם לידים</p>
-              <p className="text-slate-500 mt-2 text-sm">עברו לחנות הלידים כדי לגלוש בלידים הזמינים.</p>
-              <Link href="/advisor/leads" className="mt-4 inline-block rounded-full bg-violet-700 text-white px-6 py-3 text-sm font-black hover:bg-violet-800 transition-colors">
-                לחנות הלידים ←
-              </Link>
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold flex items-center justify-between gap-3">
+              <span>{error}</span>
+              <button onClick={() => setError("")} className="text-red-400 hover:text-red-600 font-black text-lg leading-none">×</button>
             </div>
+          )}
+
+          {/* Skeleton cards */}
+          {loading && (
+            <div className="grid gap-4 md:grid-cols-2">
+              {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
+            </div>
+          )}
+
+          {/* Empty states */}
+          {!loading && filtered.length === 0 && filter === "הכל" && (
+            <EmptyState
+              glyph="📋"
+              title="עדיין לא רכשתם לידים"
+              description="עברו לחנות הלידים כדי לגלוש בלידים הזמינים ולרכוש."
+              action={
+                <Link href="/advisor/leads" className="inline-block rounded-full bg-violet-700 text-white px-6 py-3 text-sm font-black hover:bg-violet-800 transition-colors">
+                  לחנות הלידים ←
+                </Link>
+              }
+            />
+          )}
+          {!loading && filtered.length === 0 && filter !== "הכל" && (
+            <EmptyState
+              glyph="🔍"
+              title="אין לידים בקטגוריה זו"
+              description="נסו לשנות את הסינון."
+            />
           )}
 
           <div className="grid gap-4 md:grid-cols-2">

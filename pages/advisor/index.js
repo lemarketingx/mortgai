@@ -2,24 +2,10 @@ import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatILS } from "../../lib/format";
+import { KpiTile, Pill, Tag, Skeleton, EmptyState } from "../../components/ui";
 
-const QUALITY_CONFIG = {
-  חם:     { cls: "bg-emerald-100 text-emerald-700 border-emerald-300", dot: "bg-emerald-500", icon: "🔥" },
-  בינוני: { cls: "bg-amber-100 text-amber-700 border-amber-300",   dot: "bg-amber-400",   icon: "☀️" },
-  חלש:    { cls: "bg-slate-100 text-slate-500 border-slate-200",   dot: "bg-slate-400",   icon: "❄️" },
-};
-
+const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi", "חלש": "danger" };
 const STATUS_OPTIONS = ["חדש", "נשלח ליועץ", "בטיפול", "אושר עקרונית", "נסגר", "לא רלוונטי"];
-
-function QualityBadge({ quality }) {
-  const cfg = QUALITY_CONFIG[quality] || QUALITY_CONFIG["בינוני"];
-  return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full border ${cfg.cls}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.icon} {quality || "בינוני"}
-    </span>
-  );
-}
 
 function ScoreBar({ score }) {
   const pct = Math.min(100, Math.max(0, Number(score) || 0));
@@ -29,7 +15,34 @@ function ScoreBar({ score }) {
       <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-xs font-black text-mort-muted w-8 text-left">{pct}%</span>
+      <span className="text-xs font-black text-slate-500 w-8 text-start tabular-nums">{pct}%</span>
+    </div>
+  );
+}
+
+function CardSkeleton() {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 space-y-2">
+          <Skeleton variant="line" className="w-20 h-5 rounded-full" />
+          <Skeleton variant="title" />
+          <Skeleton variant="line" className="w-28" />
+        </div>
+        <div className="space-y-2 shrink-0">
+          <Skeleton variant="line" className="w-24 h-6" />
+          <Skeleton variant="line" className="w-16" />
+        </div>
+      </div>
+      <Skeleton variant="line" />
+      <div className="flex gap-2">
+        <Skeleton variant="line" className="w-24 h-6 rounded-full" />
+        <Skeleton variant="line" className="w-20 h-6 rounded-full" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Skeleton variant="block" className="h-9" />
+        <Skeleton variant="block" className="h-9" />
+      </div>
     </div>
   );
 }
@@ -37,70 +50,85 @@ function ScoreBar({ score }) {
 function LeadCard({ lead, onUpdate }) {
   const [notes, setNotes] = useState(lead.internalNotes || "");
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   async function saveNotes() {
+    if (notes === (lead.internalNotes || "")) return;
     setSaving(true);
     await onUpdate(lead.id, { internalNotes: notes, lastContactedAt: new Date().toISOString() });
     setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
   }
 
   const score = Math.round(Number(lead.approvalScore) || 0);
   const quality = lead.leadQuality || (score >= 70 ? "חם" : score >= 40 ? "בינוני" : "חלש");
+  const tagVariant = QUALITY_TAG[quality] || "default";
+  const isHot = quality === "חם";
   const created = new Date(lead.createdAt).toLocaleDateString("he-IL", { day: "numeric", month: "short", year: "numeric" });
+  const purchasedAt = lead.purchasedAt
+    ? new Date(lead.purchasedAt).toLocaleDateString("he-IL", { day: "numeric", month: "short" })
+    : "";
 
   return (
-    <article className="bg-white border border-slate-200 rounded-2xl p-5 shadow-soft hover:border-violet-200 transition-colors">
+    <article className={`bg-white rounded-2xl p-5 shadow-sm transition-colors border ${
+      isHot ? "border-emerald-200 hover:border-emerald-300" : "border-slate-200 hover:border-violet-200"
+    }`}>
 
-      {/* Header row */}
+      {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <QualityBadge quality={quality} />
-            {lead.city && (
-              <span className="text-xs text-mort-muted font-bold">📍 {lead.city}</span>
-            )}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+            <Tag variant={tagVariant}>{quality}</Tag>
+            {lead.isExclusive && <Tag variant="exclusive">בלעדי</Tag>}
+            {lead.city && <span className="text-xs text-slate-500 font-bold">📍 {lead.city}</span>}
           </div>
-          <h2 className="text-lg font-black text-mort-ink">{lead.name}</h2>
-          <a href={`tel:${lead.phone}`} className="text-sm font-bold text-violet-600 hover:underline">{lead.phone}</a>
+          <h2 className="text-base font-black text-slate-950 truncate">{lead.name}</h2>
+          <a href={`tel:${lead.phone}`} className="text-sm font-bold text-violet-600 hover:underline">
+            {lead.phone}
+          </a>
         </div>
-        <div className="text-left shrink-0">
-          <p className="text-xl font-black text-mort-ink font-number">{formatILS(lead.mortgageAmount || 0)}</p>
-          <p className="text-xs text-mort-muted mt-0.5">{created}</p>
+        <div className="text-start shrink-0">
+          <p className="text-lg font-black text-slate-950 tabular-nums">{formatILS(lead.mortgageAmount || 0)}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{created}</p>
+          {purchasedAt && <p className="text-xs text-violet-500 mt-0.5">נרכש {purchasedAt}</p>}
         </div>
       </div>
 
       {/* Score bar */}
       <div className="mb-4">
-        <div className="flex justify-between text-xs font-bold text-mort-muted mb-1">
+        <div className="flex justify-between text-xs font-bold text-slate-500 mb-1.5">
           <span>סיכוי אישור</span>
-          <span>{score}%</span>
+          <span className="tabular-nums">{score}%</span>
         </div>
         <ScoreBar score={score} />
       </div>
 
       {/* Meta pills */}
-      <div className="flex flex-wrap gap-2 mb-4 text-xs">
-        {lead.monthlyIncome && (
-          <span className="bg-surface-low border border-surface-high px-3 py-1 rounded-full font-bold text-mort-text">
-            הכנסה: {formatILS(lead.monthlyIncome)}
-          </span>
-        )}
-        {lead.purchaseStatus && (
-          <span className="bg-surface-low border border-surface-high px-3 py-1 rounded-full font-bold text-mort-text">
-            {lead.purchaseStatus}
-          </span>
-        )}
-        {lead.employmentStatus && (
-          <span className="bg-surface-low border border-surface-high px-3 py-1 rounded-full font-bold text-mort-text">
-            {lead.employmentStatus}
-          </span>
-        )}
-      </div>
+      {(lead.monthlyIncome || lead.purchaseStatus || lead.employmentStatus) && (
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {lead.monthlyIncome && (
+            <span className="text-xs bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-bold text-slate-700">
+              הכנסה: {formatILS(lead.monthlyIncome)}
+            </span>
+          )}
+          {lead.purchaseStatus && (
+            <span className="text-xs bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-bold text-slate-700">
+              {lead.purchaseStatus}
+            </span>
+          )}
+          {lead.employmentStatus && (
+            <span className="text-xs bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-bold text-slate-700">
+              {lead.employmentStatus}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Status + follow-up */}
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
-          <label className="block text-xs font-black text-mort-muted mb-1">סטטוס</label>
+          <label className="block text-xs font-black text-slate-500 mb-1">סטטוס</label>
           <select
             className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
             value={lead.leadStatus || lead.status || "חדש"}
@@ -110,7 +138,7 @@ function LeadCard({ lead, onUpdate }) {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-black text-mort-muted mb-1">מעקב</label>
+          <label className="block text-xs font-black text-slate-500 mb-1">מועד מעקב</label>
           <input
             type="date"
             className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
@@ -122,16 +150,18 @@ function LeadCard({ lead, onUpdate }) {
 
       {/* Notes */}
       <div>
-        <label className="block text-xs font-black text-mort-muted mb-1">הערות פנימיות</label>
+        <label className="block text-xs font-black text-slate-500 mb-1">הערות פנימיות</label>
         <textarea
           className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white resize-none"
           rows={2}
           value={notes}
-          onChange={(e) => setNotes(e.target.value)}
+          onChange={(e) => { setNotes(e.target.value); setSaved(false); }}
           onBlur={saveNotes}
           placeholder="הוסיפו הערות, תיאום שיחה, עדכון סטטוס..."
         />
-        {saving && <p className="text-xs text-mort-muted mt-1">שומר...</p>}
+        <p className={`text-xs mt-1 font-bold h-4 transition-opacity ${saved || saving ? "opacity-100" : "opacity-0"} ${saved ? "text-emerald-600" : "text-slate-400"}`}>
+          {saving ? "שומר..." : "נשמר ✓"}
+        </p>
       </div>
     </article>
   );
@@ -149,7 +179,9 @@ function AdvisorNav({ active }) {
         <Link
           key={href}
           href={href}
-          className={`px-4 py-2.5 text-sm font-bold rounded-t-lg transition-colors ${active === href ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"}`}
+          className={`px-4 py-2.5 text-sm font-bold rounded-t-lg transition-colors ${
+            active === href ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"
+          }`}
         >
           {label}
         </Link>
@@ -187,10 +219,9 @@ export default function AdvisorDashboard() {
     setMsg("");
   }
 
-  const hot   = leads.filter((l) => (l.leadQuality === "חם")     || (!l.leadQuality && Number(l.approvalScore) >= 70));
-  const warm  = leads.filter((l) => (l.leadQuality === "בינוני") || (!l.leadQuality && Number(l.approvalScore) >= 40 && Number(l.approvalScore) < 70));
-  const cold  = leads.filter((l) => (l.leadQuality === "חלש")    || (!l.leadQuality && Number(l.approvalScore) < 40));
-
+  const hot  = leads.filter((l) => (l.leadQuality === "חם")     || (!l.leadQuality && Number(l.approvalScore) >= 70));
+  const warm = leads.filter((l) => (l.leadQuality === "בינוני") || (!l.leadQuality && Number(l.approvalScore) >= 40 && Number(l.approvalScore) < 70));
+  const cold = leads.filter((l) => (l.leadQuality === "חלש")    || (!l.leadQuality && Number(l.approvalScore) < 40));
   const filtered = filter === "חם" ? hot : filter === "בינוני" ? warm : filter === "חלש" ? cold : leads;
 
   return (
@@ -200,15 +231,14 @@ export default function AdvisorDashboard() {
         <meta name="robots" content="noindex,nofollow" />
       </Head>
 
-      <main dir="rtl" className="min-h-screen bg-surface-DEFAULT">
+      <main dir="rtl" className="min-h-screen bg-slate-50">
 
-        {/* ── Top bar ── */}
-        <header className="bg-mort-ink text-white px-4 pb-0 pt-4 sticky top-0 z-40">
+        <header className="bg-slate-950 text-white px-4 pb-0 pt-4 sticky top-0 z-40">
           <div className="max-w-5xl mx-auto">
             <div className="flex items-center justify-between pb-3">
               <div className="flex items-center gap-3">
                 <span className="text-lg font-black">FINZO</span>
-                <span className="text-xs text-violet-400 font-bold">פורטל יועצים</span>
+                <span className="text-xs font-black text-violet-400 bg-violet-400/10 border border-violet-400/20 px-2 py-0.5 rounded-full tracking-wide">PRO</span>
               </div>
               <button
                 onClick={() => { fetch("/api/advisor/login", { method: "DELETE" }).finally(() => { window.location.href = "/advisor/login"; }); }}
@@ -223,51 +253,65 @@ export default function AdvisorDashboard() {
 
         <div className="max-w-5xl mx-auto px-4 py-8">
 
-          {/* Stats row */}
+          {/* KPI strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {[
-              { label: "סה״כ לידים", value: leads.length, color: "text-mort-ink" },
-              { label: "🔥 חמים", value: hot.length, color: "text-emerald-600" },
-              { label: "☀️ בינוניים", value: warm.length, color: "text-amber-600" },
-              { label: "❄️ חלשים", value: cold.length, color: "text-slate-400" },
-            ].map((s) => (
-              <div key={s.label} className="bg-white border border-slate-200 rounded-2xl p-4 text-center shadow-soft">
-                <p className={`text-2xl font-black font-number ${s.color}`}>{s.value}</p>
-                <p className="text-xs font-bold text-mort-muted mt-1">{s.label}</p>
-              </div>
-            ))}
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
+                  <Skeleton variant="line" className="w-20" />
+                  <Skeleton variant="line" className="w-10 h-8" />
+                </div>
+              ))
+            ) : (
+              <>
+                <KpiTile label="לידים שלי" value={leads.length} />
+                <KpiTile label="חמים" value={hot.length} delta={hot.length > 0 ? "ממתינים לטיפול" : undefined} deltaDir="up" />
+                <KpiTile label="בינוניים" value={warm.length} />
+                <KpiTile label="חלשים" value={cold.length} />
+              </>
+            )}
           </div>
 
           {/* Filter pills */}
           <div className="flex gap-2 flex-wrap mb-6">
-            {["הכל", "חם", "בינוני", "חלש"].map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`text-sm font-bold px-4 py-2 rounded-full border transition-colors ${
-                  filter === f
-                    ? "bg-violet-600 text-white border-violet-600"
-                    : "bg-white text-mort-muted border-slate-200 hover:border-violet-300"
-                }`}
-              >
-                {f === "הכל" ? `הכל (${leads.length})` : f === "חם" ? `🔥 חמים (${hot.length})` : f === "בינוני" ? `☀️ בינוניים (${warm.length})` : `❄️ חלשים (${cold.length})`}
-              </button>
-            ))}
+            <Pill active={filter === "הכל"}    count={leads.length} onClick={() => setFilter("הכל")}>הכל</Pill>
+            <Pill active={filter === "חם"}     count={hot.length}   onClick={() => setFilter("חם")}>חמים</Pill>
+            <Pill active={filter === "בינוני"} count={warm.length}  onClick={() => setFilter("בינוני")}>בינוניים</Pill>
+            <Pill active={filter === "חלש"}    count={cold.length}  onClick={() => setFilter("חלש")}>חלשים</Pill>
           </div>
 
           {msg && (
             <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold">{msg}</div>
           )}
 
-          {/* Leads */}
+          {/* Skeleton cards */}
           {loading && (
-            <div className="text-center py-16 text-mort-muted font-bold">טוען לידים...</div>
-          )}
-          {!loading && filtered.length === 0 && (
-            <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl">
-              <p className="text-mort-muted font-bold">אין לידים בקטגוריה זו כרגע</p>
+            <div className="grid gap-4">
+              {Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           )}
+
+          {/* Empty states */}
+          {!loading && filtered.length === 0 && filter === "הכל" && (
+            <EmptyState
+              glyph="📋"
+              title="עדיין אין לידים"
+              description="רכשו לידים מחנות הלידים כדי לנהל אותם כאן."
+              action={
+                <Link href="/advisor/leads" className="inline-block rounded-full bg-violet-700 text-white px-6 py-3 text-sm font-black hover:bg-violet-800 transition-colors">
+                  לחנות הלידים ←
+                </Link>
+              }
+            />
+          )}
+          {!loading && filtered.length === 0 && filter !== "הכל" && (
+            <EmptyState
+              glyph="🔍"
+              title="אין לידים בקטגוריה זו"
+              description="נסו לשנות את הסינון."
+            />
+          )}
+
           <div className="grid gap-4">
             {filtered.map((lead) => (
               <LeadCard key={lead.id} lead={lead} onUpdate={update} />
