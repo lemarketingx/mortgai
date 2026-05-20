@@ -17,7 +17,7 @@ export function KpiTile({ label, value, unit, delta, deltaDir = "up", variant = 
   return (
     <div
       className={[
-        "rounded-finzo-lg p-[22px] border",
+        "rounded-finzo-lg p-4 border",
         isDark
           ? "bg-finzo-ink text-white border-finzo-ink"
           : "bg-finzo-white border-finzo-line",
@@ -31,7 +31,7 @@ export function KpiTile({ label, value, unit, delta, deltaDir = "up", variant = 
 
       {/* Row 2: serif value */}
       <p
-        className="font-serif text-[36px] leading-none mt-2 tracking-[-0.02em]"
+        className="font-serif text-[30px] leading-none mt-1.5 tracking-[-0.02em]"
         style={{ fontFeatureSettings: '"tnum" 1' }}
       >
         {value}
@@ -44,7 +44,7 @@ export function KpiTile({ label, value, unit, delta, deltaDir = "up", variant = 
 
       {/* Row 3: mono delta */}
       {delta && (
-        <p className={`mt-2 font-mono text-[12px] ${deltaColor}`}>
+        <p className={`mt-1.5 font-mono text-[11px] ${deltaColor}`}>
           {delta}
         </p>
       )}
