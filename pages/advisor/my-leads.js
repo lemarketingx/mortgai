@@ -2,7 +2,8 @@ import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatILS } from "../../lib/format";
-import { KpiTile, Pill, Tag, Skeleton, EmptyState } from "../../components/ui";
+import { KpiTile, Tag, Skeleton, EmptyState } from "../../components/ui";
+import AdvisorHeader from "../../components/AdvisorHeader";
 
 const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi", "חלש": "danger" };
 const STATUS_OPTIONS = ["חדש", "בטיפול", "נקבעה שיחה", "אושר עקרונית", "נסגר", "לא רלוונטי"];
@@ -113,11 +114,11 @@ function MyLeadCard({ lead, onUpdate }) {
         </div>
       </div>
 
-      {/* Score bar */}
+      {/* Score */}
       <div className="mb-5">
         <div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5">
-          <span>סיכוי אישור</span>
-          <span className="tabular-nums">{score}/100</span>
+          <span>ציון FINZO</span>
+          <span className="tabular-nums font-black text-slate-600">{score}/100</span>
         </div>
         <ScoreBar score={score} />
       </div>
@@ -182,34 +183,11 @@ function MyLeadCard({ lead, onUpdate }) {
   );
 }
 
-function AdvisorNav({ active }) {
-  const links = [
-    { href: "/advisor", label: "סקירה כללית" },
-    { href: "/advisor/leads", label: "חנות לידים" },
-    { href: "/advisor/my-leads", label: "הלידים שלי" },
-  ];
-  return (
-    <nav className="flex gap-1 mt-3 border-b border-slate-800 px-4">
-      {links.map(({ href, label }) => (
-        <Link
-          key={href}
-          href={href}
-          className={`px-4 py-2.5 text-sm font-bold rounded-t-lg transition-colors ${
-            active === href ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"
-          }`}
-        >
-          {label}
-        </Link>
-      ))}
-    </nav>
-  );
-}
-
 export default function AdvisorMyLeads() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filter, setFilter] = useState("הכל");
+  const [statusTab, setStatusTab] = useState("הכל");
 
   useEffect(() => { load(); }, []);
 
@@ -238,39 +216,38 @@ export default function AdvisorMyLeads() {
   const hot    = leads.filter((l) => l.leadQuality === "חם");
   const warm   = leads.filter((l) => l.leadQuality === "בינוני");
   const excl   = leads.filter((l) => l.isExclusive);
-  const filtered = filter === "חם" ? hot : filter === "בינוני" ? warm : filter === "בלעדי" ? excl : leads;
+
+  const newLeads    = leads.filter((l) => !l.leadStatus || l.leadStatus === "חדש");
+  const activeLeads = leads.filter((l) => l.leadStatus === "בטיפול" || l.leadStatus === "נקבעה שיחה");
+  const approvedLeads = leads.filter((l) => l.leadStatus === "אושר עקרונית");
+
+  const statusTabs = [
+    { key: "הכל",    label: "הכל",           count: leads.length },
+    { key: "חדשים",  label: "חדשים",          count: newLeads.length },
+    { key: "בטיפול", label: "בטיפול",         count: activeLeads.length },
+    { key: "אושר",   label: "אושר עקרונית",  count: approvedLeads.length },
+  ];
+
+  const filtered =
+    statusTab === "חדשים"  ? newLeads :
+    statusTab === "בטיפול" ? activeLeads :
+    statusTab === "אושר"   ? approvedLeads :
+    leads;
 
   return (
     <>
       <Head>
-        <title>הלידים שלי | FINZO</title>
+        <title>הלידים שלי | FINZO PRO</title>
         <meta name="robots" content="noindex,nofollow" />
       </Head>
 
       <main dir="rtl" className="min-h-screen bg-slate-50">
+        <AdvisorHeader active="/advisor/my-leads" />
 
-        <header className="bg-slate-950 text-white px-4 pb-0 pt-4 sticky top-0 z-40">
-          <div className="max-w-5xl mx-auto">
-            <div className="flex items-center justify-between pb-3">
-              <div className="flex items-center gap-3">
-                <span className="text-lg font-black">FINZO</span>
-                <span className="text-xs font-black text-violet-400 bg-violet-400/10 border border-violet-400/20 px-2 py-0.5 rounded-full tracking-wide">PRO</span>
-              </div>
-              <button
-                onClick={() => { fetch("/api/advisor/login", { method: "DELETE" }).finally(() => { window.location.href = "/advisor/login"; }); }}
-                className="text-xs text-slate-400 hover:text-white font-bold transition-colors"
-              >
-                יציאה
-              </button>
-            </div>
-            <AdvisorNav active="/advisor/my-leads" />
-          </div>
-        </header>
-
-        <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto px-4 py-8">
 
           {/* KPI strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="bg-white border border-slate-100 rounded-2xl p-5 space-y-3">
@@ -288,14 +265,28 @@ export default function AdvisorMyLeads() {
             )}
           </div>
 
-          {/* Filter pills */}
-          <div className="flex gap-2 flex-wrap mb-6">
-            <Pill active={filter === "הכל"}    count={leads.length} onClick={() => setFilter("הכל")}>הכל</Pill>
-            <Pill active={filter === "חם"}     count={hot.length}   onClick={() => setFilter("חם")}>חמים</Pill>
-            <Pill active={filter === "בינוני"} count={warm.length}  onClick={() => setFilter("בינוני")}>בינוניים</Pill>
-            {excl.length > 0 && (
-              <Pill active={filter === "בלעדי"} count={excl.length} onClick={() => setFilter("בלעדי")}>בלעדיים</Pill>
-            )}
+          {/* Status filter tabs */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-6">
+            <div className="flex border-b border-slate-100 overflow-x-auto">
+              {statusTabs.map(({ key, label, count }) => (
+                <button
+                  key={key}
+                  onClick={() => setStatusTab(key)}
+                  className={`flex items-center gap-1.5 px-5 py-3.5 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${
+                    statusTab === key
+                      ? "border-violet-600 text-violet-700"
+                      : "border-transparent text-slate-400 hover:text-slate-700"
+                  }`}
+                >
+                  {label}
+                  <span className={`tabular-nums text-xs px-1.5 py-0.5 rounded-full font-black ${
+                    statusTab === key ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-500"
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {error && (
@@ -311,7 +302,7 @@ export default function AdvisorMyLeads() {
             </div>
           )}
 
-          {!loading && filtered.length === 0 && filter === "הכל" && (
+          {!loading && filtered.length === 0 && statusTab === "הכל" && (
             <EmptyState
               glyph="📋"
               title="עדיין לא רכשתם לידים"
@@ -323,7 +314,7 @@ export default function AdvisorMyLeads() {
               }
             />
           )}
-          {!loading && filtered.length === 0 && filter !== "הכל" && (
+          {!loading && filtered.length === 0 && statusTab !== "הכל" && (
             <EmptyState
               glyph="🔍"
               title="אין לידים בקטגוריה זו"

@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { KpiTile, Pill, Tag, Skeleton, EmptyState } from "../../components/ui";
+import AdvisorHeader from "../../components/AdvisorHeader";
 
 const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi" };
 
@@ -33,9 +34,9 @@ function CardSkeleton() {
           <Skeleton variant="line" className="w-20 h-5 rounded-full" />
           <Skeleton variant="line" className="w-16" />
         </div>
-        <Skeleton variant="line" className="w-20 h-6" />
+        <Skeleton variant="line" className="w-20 h-7" />
       </div>
-      <Skeleton variant="line" className="w-3/4" />
+      <Skeleton variant="line" className="w-4/5" />
       <div className="grid grid-cols-2 gap-3">
         <Skeleton variant="block" className="h-14" />
         <Skeleton variant="block" className="h-14" />
@@ -55,7 +56,14 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
   const isSold = lead.storeStatus === "sold";
   const tagVariant = QUALITY_TAG[lead.leadQuality] || "default";
   const isHot = lead.leadQuality === "חם";
-  const created = new Date(lead.createdAt).toLocaleDateString("he-IL", { day: "numeric", month: "short" });
+  const timeAgo = (() => {
+    const diff = Date.now() - new Date(lead.createdAt).getTime();
+    const h = Math.floor(diff / 3600000);
+    if (h < 1) return "לפני פחות משעה";
+    if (h < 24) return `לפני ${h} שעות`;
+    const d = Math.floor(h / 24);
+    return `לפני ${d} ימים`;
+  })();
 
   async function handleConfirm() {
     const result = await onPurchase(lead.id, confirm);
@@ -63,7 +71,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
   }
 
   return (
-    <article className={`bg-white rounded-2xl p-5 shadow-sm transition-all border ${
+    <article className={`bg-white rounded-2xl shadow-sm transition-all border ${
       lead._purchased
         ? "border-emerald-200 bg-emerald-50/30"
         : isSold
@@ -73,152 +81,136 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
             : "border-slate-100 hover:border-violet-200 hover:shadow-sm"
     }`}>
 
-      {/* Header — price at top right, quality left */}
-      <div className="flex items-start justify-between gap-3 mb-3">
+      {/* Header row: tags left, price right */}
+      <div className="flex items-start justify-between gap-3 p-5 pb-3">
         <div>
           <div className="flex items-center gap-2 flex-wrap mb-1.5">
             {lead.leadQuality && <Tag variant={tagVariant}>{lead.leadQuality}</Tag>}
             {isSold && <Tag variant="danger">נמכר</Tag>}
             {lead._purchased && <Tag variant="upgrade">נרכש ✓</Tag>}
           </div>
-          {lead.city && <span className="text-xs font-bold text-slate-400">📍 {lead.city}</span>}
+          {lead.city && <p className="text-xs font-bold text-slate-400">📍 {lead.city} · {timeAgo}</p>}
         </div>
         <div className="text-start shrink-0">
-          <p className="text-base font-black text-slate-950 tabular-nums">{formatPrice(lead.storePrice)}</p>
-          <p className="text-xs text-slate-400 mt-0.5">{created}</p>
+          <p className="text-xl font-black text-slate-950 tabular-nums leading-none">{formatPrice(lead.storePrice)}</p>
+          <p className="text-[10px] font-bold text-slate-400 mt-0.5">לליד</p>
         </div>
       </div>
 
-      {/* Main issue as lead title */}
+      {/* Lead title from mainIssue */}
       {lead.mainIssue && (
-        <p className="text-sm font-bold text-slate-700 mb-4 leading-snug">{lead.mainIssue}</p>
+        <div className="px-5 pb-4">
+          <p className="text-sm font-black text-slate-900 leading-snug">{lead.mainIssue}</p>
+        </div>
       )}
 
-      {/* Key numbers */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {lead.mortgageAmount > 0 && (
-          <div className="bg-slate-50 rounded-xl px-3 py-2.5">
-            <p className="text-xs text-slate-400 font-bold mb-0.5">סכום משכנתא</p>
-            <p className="font-black text-slate-950 text-sm tabular-nums">{formatILS(lead.mortgageAmount)}</p>
+      <div className="px-5 pb-4 space-y-4">
+
+        {/* Key numbers */}
+        {(lead.mortgageAmount > 0 || lead.propertyPrice > 0) && (
+          <div className="grid grid-cols-2 gap-3">
+            {lead.mortgageAmount > 0 && (
+              <div className="bg-slate-50 rounded-xl px-3 py-2.5">
+                <p className="text-[10px] text-slate-400 font-bold mb-0.5">סכום משכנתא</p>
+                <p className="font-black text-slate-950 text-sm tabular-nums">{formatILS(lead.mortgageAmount)}</p>
+              </div>
+            )}
+            {lead.propertyPrice > 0 && (
+              <div className="bg-slate-50 rounded-xl px-3 py-2.5">
+                <p className="text-[10px] text-slate-400 font-bold mb-0.5">מחיר נכס</p>
+                <p className="font-black text-slate-950 text-sm tabular-nums">{formatILS(lead.propertyPrice)}</p>
+              </div>
+            )}
           </div>
         )}
-        {lead.propertyPrice > 0 && (
-          <div className="bg-slate-50 rounded-xl px-3 py-2.5">
-            <p className="text-xs text-slate-400 font-bold mb-0.5">מחיר נכס</p>
-            <p className="font-black text-slate-950 text-sm tabular-nums">{formatILS(lead.propertyPrice)}</p>
+
+        {/* Score */}
+        <div>
+          <div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5">
+            <span>ציון FINZO</span>
+            <span className="tabular-nums font-black text-slate-700">{lead.approvalScore}/100</span>
+          </div>
+          <ScoreBar score={lead.approvalScore} />
+        </div>
+
+        {/* Locked contact */}
+        {!lead._purchased && !isSold && (
+          <div className="rounded-xl bg-slate-50 border border-dashed border-slate-200 px-3 py-2.5 flex items-center gap-2">
+            <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <p className="text-xs font-bold text-slate-500">שם וטלפון נחשפים לאחר רכישה</p>
+          </div>
+        )}
+
+        {/* Purchased state */}
+        {lead._purchased && (
+          <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center gap-2">
+            <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <div>
+              <p className="text-sm font-black text-emerald-700">הליד נרכש</p>
+              <Link href="/advisor/my-leads" className="text-xs font-bold text-emerald-600 hover:underline">
+                ראו בלשונית הלידים שלי ←
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Purchase buttons */}
+        {!isSold && !lead._purchased && !confirm && (
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setConfirm("regular")}
+              disabled={purchasing}
+              className="text-sm font-black px-3 py-3 rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 transition-colors disabled:opacity-50 min-h-[52px]"
+            >
+              <span className="block text-xs font-bold text-violet-500 mb-0.5">ליד רגיל</span>
+              {formatPrice(lead.storePrice)}
+            </button>
+            <button
+              onClick={() => setConfirm("exclusive")}
+              disabled={purchasing}
+              className="text-sm font-black px-3 py-3 rounded-2xl bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-50 shadow-[0_4px_14px_rgba(109,40,217,0.25)] min-h-[52px]"
+            >
+              <span className="block text-xs font-bold text-violet-300 mb-0.5">בלעדי</span>
+              {formatPrice(lead.exclusivePrice)}
+            </button>
+          </div>
+        )}
+
+        {/* Confirm dialog */}
+        {confirm && !lead._purchased && (
+          <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+            <p className="text-sm font-black text-violet-900 mb-1">
+              אישור רכישת ליד {confirm === "exclusive" ? "בלעדי" : "רגיל"}
+            </p>
+            <p className="text-xs text-violet-700 mb-4 leading-relaxed">
+              {confirm === "exclusive"
+                ? "ליד בלעדי יימכר לך בלבד ויחסם לרכישה נוספת."
+                : "לאחר רכישה תקבלו גישה לפרטי הקשר המלאים."}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleConfirm}
+                disabled={purchasing}
+                className="flex-1 text-sm font-black px-4 py-2.5 rounded-full bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-70 min-h-[44px]"
+              >
+                {purchasing ? "מעבד..." : "אשר רכישה"}
+              </button>
+              <button
+                onClick={() => setConfirm(null)}
+                disabled={purchasing}
+                className="text-sm font-bold px-4 py-2.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors min-h-[44px]"
+              >
+                ביטול
+              </button>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Approval score */}
-      <div className="mb-4">
-        <div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5">
-          <span>סיכוי אישור</span>
-          <span className="tabular-nums">{lead.approvalScore}/100</span>
-        </div>
-        <ScoreBar score={lead.approvalScore} />
-      </div>
-
-      {/* Locked contact info */}
-      {!lead._purchased && !isSold && (
-        <div className="mb-4 rounded-xl bg-slate-50 border border-slate-200 border-dashed px-3 py-2.5 flex items-center gap-2">
-          <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <p className="text-xs font-bold text-slate-500">שם וטלפון נחשפים לאחר רכישה</p>
-        </div>
-      )}
-
-      {/* Purchased state */}
-      {lead._purchased && (
-        <div className="mb-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center gap-2">
-          <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-          <div>
-            <p className="text-sm font-black text-emerald-700">הליד נרכש</p>
-            <Link href="/advisor/my-leads" className="text-xs font-bold text-emerald-600 hover:underline">
-              ראו בלשונית הלידים שלי ←
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Purchase buttons */}
-      {!isSold && !lead._purchased && !confirm && (
-        <div className="grid grid-cols-2 gap-2 mt-4">
-          <button
-            onClick={() => setConfirm("regular")}
-            disabled={purchasing}
-            className="text-sm font-black px-3 py-3 rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 transition-colors disabled:opacity-50 min-h-[52px]"
-          >
-            <span className="block text-xs font-bold text-violet-500 mb-0.5">ליד רגיל</span>
-            {formatPrice(lead.storePrice)}
-          </button>
-          <button
-            onClick={() => setConfirm("exclusive")}
-            disabled={purchasing}
-            className="text-sm font-black px-3 py-3 rounded-2xl bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-50 shadow-[0_4px_14px_rgba(109,40,217,0.25)] min-h-[52px]"
-          >
-            <span className="block text-xs font-bold text-violet-300 mb-0.5">בלעדי</span>
-            {formatPrice(lead.exclusivePrice)}
-          </button>
-        </div>
-      )}
-
-      {/* Confirm dialog */}
-      {confirm && !lead._purchased && (
-        <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
-          <p className="text-sm font-black text-violet-900 mb-1">
-            אישור רכישת ליד {confirm === "exclusive" ? "בלעדי" : "רגיל"}
-          </p>
-          <p className="text-xs text-violet-700 mb-4 leading-relaxed">
-            {confirm === "exclusive"
-              ? "ליד בלעדי יימכר לך בלבד ויחסם לרכישה נוספת."
-              : "לאחר רכישה תקבלו גישה לפרטי הקשר המלאים."}
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={handleConfirm}
-              disabled={purchasing}
-              className="flex-1 text-sm font-black px-4 py-2.5 rounded-full bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-70 min-h-[44px]"
-            >
-              {purchasing ? "מעבד..." : "אשר רכישה"}
-            </button>
-            <button
-              onClick={() => setConfirm(null)}
-              disabled={purchasing}
-              className="text-sm font-bold px-4 py-2.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors min-h-[44px]"
-            >
-              ביטול
-            </button>
-          </div>
-        </div>
-      )}
     </article>
-  );
-}
-
-function AdvisorNav({ active }) {
-  const links = [
-    { href: "/advisor", label: "סקירה כללית" },
-    { href: "/advisor/leads", label: "חנות לידים" },
-    { href: "/advisor/my-leads", label: "הלידים שלי" },
-  ];
-  return (
-    <nav className="flex gap-1 mt-3 border-b border-slate-800 px-4">
-      {links.map(({ href, label }) => (
-        <Link
-          key={href}
-          href={href}
-          className={`px-4 py-2.5 text-sm font-bold rounded-t-lg transition-colors ${
-            active === href ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"
-          }`}
-        >
-          {label}
-        </Link>
-      ))}
-    </nav>
   );
 }
 
@@ -278,34 +270,31 @@ export default function AdvisorLeadsStore() {
   return (
     <>
       <Head>
-        <title>חנות לידים | FINZO</title>
+        <title>שוק לידים | FINZO PRO</title>
         <meta name="robots" content="noindex,nofollow" />
       </Head>
 
       <main dir="rtl" className="min-h-screen bg-slate-50">
+        <AdvisorHeader active="/advisor/leads" />
 
-        <header className="bg-slate-950 text-white px-4 pb-0 pt-4 sticky top-0 z-40">
-          <div className="max-w-5xl mx-auto">
-            <div className="flex items-center justify-between pb-3">
-              <div className="flex items-center gap-3">
-                <span className="text-lg font-black">FINZO</span>
-                <span className="text-xs font-black text-violet-400 bg-violet-400/10 border border-violet-400/20 px-2 py-0.5 rounded-full tracking-wide">PRO</span>
-              </div>
-              <button
-                onClick={() => { fetch("/api/advisor/login", { method: "DELETE" }).finally(() => { window.location.href = "/advisor/login"; }); }}
-                className="text-xs text-slate-400 hover:text-white font-bold transition-colors"
-              >
-                יציאה
-              </button>
-            </div>
-            <AdvisorNav active="/advisor/leads" />
+        <div className="max-w-6xl mx-auto px-4 py-8">
+
+          {/* Hero */}
+          <div className="mb-8">
+            <p className="text-[10px] font-black text-violet-600 tracking-[0.15em] uppercase mb-3">
+              FINZO MARKETPLACE · שוק לידים
+            </p>
+            <h1 className="text-2xl md:text-3xl font-black text-slate-950 leading-tight mb-2">
+              לידים חדשים, מסוננים<br />
+              <span className="text-violet-700">לפי האזור שלכם.</span>
+            </h1>
+            <p className="text-sm text-slate-500 font-bold max-w-lg">
+              כל ליד עובר אימות זהות ובדיקת איכות לפני שהוא נכנס לשוק. שם וטלפון נחשפים רק אחרי הרכישה.
+            </p>
           </div>
-        </header>
-
-        <div className="max-w-5xl mx-auto px-4 py-8">
 
           {/* KPI strip */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-3 gap-3 mb-8">
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="bg-white border border-slate-100 rounded-2xl p-5 space-y-3">
