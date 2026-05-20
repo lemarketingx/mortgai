@@ -29,6 +29,29 @@ const STATUS_BADGE = {
 const TODAY = () => new Date(new Date().toDateString());
 const DAY_MS = 1000 * 60 * 60 * 24;
 
+
+const isBrowser = typeof window !== "undefined";
+
+function loadLocalTimeline(leadId) {
+  if (!isBrowser || !leadId) return [];
+  try {
+    const raw = window.localStorage.getItem(`finzo.crm.timeline.${leadId}`);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalTimeline(leadId, timeline) {
+  if (!isBrowser || !leadId) return;
+  try {
+    window.localStorage.setItem(`finzo.crm.timeline.${leadId}`, JSON.stringify(timeline.slice(0, 30)));
+  } catch {
+    // ignore storage errors
+  }
+}
+
 function diffDays(dateStr) {
   if (!dateStr) return null;
   const target = new Date(new Date(dateStr).toDateString());
@@ -83,6 +106,7 @@ function MyLeadCard({ lead, onUpdate }) {
   const [notes, setNotes] = useState(lead.internalNotes || "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [localTimeline, setLocalTimeline] = useState([]);
 
   const score = Math.round(Number(lead.approvalScore || lead.estimatedApprovalResult) || 0);
   const quality = lead.leadQuality || (score >= 70 ? "חם" : score >= 40 ? "בינוני" : "חלש");
@@ -96,19 +120,26 @@ function MyLeadCard({ lead, onUpdate }) {
   const followUpTimeVal = lead.followUpDate?.slice(11, 16) || "";
   const { isToday, isOverdue } = getFollowUpState(followUpVal);
 
+  useEffect(() => {
+    setLocalTimeline(loadLocalTimeline(lead.id));
+  }, [lead.id]);
+
   const timeline = useMemo(() => {
-    const base = Array.isArray(lead.crmActivityLog) ? lead.crmActivityLog : [];
+    const base = [...(Array.isArray(lead.crmActivityLog) ? lead.crmActivityLog : []), ...localTimeline];
     if (!base.length) {
       return [{ text: `הליד נוצר`, at: lead.createdAt || new Date().toISOString(), type: "create" }];
     }
     return [...base].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 6);
-  }, [lead.crmActivityLog, lead.createdAt]);
+  }, [lead.crmActivityLog, lead.createdAt, localTimeline]);
   const signals = useMemo(() => buildSignals(lead), [lead]);
 
   async function logActivity(text, extraChanges = {}) {
-    const current = Array.isArray(lead.crmActivityLog) ? lead.crmActivityLog : [];
-    const next = [{ text, at: new Date().toISOString() }, ...current].slice(0, 30);
-    await onUpdate(lead.id, { crmActivityLog: next, ...extraChanges });
+    const event = { text, at: new Date().toISOString() };
+    const current = [...(Array.isArray(lead.crmActivityLog) ? lead.crmActivityLog : []), ...localTimeline];
+    const next = [event, ...current].slice(0, 30);
+    setLocalTimeline(next);
+    saveLocalTimeline(lead.id, next);
+    await onUpdate(lead.id, { ...extraChanges });
   }
 
   async function saveNotes() {
@@ -161,17 +192,17 @@ function MyLeadCard({ lead, onUpdate }) {
       <div className="grid grid-cols-3 gap-2 mb-3">
         {lead.phone && <button type="button" onClick={() => openWhatsapp()} className="text-center text-sm font-black rounded-lg py-2 bg-emerald-50 text-emerald-700">WhatsApp</button>}
         {lead.email ? <a href={`mailto:${lead.email}`} onClick={() => logActivity("נשלח מייל", { lastContactedAt: new Date().toISOString() })} className="text-center text-sm font-black rounded-lg py-2 bg-sky-50 text-sky-700">Email</a> : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">Email</button>}
-        {lead.phone ? <a href={`tel:${lead.phone}`} className="text-center text-sm font-black rounded-lg py-2 bg-violet-50 text-violet-700">שיחה</a> : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">שיחה</button>}
+        {lead.phone ? <a href={`tel:${lead.phone}`} onClick={() => logActivity("בוצעה שיחה", { lastContactedAt: new Date().toISOString() })} className="text-center text-sm font-black rounded-lg py-2 bg-violet-50 text-violet-700">שיחה</a> : <button disabled className="text-center text-sm font-black rounded-lg py-2 bg-slate-100 text-slate-400">שיחה</button>}
       </div>
 
       <div className="mb-3">
         <label className="block text-xs font-black text-slate-400 mb-1">תבניות הודעה מהירות</label>
         <div className="flex gap-2">
-          <select className="flex-1 border border-slate-200 rounded-lg px-2.5 py-2 text-sm font-bold" defaultValue="" onChange={(e) => { const m = TEMPLATE_MESSAGES[e.target.value]; if (m) openWhatsapp(m); e.target.value = ""; }}>
-            <option value="" disabled>בחרו תבנית...</option>
+          <select className="flex-1 border border-slate-200 rounded-lg px-2.5 py-2 text-sm font-bold" defaultValue="" onChange={(e) => { const m = TEMPLATE_MESSAGES[e.target.value]; if (m) { navigator.clipboard.writeText(m); logActivity(`הועתקה תבנית: ${e.target.value}`); } e.target.value = ""; }}>
+            <option value="" disabled>בחרו תבנית להעתקה...</option>
             {Object.keys(TEMPLATE_MESSAGES).map((k) => <option key={k} value={k}>{k}</option>)}
           </select>
-          <button className="px-3 rounded-lg bg-slate-100 text-slate-700 text-xs font-black" onClick={() => navigator.clipboard.writeText(notes || "")}>העתק הערה</button>
+          <button className="px-3 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-black" onClick={() => openWhatsapp(TEMPLATE_MESSAGES["עדכון סטטוס"])}>שליחה מהירה</button>
         </div>
       </div>
 
@@ -230,7 +261,12 @@ export default function AdvisorMyLeads() {
     { key: "נסגר", label: "נסגר", count: closed.length },
   ];
 
-  const filtered = statusTab === "חדש" ? newLeads : statusTab === "בתהליך" ? inProgress : statusTab === "אישור" ? approved : statusTab === "נסגר" ? closed : leads;
+  const filteredBase = statusTab === "חדש" ? newLeads : statusTab === "בתהליך" ? inProgress : statusTab === "אישור" ? approved : statusTab === "נסגר" ? closed : leads;
+  const filtered = [...filteredBase].sort((a, b) => {
+    const af = a.followUpDate ? new Date(a.followUpDate).getTime() : Number.MAX_SAFE_INTEGER;
+    const bf = b.followUpDate ? new Date(b.followUpDate).getTime() : Number.MAX_SAFE_INTEGER;
+    return af - bf;
+  });
 
   return <><Head><title>הלידים שלי | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head><main dir="rtl" className="min-h-screen bg-slate-50"><AdvisorHeader active="/advisor/my-leads" /><div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5"><div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">{loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2.5"><Skeleton variant="line" className="w-20" /><Skeleton variant="line" className="w-10 h-8" /></div>) : <><KpiTile label="סה״כ לידים" value={leads.length} /><KpiTile label="חדשים" value={newLeads.length} /><KpiTile label="בתהליך" value={inProgress.length} /><KpiTile label="נסגרו" value={closed.length} /></>}</div><div className="flex gap-1.5 flex-wrap mb-4">{statusTabs.map(({ key, label, count }) => <button key={key} onClick={() => setStatusTab(key)} className={`flex items-center gap-1.5 px-4 py-2 text-sm font-bold whitespace-nowrap rounded-full transition-colors ${statusTab === key ? "bg-violet-700 text-white" : "bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300"}`}>{label}<span className={`tabular-nums text-xs px-1.5 py-0.5 rounded-full font-black ${statusTab === key ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>{count}</span></button>)}</div>{error && <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold flex items-center justify-between gap-3"><span>{error}</span><button onClick={() => setError("")} className="text-red-400 hover:text-red-600 font-black text-lg leading-none">×</button></div>}{loading && <div className="grid gap-3 md:grid-cols-2">{Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}</div>}{!loading && filtered.length === 0 && statusTab === "הכל" && <EmptyState glyph="📋" title="עדיין לא רכשתם לידים" description="עברו לחנות הלידים כדי לגלוש בלידים הזמינים ולרכוש." action={<Link href="/advisor/leads" className="inline-block rounded-full bg-violet-700 text-white px-6 py-3 text-sm font-black hover:bg-violet-800 transition-colors">לחנות הלידים ←</Link>} />}{!loading && filtered.length === 0 && statusTab !== "הכל" && <EmptyState glyph="🔍" title="אין לידים בקטגוריה זו" description="נסו לשנות את הסינון." />}<div className="grid gap-3 md:grid-cols-2">{filtered.map((lead) => <MyLeadCard key={lead.id} lead={lead} onUpdate={update} />)}</div></div></main></>;
 }
