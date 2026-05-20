@@ -28,7 +28,7 @@ function ScoreBar({ score }) {
 
 function CardSkeleton() {
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4">
+    <div className="bg-white border border-slate-100 rounded-2xl p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <Skeleton variant="line" className="w-20 h-5 rounded-full" />
@@ -77,7 +77,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
         : isSold
           ? "border-slate-100 opacity-60"
           : isHot
-            ? "border-emerald-200 shadow-md hover:shadow-lg"
+            ? "border-emerald-200 ring-1 ring-emerald-300/60 shadow-md hover:shadow-lg"
             : "border-slate-100 hover:border-violet-200 hover:shadow-sm"
     }`}>
 
@@ -104,7 +104,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
         </div>
       )}
 
-      <div className="px-5 pb-4 space-y-4">
+      <div className="px-5 pb-4 space-y-3">
 
         {/* Key numbers */}
         {(lead.mortgageAmount > 0 || lead.propertyPrice > 0) && (
@@ -172,7 +172,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
             <button
               onClick={() => setConfirm("exclusive")}
               disabled={purchasing}
-              className="text-sm font-black px-3 py-3 rounded-2xl bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-50 shadow-[0_4px_14px_rgba(109,40,217,0.25)] min-h-[52px]"
+              className="text-sm font-black px-3 py-3 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[52px]"
             >
               <span className="block text-xs font-bold text-violet-300 mb-0.5">בלעדי</span>
               {formatPrice(lead.exclusivePrice)}
@@ -277,10 +277,10 @@ export default function AdvisorLeadsStore() {
       <main dir="rtl" className="min-h-screen bg-slate-50">
         <AdvisorHeader active="/advisor/leads" />
 
-        <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto px-4 py-6">
 
           {/* Hero */}
-          <div className="mb-8">
+          <div className="mb-6">
             <p className="text-[10px] font-black text-violet-600 tracking-[0.15em] uppercase mb-3">
               FINZO MARKETPLACE · שוק לידים
             </p>
@@ -294,10 +294,10 @@ export default function AdvisorLeadsStore() {
           </div>
 
           {/* KPI strip */}
-          <div className="grid grid-cols-3 gap-3 mb-8">
+          <div className="grid grid-cols-3 gap-2.5 mb-5">
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-5 space-y-3">
+                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2.5">
                   <Skeleton variant="line" className="w-20" />
                   <Skeleton variant="line" className="w-10 h-8" />
                 </div>
@@ -312,7 +312,7 @@ export default function AdvisorLeadsStore() {
           </div>
 
           {/* Filter pills */}
-          <div className="flex gap-2 flex-wrap mb-6">
+          <div className="flex gap-2 flex-wrap mb-5">
             <Pill active={filter === "הכל"}    count={leads.length} onClick={() => setFilter("הכל")}>הכל</Pill>
             <Pill active={filter === "חם"}     count={hot.length}   onClick={() => setFilter("חם")}>חמים</Pill>
             <Pill active={filter === "בינוני"} count={warm.length}  onClick={() => setFilter("בינוני")}>בינוניים</Pill>
@@ -336,7 +336,7 @@ export default function AdvisorLeadsStore() {
           )}
 
           {loading && (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           )}
@@ -351,7 +351,7 @@ export default function AdvisorLeadsStore() {
             />
           )}
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             {filtered.map((lead) => (
               <LeadStoreCard key={lead.id} lead={lead} onPurchase={purchase} purchasing={purchasing} />
             ))}

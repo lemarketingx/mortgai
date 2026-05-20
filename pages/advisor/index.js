@@ -42,7 +42,7 @@ function getFocusItems(leads) {
 
 function RowSkeleton() {
   return (
-    <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-50 last:border-0">
+    <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-50 last:border-0">
       <div className="w-12 h-5 bg-slate-100 rounded-full animate-pulse shrink-0" />
       <div className="flex-1 space-y-1.5 min-w-0">
         <div className="h-3.5 bg-slate-100 rounded w-2/5 animate-pulse" />
@@ -63,7 +63,7 @@ function LeadRow({ lead, onUpdate }) {
   const currentStatus = lead.leadStatus || lead.status || "חדש";
 
   return (
-    <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-50 last:border-0 hover:bg-slate-50/60 transition-colors">
+    <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-50 last:border-0 hover:bg-slate-50/60 transition-colors">
       <Tag variant={tagVariant}>{quality}</Tag>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-black text-slate-950 truncate">{lead.name || "—"}</p>
@@ -148,10 +148,10 @@ export default function AdvisorDashboard() {
       <main dir="rtl" className="min-h-screen bg-slate-50">
         <AdvisorHeader active="/advisor" />
 
-        <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="max-w-7xl mx-auto px-4 py-5">
 
           {/* Greeting */}
-          <div className="flex items-end justify-between gap-4 mb-6">
+          <div className="flex items-end justify-between gap-4 mb-5">
             <div>
               <p className="text-xs font-bold text-slate-400 mb-1.5">{todayStr}</p>
               <h1 className="text-2xl md:text-3xl font-black text-slate-950 leading-tight">
@@ -175,10 +175,10 @@ export default function AdvisorDashboard() {
           </div>
 
           {/* KPI strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-5">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-5 space-y-3">
+                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2.5">
                   <div className="h-3 w-16 bg-slate-100 rounded animate-pulse" />
                   <div className="h-8 w-12 bg-slate-100 rounded animate-pulse" />
                 </div>
@@ -194,10 +194,10 @@ export default function AdvisorDashboard() {
           </div>
 
           {/* Two-column main */}
-          <div className="grid lg:grid-cols-[320px_1fr] gap-5">
+          <div className="grid lg:grid-cols-[300px_1fr] gap-4">
 
             {/* ── Left panel ── */}
-            <div className="space-y-4">
+            <div className="space-y-3">
 
               {/* Focus section */}
               <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -223,14 +223,14 @@ export default function AdvisorDashboard() {
                     <p className="text-sm font-bold text-slate-500">כל הלידים בטיפול</p>
                   </div>
                 ) : (
-                  <div className="p-5 space-y-4">
+                  <div className="divide-y divide-slate-50">
                     {focusItems.map(({ lead, text, sub }, i) => (
-                      <div key={lead.id} className="flex gap-3">
-                        <span className="text-xs font-black text-slate-300 tabular-nums shrink-0 mt-0.5 w-5">
+                      <div key={lead.id} className="flex gap-3 px-5 py-4">
+                        <span className="text-sm font-black text-violet-400/60 tabular-nums shrink-0 mt-0.5 w-6">
                           {String(i + 1).padStart(2, "0")}
                         </span>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-slate-900 leading-snug mb-0.5">{text}</p>
+                          <p className="text-sm font-black text-slate-900 leading-snug mb-1">{text}</p>
                           <p className="text-xs text-slate-400">
                             {lead.phone ? (
                               <a href={`tel:${lead.phone}`} className="text-violet-600 font-bold hover:underline">
@@ -265,7 +265,7 @@ export default function AdvisorDashboard() {
 
             {/* ── Right: lead table panel ── */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 shrink-0">
                 <div>
                   <h2 className="text-sm font-black text-slate-950">הלידים שלי</h2>
                   {!loading && (
@@ -285,7 +285,7 @@ export default function AdvisorDashboard() {
                   <button
                     key={key}
                     onClick={() => setTabFilter(key)}
-                    className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold whitespace-nowrap border-b-2 transition-colors ${
+                    className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold whitespace-nowrap border-b-2 transition-colors ${
                       tabFilter === key
                         ? "border-violet-600 text-violet-700"
                         : "border-transparent text-slate-400 hover:text-slate-700"
@@ -334,7 +334,7 @@ export default function AdvisorDashboard() {
           </div>
 
           {/* Mobile CTA */}
-          <div className="mt-6 md:hidden">
+          <div className="mt-5 md:hidden">
             <Link href="/advisor/leads" className="flex items-center justify-center gap-2 bg-violet-700 text-white text-sm font-black px-4 py-3 rounded-xl hover:bg-violet-800 transition-colors">
               לשוק הלידים ←
             </Link>
