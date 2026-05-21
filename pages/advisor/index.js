@@ -1,207 +1,324 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { formatILS } from "../../lib/format";
-import { KpiTile, Tag, Skeleton } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
-import { PIPELINE_STAGES, getPipelineStageLabel, isClosedPipelineStage, normalizePipelineStage } from "../../lib/pipeline";
-import { isThisWeek } from "../../lib/mortgageCase";
+import {
+  getPipelineStageLabel,
+  isClosedPipelineStage,
+  normalizePipelineStage,
+} from "../../lib/pipeline";
 
-const FUNNEL_STAGES = PIPELINE_STAGES.filter((stage) => stage !== "closed_lost");
-
-const STAGE_COLORS = [
-  "bg-violet-500", "bg-violet-400", "bg-indigo-400", "bg-amber-400",
-  "bg-amber-500", "bg-sky-400", "bg-sky-500", "bg-blue-500",
-  "bg-blue-400", "bg-emerald-400", "bg-emerald-500", "bg-green-500",
+// ─── Pipeline groups (8 conceptual mortgage stages) ───────────────────────────
+// Each group aggregates multiple internal pipeline stages so the dashboard
+// shows a readable mortgage process, not the full 19-stage internal list.
+const PIPELINE_GROUPS = [
+  {
+    key: "new",
+    label: "ליד חדש",
+    stages: new Set(["new_lead", "contacted"]),
+    color: "bg-violet-500",
+    linkStage: "new_lead",
+  },
+  {
+    key: "docs",
+    label: "מסמכים",
+    stages: new Set(["documents_requested", "waiting_documents", "documents_received"]),
+    color: "bg-amber-500",
+    linkStage: "waiting_documents",
+  },
+  {
+    key: "eligibility",
+    label: "בדיקת זכאות",
+    stages: new Set(["eligibility_review"]),
+    color: "bg-sky-500",
+    linkStage: "eligibility_review",
+  },
+  {
+    key: "appraisal",
+    label: 'שמאות / עו"ד',
+    stages: new Set(["appraisal_ordered", "appraisal_completed", "lawyer_review"]),
+    color: "bg-cyan-500",
+    linkStage: "appraisal_ordered",
+  },
+  {
+    key: "bank",
+    label: "הגשה לבנק",
+    stages: new Set(["submitted_to_bank", "principle_approval", "bank_negotiation", "selected_track"]),
+    color: "bg-blue-500",
+    linkStage: "submitted_to_bank",
+  },
+  {
+    key: "signing",
+    label: "חתימות",
+    stages: new Set(["signing_scheduled", "signed"]),
+    color: "bg-emerald-500",
+    linkStage: "signing_scheduled",
+  },
+  {
+    key: "funds",
+    label: "שחרור כספים",
+    stages: new Set(["collateral_completion", "funds_released"]),
+    color: "bg-green-500",
+    linkStage: "collateral_completion",
+  },
+  {
+    key: "done",
+    label: "הושלם",
+    stages: new Set(["closed_won"]),
+    color: "bg-green-600",
+    linkStage: "closed_won",
+  },
 ];
-const STAGE_BG = [
-  "bg-violet-50 text-violet-700 border-violet-200",
-  "bg-violet-50 text-violet-700 border-violet-200",
-  "bg-indigo-50 text-indigo-700 border-indigo-200",
-  "bg-amber-50 text-amber-700 border-amber-200",
-  "bg-amber-50 text-amber-700 border-amber-200",
-  "bg-sky-50 text-sky-700 border-sky-200",
-  "bg-sky-50 text-sky-700 border-sky-200",
-  "bg-blue-50 text-blue-700 border-blue-200",
-  "bg-blue-50 text-blue-700 border-blue-200",
-  "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "bg-green-50 text-green-800 border-green-200",
-];
 
-const TODAY_DATE = () => new Date(new Date().toDateString());
+// ─── Attention item tag styles ────────────────────────────────────────────────
+const TAG_CLS = {
+  danger:  "bg-rose-100 text-rose-700 border-rose-200",
+  warning: "bg-amber-100 text-amber-800 border-amber-200",
+  docs:    "bg-amber-50 text-amber-600 border-amber-100",
+  stale:   "bg-sky-50 text-sky-700 border-sky-200",
+  low:     "bg-slate-100 text-slate-600 border-slate-200",
+};
+const DOT_CLS = {
+  danger:  "bg-rose-500",
+  warning: "bg-amber-500",
+  docs:    "bg-amber-400",
+  stale:   "bg-sky-400",
+  low:     "bg-slate-400",
+};
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
 const DAY_MS = 864e5;
 
-function diffDays(dateStr) {
-  if (!dateStr) return null;
-  const t = new Date(new Date(dateStr).toDateString());
-  return Math.max(0, Math.floor((TODAY_DATE().getTime() - t.getTime()) / DAY_MS));
-}
-function isToday(dateStr) {
-  if (!dateStr) return false;
-  return new Date(dateStr).toDateString() === new Date().toDateString();
-}
-function isOverdue(dateStr) {
-  if (!dateStr) return false;
-  return new Date(dateStr) < TODAY_DATE();
-}
-function formatDate(dateStr) {
-  if (!dateStr) return "";
-  return new Date(dateStr).toLocaleDateString("he-IL", { day: "numeric", month: "short" });
+function getToday() { return new Date(new Date().toDateString()); }
+
+function diffDays(d) {
+  if (!d) return null;
+  const t = new Date(new Date(d).toDateString());
+  return Math.max(0, Math.floor((getToday().getTime() - t.getTime()) / DAY_MS));
 }
 
-function stageIndex(lead) {
-  const s = normalizePipelineStage(lead.pipelineStage || lead.leadStatus);
-  const i = FUNNEL_STAGES.indexOf(s);
-  return i >= 0 ? i : 0;
-}
-function isActive(lead) {
-  return !isClosedPipelineStage(lead.pipelineStage || lead.leadStatus);
-}
-function isThisMonth(dateStr) {
-  if (!dateStr) return false;
-  const d = new Date(dateStr);
-  const now = new Date();
-  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+function isOverdue(d) {
+  return Boolean(d) && new Date(d) < getToday();
 }
 
-function buildAlerts(leads) {
-  const alerts = [];
-  const active = leads.filter(isActive);
-
-  const noAction = active.filter((l) => !l.nextAction && !l.nextActionAt && !l.followUpDate && diffDays(l.lastActivityAt || l.createdAt) >= 2);
-  if (noAction.length) alerts.push({ type: "warning", text: `${noAction.length} עסקאות ללא פעולה מוגדרת`, sub: "הגדר פעולה הבאה", leads: noAction });
-
-  const overdueActions = active.filter((l) => (l.nextActionAt && isOverdue(l.nextActionAt)) || (l.followUpDate && isOverdue(l.followUpDate)));
-  if (overdueActions.length) alerts.push({ type: "danger", text: `${overdueActions.length} פעולות באיחור`, sub: "טיפול דחוף", leads: overdueActions });
-
-  const waitDocs = active.filter((l) => normalizePipelineStage(l.pipelineStage || l.leadStatus) === "waiting_documents");
-  if (waitDocs.length) alerts.push({ type: "info", text: `${waitDocs.length} לקוחות מחכים למסמכים`, sub: "שלח תזכורת", leads: waitDocs });
-
-  const todayActions = active.filter((l) => isToday(l.nextActionAt) || isToday(l.followUpDate));
-  if (todayActions.length) alerts.push({ type: "success", text: `${todayActions.length} פעולות להיום`, sub: "לו״ז היום", leads: todayActions });
-
-  return alerts;
+function isToday(d) {
+  return Boolean(d) && new Date(d).toDateString() === new Date().toDateString();
 }
 
-function AlertCard({ alert }) {
-  const [open, setOpen] = useState(false);
-  const colors = {
-    danger: "border-rose-300 bg-rose-50",
-    warning: "border-amber-300 bg-amber-50",
-    info: "border-sky-300 bg-sky-50",
-    success: "border-emerald-300 bg-emerald-50",
-  };
-  const textColors = {
-    danger: "text-rose-800",
-    warning: "text-amber-800",
-    info: "text-sky-800",
-    success: "text-emerald-800",
-  };
-  const dots = {
-    danger: "bg-rose-500",
-    warning: "bg-amber-500",
-    info: "bg-sky-500",
-    success: "bg-emerald-500",
-  };
+function formatShort(d) {
+  if (!d) return "";
+  return new Date(d).toLocaleDateString("he-IL", { day: "numeric", month: "short" });
+}
+
+function formatRelative(d) {
+  if (!d) return "";
+  const days = diffDays(d);
+  if (days === 0) return "היום";
+  if (days === 1) return "אתמול";
+  if (days !== null && days < 7) return `לפני ${days} ימים`;
+  return formatShort(d);
+}
+
+function getStage(l) { return normalizePipelineStage(l.pipelineStage || l.leadStatus); }
+function isActive(l) { return !isClosedPipelineStage(l.pipelineStage || l.leadStatus); }
+
+// ─── Derives a list of leads that need immediate attention ────────────────────
+// All signals come from existing lead data fields — no invented data.
+function buildAttentionItems(active) {
+  const items = [];
+  const seen = new Set();
+
+  active.forEach((lead) => {
+    if (seen.has(lead.id)) return;
+    const stage = getStage(lead);
+    const overdueNextAction = lead.nextActionAt && isOverdue(lead.nextActionAt);
+    const overdueFollowUp   = lead.followUpDate  && isOverdue(lead.followUpDate);
+
+    if (overdueNextAction || overdueFollowUp) {
+      const due = lead.nextActionAt || lead.followUpDate;
+      items.push({ lead, priority: 10, reason: "פעולה באיחור", detail: formatShort(due), tag: "danger" });
+      seen.add(lead.id); return;
+    }
+
+    const daysSinceContact = diffDays(lead.lastContactedAt || lead.createdAt);
+    if (stage === "new_lead" && daysSinceContact !== null && daysSinceContact >= 2) {
+      items.push({ lead, priority: 9, reason: "ליד חדש ללא קשר", detail: `${daysSinceContact} ימים`, tag: "warning" });
+      seen.add(lead.id); return;
+    }
+
+    const missingDocs = Number(lead.missingDocumentsCount || 0);
+    if (missingDocs > 0 && ["documents_requested", "waiting_documents"].includes(stage)) {
+      items.push({ lead, priority: 8, reason: "מסמכים חסרים", detail: `${missingDocs} חסרים`, tag: "docs" });
+      seen.add(lead.id); return;
+    }
+
+    const daysSinceActivity = diffDays(lead.lastActivityAt || lead.createdAt);
+    if (daysSinceActivity !== null && daysSinceActivity >= 7 && !["funds_released"].includes(stage)) {
+      items.push({ lead, priority: 7, reason: "ללא פעילות", detail: `${daysSinceActivity} ימים`, tag: "stale" });
+      seen.add(lead.id); return;
+    }
+
+    const progress = Number(lead.overallProgressPercent || 0);
+    if (progress < 20 && !["new_lead", "contacted"].includes(stage)) {
+      items.push({ lead, priority: 6, reason: "התקדמות נמוכה", detail: `${progress}%`, tag: "low" });
+      seen.add(lead.id);
+    }
+  });
+
+  return items.sort((a, b) => b.priority - a.priority).slice(0, 8);
+}
+
+// ─── Derives today's task list from existing lead data ────────────────────────
+// Shows leads with scheduled actions today/overdue, and new uncontacted leads.
+function buildTodayTasks(active) {
+  const tasks = [];
+  const usedIds = new Set();
+
+  active.forEach((lead) => {
+    const hasTodayAction = isToday(lead.nextActionAt) || isToday(lead.followUpDate);
+    const overdueAction  = (lead.nextActionAt && isOverdue(lead.nextActionAt)) ||
+                           (lead.followUpDate  && isOverdue(lead.followUpDate));
+
+    if (hasTodayAction || overdueAction) {
+      const stage = getStage(lead);
+      const taskLabel = lead.nextAction
+        ? lead.nextAction
+        : stage === "waiting_documents" || stage === "documents_requested"
+          ? "בקשת מסמכים"
+          : stage === "new_lead" ? "חזרה ראשונה לליד"
+          : "מעקב";
+      tasks.push({ lead, task: taskLabel, overdue: overdueAction && !hasTodayAction });
+      usedIds.add(lead.id);
+    }
+  });
+
+  // Supplement with new uncontacted leads when fewer than 3 explicit tasks
+  if (tasks.length < 3) {
+    active
+      .filter((l) => {
+        if (usedIds.has(l.id)) return false;
+        const s = getStage(l);
+        const days = diffDays(l.lastContactedAt || l.createdAt);
+        return s === "new_lead" && days !== null && days >= 1;
+      })
+      .slice(0, 3 - tasks.length)
+      .forEach((lead) => tasks.push({ lead, task: "חזרה ראשונה לליד", overdue: false }));
+  }
+
+  return tasks.slice(0, 8);
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function AttentionItem({ item }) {
   return (
-    <div className={`border rounded-xl overflow-hidden ${colors[alert.type]}`}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-right"
-      >
-        <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${dots[alert.type]}`} />
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm font-black ${textColors[alert.type]}`}>{alert.text}</p>
-          <p className={`text-xs font-bold opacity-70 ${textColors[alert.type]}`}>{alert.sub}</p>
-        </div>
-        <span className={`text-xs font-black ${textColors[alert.type]} opacity-50`}>{open ? "▲" : "▼"}</span>
-      </button>
-      {open && (
-        <div className="border-t border-current border-opacity-10 divide-y divide-current divide-opacity-10">
-          {alert.leads.slice(0, 5).map((l) => (
-            <Link key={l.id} href={`/advisor/lead/${l.id}`} className={`flex items-center justify-between px-4 py-2 hover:bg-white/40 transition-colors ${textColors[alert.type]}`}>
-              <span className="text-sm font-bold">{l.name || "—"}</span>
-              <span className="text-xs opacity-70">{getPipelineStageLabel(l.pipelineStage || l.leadStatus)}</span>
-            </Link>
-          ))}
-          {alert.leads.length > 5 && (
-            <Link href="/advisor/my-leads" className={`block px-4 py-2 text-xs font-black text-center opacity-60 hover:opacity-100 ${textColors[alert.type]}`}>
-              עוד {alert.leads.length - 5}...
-            </Link>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PipelineFunnel({ leads }) {
-  const counts = useMemo(() => {
-    const map = {};
-    FUNNEL_STAGES.forEach((s) => { map[s] = 0; });
-    leads.forEach((l) => {
-      const s = normalizePipelineStage(l.pipelineStage || l.leadStatus);
-      if (map[s] !== undefined) map[s]++;
-    });
-    return FUNNEL_STAGES.map((s, i) => ({ stage: s, count: map[s], color: STAGE_COLORS[i], bg: STAGE_BG[i] }));
-  }, [leads]);
-
-  const max = Math.max(...counts.map((c) => c.count), 1);
-
-  return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-5">
-      <h2 className="text-sm font-black text-slate-950 mb-4">Pipeline — התפלגות עסקאות</h2>
-      <div className="space-y-2">
-        {counts.filter((c) => c.count > 0 || FUNNEL_STAGES.indexOf(c.stage) < 4).map(({ stage, count, color, bg }) => (
-          <Link key={stage} href={`/advisor/my-leads?stage=${encodeURIComponent(stage)}`} className="flex items-center gap-3 group">
-            <span className="text-xs font-bold text-slate-500 w-44 shrink-0 truncate text-right">{getPipelineStageLabel(stage)}</span>
-            <div className="flex-1 h-5 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${color}`}
-                style={{ width: count > 0 ? `${Math.max(6, (count / max) * 100)}%` : "0%" }}
-              />
-            </div>
-            <span className="text-xs font-black tabular-nums text-slate-700 w-6 text-left shrink-0">{count}</span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function LeadRow({ lead }) {
-  const si = stageIndex(lead);
-  const stage = normalizePipelineStage(lead.pipelineStage || lead.leadStatus);
-  const stageBg = STAGE_BG[si] || "bg-slate-50 text-slate-600 border-slate-200";
-  const hasOverdue = (lead.nextActionAt && isOverdue(lead.nextActionAt)) || (lead.followUpDate && isOverdue(lead.followUpDate));
-  const actionDue = lead.nextActionAt || lead.followUpDate;
-
-  return (
-    <Link href={`/advisor/lead/${lead.id}`} className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-50/80 transition-colors rounded-xl border ${hasOverdue ? "border-rose-200 bg-rose-50/40" : "border-slate-100 bg-white"}`}>
+    <Link
+      href={`/advisor/lead/${item.lead.id}`}
+      className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50/80 transition-colors rounded-xl border border-slate-100"
+    >
+      <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${DOT_CLS[item.tag]}`} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${stageBg}`}>{getPipelineStageLabel(stage)}</span>
-          {hasOverdue && <span className="text-[11px] font-black text-rose-600">⚠ באיחור</span>}
-        </div>
-        <p className="text-sm font-black text-slate-900 truncate">{lead.name || "—"}</p>
-        {lead.nextAction && <p className="text-xs text-slate-500 truncate mt-0.5">הבא: {lead.nextAction}</p>}
+        <p className="text-sm font-black text-slate-900 truncate">{item.lead.name || "—"}</p>
+        <p className="text-xs font-bold text-slate-400 truncate">{getPipelineStageLabel(getStage(item.lead))}</p>
       </div>
-      <div className="shrink-0 text-right">
-        <p className="text-sm font-black text-slate-700 tabular-nums">{formatILS(lead.mortgageAmount || 0)}</p>
-        {actionDue && <p className="text-[11px] text-slate-400 mt-0.5">{formatDate(actionDue)}</p>}
+      <div className="shrink-0 text-left">
+        <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${TAG_CLS[item.tag]}`}>
+          {item.reason}
+        </span>
+        {item.detail && (
+          <p className="text-[11px] text-slate-400 mt-0.5 text-left">{item.detail}</p>
+        )}
       </div>
     </Link>
   );
 }
 
+function TodayTaskItem({ item }) {
+  return (
+    <Link
+      href={`/advisor/lead/${item.lead.id}`}
+      className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors rounded-xl border ${
+        item.overdue ? "border-rose-200 bg-rose-50/30" : "border-slate-100 bg-white"
+      }`}
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-black text-slate-900 truncate">{item.lead.name || "—"}</p>
+        <p className="text-xs font-bold text-violet-600 truncate">{item.task}</p>
+      </div>
+      <div className="shrink-0 text-left flex flex-col items-end gap-0.5">
+        <span className="text-[11px] font-bold text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
+          {getPipelineStageLabel(getStage(item.lead))}
+        </span>
+        <span className={`text-[11px] font-bold ${item.overdue ? "text-rose-600" : "text-slate-400"}`}>
+          {item.overdue ? "⚠ באיחור" : "פתח תיק →"}
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function PipelineGroupRow({ group, count, max }) {
+  return (
+    <Link
+      href={`/advisor/my-leads?stage=${encodeURIComponent(group.linkStage)}`}
+      className="flex items-center gap-3 group"
+    >
+      <span className="text-xs font-bold text-slate-500 w-28 shrink-0 truncate text-right">{group.label}</span>
+      <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${group.color} opacity-80 group-hover:opacity-100`}
+          style={{ width: count > 0 ? `${Math.max(8, (count / max) * 100)}%` : "0%" }}
+        />
+      </div>
+      <span className="text-xs font-black tabular-nums text-slate-700 w-5 text-left shrink-0">{count}</span>
+    </Link>
+  );
+}
+
+function RecentUpdateRow({ lead }) {
+  const date = lead.lastActivityAt || lead.stageUpdatedAt || lead.lastContactedAt || lead.createdAt;
+  return (
+    <Link
+      href={`/advisor/lead/${lead.id}`}
+      className="flex items-center gap-3 py-2.5 px-2 hover:bg-slate-50 transition-colors rounded-lg"
+    >
+      <span className="h-2 w-2 rounded-full shrink-0 bg-violet-400" />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-black text-slate-800 truncate">{lead.name || "—"}</p>
+        <p className="text-xs font-bold text-slate-400 truncate">{getPipelineStageLabel(getStage(lead))}</p>
+      </div>
+      <span className="text-[11px] font-bold text-slate-400 shrink-0">{formatRelative(date)}</span>
+    </Link>
+  );
+}
+
+function SectionSkeleton({ rows = 3 }) {
+  return (
+    <div className="p-4 space-y-2">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
+function EmptySection({ icon, title, sub }) {
+  return (
+    <div className="px-5 py-8 text-center">
+      <p className="text-2xl mb-2">{icon}</p>
+      <p className="text-sm font-black text-slate-700">{title}</p>
+      {sub && <p className="text-xs font-bold text-slate-400 mt-1">{sub}</p>}
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AdvisorDashboard() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [advisorName, setAdvisorName] = useState("");
 
-  // Read advisor display name from localStorage (client-side only, safe from hydration)
+  // Read display name from localStorage — safe, runs only after hydration
   useEffect(() => {
     try {
       const raw = localStorage.getItem("finzo_advisor_profile_v1");
@@ -212,6 +329,8 @@ export default function AdvisorDashboard() {
     } catch {}
   }, []);
 
+  // Fetch all advisor leads from /api/advisor/my-leads
+  // This endpoint only returns leads that were purchased/assigned from FINZO.
   useEffect(() => {
     fetch("/api/advisor/my-leads")
       .then((r) => {
@@ -222,175 +341,330 @@ export default function AdvisorDashboard() {
       .catch(() => setLoading(false));
   }, []);
 
-  const active = useMemo(() => leads.filter(isActive), [leads]);
-  const closed = useMemo(() => leads.filter((l) => normalizePipelineStage(l.pipelineStage || l.leadStatus) === "closed_won"), [leads]);
-  const closedThisMonth = useMemo(() => closed.filter((l) => isThisMonth(l.stageUpdatedAt || l.lastActivityAt)), [closed]);
-  const overdueCount = useMemo(() => active.filter((l) =>
-    (l.nextActionAt && isOverdue(l.nextActionAt)) || (l.followUpDate && isOverdue(l.followUpDate))
-  ).length, [active]);
-  const todayCount = useMemo(() => active.filter((l) => isToday(l.nextActionAt) || isToday(l.followUpDate)).length, [active]);
-  const missingDocsCount = useMemo(() => active.filter((l) => Number(l.missingDocumentsCount || 0) > 0).length, [active]);
-  const waitingAppraisalCount = useMemo(() => active.filter((l) => {
-    const stage = normalizePipelineStage(l.pipelineStage || l.leadStatus);
-    return (stage === "appraisal_ordered" || l.appraisalStatus === "ordered" || l.appraisalStatus === "visit_completed") && l.appraisalStatus !== "report_received";
-  }).length, [active]);
-  const waitingLawyerCount = useMemo(() => active.filter((l) => {
-    const stage = normalizePipelineStage(l.pipelineStage || l.leadStatus);
-    const hasLegalData = Boolean(l.buyerLawyerName || l.sellerLawyerName || l.legalContractReceived || l.legalRightsReceived || l.legalRegistrationReceived);
-    const legalComplete = l.legalContractReceived && l.legalRightsReceived && l.legalRegistrationReceived;
-    return stage === "lawyer_review" || (hasLegalData && !legalComplete);
-  }).length, [active]);
-  const signingsThisWeekCount = useMemo(() => active.filter((l) => isThisWeek(l.signingDate)).length, [active]);
-  const fundsPendingCount = useMemo(() => active.filter((l) => l.fundsReleaseStatus !== "fully_released" && ["signed", "collateral_completion", "funds_released"].includes(normalizePipelineStage(l.pipelineStage || l.leadStatus))).length, [active]);
-  const conversionRate = leads.length > 0 ? Math.round((closed.length / leads.length) * 100) : 0;
-  const alerts = useMemo(() => buildAlerts(leads), [leads]);
-
-  const urgentLeads = useMemo(() => active
-    .filter((l) => (l.nextActionAt && isOverdue(l.nextActionAt)) || (l.followUpDate && isOverdue(l.followUpDate)) || isToday(l.nextActionAt) || isToday(l.followUpDate))
-    .sort((a, b) => new Date(a.nextActionAt || a.followUpDate || 0) - new Date(b.nextActionAt || b.followUpDate || 0))
-    .slice(0, 8),
+  // ── Derived data — all useMemos, no calculations in render ──────────────────
+  const active    = useMemo(() => leads.filter(isActive), [leads]);
+  const newLeads  = useMemo(() => active.filter((l) => ["new_lead", "contacted"].includes(getStage(l))), [active]);
+  const inProgress = useMemo(() => active.filter((l) => !["new_lead", "contacted"].includes(getStage(l))), [active]);
+  const waitingDocs = useMemo(() =>
+    active.filter((l) => ["documents_requested", "waiting_documents"].includes(getStage(l))),
   [active]);
+  const completed = useMemo(() => leads.filter((l) => getStage(l) === "closed_won"), [leads]);
 
+  const pipelineGroups = useMemo(() => {
+    const counts = {};
+    PIPELINE_GROUPS.forEach((g) => { counts[g.key] = 0; });
+    leads.forEach((l) => {
+      const s = getStage(l);
+      const g = PIPELINE_GROUPS.find((pg) => pg.stages.has(s));
+      if (g) counts[g.key]++;
+    });
+    return PIPELINE_GROUPS.map((g) => ({ ...g, count: counts[g.key] }));
+  }, [leads]);
+
+  const pipelineMax = useMemo(
+    () => Math.max(...pipelineGroups.map((g) => g.count), 1),
+    [pipelineGroups]
+  );
+
+  const attentionItems = useMemo(() => buildAttentionItems(active), [active]);
+  const todayTasks     = useMemo(() => buildTodayTasks(active),     [active]);
+
+  const recentUpdates  = useMemo(() =>
+    [...leads]
+      .filter((l) => l.lastActivityAt || l.stageUpdatedAt || l.lastContactedAt)
+      .sort((a, b) => {
+        const da = a.lastActivityAt || a.stageUpdatedAt || a.lastContactedAt || a.createdAt || "";
+        const db = b.lastActivityAt || b.stageUpdatedAt || b.lastContactedAt || b.createdAt || "";
+        return new Date(db) - new Date(da);
+      })
+      .slice(0, 6),
+  [leads]);
+
+  // ── Empty state — advisor has no leads yet ───────────────────────────────────
+  if (!loading && leads.length === 0) {
+    return (
+      <>
+        <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
+        <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
+          <AdvisorHeader active="/advisor" />
+          <div className="max-w-6xl mx-auto px-4 py-16 flex flex-col items-center text-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-violet-100 flex items-center justify-center text-3xl">📋</div>
+            <h2 className="text-xl font-black text-slate-950">עדיין אין לך לידים פעילים</h2>
+            <p className="text-sm font-bold text-slate-500 max-w-sm leading-relaxed">
+              כאן יוצגו הלידים שנרכשו מ-FINZO ושויכו אליך. עבור לשוק הלידים כדי לרכוש את הליד הראשון שלך.
+            </p>
+            <Link
+              href="/advisor/leads"
+              className="mt-2 inline-block rounded-2xl bg-violet-700 text-white font-black py-3 px-8 text-sm hover:bg-violet-800 transition-colors"
+            >
+              עבור לשוק הלידים ←
+            </Link>
+            <p className="text-xs font-bold text-slate-400">
+              לא ניתן ליצור לידים ידנית. כל הלידים מגיעים דרך FINZO.
+            </p>
+          </div>
+
+          {/* Mobile bottom nav */}
+          <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
+            <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">ראשי</Link>
+            <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">הלידים שלי</Link>
+            <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  // ── Full dashboard ────────────────────────────────────────────────────────────
   return (
     <>
-      <Head><title>דשבורד | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
+      <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
       <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
         <AdvisorHeader active="/advisor" />
-        <div className="max-w-6xl mx-auto px-4 lg:px-6 py-5">
 
-          {/* Welcome bar */}
-          <div className="flex items-center justify-between mb-4 gap-3">
-            <p className="text-base font-black text-slate-800">
-              {advisorName ? `שלום, ${advisorName} 👋` : "לוח בקרה"}
-            </p>
-            <div className="flex items-center gap-2">
-              <Link href="/advisor/profile" className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors px-3 py-1.5 bg-white border border-slate-200 rounded-lg">
-                פרופיל
-              </Link>
-              <Link href="/advisor/settings" className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors px-3 py-1.5 bg-white border border-slate-200 rounded-lg">
+        <div className="max-w-6xl mx-auto px-4 lg:px-6 py-5 space-y-5">
+
+          {/* ── Welcome / context banner ──────────────────────────────────── */}
+          <div className="flex items-start justify-between gap-3 rounded-2xl bg-gradient-to-l from-violet-50 to-white border border-violet-100 px-5 py-4">
+            <div className="min-w-0">
+              <h1 className="text-base font-black text-slate-950 mb-0.5">
+                {advisorName ? `שלום, ${advisorName} 👋` : "ברוך הבא למרכז העבודה"}
+              </h1>
+              <p className="text-xs font-bold text-slate-500 leading-relaxed">
+                ברוך הבא למרכז העבודה של FINZO. כאן מוצגים רק לידים שנכנסו דרך FINZO ושויכו אליך לאחר רכישה/הקצאה.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link href="/advisor/settings"
+                className="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-1.5 bg-white border border-slate-200 rounded-lg transition-colors hidden sm:block">
                 ⚙ הגדרות
               </Link>
+              <Link href="/advisor/profile"
+                className="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-1.5 bg-white border border-slate-200 rounded-lg transition-colors hidden sm:block">
+                פרופיל
+              </Link>
             </div>
           </div>
 
-          {/* KPIs */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          {/* ── Summary KPIs — only real counts from lead data ────────────── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {loading
               ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2">
-                    <Skeleton variant="line" className="w-20" /><Skeleton variant="line" className="w-10 h-8" />
+                  <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2 animate-pulse">
+                    <div className="h-3 w-20 bg-slate-200 rounded" />
+                    <div className="h-8 w-10 bg-slate-200 rounded" />
                   </div>
                 ))
-              : <>
-                  <KpiTile label="עסקאות פעילות" value={active.length} />
-                  <KpiTile label="נסגרו החודש" value={closedThisMonth.length} />
-                  <KpiTile label="פעולות להיום" value={todayCount} />
-                  <KpiTile label="המרה כוללת" value={`${conversionRate}%`} />
-                </>}
+              : [
+                  { label: "לידים חדשים",     value: newLeads.length,   color: "text-violet-700" },
+                  { label: "לידים בטיפול",     value: inProgress.length, color: "text-sky-700" },
+                  { label: "ממתינים למסמכים", value: waitingDocs.length, color: "text-amber-700" },
+                  { label: "תיקים שהושלמו",   value: completed.length,  color: "text-emerald-700" },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="bg-white border border-slate-100 rounded-2xl p-4">
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+                    <p className={`text-3xl font-black tabular-nums leading-none ${color}`}>{value}</p>
+                  </div>
+                ))
+            }
           </div>
 
-          {!loading && (
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-6">
-              {[
-                ["מעקבים להיום", todayCount],
-                ["מסמכים חסרים", missingDocsCount],
-                ["מחכים לשמאות", waitingAppraisalCount],
-                ["מחכים לעו״ד", waitingLawyerCount],
-                ["חתימות השבוע", signingsThisWeekCount],
-                ["כספים לשחרור", fundsPendingCount],
-              ].map(([label, value]) => (
-                <div key={label} className="bg-white border border-slate-100 rounded-xl px-3 py-3">
-                  <p className="text-[11px] font-black text-slate-400 mb-1">{label}</p>
-                  <p className="text-2xl font-black text-slate-900 tabular-nums">{value}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* ── Main 2-column grid ────────────────────────────────────────── */}
+          <div className="grid lg:grid-cols-[1fr_340px] gap-4 items-start">
 
-          {/* Main grid */}
-          <div className="grid lg:grid-cols-[1fr_380px] gap-4">
-
-            {/* Left: Pipeline funnel */}
+            {/* ─ Left column ─────────────────────────────────────────────── */}
             <div className="space-y-4">
-              {loading
-                ? <div className="bg-white rounded-2xl border border-slate-100 h-64 animate-pulse" />
-                : <PipelineFunnel leads={leads} />}
 
-              {/* Urgent / today actions */}
-              {!loading && urgentLeads.length > 0 && (
-                <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                  <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
-                    <h2 className="text-sm font-black text-slate-950">פעולות דחופות ולהיום</h2>
-                    <Link href="/advisor/my-leads" className="text-xs font-black text-violet-600 hover:underline">הכל →</Link>
+              {/* דורש טיפול */}
+              <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-black text-slate-950">דורש טיפול</h2>
+                    <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                      לידים עם פעולות באיחור, מסמכים חסרים או ללא מעקב
+                    </p>
                   </div>
-                  <div className="divide-y divide-slate-50 p-2 space-y-1">
-                    {urgentLeads.map((l) => <LeadRow key={l.id} lead={l} />)}
-                  </div>
+                  <Link href="/advisor/my-leads" className="text-xs font-black text-violet-600 hover:underline shrink-0">
+                    כל הלידים →
+                  </Link>
                 </div>
-              )}
+                {loading
+                  ? <SectionSkeleton rows={3} />
+                  : attentionItems.length > 0
+                    ? (
+                        <div className="p-3 space-y-2">
+                          {attentionItems.map((item, i) => (
+                            <AttentionItem key={`${item.lead.id}-${i}`} item={item} />
+                          ))}
+                        </div>
+                      )
+                    : (
+                        <EmptySection
+                          icon="✅"
+                          title="אין כרגע תיקים שדורשים טיפול מיוחד"
+                          sub="כל התיקים תקינים ומעודכנים — כל הכבוד!"
+                        />
+                      )
+                }
+              </section>
 
-              {!loading && urgentLeads.length === 0 && active.length > 0 && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-6 text-center">
-                  <p className="text-2xl mb-2">✅</p>
-                  <p className="text-sm font-black text-emerald-800">כל הפעולות מעודכנות — כל הכבוד!</p>
+              {/* המשימות שלי להיום */}
+              <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-black text-slate-950">המשימות שלי להיום</h2>
+                    <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                      פעולות מוגדרות להיום ולידים חדשים הממתינים לקשר ראשון
+                    </p>
+                  </div>
+                  {!loading && (
+                    <span className="text-[11px] font-black text-slate-400 bg-slate-100 rounded-full px-2 py-0.5 tabular-nums shrink-0">
+                      {todayTasks.length}
+                    </span>
+                  )}
                 </div>
-              )}
+                {loading
+                  ? <SectionSkeleton rows={3} />
+                  : todayTasks.length > 0
+                    ? (
+                        <div className="p-3 space-y-2">
+                          {todayTasks.map((task, i) => (
+                            <TodayTaskItem key={`${task.lead.id}-${i}`} item={task} />
+                          ))}
+                        </div>
+                      )
+                    : (
+                        <EmptySection
+                          icon="🗓"
+                          title="אין משימות מוגדרות להיום"
+                          sub='הגדר "פעולה הבאה" בכל תיק כדי לראות כאן'
+                        />
+                      )
+                }
+              </section>
+
+              {/* עדכוני תיקים אחרונים */}
+              <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-50">
+                  <h2 className="text-sm font-black text-slate-950">עדכוני תיקים אחרונים</h2>
+                  <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                    לידים שעודכנו לאחרונה — לפי תאריך פעילות
+                  </p>
+                </div>
+                {loading
+                  ? (
+                      <div className="p-4 space-y-2">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <div key={i} className="h-10 bg-slate-100 rounded-lg animate-pulse" />
+                        ))}
+                      </div>
+                    )
+                  : recentUpdates.length > 0
+                    ? (
+                        <div className="px-3 py-2 divide-y divide-slate-50">
+                          {recentUpdates.map((l) => (
+                            <RecentUpdateRow key={l.id} lead={l} />
+                          ))}
+                        </div>
+                      )
+                    : (
+                        <EmptySection
+                          icon="📅"
+                          title="פעילות אחרונה תופיע כאן לאחר עדכונים בתיקים"
+                        />
+                      )
+                }
+              </section>
             </div>
 
-            {/* Right: Alerts + quick stats */}
-            <div className="space-y-3">
-              <div className="bg-white rounded-2xl border border-slate-100 p-5">
-                <h2 className="text-sm font-black text-slate-950 mb-3">סטטוס Pipeline</h2>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {[
-                    ["סה״כ נרכשו", leads.length],
-                    ["פעילים", active.length],
-                    ["נסגרו", closed.length],
-                    ["באיחור", overdueCount],
-                  ].map(([l, v]) => (
-                    <div key={l} className="bg-slate-50 rounded-xl p-3">
-                      <p className="text-slate-400 font-black mb-0.5">{l}</p>
-                      <p className="text-2xl font-black text-slate-900 tabular-nums">{v}</p>
-                    </div>
-                  ))}
+            {/* ─ Right column ────────────────────────────────────────────── */}
+            <div className="space-y-4">
+
+              {/* מהלך הטיפול — Pipeline grouped overview */}
+              <section className="bg-white rounded-2xl border border-slate-100 p-5">
+                <div className="mb-4">
+                  <h2 className="text-sm font-black text-slate-950">מהלך הטיפול — Pipeline</h2>
+                  <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                    לחץ על שלב כדי לסנן את הרשימה
+                  </p>
                 </div>
-              </div>
+                {loading
+                  ? (
+                      <div className="space-y-2.5">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <div key={i} className="h-4 bg-slate-100 rounded animate-pulse" />
+                        ))}
+                      </div>
+                    )
+                  : (
+                      <div className="space-y-2.5">
+                        {pipelineGroups.map((g) => (
+                          <PipelineGroupRow key={g.key} group={g} count={g.count} max={pipelineMax} />
+                        ))}
+                      </div>
+                    )
+                }
+              </section>
 
-              {loading
-                ? <div className="bg-white rounded-2xl border border-slate-100 h-48 animate-pulse" />
-                : alerts.length > 0
-                  ? <div className="space-y-2">
-                      <p className="text-xs font-black text-slate-400 px-1">התראות</p>
-                      {alerts.map((a, i) => <AlertCard key={i} alert={a} />)}
-                    </div>
-                  : <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-5 text-center">
-                      <p className="text-sm font-black text-emerald-800">אין התראות פתוחות 🎉</p>
-                    </div>}
+              {/* סטטוס מהיר */}
+              {!loading && (
+                <section className="bg-white rounded-2xl border border-slate-100 p-5">
+                  <h2 className="text-sm font-black text-slate-950 mb-3">סטטוס מהיר</h2>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      ["סה״כ לידים",  leads.length],
+                      ["פעיל",         active.length],
+                      ["הושלמו",       completed.length],
+                      ["ממתין מסמכים", waitingDocs.length],
+                    ].map(([label, value]) => (
+                      <div key={label} className="bg-slate-50 rounded-xl px-3 py-3">
+                        <p className="text-[11px] font-black text-slate-400 mb-0.5">{label}</p>
+                        <p className="text-2xl font-black text-slate-900 tabular-nums">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
 
-              {/* Quick links */}
-              <div className="grid grid-cols-2 gap-2">
-                <Link href="/advisor/settings"
-                  className="block text-center rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs py-3 hover:bg-slate-100 transition-colors">
-                  ⚙ הגדרות
-                </Link>
-                <Link href="/advisor/profile"
-                  className="block text-center rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs py-3 hover:bg-slate-100 transition-colors">
-                  👤 פרופיל
-                </Link>
-              </div>
+              {/* פעולות מהירות */}
+              <section className="bg-white rounded-2xl border border-slate-100 p-5">
+                <h2 className="text-sm font-black text-slate-950 mb-3">פעולות מהירות</h2>
+                <div className="space-y-2">
+                  <Link href="/advisor/leads"
+                    className="flex items-center gap-3 rounded-xl bg-violet-700 text-white px-4 py-3 text-sm font-black hover:bg-violet-800 transition-colors">
+                    <span className="shrink-0">🏪</span>
+                    <span>שוק הלידים של FINZO</span>
+                  </Link>
+                  <Link href="/advisor/my-leads"
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 text-sm font-black hover:bg-slate-100 transition-colors">
+                    <span className="shrink-0">📋</span>
+                    <span>כל הלידים שלי</span>
+                  </Link>
+                  <Link href="/"
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 text-sm font-black hover:bg-slate-100 transition-colors">
+                    <span className="shrink-0">🧮</span>
+                    <span>מחשבון זכאות</span>
+                  </Link>
+                  <Link href="/refinance-check"
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 text-sm font-black hover:bg-slate-100 transition-colors">
+                    <span className="shrink-0">🔄</span>
+                    <span>מחשבון מחזור</span>
+                  </Link>
+                </div>
+                <p className="text-[10px] font-bold text-slate-300 mt-3 text-center">
+                  * לא ניתן ליצור לידים ידנית — כל הלידים מגיעים דרך FINZO
+                </p>
+              </section>
 
-              <Link href="/advisor/leads" className="block w-full text-center rounded-2xl bg-violet-700 text-white font-black py-3.5 text-sm hover:bg-violet-800 transition-colors">
-                לחנות הלידים ←
-              </Link>
             </div>
           </div>
         </div>
 
         {/* Mobile bottom nav */}
         <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
-          <Link href="/advisor" className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">ראשי</Link>
+          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">ראשי</Link>
           <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">הלידים שלי</Link>
-          <Link href="/advisor/leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
+          <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
         </div>
       </main>
     </>
