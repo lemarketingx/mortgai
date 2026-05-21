@@ -199,6 +199,18 @@ function LeadRow({ lead }) {
 export default function AdvisorDashboard() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [advisorName, setAdvisorName] = useState("");
+
+  // Read advisor display name from localStorage (client-side only, safe from hydration)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("finzo_advisor_profile_v1");
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p.name) setAdvisorName(p.name);
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     fetch("/api/advisor/my-leads")
@@ -245,6 +257,21 @@ export default function AdvisorDashboard() {
       <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
         <AdvisorHeader active="/advisor" />
         <div className="max-w-6xl mx-auto px-4 lg:px-6 py-5">
+
+          {/* Welcome bar */}
+          <div className="flex items-center justify-between mb-4 gap-3">
+            <p className="text-base font-black text-slate-800">
+              {advisorName ? `שלום, ${advisorName} 👋` : "לוח בקרה"}
+            </p>
+            <div className="flex items-center gap-2">
+              <Link href="/advisor/profile" className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors px-3 py-1.5 bg-white border border-slate-200 rounded-lg">
+                פרופיל
+              </Link>
+              <Link href="/advisor/settings" className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors px-3 py-1.5 bg-white border border-slate-200 rounded-lg">
+                ⚙ הגדרות
+              </Link>
+            </div>
+          </div>
 
           {/* KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
@@ -339,6 +366,18 @@ export default function AdvisorDashboard() {
                   : <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-5 text-center">
                       <p className="text-sm font-black text-emerald-800">אין התראות פתוחות 🎉</p>
                     </div>}
+
+              {/* Quick links */}
+              <div className="grid grid-cols-2 gap-2">
+                <Link href="/advisor/settings"
+                  className="block text-center rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs py-3 hover:bg-slate-100 transition-colors">
+                  ⚙ הגדרות
+                </Link>
+                <Link href="/advisor/profile"
+                  className="block text-center rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs py-3 hover:bg-slate-100 transition-colors">
+                  👤 פרופיל
+                </Link>
+              </div>
 
               <Link href="/advisor/leads" className="block w-full text-center rounded-2xl bg-violet-700 text-white font-black py-3.5 text-sm hover:bg-violet-800 transition-colors">
                 לחנות הלידים ←

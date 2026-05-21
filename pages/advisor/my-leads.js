@@ -45,6 +45,8 @@ const STAGE_PROGRESS_COLOR = [
 
 const ACTIVE_PIPELINE_STAGES = PIPELINE_STAGES.filter((s) => s !== "closed_lost");
 
+const PREFS_KEY = "finzo_prefs_v1";
+
 // Pre-build Sets for O(1) stage membership lookup in kanban grouping
 const KANBAN_GROUPS = [
   { key: "new_lead",    label: "ליד חדש",     color: "bg-violet-500",  stageSet: new Set(["new_lead"]) },
@@ -297,7 +299,8 @@ export default function AdvisorMyLeads() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [view, setView] = useState("kanban");
+  const [view, setView] = useState("kanban"); // hydrated from localStorage in useEffect
+  const [sortBy, setSortBy] = useState("priority"); // hydrated from localStorage in useEffect
   // Separate controlled input state from the debounced value that drives filtering.
   // This lets the input feel instant while the expensive filter runs after 200ms.
   const [searchInput, setSearchInput] = useState("");
@@ -306,9 +309,19 @@ export default function AdvisorMyLeads() {
   const [stageFilter, setStageFilter] = useState("all");
 
   useEffect(() => {
-    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    // Restore URL stage filter
+    const params = new URLSearchParams(window.location.search);
     const s = params.get("stage");
     if (s && PIPELINE_STAGES.includes(normalizePipelineStage(s))) setStageFilter(normalizePipelineStage(s));
+    // Restore saved view / sort preferences (runs client-side only — safe from hydration)
+    try {
+      const raw = localStorage.getItem(PREFS_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p.defaultView && ["kanban", "cards", "list"].includes(p.defaultView)) setView(p.defaultView);
+        if (p.defaultSort && ["priority", "newest", "amount", "status"].includes(p.defaultSort)) setSortBy(p.defaultSort);
+      }
+    } catch {}
   }, []);
 
   useEffect(() => { load(); }, []);
@@ -333,6 +346,24 @@ export default function AdvisorMyLeads() {
     searchTimerRef.current = setTimeout(() => {
       setDebouncedSearch(val.trim().toLowerCase()); // delayed — triggers filter
     }, 200);
+  }
+
+  function setViewAndSave(v) {
+    setView(v);
+    try {
+      const raw = localStorage.getItem(PREFS_KEY);
+      const p = raw ? JSON.parse(raw) : {};
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ ...p, defaultView: v }));
+    } catch {}
+  }
+
+  function setSortAndSave(v) {
+    setSortBy(v);
+    try {
+      const raw = localStorage.getItem(PREFS_KEY);
+      const p = raw ? JSON.parse(raw) : {};
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ ...p, defaultSort: v }));
+    } catch {}
   }
 
   // ── Derived counts (cheap) ───────────────────────────────────────────────
@@ -363,7 +394,18 @@ export default function AdvisorMyLeads() {
       );
     }
 
-    // Pre-compute priority for each lead once (O(N)), then sort (O(N log N) comparisons are cheap)
+    // Sort by advisor preference
+    if (sortBy === "newest") {
+      return [...base].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }
+    if (sortBy === "amount") {
+      return [...base].sort((a, b) => (Number(b.mortgageAmount) || 0) - (Number(a.mortgageAmount) || 0));
+    }
+    if (sortBy === "status") {
+      return [...base].sort((a, b) => getStageIndex(b) - getStageIndex(a));
+    }
+
+    // Default "priority" — pre-compute O(N), then sort O(N log N)
     const withMeta = base.map((l) => ({
       l,
       p: computePriority(l).priority,
@@ -375,7 +417,7 @@ export default function AdvisorMyLeads() {
       return new Date(a.d) - new Date(b.d);
     });
     return withMeta.map((x) => x.l);
-  }, [leads, stageFilter, debouncedSearch, active, closed, exited]);
+  }, [leads, stageFilter, debouncedSearch, active, closed, exited, sortBy]);
 
   const statusTabs = [
     { key: "all",    label: "הכל",          count: leads.length },
@@ -419,10 +461,17 @@ export default function AdvisorMyLeads() {
             />
             <div className="flex rounded-xl border border-slate-200 overflow-hidden bg-white shrink-0">
               {[{ k: "kanban", l: "קנבן" }, { k: "cards", l: "כרטיסים" }, { k: "list", l: "רשימה" }].map(({ k, l }) => (
-                <button key={k} onClick={() => setView(k)}
+                <button key={k} onClick={() => setViewAndSave(k)}
                   className={`px-4 py-2 text-xs font-black transition-colors ${view === k ? "bg-violet-700 text-white" : "text-slate-500 hover:text-slate-800"}`}>{l}</button>
               ))}
             </div>
+            <select value={sortBy} onChange={(e) => setSortAndSave(e.target.value)}
+              className="border border-slate-200 rounded-xl px-3 py-2 text-xs font-black bg-white outline-none focus:ring-2 focus:ring-violet-300 shrink-0 text-slate-600">
+              <option value="priority">עדיפות</option>
+              <option value="newest">חדש</option>
+              <option value="amount">סכום</option>
+              <option value="status">שלב</option>
+            </select>
           </div>
 
           {/* Status tabs */}
