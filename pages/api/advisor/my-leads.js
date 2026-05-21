@@ -2,6 +2,8 @@ import { LeadStoreError, readMyLeads, updateLead } from "../../../lib/leadsStore
 import { createActivity } from "../../../lib/activitiesStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
+import { getPipelineStageLabel, normalizePipelineStage } from "../../../lib/pipeline";
+import { calculateCollateralProgress, calculateOverallMortgageProgress } from "../../../lib/mortgageCase";
 
 function apiError(res, status, code, message) {
   return res.status(status).json({ error: code, message });
@@ -35,8 +37,9 @@ export default async function handler(req, res) {
       if (!lead) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found in your purchased leads");
 
       const now = new Date().toISOString();
-      const newStage = changes.pipelineStage || changes.leadStatus;
-      const prevStage = lead.pipelineStage || lead.leadStatus;
+      const requestedStage = changes.pipelineStage || changes.leadStatus;
+      const newStage = requestedStage ? normalizePipelineStage(requestedStage) : undefined;
+      const prevStage = normalizePipelineStage(lead.pipelineStage || lead.leadStatus);
       const allowed = {
         pipelineStage: newStage,
         leadStatus: newStage,
@@ -51,15 +54,45 @@ export default async function handler(req, res) {
         bankName: changes.bankName,
         mortgageType: changes.mortgageType,
         documentsCompletionPercent: changes.documentsCompletionPercent,
+        appraiserName: changes.appraiserName,
+        appraiserPhone: changes.appraiserPhone,
+        appraisalDate: changes.appraisalDate,
+        appraisalCost: changes.appraisalCost,
+        appraisalReportReceived: changes.appraisalReportReceived,
+        appraisalStatus: changes.appraisalStatus,
+        buyerLawyerName: changes.buyerLawyerName,
+        buyerLawyerPhone: changes.buyerLawyerPhone,
+        buyerLawyerEmail: changes.buyerLawyerEmail,
+        sellerLawyerName: changes.sellerLawyerName,
+        sellerLawyerPhone: changes.sellerLawyerPhone,
+        sellerLawyerEmail: changes.sellerLawyerEmail,
+        legalContractReceived: changes.legalContractReceived,
+        legalRightsReceived: changes.legalRightsReceived,
+        legalRegistrationReceived: changes.legalRegistrationReceived,
+        signingDate: changes.signingDate,
+        signingLocation: changes.signingLocation,
+        signingNotes: changes.signingNotes,
+        lifeInsurance: changes.lifeInsurance,
+        propertyInsurance: changes.propertyInsurance,
+        mortgageRegistration: changes.mortgageRegistration,
+        pledgeRegistration: changes.pledgeRegistration,
+        municipalityDocuments: changes.municipalityDocuments,
+        fundsReleaseStatus: changes.fundsReleaseStatus,
       };
+      const projected = { ...lead, ...Object.fromEntries(Object.entries(allowed).filter(([, v]) => v !== undefined)) };
+      allowed.collateralCompletionPercent = calculateCollateralProgress(projected);
+      allowed.overallProgressPercent = calculateOverallMortgageProgress({
+        ...projected,
+        collateralCompletionPercent: allowed.collateralCompletionPercent,
+      });
       if (newStage && newStage !== prevStage) {
         allowed.stageUpdatedAt = now;
-        if (!lead.firstContactAt && prevStage === "ליד חדש") allowed.firstContactAt = now;
+        if (!lead.firstContactAt && prevStage === "new_lead") allowed.firstContactAt = now;
         createActivity({
           leadId: id,
           advisorId: session.advisorId,
           activityType: "status_changed",
-          title: `שלב עודכן: "${prevStage}" ← "${newStage}"`,
+          title: `שלב עודכן: "${getPipelineStageLabel(prevStage)}" ← "${getPipelineStageLabel(newStage)}"`,
           metadata: { from: prevStage, to: newStage },
         }).catch(() => {});
       }

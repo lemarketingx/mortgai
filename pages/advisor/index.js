@@ -4,13 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { formatILS } from "../../lib/format";
 import { KpiTile, Tag, Skeleton } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import { PIPELINE_STAGES, getPipelineStageLabel, isClosedPipelineStage, normalizePipelineStage } from "../../lib/pipeline";
+import { isThisWeek } from "../../lib/mortgageCase";
 
-const PIPELINE_STAGES = [
-  "ליד חדש", "נוצר קשר", "נשלחה רשימת מסמכים", "מחכה למסמכים",
-  "מסמכים התקבלו", "בדיקת זכאות", "הוגש לבנק", "אישור עקרוני",
-  "משא ומתן מול בנקים", "נבחר תמהיל", "נקבעו חתימות", "נסגר בהצלחה",
-];
-const EXIT_STATUSES = new Set(["לא עונה", "לא רלוונטי", "נדחה בבנק", "עבר ליועץ אחר", "בוטל"]);
+const FUNNEL_STAGES = PIPELINE_STAGES.filter((stage) => stage !== "closed_lost");
 
 const STAGE_COLORS = [
   "bg-violet-500", "bg-violet-400", "bg-indigo-400", "bg-amber-400",
@@ -54,13 +51,12 @@ function formatDate(dateStr) {
 }
 
 function stageIndex(lead) {
-  const s = lead.pipelineStage || lead.leadStatus || "ליד חדש";
-  const i = PIPELINE_STAGES.indexOf(s);
+  const s = normalizePipelineStage(lead.pipelineStage || lead.leadStatus);
+  const i = FUNNEL_STAGES.indexOf(s);
   return i >= 0 ? i : 0;
 }
 function isActive(lead) {
-  const s = lead.pipelineStage || lead.leadStatus || "";
-  return !EXIT_STATUSES.has(s) && s !== "נסגר בהצלחה";
+  return !isClosedPipelineStage(lead.pipelineStage || lead.leadStatus);
 }
 function isThisMonth(dateStr) {
   if (!dateStr) return false;
@@ -79,7 +75,7 @@ function buildAlerts(leads) {
   const overdueActions = active.filter((l) => (l.nextActionAt && isOverdue(l.nextActionAt)) || (l.followUpDate && isOverdue(l.followUpDate)));
   if (overdueActions.length) alerts.push({ type: "danger", text: `${overdueActions.length} פעולות באיחור`, sub: "טיפול דחוף", leads: overdueActions });
 
-  const waitDocs = active.filter((l) => (l.pipelineStage || l.leadStatus) === "מחכה למסמכים");
+  const waitDocs = active.filter((l) => normalizePipelineStage(l.pipelineStage || l.leadStatus) === "waiting_documents");
   if (waitDocs.length) alerts.push({ type: "info", text: `${waitDocs.length} לקוחות מחכים למסמכים`, sub: "שלח תזכורת", leads: waitDocs });
 
   const todayActions = active.filter((l) => isToday(l.nextActionAt) || isToday(l.followUpDate));
@@ -127,7 +123,7 @@ function AlertCard({ alert }) {
           {alert.leads.slice(0, 5).map((l) => (
             <Link key={l.id} href={`/advisor/lead/${l.id}`} className={`flex items-center justify-between px-4 py-2 hover:bg-white/40 transition-colors ${textColors[alert.type]}`}>
               <span className="text-sm font-bold">{l.name || "—"}</span>
-              <span className="text-xs opacity-70">{l.pipelineStage || l.leadStatus || "ליד חדש"}</span>
+              <span className="text-xs opacity-70">{getPipelineStageLabel(l.pipelineStage || l.leadStatus)}</span>
             </Link>
           ))}
           {alert.leads.length > 5 && (
@@ -144,12 +140,12 @@ function AlertCard({ alert }) {
 function PipelineFunnel({ leads }) {
   const counts = useMemo(() => {
     const map = {};
-    PIPELINE_STAGES.forEach((s) => { map[s] = 0; });
+    FUNNEL_STAGES.forEach((s) => { map[s] = 0; });
     leads.forEach((l) => {
-      const s = l.pipelineStage || l.leadStatus || "ליד חדש";
+      const s = normalizePipelineStage(l.pipelineStage || l.leadStatus);
       if (map[s] !== undefined) map[s]++;
     });
-    return PIPELINE_STAGES.map((s, i) => ({ stage: s, count: map[s], color: STAGE_COLORS[i], bg: STAGE_BG[i] }));
+    return FUNNEL_STAGES.map((s, i) => ({ stage: s, count: map[s], color: STAGE_COLORS[i], bg: STAGE_BG[i] }));
   }, [leads]);
 
   const max = Math.max(...counts.map((c) => c.count), 1);
@@ -158,9 +154,9 @@ function PipelineFunnel({ leads }) {
     <div className="bg-white rounded-2xl border border-slate-100 p-5">
       <h2 className="text-sm font-black text-slate-950 mb-4">Pipeline — התפלגות עסקאות</h2>
       <div className="space-y-2">
-        {counts.filter((c) => c.count > 0 || PIPELINE_STAGES.indexOf(c.stage) < 4).map(({ stage, count, color, bg }) => (
+        {counts.filter((c) => c.count > 0 || FUNNEL_STAGES.indexOf(c.stage) < 4).map(({ stage, count, color, bg }) => (
           <Link key={stage} href={`/advisor/my-leads?stage=${encodeURIComponent(stage)}`} className="flex items-center gap-3 group">
-            <span className="text-xs font-bold text-slate-500 w-44 shrink-0 truncate text-right">{stage}</span>
+            <span className="text-xs font-bold text-slate-500 w-44 shrink-0 truncate text-right">{getPipelineStageLabel(stage)}</span>
             <div className="flex-1 h-5 bg-slate-100 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${color}`}
@@ -177,7 +173,7 @@ function PipelineFunnel({ leads }) {
 
 function LeadRow({ lead }) {
   const si = stageIndex(lead);
-  const stage = lead.pipelineStage || lead.leadStatus || "ליד חדש";
+  const stage = normalizePipelineStage(lead.pipelineStage || lead.leadStatus);
   const stageBg = STAGE_BG[si] || "bg-slate-50 text-slate-600 border-slate-200";
   const hasOverdue = (lead.nextActionAt && isOverdue(lead.nextActionAt)) || (lead.followUpDate && isOverdue(lead.followUpDate));
   const actionDue = lead.nextActionAt || lead.followUpDate;
@@ -186,7 +182,7 @@ function LeadRow({ lead }) {
     <Link href={`/advisor/lead/${lead.id}`} className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-50/80 transition-colors rounded-xl border ${hasOverdue ? "border-rose-200 bg-rose-50/40" : "border-slate-100 bg-white"}`}>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${stageBg}`}>{stage}</span>
+          <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${stageBg}`}>{getPipelineStageLabel(stage)}</span>
           {hasOverdue && <span className="text-[11px] font-black text-rose-600">⚠ באיחור</span>}
         </div>
         <p className="text-sm font-black text-slate-900 truncate">{lead.name || "—"}</p>
@@ -215,12 +211,25 @@ export default function AdvisorDashboard() {
   }, []);
 
   const active = useMemo(() => leads.filter(isActive), [leads]);
-  const closed = useMemo(() => leads.filter((l) => (l.pipelineStage || l.leadStatus) === "נסגר בהצלחה"), [leads]);
+  const closed = useMemo(() => leads.filter((l) => normalizePipelineStage(l.pipelineStage || l.leadStatus) === "closed_won"), [leads]);
   const closedThisMonth = useMemo(() => closed.filter((l) => isThisMonth(l.stageUpdatedAt || l.lastActivityAt)), [closed]);
   const overdueCount = useMemo(() => active.filter((l) =>
     (l.nextActionAt && isOverdue(l.nextActionAt)) || (l.followUpDate && isOverdue(l.followUpDate))
   ).length, [active]);
   const todayCount = useMemo(() => active.filter((l) => isToday(l.nextActionAt) || isToday(l.followUpDate)).length, [active]);
+  const missingDocsCount = useMemo(() => active.filter((l) => Number(l.missingDocumentsCount || 0) > 0).length, [active]);
+  const waitingAppraisalCount = useMemo(() => active.filter((l) => {
+    const stage = normalizePipelineStage(l.pipelineStage || l.leadStatus);
+    return (stage === "appraisal_ordered" || l.appraisalStatus === "ordered" || l.appraisalStatus === "visit_completed") && l.appraisalStatus !== "report_received";
+  }).length, [active]);
+  const waitingLawyerCount = useMemo(() => active.filter((l) => {
+    const stage = normalizePipelineStage(l.pipelineStage || l.leadStatus);
+    const hasLegalData = Boolean(l.buyerLawyerName || l.sellerLawyerName || l.legalContractReceived || l.legalRightsReceived || l.legalRegistrationReceived);
+    const legalComplete = l.legalContractReceived && l.legalRightsReceived && l.legalRegistrationReceived;
+    return stage === "lawyer_review" || (hasLegalData && !legalComplete);
+  }).length, [active]);
+  const signingsThisWeekCount = useMemo(() => active.filter((l) => isThisWeek(l.signingDate)).length, [active]);
+  const fundsPendingCount = useMemo(() => active.filter((l) => l.fundsReleaseStatus !== "fully_released" && ["signed", "collateral_completion", "funds_released"].includes(normalizePipelineStage(l.pipelineStage || l.leadStatus))).length, [active]);
   const conversionRate = leads.length > 0 ? Math.round((closed.length / leads.length) * 100) : 0;
   const alerts = useMemo(() => buildAlerts(leads), [leads]);
 
@@ -252,6 +261,24 @@ export default function AdvisorDashboard() {
                   <KpiTile label="המרה כוללת" value={`${conversionRate}%`} />
                 </>}
           </div>
+
+          {!loading && (
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-6">
+              {[
+                ["Follow-ups today", todayCount],
+                ["מסמכים חסרים", missingDocsCount],
+                ["מחכים לשמאות", waitingAppraisalCount],
+                ["מחכים לעו״ד", waitingLawyerCount],
+                ["חתימות השבוע", signingsThisWeekCount],
+                ["כספים לשחרור", fundsPendingCount],
+              ].map(([label, value]) => (
+                <div key={label} className="bg-white border border-slate-100 rounded-xl px-3 py-3">
+                  <p className="text-[11px] font-black text-slate-400 mb-1">{label}</p>
+                  <p className="text-2xl font-black text-slate-900 tabular-nums">{value}</p>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Main grid */}
           <div className="grid lg:grid-cols-[1fr_380px] gap-4">

@@ -4,39 +4,46 @@ import { useEffect, useMemo, useState } from "react";
 import { formatILS } from "../../lib/format";
 import { KpiTile, Tag, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
-
-const PIPELINE_STAGES = [
-  "ליד חדש", "נוצר קשר", "נשלחה רשימת מסמכים", "מחכה למסמכים",
-  "מסמכים התקבלו", "בדיקת זכאות", "הוגש לבנק", "אישור עקרוני",
-  "משא ומתן מול בנקים", "נבחר תמהיל", "נקבעו חתימות", "נסגר בהצלחה",
-];
-const EXIT_STATUSES = ["לא עונה", "לא רלוונטי", "נדחה בבנק", "עבר ליועץ אחר", "בוטל"];
-const ALL_STATUSES = [...PIPELINE_STAGES, ...EXIT_STATUSES];
+import { PIPELINE_STAGES, getPipelineProgress, getPipelineStageLabel, isClosedPipelineStage, normalizePipelineStage } from "../../lib/pipeline";
+import {
+  APPRAISAL_STATUS_LABELS,
+  FUNDS_RELEASE_STATUS_LABELS,
+  LEGAL_CHECKLIST,
+  buildDocumentChecklist,
+  calculateCollateralProgress,
+  calculateOverallMortgageProgress,
+  getDocumentLabel,
+} from "../../lib/mortgageCase";
 
 const STAGE_BADGE = {
-  "ליד חדש": "bg-violet-50 text-violet-700 border-violet-200",
-  "נוצר קשר": "bg-violet-50 text-violet-700 border-violet-200",
-  "נשלחה רשימת מסמכים": "bg-indigo-50 text-indigo-700 border-indigo-200",
-  "מחכה למסמכים": "bg-amber-50 text-amber-700 border-amber-200",
-  "מסמכים התקבלו": "bg-amber-50 text-amber-700 border-amber-200",
-  "בדיקת זכאות": "bg-sky-50 text-sky-700 border-sky-200",
-  "הוגש לבנק": "bg-sky-50 text-sky-700 border-sky-200",
-  "אישור עקרוני": "bg-blue-50 text-blue-700 border-blue-200",
-  "משא ומתן מול בנקים": "bg-blue-50 text-blue-700 border-blue-200",
-  "נבחר תמהיל": "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "נקבעו חתימות": "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "נסגר בהצלחה": "bg-green-50 text-green-800 border-green-200",
-  "לא עונה": "bg-slate-50 text-slate-500 border-slate-200",
-  "לא רלוונטי": "bg-slate-50 text-slate-500 border-slate-200",
-  "נדחה בבנק": "bg-rose-50 text-rose-700 border-rose-200",
-  "עבר ליועץ אחר": "bg-slate-50 text-slate-500 border-slate-200",
-  "בוטל": "bg-rose-50 text-rose-600 border-rose-200",
+  new_lead: "bg-violet-50 text-violet-700 border-violet-200",
+  contacted: "bg-violet-50 text-violet-700 border-violet-200",
+  documents_requested: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  waiting_documents: "bg-amber-50 text-amber-700 border-amber-200",
+  documents_received: "bg-amber-50 text-amber-700 border-amber-200",
+  eligibility_review: "bg-sky-50 text-sky-700 border-sky-200",
+  appraisal_ordered: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  appraisal_completed: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  lawyer_review: "bg-teal-50 text-teal-700 border-teal-200",
+  submitted_to_bank: "bg-sky-50 text-sky-700 border-sky-200",
+  principle_approval: "bg-blue-50 text-blue-700 border-blue-200",
+  bank_negotiation: "bg-blue-50 text-blue-700 border-blue-200",
+  selected_track: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  signing_scheduled: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  signed: "bg-green-50 text-green-800 border-green-200",
+  collateral_completion: "bg-lime-50 text-lime-800 border-lime-200",
+  funds_released: "bg-green-50 text-green-800 border-green-200",
+  closed_won: "bg-green-50 text-green-800 border-green-200",
+  closed_lost: "bg-rose-50 text-rose-700 border-rose-200",
 };
 const STAGE_PROGRESS_COLOR = [
   "bg-violet-500", "bg-violet-400", "bg-indigo-400", "bg-amber-400",
   "bg-amber-500", "bg-sky-400", "bg-sky-500", "bg-blue-500",
+  "bg-cyan-500", "bg-teal-500", "bg-blue-400", "bg-blue-500",
   "bg-blue-400", "bg-emerald-400", "bg-emerald-500", "bg-green-500",
+  "bg-lime-500", "bg-green-600", "bg-green-700",
 ];
+const ACTIVE_PIPELINE_STAGES = PIPELINE_STAGES.filter((stage) => stage !== "closed_lost");
 
 const DOC_TYPES = ["תעודת_זהות", "תלושי_שכר_3_אחרונים", "דפי_עו_ש_3_חודשים", "אישור_עבודה_ומשכורת", "חוזה_רכישה", "נסח_טאבו", "שומת_מס_אחרונה", "דוח_פנסיה", "אחר"];
 const DOC_LABELS = {
@@ -60,26 +67,85 @@ function isToday(d) { return d && new Date(d).toDateString() === new Date().toDa
 function formatShort(d) { if (!d) return ""; return new Date(d).toLocaleDateString("he-IL", { day: "numeric", month: "short" }); }
 function formatDateTime(d) { if (!d) return ""; return new Date(d).toLocaleString("he-IL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
 
-function getStage(lead) { return lead.pipelineStage || lead.leadStatus || "ליד חדש"; }
-function getStageIndex(lead) { return PIPELINE_STAGES.indexOf(getStage(lead)); }
-function isExited(lead) { const s = getStage(lead); return EXIT_STATUSES.includes(s) || s === "נסגר בהצלחה"; }
+function getStage(lead) { return normalizePipelineStage(lead.pipelineStage || lead.leadStatus); }
+function getStageIndex(lead) { return ACTIVE_PIPELINE_STAGES.indexOf(getStage(lead)); }
+function isExited(lead) { return isClosedPipelineStage(getStage(lead)); }
 
 function CardSkeleton() { return <div className="bg-white border border-slate-100 rounded-2xl p-4"><Skeleton variant="block" className="h-40" /></div>; }
 
 function StageProgress({ lead }) {
   const si = getStageIndex(lead);
   if (si < 0) return null;
-  const pct = Math.round(((si + 1) / PIPELINE_STAGES.length) * 100);
+  const pct = getPipelineProgress(lead.pipelineStage || lead.leadStatus);
   const color = STAGE_PROGRESS_COLOR[si] || "bg-violet-400";
   return (
     <div className="mb-3">
       <div className="flex justify-between text-[11px] font-bold text-slate-400 mb-1">
-        <span>שלב {si + 1} מתוך {PIPELINE_STAGES.length}</span>
+        <span>שלב {si + 1} מתוך {ACTIVE_PIPELINE_STAGES.length}</span>
         <span className="tabular-nums">{pct}%</span>
       </div>
       <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
         <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
       </div>
+    </div>
+  );
+}
+
+function OverallProgress({ lead }) {
+  const pct = Number(lead.overallProgressPercent ?? calculateOverallMortgageProgress(lead)) || 0;
+  return (
+    <div className="mb-3 rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
+      <div className="flex justify-between text-[11px] font-black text-slate-500 mb-1">
+        <span>התקדמות תיק משכנתא</span>
+        <span className="tabular-nums">{pct}%</span>
+      </div>
+      <div className="h-2 bg-white rounded-full overflow-hidden">
+        <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${Math.max(0, Math.min(100, pct))}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function formatOptionalDate(dateValue) {
+  return dateValue ? new Date(dateValue).toLocaleDateString("he-IL", { day: "numeric", month: "short" }) : "";
+}
+
+function getLawyerStatus(lead) {
+  const done = LEGAL_CHECKLIST.filter((item) => Boolean(lead[item.key])).length;
+  return `${done}/${LEGAL_CHECKLIST.length}`;
+}
+
+function MortgageCaseSummary({ lead, documentSummary }) {
+  const stage = getStage(lead);
+  const docsPercent = Number(documentSummary?.completionPercent ?? lead.documentsCompletionPercent ?? 0) || 0;
+  const missingCount = Number(documentSummary?.missingCount ?? lead.missingDocumentsCount ?? 0) || 0;
+  const collateralPercent = Number(lead.collateralCompletionPercent ?? calculateCollateralProgress(lead)) || 0;
+  const appraisalLabel = APPRAISAL_STATUS_LABELS[lead.appraisalStatus || "not_ordered"] || APPRAISAL_STATUS_LABELS.not_ordered;
+  const fundsLabel = FUNDS_RELEASE_STATUS_LABELS[lead.fundsReleaseStatus || "not_released"] || FUNDS_RELEASE_STATUS_LABELS.not_released;
+  const overall = Number(lead.overallProgressPercent ?? calculateOverallMortgageProgress(lead)) || 0;
+
+  return (
+    <div className="grid grid-cols-2 gap-2 text-[11px]">
+      {[
+        ["שלב", getPipelineStageLabel(stage)],
+        ["התקדמות", `${overall}%`],
+        ["מסמכים", `${docsPercent}%`],
+        ["חסרים", `${missingCount}`],
+        ["שמאות", appraisalLabel],
+        ["עו״ד", getLawyerStatus(lead)],
+        ["בטחונות", `${collateralPercent}%`],
+        ["כספים", fundsLabel],
+      ].map(([label, value]) => (
+        <div key={label} className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2">
+          <p className="font-black text-slate-400 mb-0.5">{label}</p>
+          <p className="font-black text-slate-800 truncate">{value}</p>
+        </div>
+      ))}
+      {lead.signingDate && (
+        <div className="col-span-2 rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-2">
+          <p className="font-black text-emerald-700">חתימה: {formatOptionalDate(lead.signingDate)}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -90,14 +156,16 @@ function MyLeadCard({ lead, onUpdate }) {
   const [saved, setSaved] = useState(false);
   const [localActivities, setLocalActivities] = useState([]);
   const [docsOpen, setDocsOpen] = useState(false);
+  const [caseOpen, setCaseOpen] = useState(true);
   const [documents, setDocuments] = useState([]);
+  const [documentSummary, setDocumentSummary] = useState(null);
   const [docsLoading, setDocsLoading] = useState(false);
   const [selectedDocTypes, setSelectedDocTypes] = useState([]);
 
   const stage = getStage(lead);
   const si = getStageIndex(lead);
   const stageBadge = STAGE_BADGE[stage] || "bg-slate-50 text-slate-600 border-slate-200";
-  const nextStage = si >= 0 && si < PIPELINE_STAGES.length - 1 ? PIPELINE_STAGES[si + 1] : null;
+  const nextStage = si >= 0 && si < ACTIVE_PIPELINE_STAGES.length - 1 ? ACTIVE_PIPELINE_STAGES[si + 1] : null;
   const score = Math.round(Number(lead.approvalScore || lead.estimatedApprovalResult) || 0);
   const quality = lead.leadQuality || (score >= 70 ? "חם" : score >= 40 ? "בינוני" : "חלש");
   const qualityColor = quality === "חם" ? "text-emerald-600" : quality === "בינוני" ? "text-amber-600" : "text-slate-400";
@@ -135,7 +203,7 @@ function MyLeadCard({ lead, onUpdate }) {
 
   async function advanceStage() {
     if (!nextStage) return;
-    await patch({ pipelineStage: nextStage, lastContactedAt: new Date().toISOString() }, `שלב: "${nextStage}"`, "status_changed");
+    await patch({ pipelineStage: nextStage, lastContactedAt: new Date().toISOString() }, `שלב: "${getPipelineStageLabel(nextStage)}"`, "status_changed");
   }
 
   async function saveNotes() {
@@ -156,17 +224,24 @@ function MyLeadCard({ lead, onUpdate }) {
   async function loadDocuments() {
     setDocsLoading(true);
     const r = await fetch(`/api/advisor/documents?leadId=${lead.id}`);
-    setDocuments(r.ok ? (await r.json()).documents || [] : []);
+    if (r.ok) {
+      const data = await r.json();
+      setDocuments(data.documents || []);
+      setDocumentSummary(data.summary || buildDocumentChecklist(data.documents || [], lead.employmentStatus));
+    } else {
+      setDocuments([]);
+      setDocumentSummary(null);
+    }
     setDocsLoading(false);
   }
   async function requestDocuments() {
     if (!selectedDocTypes.length) return;
     const r = await fetch("/api/advisor/documents", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id, documentTypes: selectedDocTypes }) });
-    if (r.ok) { const j = await r.json(); setDocuments((p) => [...p, ...(j.documents || [])]); pushActivity("נשלחה בקשת מסמכים", "document_requested"); setSelectedDocTypes([]); }
+    if (r.ok) { const j = await r.json(); setDocuments((p) => [...p, ...(j.documents || [])]); setDocumentSummary(j.summary || null); pushActivity("נשלחה בקשת מסמכים", "document_requested"); setSelectedDocTypes([]); }
   }
   async function markDocReceived(doc) {
     const r = await fetch("/api/advisor/documents", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: doc.id, status: "received", leadId: lead.id, documentType: doc.document_type }) });
-    if (r.ok) { setDocuments((p) => p.map((d) => d.id === doc.id ? { ...d, status: "received" } : d)); pushActivity(`מסמך התקבל: ${DOC_LABELS[doc.document_type] || doc.document_type}`, "document_received"); }
+    if (r.ok) { const j = await r.json(); setDocuments((p) => p.map((d) => d.id === doc.id ? { ...d, status: "received" } : d)); setDocumentSummary(j.summary || null); pushActivity(`מסמך התקבל: ${getDocumentLabel(doc.document_type)}`, "document_received"); }
   }
 
   return (
@@ -176,7 +251,7 @@ function MyLeadCard({ lead, onUpdate }) {
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
-              <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${stageBadge}`}>{stage}</span>
+              <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${stageBadge}`}>{getPipelineStageLabel(stage)}</span>
               {isExcl && <Tag variant="exclusive">בלעדי</Tag>}
               {hasOverdue && <span className="text-[11px] font-black text-rose-600">⚠ באיחור</span>}
               <span className={`text-[11px] font-black ${qualityColor}`}>{quality}</span>
@@ -194,6 +269,23 @@ function MyLeadCard({ lead, onUpdate }) {
 
         {/* Pipeline progress */}
         <StageProgress lead={lead} />
+        <OverallProgress lead={lead} />
+
+        <div className="mb-3 border border-slate-100 rounded-xl overflow-hidden">
+          <button
+            type="button"
+            className="w-full flex items-center justify-between px-3 py-2 bg-emerald-50 text-[11px] font-black text-emerald-800"
+            onClick={() => setCaseOpen((v) => !v)}
+          >
+            <span>תיק משכנתא</span>
+            <span>{caseOpen ? "▲" : "▼"}</span>
+          </button>
+          {caseOpen && (
+            <div className="p-2.5 bg-white">
+              <MortgageCaseSummary lead={lead} documentSummary={documentSummary} />
+            </div>
+          )}
+        </div>
 
         {/* Next action */}
         {(lead.nextAction || lead.nextActionAt) && (
@@ -234,12 +326,12 @@ function MyLeadCard({ lead, onUpdate }) {
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
             <label className="block text-[11px] font-black text-slate-400 mb-1">שלב</label>
-            <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold" value={stage} onChange={(e) => patch({ pipelineStage: e.target.value, lastContactedAt: new Date().toISOString() }, `שלב: "${e.target.value}"`, "status_changed")}>
+            <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold" value={stage} onChange={(e) => patch({ pipelineStage: e.target.value, lastContactedAt: new Date().toISOString() }, `שלב: "${getPipelineStageLabel(e.target.value)}"`, "status_changed")}>
               <optgroup label="Pipeline פעיל">
-                {PIPELINE_STAGES.map((s) => <option key={s}>{s}</option>)}
+                {ACTIVE_PIPELINE_STAGES.map((s) => <option key={s} value={s}>{getPipelineStageLabel(s)}</option>)}
               </optgroup>
               <optgroup label="יצא מהתהליך">
-                {EXIT_STATUSES.map((s) => <option key={s}>{s}</option>)}
+                <option value="closed_lost">{getPipelineStageLabel("closed_lost")}</option>
               </optgroup>
             </select>
           </div>
@@ -275,9 +367,35 @@ function MyLeadCard({ lead, onUpdate }) {
           {docsOpen && (
             <div className="p-2.5">
               {docsLoading && <p className="text-xs text-slate-400">טוען...</p>}
-              {!docsLoading && documents.map((doc) => (
+              {!docsLoading && (documentSummary?.missingCount || lead.missingDocumentsCount) > 0 && (
+                <div className="mb-2 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-2">
+                  <p className="text-xs font-black text-amber-800">חסרים {documentSummary?.missingCount ?? lead.missingDocumentsCount} מסמכים</p>
+                  {documentSummary?.missingDocuments?.length > 0 && (
+                    <ul className="mt-1 space-y-0.5">
+                      {documentSummary.missingDocuments.slice(0, 6).map((doc) => (
+                        <li key={doc.key || doc.document_type} className="text-[11px] font-bold text-amber-700">✗ {doc.label || getDocumentLabel(doc.document_type)}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+              {!docsLoading && documentSummary?.checklist?.length > 0 && (
+                <div className="mb-2 grid gap-1">
+                  {documentSummary.checklist.map((doc) => (
+                    <div key={doc.key || doc.document_type} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5">
+                      <span className="text-xs font-bold text-slate-700">{doc.label || getDocumentLabel(doc.document_type)}</span>
+                      {doc.received
+                        ? <span className="text-xs font-black text-emerald-600">✓ התקבל</span>
+                        : doc.id
+                          ? <button type="button" onClick={() => markDocReceived(doc)} className="text-[10px] font-black text-violet-600">סמן כהתקבל</button>
+                          : <span className="text-xs font-black text-rose-600">✗ חסר</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!docsLoading && !documentSummary?.checklist?.length && documents.map((doc) => (
                 <div key={doc.id} className="flex items-center justify-between gap-2 mb-1">
-                  <span className="text-xs font-bold text-slate-700">{DOC_LABELS[doc.document_type] || doc.document_type}</span>
+                  <span className="text-xs font-bold text-slate-700">{getDocumentLabel(doc.document_type)}</span>
                   {doc.status === "received" || doc.status === "approved"
                     ? <span className="text-xs font-black text-emerald-600">✓</span>
                     : <button type="button" onClick={() => markDocReceived(doc)} className="text-[10px] font-black text-violet-600">התקבל</button>}
@@ -287,7 +405,7 @@ function MyLeadCard({ lead, onUpdate }) {
                 {DOC_TYPES.map((dt) => (
                   <button key={dt} type="button" onClick={() => setSelectedDocTypes((p) => p.includes(dt) ? p.filter((d) => d !== dt) : [...p, dt])}
                     className={`text-[10px] px-1.5 py-0.5 rounded-full border font-bold ${selectedDocTypes.includes(dt) ? "bg-violet-700 text-white border-violet-700" : "bg-white text-slate-600 border-slate-200"}`}>
-                    {DOC_LABELS[dt]}
+                    {getDocumentLabel(dt)}
                   </button>
                 ))}
               </div>
@@ -312,12 +430,12 @@ export default function AdvisorMyLeads() {
   const [error, setError] = useState("");
   const [view, setView] = useState("pipeline");
   const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState("הכל");
+  const [stageFilter, setStageFilter] = useState("all");
 
   useEffect(() => {
     const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
     const s = params.get("stage");
-    if (s && ALL_STATUSES.includes(s)) setStageFilter(s);
+    if (s && PIPELINE_STAGES.includes(normalizePipelineStage(s))) setStageFilter(normalizePipelineStage(s));
   }, []);
 
   useEffect(() => { load(); }, []);
@@ -337,14 +455,14 @@ export default function AdvisorMyLeads() {
   }
 
   const q = search.trim().toLowerCase();
-  const active = useMemo(() => leads.filter((l) => !["לא עונה", "לא רלוונטי", "נדחה בבנק", "עבר ליועץ אחר", "בוטל", "נסגר בהצלחה"].includes(l.pipelineStage || l.leadStatus || "")), [leads]);
-  const closed = useMemo(() => leads.filter((l) => (l.pipelineStage || l.leadStatus) === "נסגר בהצלחה"), [leads]);
-  const exited = useMemo(() => leads.filter((l) => ["לא עונה", "לא רלוונטי", "נדחה בבנק", "עבר ליועץ אחר", "בוטל"].includes(l.pipelineStage || l.leadStatus || "")), [leads]);
+  const active = useMemo(() => leads.filter((l) => !isClosedPipelineStage(l.pipelineStage || l.leadStatus)), [leads]);
+  const closed = useMemo(() => leads.filter((l) => normalizePipelineStage(l.pipelineStage || l.leadStatus) === "closed_won"), [leads]);
+  const exited = useMemo(() => leads.filter((l) => normalizePipelineStage(l.pipelineStage || l.leadStatus) === "closed_lost"), [leads]);
   const totalSpent = useMemo(() => leads.reduce((s, l) => s + (Number(l.purchasePrice) || 0), 0), [leads]);
   const conversionRate = leads.length > 0 ? Math.round((closed.length / leads.length) * 100) : 0;
 
   const filtered = useMemo(() => {
-    let base = stageFilter === "הכל" ? leads : stageFilter === "פעיל" ? active : stageFilter === "נסגר" ? closed : stageFilter === "יצא" ? exited : leads.filter((l) => (l.pipelineStage || l.leadStatus) === stageFilter);
+    let base = stageFilter === "all" ? leads : stageFilter === "active" ? active : stageFilter === "closed" ? closed : stageFilter === "lost" ? exited : leads.filter((l) => normalizePipelineStage(l.pipelineStage || l.leadStatus) === stageFilter);
     if (q) base = base.filter((l) => (l.name || "").toLowerCase().includes(q) || (l.phone || "").replace(/\D/g, "").includes(q.replace(/\D/g, "")));
     return [...base].sort((a, b) => {
       const aOver = (a.nextActionAt && new Date(a.nextActionAt) < new Date()) || (a.followUpDate && new Date(a.followUpDate) < new Date());
@@ -360,21 +478,21 @@ export default function AdvisorMyLeads() {
   // Pipeline grouped view
   const pipelineGroups = useMemo(() => {
     if (view !== "pipeline") return [];
-    return PIPELINE_STAGES
+    return ACTIVE_PIPELINE_STAGES
       .map((stage, si) => ({
         stage, si,
-        leads: filtered.filter((l) => (l.pipelineStage || l.leadStatus || "ליד חדש") === stage),
+        leads: filtered.filter((l) => normalizePipelineStage(l.pipelineStage || l.leadStatus) === stage),
       }))
       .filter((g) => g.leads.length > 0);
   }, [filtered, view]);
 
-  const exitGroup = useMemo(() => view === "pipeline" ? filtered.filter((l) => ["לא עונה", "לא רלוונטי", "נדחה בבנק", "עבר ליועץ אחר", "בוטל"].includes(l.pipelineStage || l.leadStatus || "")) : [], [filtered, view]);
+  const exitGroup = useMemo(() => view === "pipeline" ? filtered.filter((l) => normalizePipelineStage(l.pipelineStage || l.leadStatus) === "closed_lost") : [], [filtered, view]);
 
   const tabs = [
-    { key: "הכל", label: "הכל", count: leads.length },
-    { key: "פעיל", label: "פעיל", count: active.length },
-    { key: "נסגר", label: "נסגר בהצלחה", count: closed.length },
-    { key: "יצא", label: "יצא מהתהליך", count: exited.length },
+    { key: "all", label: "הכל", count: leads.length },
+    { key: "active", label: "פעיל", count: active.length },
+    { key: "closed", label: "נסגר בהצלחה", count: closed.length },
+    { key: "lost", label: "יצא מהתהליך", count: exited.length },
   ];
 
   return (
@@ -420,11 +538,11 @@ export default function AdvisorMyLeads() {
 
           {loading && <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}</div>}
 
-          {!loading && filtered.length === 0 && stageFilter === "הכל" && !q && (
+          {!loading && filtered.length === 0 && stageFilter === "all" && !q && (
             <EmptyState glyph="📋" title="עדיין לא רכשתם לידים" description="עברו לחנות הלידים כדי לקנות."
               action={<Link href="/advisor/leads" className="inline-block rounded-full bg-violet-700 text-white px-6 py-3 text-sm font-black">לחנות הלידים ←</Link>} />
           )}
-          {!loading && filtered.length === 0 && (stageFilter !== "הכל" || q) && (
+          {!loading && filtered.length === 0 && (stageFilter !== "all" || q) && (
             <EmptyState glyph="🔍" title="אין תוצאות" description="נסו לשנות את החיפוש או הסינון." />
           )}
 
@@ -435,10 +553,10 @@ export default function AdvisorMyLeads() {
                 <div key={stage}>
                   <div className="flex items-center gap-3 mb-2">
                     <div className={`h-3 w-3 rounded-full shrink-0 ${STAGE_PROGRESS_COLOR[si]}`} />
-                    <h3 className="text-sm font-black text-slate-800">{stage}</h3>
+                    <h3 className="text-sm font-black text-slate-800">{getPipelineStageLabel(stage)}</h3>
                     <span className="text-xs font-black text-slate-400 bg-slate-100 rounded-full px-2 py-0.5">{groupLeads.length}</span>
                     <div className="flex-1 h-px bg-slate-200" />
-                    <span className="text-[11px] font-bold text-slate-400">שלב {si + 1}/{PIPELINE_STAGES.length}</span>
+                    <span className="text-[11px] font-bold text-slate-400">שלב {si + 1}/{ACTIVE_PIPELINE_STAGES.length}</span>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                     {groupLeads.map((lead) => <MyLeadCard key={lead.id} lead={lead} onUpdate={update} />)}
@@ -455,6 +573,19 @@ export default function AdvisorMyLeads() {
                   </div>
                   <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                     {exitGroup.map((lead) => <MyLeadCard key={lead.id} lead={lead} onUpdate={update} />)}
+                  </div>
+                </div>
+              )}
+              {pipelineGroups.length === 0 && exitGroup.length === 0 && filtered.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="h-3 w-3 rounded-full shrink-0 bg-violet-500" />
+                    <h3 className="text-sm font-black text-slate-800">כל תיקי המשכנתא</h3>
+                    <span className="text-xs font-black text-slate-400 bg-slate-100 rounded-full px-2 py-0.5">{filtered.length}</span>
+                    <div className="flex-1 h-px bg-slate-200" />
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {filtered.map((lead) => <MyLeadCard key={lead.id} lead={lead} onUpdate={update} />)}
                   </div>
                 </div>
               )}

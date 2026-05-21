@@ -4,13 +4,22 @@ import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import { formatILS } from "../../../lib/format";
 import AdvisorHeader from "../../../components/AdvisorHeader";
+import { PIPELINE_STAGES, getPipelineProgress, getPipelineStageLabel, normalizePipelineStage } from "../../../lib/pipeline";
+import {
+  APPRAISAL_PROGRESS,
+  APPRAISAL_STATUS_LABELS,
+  APPRAISAL_STATUSES,
+  COLLATERAL_CHECKLIST,
+  FUNDS_RELEASE_STATUS_LABELS,
+  FUNDS_RELEASE_STATUSES,
+  LEGAL_CHECKLIST,
+  buildDocumentChecklist,
+  calculateCollateralProgress,
+  calculateOverallMortgageProgress,
+  getDocumentLabel,
+} from "../../../lib/mortgageCase";
 
-const PIPELINE_STAGES = [
-  "ליד חדש", "נוצר קשר", "נשלחה רשימת מסמכים", "מחכה למסמכים",
-  "מסמכים התקבלו", "בדיקת זכאות", "הוגש לבנק", "אישור עקרוני",
-  "משא ומתן מול בנקים", "נבחר תמהיל", "נקבעו חתימות", "נסגר בהצלחה",
-];
-const EXIT_STATUSES = ["לא עונה", "לא רלוונטי", "נדחה בבנק", "עבר ליועץ אחר", "בוטל"];
+const ACTIVE_PIPELINE_STAGES = PIPELINE_STAGES.filter((stage) => stage !== "closed_lost");
 
 const STAGE_COLORS = [
   "bg-violet-500", "bg-violet-400", "bg-indigo-400", "bg-amber-400",
@@ -49,8 +58,8 @@ function formatDT(d) { if (!d) return ""; return new Date(d).toLocaleString("he-
 function formatDate(d) { if (!d) return ""; return new Date(d).toLocaleDateString("he-IL", { day: "numeric", month: "short", year: "numeric" }); }
 function isOverdue(d) { return d && new Date(d) < new Date(new Date().toDateString()); }
 
-function getStage(lead) { return lead?.pipelineStage || lead?.leadStatus || "ליד חדש"; }
-function getStageIndex(lead) { return PIPELINE_STAGES.indexOf(getStage(lead)); }
+function getStage(lead) { return normalizePipelineStage(lead?.pipelineStage || lead?.leadStatus); }
+function getStageIndex(lead) { return ACTIVE_PIPELINE_STAGES.indexOf(getStage(lead)); }
 
 function StageStepper({ lead, onAdvance, onSetStage }) {
   const si = getStageIndex(lead);
@@ -68,7 +77,7 @@ function StageStepper({ lead, onAdvance, onSetStage }) {
       <div className="max-w-5xl mx-auto px-4 py-3">
         {/* Scrollable stage dots */}
         <div ref={scrollRef} className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
-          {PIPELINE_STAGES.map((stage, i) => {
+          {ACTIVE_PIPELINE_STAGES.map((stage, i) => {
             const done = i < si;
             const active = i === si;
             const color = STAGE_COLORS[i];
@@ -77,12 +86,12 @@ function StageStepper({ lead, onAdvance, onSetStage }) {
                 key={stage}
                 type="button"
                 onClick={() => onSetStage(stage)}
-                title={stage}
+                title={getPipelineStageLabel(stage)}
                 className={`flex-none flex flex-col items-center gap-1 px-2 py-1 rounded-xl transition-all ${active ? "bg-slate-50 ring-2 " + STAGE_RING[i] : "hover:bg-slate-50"}`}
               >
                 <div className={`h-3 w-3 rounded-full transition-all ${done ? color + " opacity-60" : active ? color : "bg-slate-200"}`} />
                 <span className={`text-[10px] font-bold whitespace-nowrap ${active ? "text-slate-900" : done ? "text-slate-400" : "text-slate-300"}`} style={{ maxWidth: "72px", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {stage}
+                  {getPipelineStageLabel(stage)}
                 </span>
               </button>
             );
@@ -94,22 +103,22 @@ function StageStepper({ lead, onAdvance, onSetStage }) {
           <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${si >= 0 ? STAGE_COLORS[si] : "bg-violet-400"}`}
-              style={{ width: si >= 0 ? `${Math.round(((si + 1) / PIPELINE_STAGES.length) * 100)}%` : "8%" }}
+              style={{ width: `${getPipelineProgress(getStage(lead))}%` }}
             />
           </div>
           <span className="text-xs font-black tabular-nums text-slate-500 shrink-0">
-            {si >= 0 ? `${si + 1}/${PIPELINE_STAGES.length}` : "—"}
+            {si >= 0 ? `${si + 1}/${ACTIVE_PIPELINE_STAGES.length}` : "—"}
           </span>
-          {si >= 0 && si < PIPELINE_STAGES.length - 1 && (
+          {si >= 0 && si < ACTIVE_PIPELINE_STAGES.length - 1 && (
             <button
               type="button"
               onClick={onAdvance}
               className={`shrink-0 text-xs font-black px-3 py-1.5 rounded-xl text-white transition-colors ${STAGE_COLORS[si + 1]} hover:opacity-90`}
             >
-              הבא: {PIPELINE_STAGES[si + 1]} ←
+              הבא: {getPipelineStageLabel(ACTIVE_PIPELINE_STAGES[si + 1])} ←
             </button>
           )}
-          {getStage(lead) === "נסגר בהצלחה" && <span className="shrink-0 text-xs font-black text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-xl">🎉 נסגר בהצלחה</span>}
+          {getStage(lead) === "closed_won" && <span className="shrink-0 text-xs font-black text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-xl">🎉 נסגר בהצלחה</span>}
         </div>
       </div>
     </div>
@@ -123,6 +132,7 @@ export default function LeadDetailPage() {
   const [lead, setLead] = useState(null);
   const [activities, setActivities] = useState([]);
   const [documents, setDocuments] = useState([]);
+  const [documentSummary, setDocumentSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notes, setNotes] = useState("");
@@ -148,7 +158,9 @@ export default function LeadDetailPage() {
       setNextActionDate(found.nextActionAt?.slice(0, 10) || "");
       const acts = Array.isArray(actData.activities) ? actData.activities : [];
       setActivities(acts.length > 0 ? acts : [{ title: "הליד נוצר", created_at: found.createdAt, activity_type: "lead_created" }]);
-      setDocuments(Array.isArray(docsData.documents) ? docsData.documents : []);
+      const docs = Array.isArray(docsData.documents) ? docsData.documents : [];
+      setDocuments(docs);
+      setDocumentSummary(docsData.summary || buildDocumentChecklist(docs, found.employmentStatus));
       setLoading(false);
     }).catch(() => { setLoading(false); router.push("/advisor/my-leads"); });
   }, [id]);
@@ -174,14 +186,15 @@ export default function LeadDetailPage() {
 
   async function advanceStage() {
     const si = getStageIndex(lead);
-    if (si < 0 || si >= PIPELINE_STAGES.length - 1) return;
-    const next = PIPELINE_STAGES[si + 1];
-    await patchLead({ pipelineStage: next, lastContactedAt: new Date().toISOString() }, `שלב עודכן: "${next}"`, "status_changed");
+    if (si < 0 || si >= ACTIVE_PIPELINE_STAGES.length - 1) return;
+    const next = ACTIVE_PIPELINE_STAGES[si + 1];
+    await patchLead({ pipelineStage: next, lastContactedAt: new Date().toISOString() }, `שלב עודכן: "${getPipelineStageLabel(next)}"`, "status_changed");
   }
 
   async function setStage(stage) {
-    if (stage === getStage(lead)) return;
-    await patchLead({ pipelineStage: stage, lastContactedAt: new Date().toISOString() }, `שלב עודכן: "${stage}"`, "status_changed");
+    const nextStage = normalizePipelineStage(stage);
+    if (nextStage === getStage(lead)) return;
+    await patchLead({ pipelineStage: nextStage, lastContactedAt: new Date().toISOString() }, `שלב עודכן: "${getPipelineStageLabel(nextStage)}"`, "status_changed");
   }
 
   async function saveNotes() {
@@ -204,7 +217,7 @@ export default function LeadDetailPage() {
     const raw = String(lead.phone).replace(/[^\d]/g, "");
     const phone = raw.startsWith("0") ? `972${raw.slice(1)}` : raw;
     const tmpl = WA_TEMPLATES.find((t) => t.key === template);
-    const text = tmpl ? tmpl.body(lead.name, getStage(lead)) : "";
+    const text = tmpl ? tmpl.body(lead.name, getPipelineStageLabel(getStage(lead))) : "";
     window.open(text ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : `https://wa.me/${phone}`, "_blank", "noopener,noreferrer");
     pushActivity(`WhatsApp${tmpl ? ` — ${tmpl.label}` : ""}`, "whatsapp_opened");
     patchLead({ lastContactedAt: new Date().toISOString() });
@@ -216,7 +229,8 @@ export default function LeadDetailPage() {
     if (r.ok) {
       const j = await r.json();
       setDocuments((prev) => [...prev, ...(j.documents || [])]);
-      pushActivity(`בקשת מסמכים: ${selectedDocs.map((d) => DOC_LABELS[d]).join(", ")}`, "document_requested");
+      setDocumentSummary(j.summary || null);
+      pushActivity(`בקשת מסמכים: ${selectedDocs.map(getDocumentLabel).join(", ")}`, "document_requested");
       setSelectedDocs([]);
     }
   }
@@ -225,14 +239,19 @@ export default function LeadDetailPage() {
     const r = await fetch("/api/advisor/documents", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: doc.id, status: "received", leadId: id, documentType: doc.document_type }) });
     if (r.ok) {
       setDocuments((prev) => prev.map((d) => d.id === doc.id ? { ...d, status: "received" } : d));
-      pushActivity(`מסמך התקבל: ${DOC_LABELS[doc.document_type] || doc.document_type}`, "document_received");
+      const j = await r.json();
+      setDocumentSummary(j.summary || null);
+      pushActivity(`מסמך התקבל: ${getDocumentLabel(doc.document_type)}`, "document_received");
     }
   }
 
-  const missingDocs = documents.filter((d) => d.status === "requested").length;
-  const receivedDocs = documents.filter((d) => d.status === "received" || d.status === "approved").length;
+  const computedDocumentSummary = documentSummary || buildDocumentChecklist(documents, lead?.employmentStatus);
+  const missingDocs = computedDocumentSummary.missingCount;
+  const receivedDocs = computedDocumentSummary.receivedCount;
   const score = Math.round(Number(lead?.approvalScore || lead?.estimatedApprovalResult) || 0);
   const si = lead ? getStageIndex(lead) : -1;
+  const overallProgress = lead ? Number(lead.overallProgressPercent ?? calculateOverallMortgageProgress(lead)) || 0 : 0;
+  const collateralProgress = lead ? Number(lead.collateralCompletionPercent ?? calculateCollateralProgress(lead)) || 0 : 0;
 
   if (loading) {
     return (
@@ -284,6 +303,23 @@ export default function LeadDetailPage() {
 
         {/* Stage stepper */}
         <StageStepper lead={lead} onAdvance={advanceStage} onSetStage={setStage} />
+
+        <div className="bg-white border-b border-slate-100">
+          <div className="max-w-5xl mx-auto px-4 py-3">
+            <div className="flex items-center justify-between text-xs font-black text-slate-500 mb-1">
+              <span>התקדמות תיק משכנתא</span>
+              <span className="tabular-nums">{overallProgress}%</span>
+            </div>
+            <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${Math.max(0, Math.min(100, overallProgress))}%` }} />
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-2 text-[11px] font-bold text-slate-500">
+              <span>Pipeline {getPipelineProgress(getStage(lead))}%</span>
+              <span>מסמכים {computedDocumentSummary.completionPercent}%</span>
+              <span>בטחונות {collateralProgress}%</span>
+            </div>
+          </div>
+        </div>
 
         {msg.text && <div className={`max-w-5xl mx-auto mt-3 px-4 py-2 rounded-xl text-sm font-bold ${msg.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{msg.text}</div>}
 
@@ -342,10 +378,10 @@ export default function LeadDetailPage() {
                   <label className="block text-xs font-black text-slate-400 mb-1">שלב נוכחי</label>
                   <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300" value={getStage(lead)} onChange={(e) => setStage(e.target.value)}>
                     <optgroup label="Pipeline פעיל">
-                      {PIPELINE_STAGES.map((s) => <option key={s}>{s}</option>)}
+                      {ACTIVE_PIPELINE_STAGES.map((s) => <option key={s} value={s}>{getPipelineStageLabel(s)}</option>)}
                     </optgroup>
                     <optgroup label="יצא מהתהליך">
-                      {EXIT_STATUSES.map((s) => <option key={s}>{s}</option>)}
+                      <option value="closed_lost">{getPipelineStageLabel("closed_lost")}</option>
                     </optgroup>
                   </select>
                 </div>
@@ -400,20 +436,93 @@ export default function LeadDetailPage() {
               </div>
             </div>
 
+            {/* Appraisal */}
+            <div className="bg-white rounded-2xl border border-slate-100 p-5">
+              <h2 className="text-sm font-black text-slate-950 mb-3">שמאות</h2>
+              <div className="grid gap-2">
+                <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" value={lead.appraisalStatus || "not_ordered"} onChange={(e) => patchLead({ appraisalStatus: e.target.value }, `שמאות: ${APPRAISAL_STATUS_LABELS[e.target.value]}`)}>
+                  {APPRAISAL_STATUSES.map((status) => <option key={status} value={status}>{APPRAISAL_STATUS_LABELS[status]}</option>)}
+                </select>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-sky-500" style={{ width: `${APPRAISAL_PROGRESS[lead.appraisalStatus || "not_ordered"] || 0}%` }} />
+                </div>
+                <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" placeholder="שם שמאי" value={lead.appraiserName || ""} onChange={(e) => setLead((p) => ({ ...p, appraiserName: e.target.value }))} onBlur={(e) => patchLead({ appraiserName: e.target.value })} />
+                <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" placeholder="טלפון שמאי" value={lead.appraiserPhone || ""} onChange={(e) => setLead((p) => ({ ...p, appraiserPhone: e.target.value }))} onBlur={(e) => patchLead({ appraiserPhone: e.target.value })} />
+                <input type="date" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" value={lead.appraisalDate?.slice(0, 10) || ""} onChange={(e) => setLead((p) => ({ ...p, appraisalDate: e.target.value }))} onBlur={(e) => patchLead({ appraisalDate: e.target.value })} />
+                <input type="number" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" placeholder="עלות שמאות" value={lead.appraisalCost || ""} onChange={(e) => setLead((p) => ({ ...p, appraisalCost: e.target.value }))} onBlur={(e) => patchLead({ appraisalCost: e.target.value })} />
+              </div>
+            </div>
+
+            {/* Legal */}
+            <div className="bg-white rounded-2xl border border-slate-100 p-5">
+              <h2 className="text-sm font-black text-slate-950 mb-3">עורכי דין</h2>
+              <div className="grid gap-2">
+                <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" placeholder="עו״ד קונה - שם" value={lead.buyerLawyerName || ""} onChange={(e) => setLead((p) => ({ ...p, buyerLawyerName: e.target.value }))} onBlur={(e) => patchLead({ buyerLawyerName: e.target.value })} />
+                <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" placeholder="עו״ד קונה - טלפון" value={lead.buyerLawyerPhone || ""} onChange={(e) => setLead((p) => ({ ...p, buyerLawyerPhone: e.target.value }))} onBlur={(e) => patchLead({ buyerLawyerPhone: e.target.value })} />
+                <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" placeholder="עו״ד מוכר - שם" value={lead.sellerLawyerName || ""} onChange={(e) => setLead((p) => ({ ...p, sellerLawyerName: e.target.value }))} onBlur={(e) => patchLead({ sellerLawyerName: e.target.value })} />
+                <div className="grid gap-1.5">
+                  {LEGAL_CHECKLIST.map((item) => (
+                    <label key={item.key} className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">
+                      <input type="checkbox" checked={Boolean(lead[item.key])} onChange={(e) => { setLead((p) => ({ ...p, [item.key]: e.target.checked })); patchLead({ [item.key]: e.target.checked }); }} />
+                      {item.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Signing, collateral, funds */}
+            <div className="bg-white rounded-2xl border border-slate-100 p-5">
+              <h2 className="text-sm font-black text-slate-950 mb-3">חתימות, בטחונות וכספים</h2>
+              <div className="grid gap-2 mb-3">
+                <input type="date" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" value={lead.signingDate?.slice(0, 10) || ""} onChange={(e) => setLead((p) => ({ ...p, signingDate: e.target.value }))} onBlur={(e) => patchLead({ signingDate: e.target.value })} />
+                {lead.signingDate && <p className="text-xs font-black text-emerald-700">עוד {Math.max(0, Math.ceil((new Date(lead.signingDate) - new Date()) / 86400000))} ימים לחתימה</p>}
+                <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" placeholder="מיקום חתימה" value={lead.signingLocation || ""} onChange={(e) => setLead((p) => ({ ...p, signingLocation: e.target.value }))} onBlur={(e) => patchLead({ signingLocation: e.target.value })} />
+                <textarea className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold min-h-[72px]" placeholder="הערות חתימה" value={lead.signingNotes || ""} onChange={(e) => setLead((p) => ({ ...p, signingNotes: e.target.value }))} onBlur={(e) => patchLead({ signingNotes: e.target.value })} />
+              </div>
+              <div className="mb-3">
+                <div className="flex justify-between text-xs font-black text-slate-500 mb-1"><span>בטחונות</span><span>{collateralProgress}%</span></div>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-2"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${collateralProgress}%` }} /></div>
+                <div className="grid gap-1.5">
+                  {COLLATERAL_CHECKLIST.map((item) => (
+                    <label key={item.key} className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">
+                      <input type="checkbox" checked={Boolean(lead[item.key])} onChange={(e) => { setLead((p) => ({ ...p, [item.key]: e.target.checked })); patchLead({ [item.key]: e.target.checked }); }} />
+                      {item.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" value={lead.fundsReleaseStatus || "not_released"} onChange={(e) => patchLead({ fundsReleaseStatus: e.target.value }, `שחרור כספים: ${FUNDS_RELEASE_STATUS_LABELS[e.target.value]}`)}>
+                {FUNDS_RELEASE_STATUSES.map((status) => <option key={status} value={status}>{FUNDS_RELEASE_STATUS_LABELS[status]}</option>)}
+              </select>
+            </div>
+
             {/* Documents */}
             <div className="bg-white rounded-2xl border border-slate-100 p-5">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-black text-slate-950">מסמכים</h2>
-                {documents.length > 0 && <span className="text-xs font-black text-slate-400">{receivedDocs}/{documents.length} התקבלו</span>}
+                <span className="text-xs font-black text-slate-400">{receivedDocs}/{computedDocumentSummary.totalCount} התקבלו · {computedDocumentSummary.completionPercent}%</span>
               </div>
-              {documents.length > 0 && (
+              {missingDocs > 0 && (
+                <div className="mb-3 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
+                  <p className="text-xs font-black text-amber-800">חסרים {missingDocs} מסמכים</p>
+                  <div className="mt-1 grid gap-1">
+                    {computedDocumentSummary.missingDocuments.map((doc) => (
+                      <p key={doc.key || doc.document_type} className="text-[11px] font-bold text-amber-700">✗ {doc.label || getDocumentLabel(doc.document_type)}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {computedDocumentSummary.checklist.length > 0 && (
                 <div className="mb-3 grid gap-1.5">
-                  {documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2">
-                      <span className="text-xs font-bold text-slate-700">{DOC_LABELS[doc.document_type] || doc.document_type}</span>
-                      {doc.status === "received" || doc.status === "approved"
+                  {computedDocumentSummary.checklist.map((doc) => (
+                    <div key={doc.id || doc.key} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2">
+                      <span className="text-xs font-bold text-slate-700">{doc.label || getDocumentLabel(doc.document_type)}</span>
+                      {doc.received
                         ? <span className="text-xs font-black text-emerald-600 shrink-0">✓ התקבל</span>
-                        : <button type="button" onClick={() => markDocReceived(doc)} className="text-[11px] font-black text-violet-600 hover:underline shrink-0">סמן כהתקבל</button>}
+                        : doc.id
+                          ? <button type="button" onClick={() => markDocReceived(doc)} className="text-[11px] font-black text-violet-600 hover:underline shrink-0">סמן כהתקבל</button>
+                          : <span className="text-xs font-black text-rose-600 shrink-0">✗ חסר</span>}
                     </div>
                   ))}
                 </div>
@@ -423,7 +532,7 @@ export default function LeadDetailPage() {
                 {DOC_TYPES.filter((dt) => !documents.find((d) => d.document_type === dt)).map((dt) => (
                   <button key={dt} type="button" onClick={() => setSelectedDocs((p) => p.includes(dt) ? p.filter((d) => d !== dt) : [...p, dt])}
                     className={`text-[11px] px-2 py-1 rounded-full border font-bold transition-colors ${selectedDocs.includes(dt) ? "bg-violet-700 text-white border-violet-700" : "bg-white text-slate-600 border-slate-200 hover:border-violet-300"}`}>
-                    {DOC_LABELS[dt]}
+                    {getDocumentLabel(dt)}
                   </button>
                 ))}
               </div>
@@ -437,7 +546,7 @@ export default function LeadDetailPage() {
         <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
           {lead.phone && <a href={`tel:${lead.phone}`} className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">☎ שיחה</a>}
           {lead.phone && <button type="button" onClick={() => openWa()} className="flex-1 text-center text-xs font-black text-emerald-700 bg-emerald-50 rounded-xl py-2.5">💬 WA</button>}
-          {si >= 0 && si < PIPELINE_STAGES.length - 1 && <button type="button" onClick={advanceStage} className="flex-1 text-center text-xs font-black text-white bg-violet-700 rounded-xl py-2.5">הבא ←</button>}
+          {si >= 0 && si < ACTIVE_PIPELINE_STAGES.length - 1 && <button type="button" onClick={advanceStage} className="flex-1 text-center text-xs font-black text-white bg-violet-700 rounded-xl py-2.5">הבא ←</button>}
           <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">← חזרה</Link>
         </div>
       </main>
