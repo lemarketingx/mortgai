@@ -1,4 +1,4 @@
-import Head from "next/head";
+﻿import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { formatILS } from "../../lib/format";
@@ -150,280 +150,108 @@ function MortgageCaseSummary({ lead, documentSummary }) {
   );
 }
 
-function MyLeadCard({ lead, onUpdate }) {
-  const [notes, setNotes] = useState(lead.internalNotes || "");
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [localActivities, setLocalActivities] = useState([]);
-  const [docsOpen, setDocsOpen] = useState(false);
-  const [caseOpen, setCaseOpen] = useState(true);
-  const [documents, setDocuments] = useState([]);
-  const [documentSummary, setDocumentSummary] = useState(null);
-  const [docsLoading, setDocsLoading] = useState(false);
-  const [selectedDocTypes, setSelectedDocTypes] = useState([]);
-
+function getLeadPriority(lead) {
   const stage = getStage(lead);
-  const si = getStageIndex(lead);
+  const closed = isClosedPipelineStage(stage);
+  const daysStuck = diffDays(lead.lastActivityAt || lead.stageUpdatedAt || lead.createdAt) || 0;
+  const score = Math.round(Number(lead.approvalScore || lead.estimatedApprovalResult) || 0);
+  const missing = Number(lead.missingDocumentsCount || 0);
+  const docsPercent = Number(lead.documentsCompletionPercent || 0);
+  const docsPartial = docsPercent > 0 && docsPercent < 100;
+  const signingSoon = lead.signingDate && Math.ceil((new Date(lead.signingDate) - new Date()) / DAY_MS) <= 7 && new Date(lead.signingDate) >= TODAY_D();
+  const waitingAppraisal = ["appraisal_ordered", "appraisal_completed"].includes(stage) && lead.appraisalStatus !== "report_received";
+  const waitingLawyer = stage === "lawyer_review" || (lead.buyerLawyerName && !(lead.legalContractReceived && lead.legalRightsReceived && lead.legalRegistrationReceived));
+  const waitingBank = ["submitted_to_bank", "principle_approval", "bank_negotiation"].includes(stage);
+  const badges = [];
+  let priority = 20;
+
+  if (closed) return { priority: 0, badges: [], daysStuck };
+  if (isOverdue(lead.nextActionAt) || isOverdue(lead.followUpDate)) { priority = 100; badges.push("דחוף"); }
+  if (isToday(lead.nextActionAt) || isToday(lead.followUpDate)) { priority = Math.max(priority, 90); badges.push("היום"); }
+  if (score >= 70 && !lead.firstContactAt) { priority = Math.max(priority, 85); badges.push("דחוף"); }
+  if (missing > 0 && ["documents_requested", "waiting_documents", "documents_received"].includes(stage)) { priority = Math.max(priority, 78); badges.push("חסר מסמכים"); }
+  if (signingSoon) { priority = Math.max(priority, 82); badges.push("חתימות השבוע"); }
+  if (waitingAppraisal) { priority = Math.max(priority, 72); badges.push("ממתין לשמאי"); }
+  if (daysStuck >= 3) { priority = Math.max(priority, 68); badges.push(`תקוע ${daysStuck} ימים`); }
+  if (waitingLawyer) priority = Math.max(priority, 55);
+  if (waitingBank) priority = Math.max(priority, 50);
+  if (docsPartial) priority = Math.max(priority, 45);
+  if (badges.length === 0 && missing > 0) badges.push("חסר מסמכים");
+  return { priority, badges: [...new Set(badges)], daysStuck };
+}
+
+function MyLeadCard({ lead }) {
+  const stage = getStage(lead);
   const stageBadge = STAGE_BADGE[stage] || "bg-slate-50 text-slate-600 border-slate-200";
-  const nextStage = si >= 0 && si < ACTIVE_PIPELINE_STAGES.length - 1 ? ACTIVE_PIPELINE_STAGES[si + 1] : null;
   const score = Math.round(Number(lead.approvalScore || lead.estimatedApprovalResult) || 0);
   const quality = lead.leadQuality || (score >= 70 ? "חם" : score >= 40 ? "בינוני" : "חלש");
-  const qualityColor = quality === "חם" ? "text-emerald-600" : quality === "בינוני" ? "text-amber-600" : "text-slate-400";
-  const hasOverdue = isOverdue(lead.nextActionAt) || isOverdue(lead.followUpDate);
-  const isExcl = lead.isExclusive;
-  const created = new Date(lead.createdAt).toLocaleDateString("he-IL", { day: "numeric", month: "short" });
+  const qualityColor = String(quality).includes("חם") || score >= 70 ? "text-emerald-600" : String(quality).includes("בינוני") || score >= 40 ? "text-amber-600" : "text-slate-400";
+  const priority = getLeadPriority(lead);
+  const missing = Number(lead.missingDocumentsCount || 0);
+  const docsPercent = Number(lead.documentsCompletionPercent || 0);
+  const overall = Number(lead.overallProgressPercent ?? calculateOverallMortgageProgress(lead)) || 0;
+  const dueDate = lead.nextActionAt || lead.followUpDate;
 
-  useEffect(() => {
-    fetch(`/api/advisor/activities?leadId=${lead.id}`)
-      .then((r) => r.ok ? r.json() : { activities: [] })
-      .then((j) => {
-        const acts = Array.isArray(j.activities) ? j.activities : [];
-        setLocalActivities(acts.length > 0 ? acts : [{ title: "הליד נוצר", created_at: lead.createdAt, activity_type: "lead_created" }]);
-      })
-      .catch(() => setLocalActivities([{ title: "הליד נוצר", created_at: lead.createdAt, activity_type: "lead_created" }]));
-  }, [lead.id, lead.createdAt]);
-
-  const timeline = useMemo(() =>
-    [...localActivities].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5),
-    [localActivities]
-  );
-
-  function pushActivity(title, activityType = "note_added") {
-    setLocalActivities((prev) => [{ title, created_at: new Date().toISOString(), activity_type: activityType }, ...prev]);
-    fetch("/api/advisor/activities", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id, activityType, title }) }).catch(() => {});
-  }
-
-  async function patch(changes, activityTitle, activityType) {
-    const r = await fetch("/api/advisor/my-leads", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: lead.id, changes }) });
-    if (!r.ok) return;
-    const j = await r.json();
-    onUpdate(lead.id, j.lead);
-    if (activityTitle) pushActivity(activityTitle, activityType || "note_added");
-  }
-
-  async function advanceStage() {
-    if (!nextStage) return;
-    await patch({ pipelineStage: nextStage, lastContactedAt: new Date().toISOString() }, `שלב: "${getPipelineStageLabel(nextStage)}"`, "status_changed");
-  }
-
-  async function saveNotes() {
-    if (notes === (lead.internalNotes || "")) return;
-    setSaving(true);
-    await patch({ internalNotes: notes, lastContactedAt: new Date().toISOString() }, "הערה עודכנה", "note_added");
-    setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2500);
-  }
-
-  function openWa(msg = "") {
+  function openWa() {
     if (!lead.phone) return;
     const raw = String(lead.phone).replace(/[^\d]/g, "");
     const phone = raw.startsWith("0") ? `972${raw.slice(1)}` : raw;
-    window.open(msg ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/${phone}`, "_blank", "noopener,noreferrer");
-    patch({ lastContactedAt: new Date().toISOString() }, "נפתח WhatsApp", "whatsapp_opened");
-  }
-
-  async function loadDocuments() {
-    setDocsLoading(true);
-    const r = await fetch(`/api/advisor/documents?leadId=${lead.id}`);
-    if (r.ok) {
-      const data = await r.json();
-      setDocuments(data.documents || []);
-      setDocumentSummary(data.summary || buildDocumentChecklist(data.documents || [], lead.employmentStatus));
-    } else {
-      setDocuments([]);
-      setDocumentSummary(null);
-    }
-    setDocsLoading(false);
-  }
-  async function requestDocuments() {
-    if (!selectedDocTypes.length) return;
-    const r = await fetch("/api/advisor/documents", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id, documentTypes: selectedDocTypes }) });
-    if (r.ok) { const j = await r.json(); setDocuments((p) => [...p, ...(j.documents || [])]); setDocumentSummary(j.summary || null); pushActivity("נשלחה בקשת מסמכים", "document_requested"); setSelectedDocTypes([]); }
-  }
-  async function markDocReceived(doc) {
-    const r = await fetch("/api/advisor/documents", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: doc.id, status: "received", leadId: lead.id, documentType: doc.document_type }) });
-    if (r.ok) { const j = await r.json(); setDocuments((p) => p.map((d) => d.id === doc.id ? { ...d, status: "received" } : d)); setDocumentSummary(j.summary || null); pushActivity(`מסמך התקבל: ${getDocumentLabel(doc.document_type)}`, "document_received"); }
+    window.open(`https://wa.me/${phone}`, "_blank", "noopener,noreferrer");
   }
 
   return (
-    <article className={`bg-white rounded-2xl border shadow-sm ${hasOverdue ? "border-rose-300 bg-rose-50/20" : "border-slate-100"}`}>
-      {/* Header */}
-      <div className="p-4 pb-3">
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
-              <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${stageBadge}`}>{getPipelineStageLabel(stage)}</span>
-              {isExcl && <Tag variant="exclusive">בלעדי</Tag>}
-              {hasOverdue && <span className="text-[11px] font-black text-rose-600">⚠ באיחור</span>}
-              <span className={`text-[11px] font-black ${qualityColor}`}>{quality}</span>
-            </div>
-            <Link href={`/advisor/lead/${lead.id}`} className="block text-base font-black text-slate-950 hover:text-violet-700 truncate mb-0.5">{lead.name || "—"}</Link>
-            {lead.phone && <a href={`tel:${lead.phone}`} onClick={() => patch({ lastContactedAt: new Date().toISOString() }, "בוצעה שיחה", "call_logged")} className="text-sm font-black text-violet-600 hover:underline">{lead.phone}</a>}
-          </div>
-          <div className="shrink-0 text-right">
-            <p className="text-base font-black text-slate-950 tabular-nums">{formatILS(lead.mortgageAmount || 0)}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">{created}</p>
-            {lead.purchasePrice > 0 && <p className="text-[11px] text-slate-500 font-bold mt-0.5">שולם {formatILS(lead.purchasePrice)}</p>}
-            {lead.bankName && <p className="text-[11px] text-slate-400 mt-0.5">{lead.bankName}</p>}
-          </div>
-        </div>
-
-        {/* Pipeline progress */}
-        <StageProgress lead={lead} />
-        <OverallProgress lead={lead} />
-
-        <div className="mb-3 border border-slate-100 rounded-xl overflow-hidden">
-          <button
-            type="button"
-            className="w-full flex items-center justify-between px-3 py-2 bg-emerald-50 text-[11px] font-black text-emerald-800"
-            onClick={() => setCaseOpen((v) => !v)}
-          >
-            <span>תיק משכנתא</span>
-            <span>{caseOpen ? "▲" : "▼"}</span>
-          </button>
-          {caseOpen && (
-            <div className="p-2.5 bg-white">
-              <MortgageCaseSummary lead={lead} documentSummary={documentSummary} />
-            </div>
-          )}
-        </div>
-
-        {/* Next action */}
-        {(lead.nextAction || lead.nextActionAt) && (
-          <div className={`rounded-lg px-3 py-2 mb-3 text-xs ${isOverdue(lead.nextActionAt) ? "bg-rose-50 border border-rose-200" : isToday(lead.nextActionAt) ? "bg-emerald-50 border border-emerald-200" : "bg-slate-50 border border-slate-200"}`}>
-            <p className="font-black text-slate-700">{lead.nextAction || "פעולה הבאה"}</p>
-            {lead.nextActionAt && <p className="text-slate-500 mt-0.5">{formatShort(lead.nextActionAt)}{isOverdue(lead.nextActionAt) ? " — באיחור" : isToday(lead.nextActionAt) ? " — היום" : ""}</p>}
-          </div>
-        )}
-
-        {/* Quick actions */}
-        <div className="grid grid-cols-4 gap-1.5 mb-3">
-          {lead.phone
-            ? <a href={`tel:${lead.phone}`} onClick={() => patch({ lastContactedAt: new Date().toISOString() }, "בוצעה שיחה", "call_logged")} className="text-center text-xs font-black rounded-lg py-2 bg-violet-50 text-violet-700">שיחה</a>
-            : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 text-slate-400">שיחה</button>}
-          {lead.phone
-            ? <button type="button" onClick={() => openWa()} className="text-center text-xs font-black rounded-lg py-2 bg-emerald-50 text-emerald-700">WhatsApp</button>
-            : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 text-slate-400">WA</button>}
-          {lead.advisorEmail || lead.email
-            ? <a href={`mailto:${lead.advisorEmail || lead.email}`} onClick={() => patch({ lastContactedAt: new Date().toISOString() }, "נשלח מייל", "email_opened")} className="text-center text-xs font-black rounded-lg py-2 bg-sky-50 text-sky-700">מייל</a>
-            : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 text-slate-400">מייל</button>}
-          <Link href={`/advisor/lead/${lead.id}`} className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 text-slate-700">פרטים</Link>
-        </div>
-
-        {/* WhatsApp template */}
-        <div className="flex gap-1.5 mb-3">
-          <select className="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold" defaultValue="" onChange={(e) => { if (e.target.value) { openWa(WA_TEMPLATES[e.target.value]); } e.target.value = ""; }}>
-            <option value="" disabled>תבנית WA...</option>
-            {Object.keys(WA_TEMPLATES).map((k) => <option key={k} value={k}>{k}</option>)}
-          </select>
-          {nextStage && (
-            <button type="button" onClick={advanceStage} className="whitespace-nowrap px-3 rounded-lg bg-violet-700 text-white text-xs font-black hover:bg-violet-800 transition-colors">
-              הבא ←
-            </button>
-          )}
-        </div>
-
-        {/* Stage select (full) */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div>
-            <label className="block text-[11px] font-black text-slate-400 mb-1">שלב</label>
-            <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold" value={stage} onChange={(e) => patch({ pipelineStage: e.target.value, lastContactedAt: new Date().toISOString() }, `שלב: "${getPipelineStageLabel(e.target.value)}"`, "status_changed")}>
-              <optgroup label="Pipeline פעיל">
-                {ACTIVE_PIPELINE_STAGES.map((s) => <option key={s} value={s}>{getPipelineStageLabel(s)}</option>)}
-              </optgroup>
-              <optgroup label="יצא מהתהליך">
-                <option value="closed_lost">{getPipelineStageLabel("closed_lost")}</option>
-              </optgroup>
-            </select>
-          </div>
-          <div>
-            <label className="block text-[11px] font-black text-slate-400 mb-1">follow-up</label>
-            <input type="date" className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold ${isOverdue(lead.followUpDate) ? "border-amber-300 bg-amber-50/40" : "border-slate-200"}`} defaultValue={lead.followUpDate?.slice(0, 10) || ""} onBlur={(e) => { if (e.target.value) patch({ followUpDate: e.target.value }, `נקבע follow-up`); }} />
-          </div>
-        </div>
-
-        {/* Activity timeline */}
-        <div className="mb-3">
-          <p className="text-[11px] font-black text-slate-400 mb-1">פעילות אחרונה</p>
-          <div className="border border-slate-100 rounded-xl divide-y divide-slate-100">
-            {timeline.map((item, idx) => (
-              <div key={`${item.created_at}-${idx}`} className="flex gap-2 px-2.5 py-1.5">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-violet-300 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold text-slate-700">{item.title || item.text}</p>
-                  <p className="text-[10px] text-slate-400">{formatDateTime(item.created_at || item.at)}</p>
-                </div>
-              </div>
+    <article className={`bg-white rounded-xl border shadow-sm p-4 ${priority.priority >= 90 ? "border-rose-300 bg-rose-50/20" : "border-slate-100"}`}>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+            <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${stageBadge}`}>{getPipelineStageLabel(stage)}</span>
+            <span className={`text-[11px] font-black ${qualityColor}`}>{quality}</span>
+            {priority.badges.slice(0, 3).map((badge) => (
+              <span key={badge} className={`text-[11px] font-black px-2 py-0.5 rounded-full ${badge === "דחוף" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>{badge}</span>
             ))}
           </div>
+          <Link href={`/advisor/lead/${lead.id}`} className="block text-base font-black text-slate-950 hover:text-violet-700 truncate">{lead.name || "—"}</Link>
+          {lead.phone && <a href={`tel:${lead.phone}`} className="text-sm font-black text-violet-600 hover:underline">{lead.phone}</a>}
         </div>
+        <div className="shrink-0 text-left">
+          <p className="text-2xl font-black text-slate-900 tabular-nums">{overall}%</p>
+          <p className="text-[11px] font-black text-slate-400">התקדמות</p>
+        </div>
+      </div>
 
-        {/* Documents */}
-        <div className="mb-3 border border-slate-100 rounded-xl overflow-hidden">
-          <button type="button" className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 text-[11px] font-black text-slate-600"
-            onClick={() => { setDocsOpen((v) => !v); if (!docsOpen) loadDocuments(); }}>
-            <span>מסמכים {lead.documentsCompletionPercent > 0 ? `(${lead.documentsCompletionPercent}%)` : ""}</span>
-            <span>{docsOpen ? "▲" : "▼"}</span>
-          </button>
-          {docsOpen && (
-            <div className="p-2.5">
-              {docsLoading && <p className="text-xs text-slate-400">טוען...</p>}
-              {!docsLoading && (documentSummary?.missingCount || lead.missingDocumentsCount) > 0 && (
-                <div className="mb-2 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-2">
-                  <p className="text-xs font-black text-amber-800">חסרים {documentSummary?.missingCount ?? lead.missingDocumentsCount} מסמכים</p>
-                  {documentSummary?.missingDocuments?.length > 0 && (
-                    <ul className="mt-1 space-y-0.5">
-                      {documentSummary.missingDocuments.slice(0, 6).map((doc) => (
-                        <li key={doc.key || doc.document_type} className="text-[11px] font-bold text-amber-700">✗ {doc.label || getDocumentLabel(doc.document_type)}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-              {!docsLoading && documentSummary?.checklist?.length > 0 && (
-                <div className="mb-2 grid gap-1">
-                  {documentSummary.checklist.map((doc) => (
-                    <div key={doc.key || doc.document_type} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5">
-                      <span className="text-xs font-bold text-slate-700">{doc.label || getDocumentLabel(doc.document_type)}</span>
-                      {doc.received
-                        ? <span className="text-xs font-black text-emerald-600">✓ התקבל</span>
-                        : doc.id
-                          ? <button type="button" onClick={() => markDocReceived(doc)} className="text-[10px] font-black text-violet-600">סמן כהתקבל</button>
-                          : <span className="text-xs font-black text-rose-600">✗ חסר</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {!docsLoading && !documentSummary?.checklist?.length && documents.map((doc) => (
-                <div key={doc.id} className="flex items-center justify-between gap-2 mb-1">
-                  <span className="text-xs font-bold text-slate-700">{getDocumentLabel(doc.document_type)}</span>
-                  {doc.status === "received" || doc.status === "approved"
-                    ? <span className="text-xs font-black text-emerald-600">✓</span>
-                    : <button type="button" onClick={() => markDocReceived(doc)} className="text-[10px] font-black text-violet-600">התקבל</button>}
-                </div>
-              ))}
-              <div className="flex flex-wrap gap-1 mb-1.5">
-                {DOC_TYPES.map((dt) => (
-                  <button key={dt} type="button" onClick={() => setSelectedDocTypes((p) => p.includes(dt) ? p.filter((d) => d !== dt) : [...p, dt])}
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full border font-bold ${selectedDocTypes.includes(dt) ? "bg-violet-700 text-white border-violet-700" : "bg-white text-slate-600 border-slate-200"}`}>
-                    {getDocumentLabel(dt)}
-                  </button>
-                ))}
-              </div>
-              {selectedDocTypes.length > 0 && <button type="button" onClick={requestDocuments} className="w-full rounded-lg bg-violet-700 text-white text-[11px] font-black py-1.5">בקש {selectedDocTypes.length} מסמכים</button>}
-            </div>
-          )}
+      <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+        <div className="rounded-lg bg-slate-50 px-3 py-2">
+          <p className="font-black text-slate-400 mb-0.5">פעולה הבאה</p>
+          <p className="font-black text-slate-800 truncate">{lead.nextAction || "לא נקבעה"}</p>
         </div>
+        <div className="rounded-lg bg-slate-50 px-3 py-2">
+          <p className="font-black text-slate-400 mb-0.5">תאריך מעקב</p>
+          <p className={`font-black truncate ${isOverdue(dueDate) ? "text-rose-700" : "text-slate-800"}`}>{formatShort(dueDate) || "—"}</p>
+        </div>
+      </div>
 
-        {/* Notes */}
-        <div>
-          <textarea className="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs bg-white resize-y min-h-[72px]" value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} onBlur={saveNotes} placeholder="הערות פנימיות..." />
-          <p className={`text-[11px] h-4 font-bold transition-opacity ${saved || saving ? "opacity-100" : "opacity-0"} ${saved ? "text-emerald-600" : "text-slate-400"}`}>{saving ? "שומר..." : "נשמר ✓"}</p>
-        </div>
+      <div className="mb-3 flex items-center justify-between rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+        <span className="text-xs font-black text-amber-800">חסרים {missing} מסמכים</span>
+        <span className="text-xs font-black text-slate-500">מסמכים {docsPercent}%</span>
+      </div>
+
+      <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
+        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.max(0, Math.min(100, overall))}%` }} />
+      </div>
+
+      <div className="grid grid-cols-4 gap-1.5">
+        {lead.phone
+          ? <a href={`tel:${lead.phone}`} className="text-center text-xs font-black rounded-lg py-2 bg-violet-50 text-violet-700">Call</a>
+          : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 text-slate-400">Call</button>}
+        {lead.phone
+          ? <button type="button" onClick={openWa} className="text-center text-xs font-black rounded-lg py-2 bg-emerald-50 text-emerald-700">WhatsApp</button>
+          : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 text-slate-400">WA</button>}
+        <Link href={`/advisor/lead/${lead.id}`} className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 text-slate-700">Details</Link>
+        <Link href={`/advisor/lead/${lead.id}`} className="text-center text-xs font-black rounded-lg py-2 bg-violet-700 text-white">פתח תיק</Link>
       </div>
     </article>
   );
 }
-
 export default function AdvisorMyLeads() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -465,10 +293,8 @@ export default function AdvisorMyLeads() {
     let base = stageFilter === "all" ? leads : stageFilter === "active" ? active : stageFilter === "closed" ? closed : stageFilter === "lost" ? exited : leads.filter((l) => normalizePipelineStage(l.pipelineStage || l.leadStatus) === stageFilter);
     if (q) base = base.filter((l) => (l.name || "").toLowerCase().includes(q) || (l.phone || "").replace(/\D/g, "").includes(q.replace(/\D/g, "")));
     return [...base].sort((a, b) => {
-      const aOver = (a.nextActionAt && new Date(a.nextActionAt) < new Date()) || (a.followUpDate && new Date(a.followUpDate) < new Date());
-      const bOver = (b.nextActionAt && new Date(b.nextActionAt) < new Date()) || (b.followUpDate && new Date(b.followUpDate) < new Date());
-      if (aOver && !bOver) return -1;
-      if (!aOver && bOver) return 1;
+      const priorityDiff = getLeadPriority(b).priority - getLeadPriority(a).priority;
+      if (priorityDiff !== 0) return priorityDiff;
       const aDate = a.nextActionAt || a.followUpDate || a.createdAt || "";
       const bDate = b.nextActionAt || b.followUpDate || b.createdAt || "";
       return new Date(aDate) - new Date(bDate);
@@ -611,3 +437,4 @@ export default function AdvisorMyLeads() {
     </>
   );
 }
+

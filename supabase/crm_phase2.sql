@@ -146,7 +146,7 @@ begin
 
     alter table public.lead_documents
       add constraint lead_documents_status_check
-      check (status in ('requested','received','approved','rejected','missing'));
+      check (status in ('missing','requested','received','approved','rejected','not_required'));
   end if;
 end $$;
 

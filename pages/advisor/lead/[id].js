@@ -1,4 +1,4 @@
-import Head from "next/head";
+﻿import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
@@ -10,6 +10,8 @@ import {
   APPRAISAL_STATUS_LABELS,
   APPRAISAL_STATUSES,
   COLLATERAL_CHECKLIST,
+  DOCUMENT_STATUS_LABELS,
+  DOCUMENT_STATUSES,
   FUNDS_RELEASE_STATUS_LABELS,
   FUNDS_RELEASE_STATUSES,
   LEGAL_CHECKLIST,
@@ -245,6 +247,40 @@ export default function LeadDetailPage() {
     }
   }
 
+  async function updateDocStatus(doc, status, notes = doc.notes) {
+    let target = doc;
+    if (!target.id) {
+      const created = await fetch("/api/advisor/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: id, documentTypes: [doc.document_type] }),
+      });
+      if (!created.ok) return;
+      const payload = await created.json();
+      target = (payload.documents || [])[0] || doc;
+      setDocuments((prev) => [...prev, target]);
+    }
+    const r = await fetch("/api/advisor/documents", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: target.id, status, notes, leadId: id, documentType: target.document_type || doc.document_type }),
+    });
+    if (!r.ok) return;
+    const j = await r.json();
+    const updated = j.document || { ...target, status, notes };
+    setDocuments((prev) => prev.some((d) => d.id === updated.id) ? prev.map((d) => d.id === updated.id ? updated : d) : [...prev, updated]);
+    setDocumentSummary(j.summary || null);
+  }
+
+  function sendMissingDocsWa() {
+    if (!lead?.phone || computedDocumentSummary.missingDocuments.length === 0) return;
+    const raw = String(lead.phone).replace(/[^\d]/g, "");
+    const phone = raw.startsWith("0") ? `972${raw.slice(1)}` : raw;
+    const list = computedDocumentSummary.missingDocuments.map((doc) => `• ${doc.label || getDocumentLabel(doc.document_type)}`).join("\n");
+    const text = `היי ${lead.name || ""}, כדי להתקדם בתיק המשכנתא חסרים לי המסמכים הבאים:\n${list}\n\nאפשר לשלוח כאן בוואטסאפ.`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  }
+
   const computedDocumentSummary = documentSummary || buildDocumentChecklist(documents, lead?.employmentStatus);
   const missingDocs = computedDocumentSummary.missingCount;
   const receivedDocs = computedDocumentSummary.receivedCount;
@@ -282,6 +318,8 @@ export default function LeadDetailPage() {
             <Link href="/advisor/my-leads" className="text-xs font-black text-slate-400 hover:text-slate-700 shrink-0">← חזרה</Link>
             <h1 className="text-lg font-black text-slate-950 truncate flex-1">{lead.name || "—"}</h1>
             {lead.phone && <a href={`tel:${lead.phone}`} className="text-sm font-black text-violet-600 shrink-0">{lead.phone}</a>}
+            <span className="text-xs font-black px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 shrink-0">{getPipelineStageLabel(getStage(lead))}</span>
+            <span className="text-xs font-black px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">{overallProgress}%</span>
             {score > 0 && <span className={`text-sm font-black tabular-nums shrink-0 ${score >= 70 ? "text-emerald-600" : score >= 40 ? "text-amber-500" : "text-slate-400"}`}>{score}/100</span>}
             {missingDocs > 0 && <span className="text-xs font-black px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 shrink-0">חסרים {missingDocs}</span>}
             {saving && <span className="text-xs text-slate-400 font-bold shrink-0">שומר...</span>}
@@ -289,6 +327,11 @@ export default function LeadDetailPage() {
 
           {/* Action bar */}
           <div className="max-w-5xl mx-auto px-4 pb-3 flex gap-2 flex-wrap">
+            {(lead.nextAction || lead.nextActionAt || lead.followUpDate) && (
+              <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 text-xs font-black border border-slate-200">
+                {lead.nextAction || "פעולה הבאה"}{(lead.nextActionAt || lead.followUpDate) ? ` · ${formatDate(lead.nextActionAt || lead.followUpDate)}` : ""}
+              </span>
+            )}
             {lead.phone && <a href={`tel:${lead.phone}`} onClick={() => { pushActivity("בוצעה שיחה", "call_logged"); patchLead({ lastContactedAt: new Date().toISOString() }); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-black border border-violet-200">☎ שיחה</a>}
             {lead.phone && <button type="button" onClick={() => openWa()} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-black border border-emerald-200">💬 WhatsApp</button>}
             {lead.phone && (
@@ -498,45 +541,43 @@ export default function LeadDetailPage() {
             </div>
 
             {/* Documents */}
-            <div className="bg-white rounded-2xl border border-slate-100 p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-black text-slate-950">מסמכים</h2>
-                <span className="text-xs font-black text-slate-400">{receivedDocs}/{computedDocumentSummary.totalCount} התקבלו · {computedDocumentSummary.completionPercent}%</span>
+            <div className="bg-white rounded-xl border border-slate-100 p-4">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div>
+                  <h2 className="text-sm font-black text-slate-950">מסמכים</h2>
+                  <p className="text-xs font-black text-slate-400">{receivedDocs}/{computedDocumentSummary.totalCount} אושרו/התקבלו · {computedDocumentSummary.completionPercent}%</p>
+                </div>
+                {missingDocs > 0 && <button type="button" onClick={sendMissingDocsWa} className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs font-black text-emerald-700">שלח בקשת מסמכים ב-WhatsApp</button>}
               </div>
               {missingDocs > 0 && (
-                <div className="mb-3 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
-                  <p className="text-xs font-black text-amber-800">חסרים {missingDocs} מסמכים</p>
-                  <div className="mt-1 grid gap-1">
+                <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                  <p className="text-xs font-black text-amber-800 mb-1">חסרים {missingDocs} מסמכים</p>
+                  <div className="grid gap-0.5">
                     {computedDocumentSummary.missingDocuments.map((doc) => (
-                      <p key={doc.key || doc.document_type} className="text-[11px] font-bold text-amber-700">✗ {doc.label || getDocumentLabel(doc.document_type)}</p>
+                      <p key={doc.key || doc.document_type} className="text-[11px] font-bold text-amber-700">• {doc.label || getDocumentLabel(doc.document_type)}</p>
                     ))}
                   </div>
                 </div>
               )}
-              {computedDocumentSummary.checklist.length > 0 && (
-                <div className="mb-3 grid gap-1.5">
-                  {computedDocumentSummary.checklist.map((doc) => (
-                    <div key={doc.id || doc.key} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2">
-                      <span className="text-xs font-bold text-slate-700">{doc.label || getDocumentLabel(doc.document_type)}</span>
-                      {doc.received
-                        ? <span className="text-xs font-black text-emerald-600 shrink-0">✓ התקבל</span>
-                        : doc.id
-                          ? <button type="button" onClick={() => markDocReceived(doc)} className="text-[11px] font-black text-violet-600 hover:underline shrink-0">סמן כהתקבל</button>
-                          : <span className="text-xs font-black text-rose-600 shrink-0">✗ חסר</span>}
+              <div className="grid gap-2">
+                {computedDocumentSummary.checklist.map((doc) => (
+                  <div key={doc.id || doc.key} className="rounded-lg bg-slate-50 border border-slate-100 p-2.5">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-xs font-black text-slate-800">{doc.label || getDocumentLabel(doc.document_type)}</span>
+                      <select className="border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold bg-white" value={doc.status} onChange={(e) => updateDocStatus(doc, e.target.value)}>
+                        {DOCUMENT_STATUSES.map((status) => <option key={status} value={status}>{DOCUMENT_STATUS_LABELS[status]}</option>)}
+                      </select>
                     </div>
-                  ))}
-                </div>
-              )}
-              <p className="text-xs font-black text-slate-400 mb-2">בקש מסמכים:</p>
-              <div className="flex flex-wrap gap-1 mb-2">
-                {DOC_TYPES.filter((dt) => !documents.find((d) => d.document_type === dt)).map((dt) => (
-                  <button key={dt} type="button" onClick={() => setSelectedDocs((p) => p.includes(dt) ? p.filter((d) => d !== dt) : [...p, dt])}
-                    className={`text-[11px] px-2 py-1 rounded-full border font-bold transition-colors ${selectedDocs.includes(dt) ? "bg-violet-700 text-white border-violet-700" : "bg-white text-slate-600 border-slate-200 hover:border-violet-300"}`}>
-                    {getDocumentLabel(dt)}
-                  </button>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      <button type="button" onClick={() => updateDocStatus(doc, "received")} className="rounded-md bg-emerald-50 text-emerald-700 px-2 py-1 text-[11px] font-black">סמן כהתקבל</button>
+                      <button type="button" onClick={() => updateDocStatus(doc, "missing")} className="rounded-md bg-rose-50 text-rose-700 px-2 py-1 text-[11px] font-black">סמן כחסר</button>
+                      <button type="button" onClick={() => updateDocStatus(doc, "not_required")} className="rounded-md bg-slate-100 text-slate-600 px-2 py-1 text-[11px] font-black">לא רלוונטי</button>
+                    </div>
+                    <input className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white" placeholder="הערה למסמך..." defaultValue={doc.notes || ""} onBlur={(e) => updateDocStatus(doc, doc.status, e.target.value)} />
+                    {(doc.received_at || doc.requested_at || doc.created_at) && <p className="mt-1 text-[10px] font-bold text-slate-400">עודכן: {formatDT(doc.received_at || doc.requested_at || doc.created_at)}</p>}
+                  </div>
                 ))}
               </div>
-              {selectedDocs.length > 0 && <button type="button" onClick={requestDocs} className="w-full rounded-xl bg-violet-700 text-white text-xs font-black py-2.5 hover:bg-violet-800 transition-colors">בקש {selectedDocs.length} מסמך{selectedDocs.length > 1 ? "ים" : ""}</button>}
             </div>
 
           </div>
@@ -553,3 +594,4 @@ export default function LeadDetailPage() {
     </>
   );
 }
+
