@@ -1,7 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatILS } from "../../../lib/format";
 import AdvisorHeader from "../../../components/AdvisorHeader";
 import {
@@ -104,7 +104,7 @@ function getStage(lead) { return normalizePipelineStage(lead?.pipelineStage || l
 function getStageIndex(lead) { return ACTIVE_PIPELINE_STAGES.indexOf(getStage(lead)); }
 
 // ─── Stage Stepper ────────────────────────────────────────────────────────────
-function StageStepper({ lead, onAdvance, onSetStage }) {
+const StageStepper = memo(function StageStepper({ lead, onAdvance, onSetStage }) {
   const si = getStageIndex(lead);
   const scrollRef = useRef(null);
   useEffect(() => {
@@ -150,10 +150,10 @@ function StageStepper({ lead, onAdvance, onSetStage }) {
       </div>
     </div>
   );
-}
+});
 
 // ─── Progress Widget ───────────────────────────────────────────────────────────
-function ProgressWidget({ label, pct, color = "bg-emerald-500" }) {
+const ProgressWidget = memo(function ProgressWidget({ label, pct, color = "bg-emerald-500" }) {
   const p = Math.max(0, Math.min(100, Number(pct) || 0));
   return (
     <div className="bg-white rounded-xl border border-slate-100 px-4 py-3">
@@ -166,7 +166,7 @@ function ProgressWidget({ label, pct, color = "bg-emerald-500" }) {
       </div>
     </div>
   );
-}
+});
 
 // ─── WhatsApp Template Manager ────────────────────────────────────────────────
 function WaTemplateManager({ lead, missingDocsList, onClose }) {
@@ -291,11 +291,11 @@ export default function LeadDetailPage() {
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      fetch("/api/advisor/my-leads").then((r) => r.ok ? r.json() : { leads: [] }),
+      fetch(`/api/advisor/my-leads?leadId=${id}`).then((r) => r.ok ? r.json() : { lead: null }),
       fetch(`/api/advisor/activities?leadId=${id}`).then((r) => r.ok ? r.json() : { activities: [] }),
       fetch(`/api/advisor/documents?leadId=${id}`).then((r) => r.ok ? r.json() : { documents: [] }),
     ]).then(([leadsData, actData, docsData]) => {
-      const found = (leadsData.leads || []).find((l) => l.id === id);
+      const found = leadsData.lead || (leadsData.leads || []).find((l) => l.id === id);
       if (!found) { router.push("/advisor/my-leads"); return; }
       setLead(found);
       setNotes(found.internalNotes || "");
@@ -318,6 +318,14 @@ export default function LeadDetailPage() {
   function pushActivity(title, activityType = "note_added") {
     setActivities((prev) => [{ title, created_at: new Date().toISOString(), activity_type: activityType }, ...prev]);
     fetch("/api/advisor/activities", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: id, activityType, title }) }).catch(() => {});
+  }
+
+  function touchLead(changes) {
+    fetch("/api/advisor/my-leads", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, changes }),
+    }).catch(() => {});
   }
 
   async function patchLead(changes, activityTitle, activityType = "note_added") {
@@ -345,18 +353,20 @@ export default function LeadDetailPage() {
     debounceRef.current[key] = setTimeout(() => patchLead(changes, activityTitle, activityType), delay);
   }
 
-  async function advanceStage() {
+  const advanceStage = useCallback(async () => {
     const si = getStageIndex(lead);
     if (si < 0 || si >= ACTIVE_PIPELINE_STAGES.length - 1) return;
     const next = ACTIVE_PIPELINE_STAGES[si + 1];
     await patchLead({ pipelineStage: next, lastContactedAt: new Date().toISOString() }, `שלב עודכן: "${getPipelineStageLabel(next)}"`, "status_changed");
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lead]);
 
-  async function setStage(stage) {
+  const setStage = useCallback(async (stage) => {
     const nextStage = normalizePipelineStage(stage);
     if (nextStage === getStage(lead)) return;
     await patchLead({ pipelineStage: nextStage, lastContactedAt: new Date().toISOString() }, `שלב עודכן: "${getPipelineStageLabel(nextStage)}"`, "status_changed");
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lead]);
 
   function openWa(templateKey = "") {
     if (!lead?.phone) return;
@@ -373,7 +383,7 @@ export default function LeadDetailPage() {
     }
     window.open(text ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : `https://wa.me/${phone}`, "_blank", "noopener,noreferrer");
     pushActivity("WhatsApp נשלח", "whatsapp_opened");
-    patchLead({ lastContactedAt: new Date().toISOString() });
+    touchLead({ lastContactedAt: new Date().toISOString() });
   }
 
   async function updateDocStatus(doc, status, docNotes = doc.notes) {
@@ -404,7 +414,10 @@ export default function LeadDetailPage() {
     pushActivity("נשלחה בקשת מסמכים ב-WhatsApp", "whatsapp_sent");
   }
 
-  const computedDocumentSummary = documentSummary || buildDocumentChecklist(documents, lead?.employmentStatus);
+  const computedDocumentSummary = useMemo(
+    () => documentSummary || buildDocumentChecklist(documents, lead?.employmentStatus),
+    [documentSummary, documents, lead?.employmentStatus]
+  );
   const missingDocs = computedDocumentSummary.missingCount;
   const score = Math.round(Number(lead?.approvalScore || lead?.estimatedApprovalResult) || 0);
   const si = lead ? getStageIndex(lead) : -1;
@@ -455,7 +468,7 @@ export default function LeadDetailPage() {
           <div className="max-w-6xl mx-auto px-4 pb-3 flex gap-2 flex-wrap">
             {lead.phone && (
               <a href={`tel:${lead.phone}`}
-                onClick={() => { pushActivity("בוצעה שיחה", "call_logged"); patchLead({ lastContactedAt: new Date().toISOString() }); }}
+                onClick={() => { pushActivity("בוצעה שיחה", "call_logged"); touchLead({ lastContactedAt: new Date().toISOString() }); }}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-black border border-violet-200">
                 ☎ התקשר
               </a>
@@ -472,7 +485,7 @@ export default function LeadDetailPage() {
             )}
             {(lead.advisorEmail || lead.email) && (
               <a href={`mailto:${lead.advisorEmail || lead.email}`}
-                onClick={() => { pushActivity("נשלח מייל", "email_opened"); patchLead({ lastContactedAt: new Date().toISOString() }); }}
+                onClick={() => { pushActivity("נשלח מייל", "email_opened"); touchLead({ lastContactedAt: new Date().toISOString() }); }}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-black border border-sky-200">
                 ✉ שלח מייל
               </a>

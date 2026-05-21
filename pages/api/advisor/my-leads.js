@@ -16,6 +16,12 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const leads = await readMyLeads(session.advisorId);
+      const { leadId } = req.query;
+      if (leadId) {
+        const lead = leads.find((l) => l.id === leadId);
+        if (!lead) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
+        return res.status(200).json({ lead });
+      }
       return res.status(200).json({ leads });
     } catch (error) {
       if (error instanceof LeadStoreError) {
