@@ -265,7 +265,7 @@ export default function AdvisorDashboard() {
           {!loading && (
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-6">
               {[
-                ["Follow-ups today", todayCount],
+                ["מעקבים להיום", todayCount],
                 ["מסמכים חסרים", missingDocsCount],
                 ["מחכים לשמאות", waitingAppraisalCount],
                 ["מחכים לעו״ד", waitingLawyerCount],
