@@ -348,23 +348,15 @@ export default function AdvisorMyLeads() {
     }, 200);
   }
 
-  function setViewAndSave(v) {
-    setView(v);
+  function savePref(key, value) {
     try {
-      const raw = localStorage.getItem(PREFS_KEY);
-      const p = raw ? JSON.parse(raw) : {};
-      localStorage.setItem(PREFS_KEY, JSON.stringify({ ...p, defaultView: v }));
+      const p = JSON.parse(localStorage.getItem(PREFS_KEY) || "{}");
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ ...p, [key]: value }));
     } catch {}
   }
 
-  function setSortAndSave(v) {
-    setSortBy(v);
-    try {
-      const raw = localStorage.getItem(PREFS_KEY);
-      const p = raw ? JSON.parse(raw) : {};
-      localStorage.setItem(PREFS_KEY, JSON.stringify({ ...p, defaultSort: v }));
-    } catch {}
-  }
+  function setViewAndSave(v) { setView(v);   savePref("defaultView", v); }
+  function setSortAndSave(v) { setSortBy(v); savePref("defaultSort", v); }
 
   // ── Derived counts (cheap) ───────────────────────────────────────────────
   const active = useMemo(() => leads.filter((l) => !isClosedPipelineStage(l.pipelineStage || l.leadStatus)), [leads]);

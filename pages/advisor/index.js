@@ -70,20 +70,18 @@ const PIPELINE_GROUPS = [
   },
 ];
 
+// O(1) stage → group key lookup — built once at module level
+const STAGE_TO_GROUP = new Map(
+  PIPELINE_GROUPS.flatMap((g) => [...g.stages].map((s) => [s, g.key]))
+);
+
 // ─── Attention item tag styles ────────────────────────────────────────────────
-const TAG_CLS = {
-  danger:  "bg-rose-100 text-rose-700 border-rose-200",
-  warning: "bg-amber-100 text-amber-800 border-amber-200",
-  docs:    "bg-amber-50 text-amber-600 border-amber-100",
-  stale:   "bg-sky-50 text-sky-700 border-sky-200",
-  low:     "bg-slate-100 text-slate-600 border-slate-200",
-};
-const DOT_CLS = {
-  danger:  "bg-rose-500",
-  warning: "bg-amber-500",
-  docs:    "bg-amber-400",
-  stale:   "bg-sky-400",
-  low:     "bg-slate-400",
+const TAG_META = {
+  danger:  { tag: "bg-rose-100 text-rose-700 border-rose-200",   dot: "bg-rose-500" },
+  warning: { tag: "bg-amber-100 text-amber-800 border-amber-200", dot: "bg-amber-500" },
+  docs:    { tag: "bg-amber-50 text-amber-600 border-amber-100",  dot: "bg-amber-400" },
+  stale:   { tag: "bg-sky-50 text-sky-700 border-sky-200",        dot: "bg-sky-400" },
+  low:     { tag: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" },
 };
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -125,37 +123,36 @@ function isActive(l) { return !isClosedPipelineStage(l.pipelineStage || l.leadSt
 // ─── Derives a list of leads that need immediate attention ────────────────────
 // All signals come from existing lead data fields — no invented data.
 function buildAttentionItems(active) {
+  const today = getToday(); // computed once for the whole loop
   const items = [];
   const seen = new Set();
 
-  active.forEach((lead) => {
-    if (seen.has(lead.id)) return;
+  for (const lead of active) {
+    if (seen.has(lead.id)) continue;
     const stage = getStage(lead);
-    const overdueNextAction = lead.nextActionAt && isOverdue(lead.nextActionAt);
-    const overdueFollowUp   = lead.followUpDate  && isOverdue(lead.followUpDate);
 
-    if (overdueNextAction || overdueFollowUp) {
-      const due = lead.nextActionAt || lead.followUpDate;
-      items.push({ lead, priority: 10, reason: "פעולה באיחור", detail: formatShort(due), tag: "danger" });
-      seen.add(lead.id); return;
+    if ((lead.nextActionAt && isOverdue(lead.nextActionAt, today)) ||
+        (lead.followUpDate  && isOverdue(lead.followUpDate,  today))) {
+      items.push({ lead, priority: 10, reason: "פעולה באיחור", detail: formatShort(lead.nextActionAt || lead.followUpDate), tag: "danger" });
+      seen.add(lead.id); continue;
     }
 
-    const daysSinceContact = diffDays(lead.lastContactedAt || lead.createdAt);
+    const daysSinceContact = diffDays(lead.lastContactedAt || lead.createdAt, today);
     if (stage === "new_lead" && daysSinceContact !== null && daysSinceContact >= 2) {
       items.push({ lead, priority: 9, reason: "ליד חדש ללא קשר", detail: `${daysSinceContact} ימים`, tag: "warning" });
-      seen.add(lead.id); return;
+      seen.add(lead.id); continue;
     }
 
     const missingDocs = Number(lead.missingDocumentsCount || 0);
     if (missingDocs > 0 && ["documents_requested", "waiting_documents"].includes(stage)) {
       items.push({ lead, priority: 8, reason: "מסמכים חסרים", detail: `${missingDocs} חסרים`, tag: "docs" });
-      seen.add(lead.id); return;
+      seen.add(lead.id); continue;
     }
 
-    const daysSinceActivity = diffDays(lead.lastActivityAt || lead.createdAt);
-    if (daysSinceActivity !== null && daysSinceActivity >= 7 && !["funds_released"].includes(stage)) {
+    const daysSinceActivity = diffDays(lead.lastActivityAt || lead.createdAt, today);
+    if (daysSinceActivity !== null && daysSinceActivity >= 7 && stage !== "funds_released") {
       items.push({ lead, priority: 7, reason: "ללא פעילות", detail: `${daysSinceActivity} ימים`, tag: "stale" });
-      seen.add(lead.id); return;
+      seen.add(lead.id); continue;
     }
 
     const progress = Number(lead.overallProgressPercent || 0);
@@ -163,43 +160,44 @@ function buildAttentionItems(active) {
       items.push({ lead, priority: 6, reason: "התקדמות נמוכה", detail: `${progress}%`, tag: "low" });
       seen.add(lead.id);
     }
-  });
+  }
 
   return items.sort((a, b) => b.priority - a.priority).slice(0, 8);
 }
 
+const STAGE_TASK_LABEL = {
+  waiting_documents:   "בקשת מסמכים",
+  documents_requested: "בקשת מסמכים",
+  new_lead:            "חזרה ראשונה לליד",
+};
+
 // ─── Derives today's task list from existing lead data ────────────────────────
 // Shows leads with scheduled actions today/overdue, and new uncontacted leads.
 function buildTodayTasks(active) {
+  const today = getToday();
   const tasks = [];
   const usedIds = new Set();
 
-  active.forEach((lead) => {
+  for (const lead of active) {
     const hasTodayAction = isToday(lead.nextActionAt) || isToday(lead.followUpDate);
-    const overdueAction  = (lead.nextActionAt && isOverdue(lead.nextActionAt)) ||
-                           (lead.followUpDate  && isOverdue(lead.followUpDate));
+    const overdueAction  = (lead.nextActionAt && isOverdue(lead.nextActionAt, today)) ||
+                           (lead.followUpDate  && isOverdue(lead.followUpDate,  today));
 
     if (hasTodayAction || overdueAction) {
       const stage = getStage(lead);
-      const taskLabel = lead.nextAction
-        ? lead.nextAction
-        : stage === "waiting_documents" || stage === "documents_requested"
-          ? "בקשת מסמכים"
-          : stage === "new_lead" ? "חזרה ראשונה לליד"
-          : "מעקב";
-      tasks.push({ lead, task: taskLabel, overdue: overdueAction && !hasTodayAction });
+      const task = lead.nextAction || STAGE_TASK_LABEL[stage] || "מעקב";
+      tasks.push({ lead, task, overdue: overdueAction && !hasTodayAction });
       usedIds.add(lead.id);
     }
-  });
+  }
 
   // Supplement with new uncontacted leads when fewer than 3 explicit tasks
   if (tasks.length < 3) {
     active
       .filter((l) => {
         if (usedIds.has(l.id)) return false;
-        const s = getStage(l);
-        const days = diffDays(l.lastContactedAt || l.createdAt);
-        return s === "new_lead" && days !== null && days >= 1;
+        const days = diffDays(l.lastContactedAt || l.createdAt, today);
+        return getStage(l) === "new_lead" && days !== null && days >= 1;
       })
       .slice(0, 3 - tasks.length)
       .forEach((lead) => tasks.push({ lead, task: "חזרה ראשונה לליד", overdue: false }));
@@ -211,18 +209,19 @@ function buildTodayTasks(active) {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function AttentionItem({ item }) {
+  const meta = TAG_META[item.tag];
   return (
     <Link
       href={`/advisor/lead/${item.lead.id}`}
       className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50/80 transition-colors rounded-xl border border-slate-100"
     >
-      <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${DOT_CLS[item.tag]}`} />
+      <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${meta.dot}`} />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-black text-slate-900 truncate">{item.lead.name || "—"}</p>
         <p className="text-xs font-bold text-slate-400 truncate">{getPipelineStageLabel(getStage(item.lead))}</p>
       </div>
       <div className="shrink-0 text-left">
-        <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${TAG_CLS[item.tag]}`}>
+        <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${meta.tag}`}>
           {item.reason}
         </span>
         {item.detail && (
@@ -351,13 +350,11 @@ export default function AdvisorDashboard() {
   const completed = useMemo(() => leads.filter((l) => getStage(l) === "closed_won"), [leads]);
 
   const pipelineGroups = useMemo(() => {
-    const counts = {};
-    PIPELINE_GROUPS.forEach((g) => { counts[g.key] = 0; });
-    leads.forEach((l) => {
-      const s = getStage(l);
-      const g = PIPELINE_GROUPS.find((pg) => pg.stages.has(s));
-      if (g) counts[g.key]++;
-    });
+    const counts = Object.fromEntries(PIPELINE_GROUPS.map((g) => [g.key, 0]));
+    for (const l of leads) {
+      const key = STAGE_TO_GROUP.get(getStage(l));
+      if (key) counts[key]++;
+    }
     return PIPELINE_GROUPS.map((g) => ({ ...g, count: counts[g.key] }));
   }, [leads]);
 
@@ -493,8 +490,8 @@ export default function AdvisorDashboard() {
                   : attentionItems.length > 0
                     ? (
                         <div className="p-3 space-y-2">
-                          {attentionItems.map((item, i) => (
-                            <AttentionItem key={`${item.lead.id}-${i}`} item={item} />
+                          {attentionItems.map((item) => (
+                            <AttentionItem key={item.lead.id} item={item} />
                           ))}
                         </div>
                       )
@@ -528,8 +525,8 @@ export default function AdvisorDashboard() {
                   : todayTasks.length > 0
                     ? (
                         <div className="p-3 space-y-2">
-                          {todayTasks.map((task, i) => (
-                            <TodayTaskItem key={`${task.lead.id}-${i}`} item={task} />
+                          {todayTasks.map((task) => (
+                            <TodayTaskItem key={task.lead.id} item={task} />
                           ))}
                         </div>
                       )
