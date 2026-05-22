@@ -409,6 +409,14 @@ export default function LeadDetailPage() {
   const [showWaTemplates, setShowWaTemplates] = useState(false);
   const [msg, setMsg] = useState({ text: "", ok: true });
 
+  // Upload-link & reminder state
+  const [uploadToken,      setUploadToken]      = useState(null);   // {token: record, uploadUrl: string}
+  const [tokenLoading,     setTokenLoading]     = useState(false);
+  const [linkCopied,       setLinkCopied]       = useState(false);
+  const [reminder,         setReminder]         = useState(null);
+  const [reminderDeadline, setReminderDeadline] = useState("");     // datetime-local value
+  const [reviewNotes,      setReviewNotes]      = useState({});     // docId → string
+
   const debounceRef = useRef({});
 
   useEffect(() => {
@@ -417,7 +425,9 @@ export default function LeadDetailPage() {
       fetch(`/api/advisor/my-leads?leadId=${id}`).then((r) => r.ok ? r.json() : { lead: null }),
       fetch(`/api/advisor/activities?leadId=${id}`).then((r) => r.ok ? r.json() : { activities: [] }),
       fetch(`/api/advisor/documents?leadId=${id}`).then((r) => r.ok ? r.json() : { documents: [] }),
-    ]).then(([leadsData, actData, docsData]) => {
+      fetch(`/api/advisor/document-upload-token?leadId=${id}`).then((r) => r.ok ? r.json() : { token: null, uploadUrl: null }),
+      fetch(`/api/advisor/document-reminders?leadId=${id}`).then((r) => r.ok ? r.json() : { reminder: null }),
+    ]).then(([leadsData, actData, docsData, tokenData, reminderData]) => {
       const found = leadsData.lead || (leadsData.leads || []).find((l) => l.id === id);
       if (!found) { router.push("/advisor/my-leads"); return; }
       setLead(found);
@@ -428,6 +438,14 @@ export default function LeadDetailPage() {
       setActivities(acts.length > 0 ? acts : [{ title: "הליד נוצר", created_at: found.createdAt, activity_type: "lead_created" }]);
       const docs = Array.isArray(docsData.documents) ? docsData.documents : [];
       setDocuments(docs);
+      if (tokenData.token) setUploadToken({ record: tokenData.token, url: tokenData.uploadUrl });
+      if (reminderData.reminder) {
+        setReminder(reminderData.reminder);
+        if (reminderData.reminder.deadline_at) {
+          // Convert ISO to datetime-local format for the input
+          setReminderDeadline(reminderData.reminder.deadline_at.slice(0, 16));
+        }
+      }
       setLoading(false);
     }).catch(() => { setLoading(false); router.push("/advisor/my-leads"); });
   }, [id]);
@@ -535,6 +553,143 @@ export default function LeadDetailPage() {
     pushActivity("נשלחה בקשת מסמכים ב-WhatsApp", "whatsapp_sent");
   }
 
+  // ── Upload token handlers ─────────────────────────────────────────────────
+  async function generateUploadToken() {
+    setTokenLoading(true);
+    try {
+      const r = await fetch("/api/advisor/document-upload-token", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: id }),
+      });
+      if (r.ok) {
+        const j = await r.json();
+        setUploadToken({ record: j.token, url: j.uploadUrl });
+        pushActivity("קישור העלאת מסמכים נוצר", "note_added");
+      }
+    } finally { setTokenLoading(false); }
+  }
+
+  async function revokeUploadToken() {
+    if (!uploadToken?.record?.id) return;
+    await fetch("/api/advisor/document-upload-token", {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tokenId: uploadToken.record.id, leadId: id }),
+    });
+    setUploadToken(null);
+  }
+
+  function copyUploadLink() {
+    if (!uploadToken?.url) return;
+    navigator.clipboard.writeText(uploadToken.url).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2500);
+    }).catch(() => {});
+  }
+
+  function openWaWithUploadLink() {
+    if (!lead?.phone || !uploadToken?.url) return;
+    const raw   = String(lead.phone).replace(/[^\d]/g, "");
+    const phone = raw.startsWith("0") ? `972${raw.slice(1)}` : raw;
+    const name  = lead.name || "לקוח";
+    const text  = `שלום ${name},\nכדי להתקדם בתיק המשכנתא שלך, יש להעלות את המסמכים החסרים בקישור המאובטח הבא:\n${uploadToken.url}\n\nתודה,\n${lead.assignedAdvisor || ""}`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+    pushActivity("קישור העלאת מסמכים נשלח ב-WhatsApp", "whatsapp_sent");
+    touchLead({ lastContactedAt: new Date().toISOString() });
+  }
+
+  // ── Reminder handlers ─────────────────────────────────────────────────────
+  async function saveReminder(deadlineAt) {
+    const missingTypes = computedDocumentSummary.missingDocuments.map((d) => ({
+      type: d.document_type, label: d.label,
+    }));
+    const r = await fetch("/api/advisor/document-reminders", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        leadId: id,
+        uploadTokenId: uploadToken?.record?.id || null,
+        deadlineAt,
+        channel: "whatsapp",
+        missingDocumentTypes: missingTypes,
+      }),
+    });
+    if (r.ok) { const j = await r.json(); setReminder(j.reminder); }
+  }
+
+  function setReminderHours(h) {
+    const dt = new Date(Date.now() + h * 3_600_000);
+    const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+    setReminderDeadline(local);
+    saveReminder(dt.toISOString());
+  }
+
+  function copyReminderMessage() {
+    if (!uploadToken?.url) return;
+    const missingDocs = computedDocumentSummary.missingDocuments.map((d) => ({ label: d.label || d.document_type }));
+    const text = [
+      `שלום ${lead?.name || "לקוח יקר"},`,
+      `תזכורת ידידותית מ-FINZO:`,
+      `כדי שנוכל להתקדם בתיק המשכנתא שלך, עדיין חסרים המסמכים הבאים:`,
+      "",
+      ...missingDocs.map((d) => `• ${d.label}`),
+      "",
+      `ניתן להעלות אותם בקישור המאובטח:`,
+      uploadToken.url,
+      "",
+      `תודה,`,
+      lead?.assignedAdvisor || "",
+    ].join("\n");
+    navigator.clipboard.writeText(text).then(() => {
+      if (reminder?.id) {
+        fetch("/api/advisor/document-reminders", {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reminderId: reminder.id, leadId: id }),
+        }).then((r) => r.ok ? r.json() : null).then((j) => {
+          if (j) setReminder((p) => ({ ...p, last_reminder_sent_at: new Date().toISOString(), status: "sent" }));
+        }).catch(() => {});
+      }
+      setMsg({ text: "הודעת תזכורת הועתקה ✓", ok: true });
+      setTimeout(() => setMsg({ text: "", ok: true }), 2500);
+    }).catch(() => {});
+  }
+
+  function openWaReminder() {
+    if (!lead?.phone || !uploadToken?.url) return;
+    const raw  = String(lead.phone).replace(/[^\d]/g, "");
+    const phone = raw.startsWith("0") ? `972${raw.slice(1)}` : raw;
+    const missingDocs = computedDocumentSummary.missingDocuments.map((d) => `• ${d.label || d.document_type}`).join("\n");
+    const text = `שלום ${lead.name || "לקוח יקר"},\nתזכורת ידידותית מ-FINZO:\nכדי שנוכל להתקדם בתיק המשכנתא שלך, עדיין חסרים המסמכים הבאים:\n\n${missingDocs}\n\nניתן להעלות אותם בקישור המאובטח:\n${uploadToken.url}\n\nתודה,\n${lead.assignedAdvisor || ""}`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+    if (reminder?.id) {
+      fetch("/api/advisor/document-reminders", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reminderId: reminder.id, leadId: id }),
+      }).then(() => setReminder((p) => ({ ...p, last_reminder_sent_at: new Date().toISOString(), status: "sent" }))).catch(() => {});
+    }
+    pushActivity("תזכורת נשלחה ב-WhatsApp", "whatsapp_sent");
+    touchLead({ lastContactedAt: new Date().toISOString() });
+  }
+
+  // ── Document review handlers ───────────────────────────────────────────────
+  async function openDocFile(doc) {
+    const r = await fetch(`/api/advisor/document-review?docId=${doc.id}&leadId=${id}`);
+    if (!r.ok) { setMsg({ text: "לא ניתן לפתוח את הקובץ", ok: false }); setTimeout(() => setMsg({ text: "", ok: true }), 3000); return; }
+    const { url } = await r.json();
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  async function reviewDoc(doc, status, note) {
+    const r = await fetch("/api/advisor/document-review", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ docId: doc.id, leadId: id, status, reviewNote: note || "" }),
+    });
+    if (!r.ok) return;
+    const j = await r.json();
+    const updated = j.document;
+    if (updated) {
+      setDocuments((prev) => prev.map((d) => d.id === updated.id ? { ...d, ...updated } : d));
+      showSaved();
+    }
+  }
+
   const caseType = normalizeCaseType(lead?.mortgageType);
   const isRefinance = isRefinanceCase(caseType);
 
@@ -557,6 +712,28 @@ export default function LeadDetailPage() {
   const lawyerPct = lead ? Math.round((lawyerDone / LEGAL_CHECKLIST.length) * 100) : 0;
   const fundsReleased = lead?.fundsReleaseStatus === "fully_released";
   const fundsPct = fundsReleased ? 100 : lead?.fundsReleaseStatus === "partially_released" ? 50 : 0;
+
+  // Reminder status label for the advisor UI (computed from live state)
+  const reminderStatusLabel = useMemo(() => {
+    if (!reminder) return null;
+    if (reminder.cancelled_at) return null;
+    if (missingDocs === 0 || reminder.status === "completed") return "כל המסמכים התקבלו — אין צורך בתזכורת ✓";
+    const now = Date.now();
+    if (reminder.deadline_at) {
+      const diff = new Date(reminder.deadline_at).getTime() - now;
+      if (diff <= 0) return `התזכורת מוכנה לשליחה — חסרים ${missingDocs} מסמכים`;
+      const h = Math.round(diff / 3_600_000);
+      if (h < 24) return `תזכורת תישלח בעוד ${h} שעות`;
+      return `תזכורת תישלח בעוד ${Math.round(diff / 86_400_000)} ימים`;
+    }
+    if (reminder.last_reminder_sent_at) {
+      const ago = now - new Date(reminder.last_reminder_sent_at).getTime();
+      const h = Math.round(ago / 3_600_000);
+      if (h < 24) return `נשלח קישור מסמכים לפני ${h} שעות`;
+      return `נשלח קישור מסמכים לפני ${Math.round(ago / 86_400_000)} ימים`;
+    }
+    return null;
+  }, [reminder, missingDocs]);
 
   if (loading) {
     return (
@@ -847,6 +1024,40 @@ export default function LeadDetailPage() {
                             {(doc.received_at || doc.requested_at || doc.created_at) && (
                               <p className="mt-1 text-[10px] font-bold text-slate-400">עודכן: {formatDT(doc.received_at || doc.requested_at || doc.created_at)}</p>
                             )}
+                            {/* Advisor review section — shown when client has uploaded a file */}
+                            {doc.storage_path && (
+                              <div className="mt-2 pt-2 border-t border-slate-100 space-y-2">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {doc.file_name && (
+                                    <span className="text-[10px] font-bold text-slate-400">📎 {doc.file_name}</span>
+                                  )}
+                                  <span className="text-[10px] font-bold text-violet-500 ml-auto">הועלה ע"י לקוח</span>
+                                </div>
+                                <div className="flex gap-1.5 flex-wrap">
+                                  <button type="button" onClick={() => openDocFile(doc)}
+                                    className="rounded-md bg-sky-50 text-sky-700 border border-sky-200 px-2 py-1 text-[11px] font-black">
+                                    🔍 פתח קובץ
+                                  </button>
+                                  <button type="button" onClick={() => reviewDoc(doc, "approved", "")}
+                                    className="rounded-md bg-emerald-100 text-emerald-800 px-2 py-1 text-[11px] font-black">
+                                    ✓ אשר
+                                  </button>
+                                  <button type="button" onClick={() => reviewDoc(doc, "rejected", reviewNotes[doc.id] || "")}
+                                    className="rounded-md bg-rose-50 text-rose-700 border border-rose-200 px-2 py-1 text-[11px] font-black">
+                                    ✗ דחה
+                                  </button>
+                                </div>
+                                <input
+                                  className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white"
+                                  placeholder="הערה לדחייה (אופציונלי)..."
+                                  value={reviewNotes[doc.id] || ""}
+                                  onChange={(e) => setReviewNotes((p) => ({ ...p, [doc.id]: e.target.value }))}
+                                />
+                                {doc.review_note && (
+                                  <p className="text-[10px] text-rose-600">הערה קיימת: {doc.review_note}</p>
+                                )}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -995,6 +1206,104 @@ export default function LeadDetailPage() {
                 )}
 
               </div>
+            </div>
+
+            {/* ── Document Upload Link (Portal) ── */}
+            <div className="bg-white rounded-2xl border border-slate-100 p-5">
+              <h2 className="text-sm font-black text-slate-950 mb-1">קישור להעלאת מסמכים</h2>
+              <p className="text-[11px] font-bold text-slate-400 mb-4">שלח ללקוח קישור מאובטח להעלאה עצמאית של המסמכים</p>
+
+              {uploadToken ? (
+                <>
+                  {/* URL display + copy */}
+                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 mb-3">
+                    <span className="text-xs text-slate-500 truncate flex-1 font-mono ltr" style={{ direction: "ltr" }}>
+                      {uploadToken.url}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={copyUploadLink}
+                      className="shrink-0 text-[11px] font-black px-2.5 py-1 rounded-lg bg-violet-100 text-violet-700 hover:bg-violet-200 transition-colors"
+                    >
+                      {linkCopied ? "הועתק ✓" : "העתק"}
+                    </button>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-2 flex-wrap mb-4">
+                    {lead?.phone && (
+                      <button type="button" onClick={openWaWithUploadLink}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black">
+                        💬 שלח ב-WA
+                      </button>
+                    )}
+                    <button type="button" onClick={generateUploadToken} disabled={tokenLoading}
+                      className="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-black disabled:opacity-50">
+                      {tokenLoading ? "יוצר..." : "🔄 חדש קישור"}
+                    </button>
+                    <button type="button" onClick={revokeUploadToken}
+                      className="px-3 py-2 rounded-xl bg-rose-50 text-rose-700 text-xs font-black border border-rose-200">
+                      בטל קישור
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mb-4">
+                    תוקף: {uploadToken.record?.expires_at ? new Date(uploadToken.record.expires_at).toLocaleDateString("he-IL") : "—"}
+                  </p>
+
+                  {/* Reminder section */}
+                  <div className="border-t border-slate-100 pt-4">
+                    <p className="text-xs font-black text-slate-700 mb-2">זמן יעד להעלאת מסמכים</p>
+                    <div className="flex gap-1.5 flex-wrap mb-2">
+                      {[24, 48, 72].map((h) => (
+                        <button key={h} type="button" onClick={() => setReminderHours(h)}
+                          className="px-2.5 py-1.5 rounded-lg text-[11px] font-black bg-slate-100 text-slate-700 hover:bg-violet-100 hover:text-violet-700 transition-colors">
+                          {h} שעות
+                        </button>
+                      ))}
+                      <input
+                        type="datetime-local"
+                        className="border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                        value={reminderDeadline}
+                        onChange={(e) => {
+                          setReminderDeadline(e.target.value);
+                          if (e.target.value) saveReminder(new Date(e.target.value).toISOString());
+                        }}
+                      />
+                    </div>
+
+                    {/* Status label */}
+                    {reminderStatusLabel && (
+                      <div className="rounded-lg bg-sky-50 border border-sky-200 px-3 py-2 mb-3">
+                        <p className="text-xs font-black text-sky-700">{reminderStatusLabel}</p>
+                      </div>
+                    )}
+
+                    {/* Manual reminder send */}
+                    {missingDocs > 0 && (
+                      <div className="flex gap-2 flex-wrap">
+                        <button type="button" onClick={copyReminderMessage}
+                          className="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-black">
+                          📋 העתק הודעת תזכורת
+                        </button>
+                        {lead?.phone && (
+                          <button type="button" onClick={openWaReminder}
+                            className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-black">
+                            💬 שלח תזכורת ב-WA
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-xs font-bold text-slate-400 mb-3">טרם נוצר קישור להעלאת מסמכים</p>
+                  <button type="button" onClick={generateUploadToken} disabled={tokenLoading}
+                    className="px-4 py-2.5 rounded-xl bg-violet-700 text-white text-xs font-black disabled:opacity-50">
+                    {tokenLoading ? "יוצר קישור..." : "✨ צור קישור להעלאה"}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Bank Guide Section (Phase 8) — refinance cases only */}

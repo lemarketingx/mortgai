@@ -187,3 +187,84 @@ CREATE INDEX IF NOT EXISTS lead_purchases_purchased_idx ON lead_purchases (purch
 
 -- Row Level Security
 ALTER TABLE lead_purchases ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- LEAD DOCUMENTS TABLE  (extended for client upload portal)
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Core table — created by activitiesStore.js logic. These ALTER statements add
+-- file-upload columns that may be missing from an older schema.
+ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS storage_path  TEXT;
+ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS file_name     TEXT;
+ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS file_size     INTEGER;
+ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS mime_type     TEXT;
+ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS uploaded_by   TEXT NOT NULL DEFAULT 'advisor';
+ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS uploaded_at   TIMESTAMPTZ;
+ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS reviewed_at   TIMESTAMPTZ;
+ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS review_note   TEXT;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- DOCUMENT UPLOAD TOKENS TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Secure tokens that give a client one-case upload access without exposing
+-- lead IDs or requiring authentication.
+CREATE TABLE IF NOT EXISTS document_upload_tokens (
+  id           TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  token        TEXT        NOT NULL UNIQUE,
+  lead_id      TEXT        NOT NULL,
+  advisor_id   TEXT        NOT NULL,
+  expires_at   TIMESTAMPTZ NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_used_at TIMESTAMPTZ,
+  revoked_at   TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS doc_upload_tokens_token_idx   ON document_upload_tokens (token);
+CREATE INDEX IF NOT EXISTS doc_upload_tokens_lead_idx    ON document_upload_tokens (lead_id);
+CREATE INDEX IF NOT EXISTS doc_upload_tokens_advisor_idx ON document_upload_tokens (advisor_id);
+
+ALTER TABLE document_upload_tokens ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- DOCUMENT REMINDERS TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Tracks upload deadlines and reminder state per case.
+-- Phase 1: manual send only (WhatsApp copy). Future: automated background job.
+CREATE TABLE IF NOT EXISTS document_reminders (
+  id                     TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  lead_id                TEXT        NOT NULL,
+  advisor_id             TEXT        NOT NULL,
+  upload_token_id        TEXT,
+  deadline_at            TIMESTAMPTZ,
+  channel                TEXT        NOT NULL DEFAULT 'whatsapp',
+  status                 TEXT        NOT NULL DEFAULT 'not_scheduled',
+  missing_document_types JSONB,
+  last_reminder_sent_at  TIMESTAMPTZ,
+  reminder_count         INTEGER     NOT NULL DEFAULT 0,
+  created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at           TIMESTAMPTZ,
+  cancelled_at           TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS doc_reminders_lead_idx    ON document_reminders (lead_id);
+CREATE INDEX IF NOT EXISTS doc_reminders_advisor_idx ON document_reminders (advisor_id);
+CREATE INDEX IF NOT EXISTS doc_reminders_status_idx  ON document_reminders (status);
+
+ALTER TABLE document_reminders ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- SUPABASE STORAGE  (manual step — cannot be done via SQL)
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Create a PRIVATE bucket named: mortgage-documents
+--
+-- Steps in the Supabase dashboard:
+--   Storage → New bucket
+--   Name:   mortgage-documents
+--   Public: OFF  (private)
+--   Save
+--
+-- No SQL needed for bucket creation.
