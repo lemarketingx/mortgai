@@ -364,7 +364,7 @@ function BankGuideSection() {
                   <span className="text-sm font-black text-slate-800">{bank.name}</span>
                   {bank.phone && <span className="text-xs font-bold text-violet-600">{bank.phone}</span>}
                 </div>
-                <span className="text-slate-400 text-sm shrink-0 ml-2">{expanded === bank.key ? "▲" : "▼"}</span>
+                <span className="text-slate-400 text-sm shrink-0 mr-2">{expanded === bank.key ? "▲" : "▼"}</span>
               </button>
               {expanded === bank.key && (
                 <div className="px-5 pb-4 space-y-2">
@@ -399,7 +399,6 @@ export default function LeadDetailPage() {
   const [lead, setLead] = useState(null);
   const [activities, setActivities] = useState([]);
   const [documents, setDocuments] = useState([]);
-  const [documentSummary, setDocumentSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedIndicator, setSavedIndicator] = useState(false);
@@ -429,7 +428,6 @@ export default function LeadDetailPage() {
       setActivities(acts.length > 0 ? acts : [{ title: "הליד נוצר", created_at: found.createdAt, activity_type: "lead_created" }]);
       const docs = Array.isArray(docsData.documents) ? docsData.documents : [];
       setDocuments(docs);
-      setDocumentSummary(docsData.summary || buildDocumentChecklist(docs, found.employmentStatus));
       setLoading(false);
     }).catch(() => { setLoading(false); router.push("/advisor/my-leads"); });
   }, [id]);
@@ -524,7 +522,6 @@ export default function LeadDetailPage() {
     const j = await r.json();
     const updated = j.document || { ...target, status, notes: docNotes };
     setDocuments((prev) => prev.some((d) => d.id === updated.id) ? prev.map((d) => d.id === updated.id ? updated : d) : [...prev, updated]);
-    setDocumentSummary(j.summary || null);
     showSaved();
   }
 
@@ -542,12 +539,15 @@ export default function LeadDetailPage() {
   const isRefinance = isRefinanceCase(caseType);
 
   const computedDocumentSummary = useMemo(
-    () => documentSummary || buildDocumentChecklist(documents, lead?.employmentStatus, caseType),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [documentSummary, documents, lead?.employmentStatus, caseType]
+    () => buildDocumentChecklist(documents, lead?.employmentStatus, caseType),
+    [documents, lead?.employmentStatus, caseType]
   );
   const missingDocs = computedDocumentSummary.missingCount;
   const attentionFlags = useMemo(() => buildAttentionFlags(lead), [lead]);
+  const sortedActivities = useMemo(
+    () => [...activities].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
+    [activities]
+  );
   const score = Math.round(Number(lead?.approvalScore || lead?.estimatedApprovalResult) || 0);
   const si = lead ? getStageIndex(lead) : -1;
   const overallProgress = lead ? Number(lead.overallProgressPercent ?? calculateOverallMortgageProgress(lead)) || 0 : 0;
@@ -556,7 +556,7 @@ export default function LeadDetailPage() {
   const lawyerDone = lead ? LEGAL_CHECKLIST.filter((item) => Boolean(lead[item.key])).length : 0;
   const lawyerPct = lead ? Math.round((lawyerDone / LEGAL_CHECKLIST.length) * 100) : 0;
   const fundsReleased = lead?.fundsReleaseStatus === "fully_released";
-  const fundsPct = fundsReleased ? 100 : lead?.fundsReleaseStatus === "partial_release" ? 50 : 0;
+  const fundsPct = fundsReleased ? 100 : lead?.fundsReleaseStatus === "partially_released" ? 50 : 0;
 
   if (loading) {
     return (
@@ -752,7 +752,7 @@ export default function LeadDetailPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-2">
                 <div>
                   <label className="block text-xs font-black text-slate-400 mb-1">בנק</label>
                   <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none" value={lead.bankName || ""} onChange={(e) => patchLead({ bankName: e.target.value }, e.target.value ? `בנק: ${e.target.value}` : "")}>
@@ -869,7 +869,7 @@ export default function LeadDetailPage() {
                         {/* Vertical timeline line */}
                         <div className="absolute right-5 top-0 bottom-0 w-px bg-slate-200" />
                         <div className="space-y-0">
-                          {activities.map((act, idx) => (
+                          {sortedActivities.map((act, idx) => (
                             <div key={`${act.created_at}-${idx}`} className="relative flex gap-4 pb-4">
                               {/* Timeline dot */}
                               <div className="relative z-10 shrink-0">
