@@ -14,8 +14,11 @@ import {
   APPRAISAL_PROGRESS,
   APPRAISAL_STATUS_LABELS,
   APPRAISAL_STATUSES,
+  CASE_TYPE_ICONS,
+  CASE_TYPES,
   COLLATERAL_CHECKLIST,
   DOCUMENT_STATUS_LABELS,
+  DOCUMENT_STATUS_MARKS,
   DOCUMENT_STATUSES,
   FUNDS_RELEASE_STATUS_LABELS,
   FUNDS_RELEASE_STATUSES,
@@ -24,7 +27,10 @@ import {
   calculateCollateralProgress,
   calculateOverallMortgageProgress,
   getDocumentLabel,
+  isRefinanceCase,
+  normalizeCaseType,
 } from "../../../lib/mortgageCase";
+import { BANK_GUIDES } from "../../../lib/bankGuides";
 
 const ACTIVE_PIPELINE_STAGES = PIPELINE_STAGES.filter((s) => s !== "closed_lost");
 
@@ -44,7 +50,6 @@ const STAGE_RING = [
 ];
 
 const BANKS = ["בנק לאומי", "בנק הפועלים", "בנק דיסקונט", "מזרחי-טפחות", "הבינלאומי", "One Zero", "יורוקום", "אחר"];
-const MORTGAGE_TYPES = ["משכנתא ראשונה", "מחזור משכנתא", "הלוואת גישור", "שיפור תנאים", "הגדלת משכנתא", "משכנתא לצרכים חופשיים"];
 
 const ACTIVITY_ICONS = {
   lead_created: "⭐", status_changed: "🔄", call_logged: "📞",
@@ -267,6 +272,125 @@ function WaTemplateManager({ lead, missingDocsList, onClose }) {
   );
 }
 
+// ─── Attention Flags (Phase 6) ────────────────────────────────────────────────
+// Derives warning indicators from real lead data. No fake urgency.
+const FLAG_STYLES = {
+  danger:  { bar: "bg-rose-50 border-rose-200",  dot: "bg-rose-500",   text: "text-rose-700" },
+  warning: { bar: "bg-amber-50 border-amber-200", dot: "bg-amber-400",  text: "text-amber-700" },
+  info:    { bar: "bg-sky-50 border-sky-200",     dot: "bg-sky-400",    text: "text-sky-700" },
+  stale:   { bar: "bg-slate-50 border-slate-200", dot: "bg-slate-400",  text: "text-slate-600" },
+};
+
+function buildAttentionFlags(lead) {
+  if (!lead) return [];
+  const flags = [];
+  const today = new Date(new Date().toDateString());
+  const DAY_MS = 864e5;
+  const stage = normalizePipelineStage(lead.pipelineStage || lead.leadStatus);
+
+  function daysSince(d) {
+    if (!d) return null;
+    return Math.max(0, Math.floor((today - new Date(new Date(d).toDateString())) / DAY_MS));
+  }
+  function isOverdueDate(d) { return d && new Date(d) < today; }
+
+  // Overdue follow-up or next action
+  if (isOverdueDate(lead.nextActionAt) || isOverdueDate(lead.followUpDate)) {
+    flags.push({ type: "danger", icon: "⚠️", text: "מעקב באיחור — פנה ללקוח עכשיו" });
+  }
+
+  // Missing documents in docs stage
+  const missingCount = Number(lead.missingDocumentsCount || 0);
+  if (missingCount > 0 && ["documents_requested", "waiting_documents", "documents_received"].includes(stage)) {
+    flags.push({ type: "warning", icon: "📄", text: `${missingCount} מסמכים חסרים לקידום התיק` });
+  }
+
+  // No contact for 7+ days
+  const daysSinceContact = daysSince(lead.lastContactedAt || lead.createdAt);
+  if (daysSinceContact !== null && daysSinceContact >= 7 &&
+      !["closed_won", "closed_lost", "funds_released"].includes(stage)) {
+    flags.push({ type: "warning", icon: "📞", text: `ללא קשר ${daysSinceContact} ימים` });
+  }
+
+  // Waiting for bank 14+ days
+  if (["submitted_to_bank", "principle_approval", "bank_negotiation"].includes(stage)) {
+    const daysInStage = daysSince(lead.stageUpdatedAt);
+    if (daysInStage !== null && daysInStage >= 14) {
+      flags.push({ type: "info", icon: "🏦", text: `ממתין לתשובת בנק ${daysInStage} ימים` });
+    }
+  }
+
+  // Case stalled (no activity 10+ days)
+  const daysNoActivity = daysSince(lead.lastActivityAt);
+  if (daysNoActivity !== null && daysNoActivity >= 10 &&
+      !["closed_won", "closed_lost", "funds_released"].includes(stage)) {
+    flags.push({ type: "stale", icon: "⏱", text: `תיק ללא פעילות ${daysNoActivity} ימים` });
+  }
+
+  return flags;
+}
+
+// ─── Bank Guide Section (Phase 8) ─────────────────────────────────────────────
+// Expandable per-bank instructions for generating payoff reports.
+// Shown only on refinance cases. Data lives in lib/bankGuides.js.
+function BankGuideSection() {
+  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(null);
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 text-right hover:bg-slate-50/60 transition-colors"
+      >
+        <div>
+          <h2 className="text-sm font-black text-slate-950">הפקת דוח יתרות לסילוק</h2>
+          <p className="text-[11px] font-bold text-slate-400 mt-0.5">מדריכים לפי בנק — לחץ כדי להרחיב</p>
+        </div>
+        <span className="text-slate-400 font-black text-lg shrink-0 mr-2">{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-slate-100 divide-y divide-slate-50">
+          {BANK_GUIDES.map((bank) => (
+            <div key={bank.key}>
+              <button
+                type="button"
+                onClick={() => setExpanded((v) => v === bank.key ? null : bank.key)}
+                className="w-full flex items-center justify-between px-5 py-3 text-right hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-black text-slate-800">{bank.name}</span>
+                  {bank.phone && <span className="text-xs font-bold text-violet-600">{bank.phone}</span>}
+                </div>
+                <span className="text-slate-400 text-sm shrink-0 ml-2">{expanded === bank.key ? "▲" : "▼"}</span>
+              </button>
+              {expanded === bank.key && (
+                <div className="px-5 pb-4 space-y-2">
+                  <ol className="space-y-1.5">
+                    {bank.steps.map((step, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                        <span className="font-black text-violet-600 shrink-0 tabular-nums">{i + 1}.</span>
+                        <span className="font-bold">{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  {bank.note && (
+                    <p className="text-[11px] font-bold text-slate-400 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+                      💡 {bank.note}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function LeadDetailPage() {
   const router = useRouter();
@@ -414,11 +538,16 @@ export default function LeadDetailPage() {
     pushActivity("נשלחה בקשת מסמכים ב-WhatsApp", "whatsapp_sent");
   }
 
+  const caseType = normalizeCaseType(lead?.mortgageType);
+  const isRefinance = isRefinanceCase(caseType);
+
   const computedDocumentSummary = useMemo(
-    () => documentSummary || buildDocumentChecklist(documents, lead?.employmentStatus),
-    [documentSummary, documents, lead?.employmentStatus]
+    () => documentSummary || buildDocumentChecklist(documents, lead?.employmentStatus, caseType),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [documentSummary, documents, lead?.employmentStatus, caseType]
   );
   const missingDocs = computedDocumentSummary.missingCount;
+  const attentionFlags = useMemo(() => buildAttentionFlags(lead), [lead]);
   const score = Math.round(Number(lead?.approvalScore || lead?.estimatedApprovalResult) || 0);
   const si = lead ? getStageIndex(lead) : -1;
   const overallProgress = lead ? Number(lead.overallProgressPercent ?? calculateOverallMortgageProgress(lead)) || 0 : 0;
@@ -456,6 +585,12 @@ export default function LeadDetailPage() {
             <Link href="/advisor/my-leads" className="text-xs font-black text-slate-400 hover:text-slate-700 shrink-0">← חזרה</Link>
             <h1 className="text-lg font-black text-slate-950 truncate flex-1">{lead.name || "—"}</h1>
             {lead.phone && <a href={`tel:${lead.phone}`} className="text-sm font-black text-violet-600 shrink-0">{lead.phone}</a>}
+            {/* Case Type badge — Phase 1 */}
+            {caseType && (
+              <span className="text-xs font-black px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200 shrink-0">
+                {CASE_TYPE_ICONS[caseType]} {caseType}
+              </span>
+            )}
             <span className="text-xs font-black px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 shrink-0">{getPipelineStageLabel(getStage(lead))}</span>
             <span className="text-xs font-black px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">{overallProgress}%</span>
             {score > 0 && <span className={`text-sm font-black tabular-nums shrink-0 ${score >= 70 ? "text-emerald-600" : score >= 40 ? "text-amber-500" : "text-slate-400"}`}>{score}/100</span>}
@@ -576,22 +711,53 @@ export default function LeadDetailPage() {
           <div className="space-y-4 min-w-0">
             <StageStepper lead={lead} onAdvance={advanceStage} onSetStage={setStage} />
 
+            {/* Attention Flags (Phase 6) */}
+            {attentionFlags.length > 0 && (
+              <div className="space-y-2">
+                {attentionFlags.map((flag, i) => {
+                  const s = FLAG_STYLES[flag.type] || FLAG_STYLES.stale;
+                  return (
+                    <div key={i} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border ${s.bar}`}>
+                      <span className={`h-2 w-2 rounded-full shrink-0 ${s.dot}`} />
+                      <span className="text-sm shrink-0">{flag.icon}</span>
+                      <span className={`text-xs font-black ${s.text}`}>{flag.text}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Deal details */}
             <div className="bg-white rounded-2xl border border-slate-100 p-5">
               <h2 className="text-sm font-black text-slate-950 mb-3">פרטי העסקה</h2>
+
+              {/* Case Type — Phase 1: prominent selector */}
+              <div className="mb-3">
+                <label className="block text-xs font-black text-slate-400 mb-1.5">סוג תיק</label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {CASE_TYPES.map((ct) => (
+                    <button
+                      key={ct}
+                      type="button"
+                      onClick={() => patchLead({ mortgageType: ct }, `סוג תיק: ${ct}`, "status_changed")}
+                      className={`rounded-xl px-3 py-2 text-xs font-black text-right transition-all border ${
+                        caseType === ct
+                          ? "bg-violet-700 text-white border-violet-700 shadow-sm"
+                          : "bg-slate-50 text-slate-600 border-slate-200 hover:border-violet-300 hover:text-violet-700"
+                      }`}
+                    >
+                      {CASE_TYPE_ICONS[ct]} {ct}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-black text-slate-400 mb-1">בנק</label>
                   <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none" value={lead.bankName || ""} onChange={(e) => patchLead({ bankName: e.target.value }, e.target.value ? `בנק: ${e.target.value}` : "")}>
                     <option value="">בחר בנק...</option>
                     {BANKS.map((b) => <option key={b}>{b}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-black text-slate-400 mb-1">סוג משכנתא</label>
-                  <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none" value={lead.mortgageType || ""} onChange={(e) => patchLead({ mortgageType: e.target.value }, e.target.value ? `סוג: ${e.target.value}` : "")}>
-                    <option value="">בחר סוג...</option>
-                    {MORTGAGE_TYPES.map((m) => <option key={m}>{m}</option>)}
                   </select>
                 </div>
               </div>
@@ -628,69 +794,100 @@ export default function LeadDetailPage() {
                 {/* מסמכים */}
                 {tab === "docs" && (
                   <div>
+                    {/* Document Center Card (Phase 7) — 4-way status breakdown */}
+                    <div className="grid grid-cols-4 gap-2 mb-4">
+                      {[
+                        { label: "חסרים",    count: computedDocumentSummary.statusCounts.missing,   cls: "bg-rose-50 border-rose-200 text-rose-700" },
+                        { label: "בבקשה",    count: computedDocumentSummary.statusCounts.requested, cls: "bg-amber-50 border-amber-200 text-amber-700" },
+                        { label: "התקבלו",  count: computedDocumentSummary.statusCounts.received,  cls: "bg-sky-50 border-sky-200 text-sky-700" },
+                        { label: "אושרו",   count: computedDocumentSummary.statusCounts.approved,  cls: "bg-emerald-50 border-emerald-200 text-emerald-700" },
+                      ].map(({ label, count, cls }) => (
+                        <div key={label} className={`rounded-xl border p-2.5 text-center ${cls}`}>
+                          <p className="text-2xl font-black tabular-nums leading-none">{count}</p>
+                          <p className="text-[11px] font-black mt-1">{label}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs font-bold text-slate-400 mb-3 text-center">
+                      {computedDocumentSummary.receivedCount} מתוך {computedDocumentSummary.totalCount} מסמכים הושלמו · {computedDocumentSummary.completionPercent}%
+                    </p>
+
                     <div className="flex items-center justify-between gap-3 mb-3">
-                      <div>
-                        <p className="text-sm font-black text-slate-950">מסמכים</p>
-                        <p className="text-xs font-black text-slate-400">{computedDocumentSummary.receivedCount}/{computedDocumentSummary.totalCount} אושרו · {computedDocumentSummary.completionPercent}%</p>
-                      </div>
                       {missingDocs > 0 && (
                         <button type="button" onClick={sendMissingDocsWa} className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs font-black text-emerald-700">
                           שלח בקשת מסמכים ב-WA
                         </button>
                       )}
                     </div>
-                    {missingDocs > 0 && (
-                      <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
-                        <p className="text-xs font-black text-amber-800 mb-1">חסרים {missingDocs} מסמכים</p>
-                        <div className="grid gap-0.5">
-                          {computedDocumentSummary.missingDocuments.map((doc) => (
-                            <p key={doc.key || doc.document_type} className="text-[11px] font-bold text-amber-700">• {doc.label || getDocumentLabel(doc.document_type)}</p>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+
                     <div className="grid gap-2">
-                      {computedDocumentSummary.checklist.map((doc) => (
-                        <div key={doc.id || doc.key} className="rounded-lg bg-slate-50 border border-slate-100 p-2.5">
-                          <div className="flex items-center justify-between gap-2 mb-2">
-                            <span className="text-xs font-black text-slate-800">{doc.label || getDocumentLabel(doc.document_type)}</span>
-                            <select className="border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold bg-white" value={doc.status} onChange={(e) => updateDocStatus(doc, e.target.value)}>
-                              {DOCUMENT_STATUSES.map((s) => <option key={s} value={s}>{DOCUMENT_STATUS_LABELS[s]}</option>)}
-                            </select>
+                      {computedDocumentSummary.checklist.map((doc) => {
+                        const mark = DOCUMENT_STATUS_MARKS[doc.status] || "—";
+                        const isGood = doc.status === "approved" || doc.status === "received";
+                        return (
+                          <div key={doc.id || doc.key} className={`rounded-lg border p-2.5 ${isGood ? "bg-emerald-50/40 border-emerald-100" : "bg-slate-50 border-slate-100"}`}>
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-base shrink-0">{mark}</span>
+                                <span className="text-xs font-black text-slate-800 truncate">{doc.label || getDocumentLabel(doc.document_type)}</span>
+                              </div>
+                              <select className="border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold bg-white shrink-0" value={doc.status} onChange={(e) => updateDocStatus(doc, e.target.value)}>
+                                {DOCUMENT_STATUSES.map((s) => <option key={s} value={s}>{DOCUMENT_STATUS_LABELS[s]}</option>)}
+                              </select>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                              <button type="button" onClick={() => updateDocStatus(doc, "received")} className="rounded-md bg-emerald-50 text-emerald-700 px-2 py-1 text-[11px] font-black">📥 התקבל</button>
+                              <button type="button" onClick={() => updateDocStatus(doc, "approved")} className="rounded-md bg-emerald-100 text-emerald-800 px-2 py-1 text-[11px] font-black">✓ אושר</button>
+                              <button type="button" onClick={() => updateDocStatus(doc, "missing")} className="rounded-md bg-rose-50 text-rose-700 px-2 py-1 text-[11px] font-black">❌ חסר</button>
+                              <button type="button" onClick={() => updateDocStatus(doc, "not_required")} className="rounded-md bg-slate-100 text-slate-600 px-2 py-1 text-[11px] font-black">— לא רלוונטי</button>
+                            </div>
+                            <input className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white" placeholder="הערה למסמך..."
+                              defaultValue={doc.notes || ""}
+                              onBlur={(e) => updateDocStatus(doc, doc.status, e.target.value)} />
+                            {(doc.received_at || doc.requested_at || doc.created_at) && (
+                              <p className="mt-1 text-[10px] font-bold text-slate-400">עודכן: {formatDT(doc.received_at || doc.requested_at || doc.created_at)}</p>
+                            )}
                           </div>
-                          <div className="flex flex-wrap gap-1.5 mb-2">
-                            <button type="button" onClick={() => updateDocStatus(doc, "received")} className="rounded-md bg-emerald-50 text-emerald-700 px-2 py-1 text-[11px] font-black">סמן כהתקבל</button>
-                            <button type="button" onClick={() => updateDocStatus(doc, "missing")} className="rounded-md bg-rose-50 text-rose-700 px-2 py-1 text-[11px] font-black">סמן כחסר</button>
-                            <button type="button" onClick={() => updateDocStatus(doc, "not_required")} className="rounded-md bg-slate-100 text-slate-600 px-2 py-1 text-[11px] font-black">לא רלוונטי</button>
-                          </div>
-                          <input className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white" placeholder="הערה למסמך..."
-                            defaultValue={doc.notes || ""}
-                            onBlur={(e) => updateDocStatus(doc, doc.status, e.target.value)} />
-                          {(doc.received_at || doc.requested_at || doc.created_at) && (
-                            <p className="mt-1 text-[10px] font-bold text-slate-400">עודכן: {formatDT(doc.received_at || doc.requested_at || doc.created_at)}</p>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
 
-                {/* פעילות */}
+                {/* פעילות — ציר זמן (Phase 5) */}
                 {tab === "activity" && (
                   <div>
-                    <p className="text-sm font-black text-slate-950 mb-3">היסטוריית פעילות</p>
-                    <div className="divide-y divide-slate-50 max-h-[480px] overflow-y-auto">
-                      {activities.map((act, idx) => (
-                        <div key={`${act.created_at}-${idx}`} className="flex gap-3 py-3">
-                          <span className="text-base shrink-0 mt-0.5">{ACTIVITY_ICONS[act.activity_type] || "•"}</span>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-slate-800">{act.title}</p>
-                            {act.body && <p className="text-xs text-slate-500 mt-0.5">{act.body}</p>}
-                            <p className="text-[11px] text-slate-400 mt-0.5">{formatDT(act.created_at)}</p>
-                          </div>
+                    <p className="text-sm font-black text-slate-950 mb-4">ציר זמן — היסטוריית תיק</p>
+                    {activities.length === 0 ? (
+                      <div className="text-center py-10">
+                        <p className="text-2xl mb-2">📅</p>
+                        <p className="text-sm font-black text-slate-500">עדיין אין פעילות בתיק</p>
+                        <p className="text-xs font-bold text-slate-400 mt-1">פעולות, עדכוני שלב ומסמכים יופיעו כאן</p>
+                      </div>
+                    ) : (
+                      <div className="relative max-h-[520px] overflow-y-auto">
+                        {/* Vertical timeline line */}
+                        <div className="absolute right-5 top-0 bottom-0 w-px bg-slate-200" />
+                        <div className="space-y-0">
+                          {activities.map((act, idx) => (
+                            <div key={`${act.created_at}-${idx}`} className="relative flex gap-4 pb-4">
+                              {/* Timeline dot */}
+                              <div className="relative z-10 shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center text-base shadow-sm">
+                                  {ACTIVITY_ICONS[act.activity_type] || "•"}
+                                </div>
+                              </div>
+                              {/* Content */}
+                              <div className="flex-1 bg-white rounded-xl border border-slate-100 px-3 py-2.5 min-w-0">
+                                <p className="text-sm font-black text-slate-800">{act.title}</p>
+                                {act.body && <p className="text-xs text-slate-500 mt-0.5">{act.body}</p>}
+                                <p className="text-[11px] text-slate-400 mt-1">{formatDT(act.created_at)}</p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -799,6 +996,9 @@ export default function LeadDetailPage() {
 
               </div>
             </div>
+
+            {/* Bank Guide Section (Phase 8) — refinance cases only */}
+            {isRefinance && <BankGuideSection />}
           </div>
 
           {/* LEFT: Progress widgets */}
