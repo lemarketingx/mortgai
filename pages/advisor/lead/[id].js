@@ -31,6 +31,7 @@ import {
   normalizeCaseType,
 } from "../../../lib/mortgageCase";
 import { BANK_GUIDES } from "../../../lib/bankGuides";
+import { BANK_SUBMISSION_STATUSES, BANK_SUBMISSION_STATUS_MAP } from "../../../lib/bankerDirectory";
 
 const ACTIVE_PIPELINE_STAGES = PIPELINE_STAGES.filter((s) => s !== "closed_lost");
 
@@ -59,6 +60,7 @@ const ACTIVITY_ICONS = {
 
 const DETAIL_TABS = [
   { key: "docs",      label: "מסמכים" },
+  { key: "bank",      label: "בנק" },
   { key: "activity",  label: "פעילות" },
   { key: "notes",     label: "הערות" },
   { key: "appraisal", label: "שמאות" },
@@ -417,6 +419,14 @@ export default function LeadDetailPage() {
   const [reminderDeadline, setReminderDeadline] = useState("");     // datetime-local value
   const [reviewNotes,      setReviewNotes]      = useState({});     // docId → string
 
+  // Banker / bank submission state (fields stored on lead record)
+  const [bankerName,           setBankerName]           = useState("");
+  const [bankerPhone,          setBankerPhone]          = useState("");
+  const [bankerEmail,          setBankerEmail]          = useState("");
+  const [bankBranch,           setBankBranch]           = useState("");
+  const [bankNotes,            setBankNotes]            = useState("");
+  const [bankSubmissionStatus, setBankSubmissionStatus] = useState("not_submitted");
+
   const debounceRef = useRef({});
 
   useEffect(() => {
@@ -434,6 +444,12 @@ export default function LeadDetailPage() {
       setNotes(found.internalNotes || "");
       setNextActionText(found.nextAction || "");
       setNextActionDate(found.nextActionAt?.slice(0, 10) || "");
+      setBankerName(found.bankerName || "");
+      setBankerPhone(found.bankerPhone || "");
+      setBankerEmail(found.bankerEmail || "");
+      setBankBranch(found.bankBranch || "");
+      setBankNotes(found.bankNotes || "");
+      setBankSubmissionStatus(found.bankSubmissionStatus || "not_submitted");
       const acts = Array.isArray(actData.activities) ? actData.activities : [];
       setActivities(acts.length > 0 ? acts : [{ title: "הליד נוצר", created_at: found.createdAt, activity_type: "lead_created" }]);
       const docs = Array.isArray(docsData.documents) ? docsData.documents : [];
@@ -812,6 +828,10 @@ export default function LeadDetailPage() {
                 ✉ שלח מייל
               </a>
             )}
+            <button type="button" onClick={() => setTab("docs")}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-black border border-violet-200">
+              📎 קישור מסמכים
+            </button>
           </div>
         </div>
 
@@ -981,6 +1001,89 @@ export default function LeadDetailPage() {
                 {/* מסמכים */}
                 {tab === "docs" && (
                   <div>
+
+                    {/* ── Upload link & reminder ── */}
+                    <div className="mb-5 rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                      <h3 className="text-xs font-black text-slate-700 mb-0.5">קישור להעלאת מסמכים</h3>
+                      <p className="text-[11px] font-bold text-slate-400 mb-3">שלח ללקוח קישור מאובטח להעלאה עצמאית</p>
+                      {uploadToken ? (
+                        <>
+                          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 mb-3">
+                            <span className="text-xs text-slate-500 truncate flex-1 font-mono" style={{ direction: "ltr" }}>
+                              {uploadToken.url}
+                            </span>
+                            <button type="button" onClick={copyUploadLink}
+                              className="shrink-0 text-[11px] font-black px-2.5 py-1 rounded-lg bg-violet-100 text-violet-700 hover:bg-violet-200 transition-colors">
+                              {linkCopied ? "הועתק ✓" : "העתק"}
+                            </button>
+                          </div>
+                          <div className="flex gap-2 flex-wrap mb-3">
+                            {lead?.phone && (
+                              <button type="button" onClick={openWaWithUploadLink}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black">
+                                💬 שלח ב-WA
+                              </button>
+                            )}
+                            <button type="button" onClick={generateUploadToken} disabled={tokenLoading}
+                              className="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-black disabled:opacity-50">
+                              {tokenLoading ? "יוצר..." : "🔄 חדש קישור"}
+                            </button>
+                            <button type="button" onClick={revokeUploadToken}
+                              className="px-3 py-2 rounded-xl bg-rose-50 text-rose-700 text-xs font-black border border-rose-200">
+                              בטל קישור
+                            </button>
+                          </div>
+                          <p className="text-[10px] text-slate-400 mb-3">
+                            תוקף: {uploadToken.record?.expires_at ? new Date(uploadToken.record.expires_at).toLocaleDateString("he-IL") : "—"}
+                          </p>
+                          {/* Reminder */}
+                          <div className="border-t border-slate-200 pt-3">
+                            <p className="text-xs font-black text-slate-600 mb-2">זמן יעד להעלאה</p>
+                            <div className="flex gap-1.5 flex-wrap mb-2">
+                              {[24, 48, 72].map((h) => (
+                                <button key={h} type="button" onClick={() => setReminderHours(h)}
+                                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-black bg-white border border-slate-200 text-slate-700 hover:bg-violet-100 hover:text-violet-700 transition-colors">
+                                  {h} שעות
+                                </button>
+                              ))}
+                              <input type="datetime-local"
+                                className="border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-violet-300"
+                                value={reminderDeadline}
+                                onChange={(e) => { setReminderDeadline(e.target.value); if (e.target.value) saveReminder(new Date(e.target.value).toISOString()); }}
+                              />
+                            </div>
+                            {reminderStatusLabel && (
+                              <div className="rounded-lg bg-sky-50 border border-sky-200 px-3 py-2 mb-2">
+                                <p className="text-xs font-black text-sky-700">{reminderStatusLabel}</p>
+                              </div>
+                            )}
+                            {missingDocs > 0 && (
+                              <div className="flex gap-2 flex-wrap">
+                                <button type="button" onClick={copyReminderMessage}
+                                  className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-black">
+                                  📋 העתק הודעת תזכורת
+                                </button>
+                                {lead?.phone && (
+                                  <button type="button" onClick={openWaReminder}
+                                    className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-black">
+                                    💬 שלח תזכורת ב-WA
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center py-3">
+                          <p className="text-xs font-bold text-slate-400 mb-3">טרם נוצר קישור להעלאת מסמכים</p>
+                          <button type="button" onClick={generateUploadToken} disabled={tokenLoading}
+                            className="px-4 py-2.5 rounded-xl bg-violet-700 text-white text-xs font-black disabled:opacity-50">
+                            {tokenLoading ? "יוצר קישור..." : "✨ צור קישור להעלאה"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Document Center Card (Phase 7) — 4-way status breakdown */}
                     <div className="grid grid-cols-4 gap-2 mb-4">
                       {[
@@ -1071,6 +1174,146 @@ export default function LeadDetailPage() {
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {/* בנק */}
+                {tab === "bank" && (
+                  <div>
+                    <p className="text-sm font-black text-slate-950 mb-3">פרטי בנק ובנקאי</p>
+                    <div className="grid gap-3">
+
+                      {/* Bank selector */}
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 mb-1">בנק</label>
+                        <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                          value={lead.bankName || ""}
+                          onChange={(e) => patchLead({ bankName: e.target.value }, e.target.value ? `בנק: ${e.target.value}` : "")}>
+                          <option value="">בחר בנק...</option>
+                          {BANKS.map((b) => <option key={b}>{b}</option>)}
+                        </select>
+                      </div>
+
+                      {/* Branch */}
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 mb-1">סניף</label>
+                        <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                          placeholder="שם/מספר סניף"
+                          value={bankBranch}
+                          onChange={(e) => setBankBranch(e.target.value)}
+                          onBlur={(e) => patchLead({ bankBranch: e.target.value })} />
+                      </div>
+
+                      {/* Submission status */}
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 mb-1">סטטוס הגשה לבנק</label>
+                        <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                          value={bankSubmissionStatus}
+                          onChange={(e) => {
+                            setBankSubmissionStatus(e.target.value);
+                            patchLead({ bankSubmissionStatus: e.target.value }, `סטטוס הגשה: ${BANK_SUBMISSION_STATUS_MAP[e.target.value] || e.target.value}`, "status_changed");
+                          }}>
+                          {BANK_SUBMISSION_STATUSES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+                        </select>
+                      </div>
+
+                      {/* Divider — banker contact */}
+                      <div className="border-t border-slate-100 pt-3">
+                        <p className="text-xs font-black text-slate-500 mb-2">איש קשר בבנק (בנקאי)</p>
+                      </div>
+
+                      {/* Banker name */}
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 mb-1">שם הבנקאי</label>
+                        <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                          placeholder="שם מלא"
+                          value={bankerName}
+                          onChange={(e) => setBankerName(e.target.value)}
+                          onBlur={(e) => patchLead({ bankerName: e.target.value })} />
+                      </div>
+
+                      {/* Banker phone */}
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 mb-1">טלפון בנקאי</label>
+                        <div className="flex gap-2">
+                          <input className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                            placeholder="050-000-0000"
+                            value={bankerPhone}
+                            onChange={(e) => setBankerPhone(e.target.value)}
+                            onBlur={(e) => patchLead({ bankerPhone: e.target.value })} />
+                          {bankerPhone && (
+                            <a href={`tel:${bankerPhone}`}
+                              className="shrink-0 px-3 py-2 rounded-xl bg-violet-50 text-violet-700 text-xs font-black border border-violet-200">
+                              ☎ התקשר
+                            </a>
+                          )}
+                          {bankerPhone && (
+                            <a href={`https://wa.me/${bankerPhone.replace(/[^\d]/g, "").replace(/^0/, "972")}`}
+                              target="_blank" rel="noopener noreferrer"
+                              className="shrink-0 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-black border border-emerald-200">
+                              💬 WA
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Banker email */}
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 mb-1">מייל בנקאי</label>
+                        <div className="flex gap-2">
+                          <input className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                            placeholder="banker@bank.co.il"
+                            type="email"
+                            value={bankerEmail}
+                            onChange={(e) => setBankerEmail(e.target.value)}
+                            onBlur={(e) => patchLead({ bankerEmail: e.target.value })} />
+                          {bankerEmail && (
+                            <a href={`mailto:${bankerEmail}`}
+                              className="shrink-0 px-3 py-2 rounded-xl bg-sky-50 text-sky-700 text-xs font-black border border-sky-200">
+                              ✉ מייל
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Bank notes */}
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 mb-1">הערות לבנק</label>
+                        <textarea className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold min-h-[80px] resize-y outline-none focus:ring-2 focus:ring-violet-300"
+                          placeholder="תנאים מיוחדים, הנחיות, עדכונים..."
+                          value={bankNotes}
+                          onChange={(e) => setBankNotes(e.target.value)}
+                          onBlur={(e) => patchLead({ bankNotes: e.target.value })} />
+                      </div>
+
+                      {/* Copy doc list for bank */}
+                      <div className="border-t border-slate-100 pt-3">
+                        <p className="text-xs font-black text-slate-500 mb-2">שליחה לבנק</p>
+                        <div className="flex gap-2 flex-wrap">
+                          <button type="button"
+                            onClick={() => {
+                              const docList = computedDocumentSummary.checklist
+                                .filter((d) => d.status === "approved" || d.status === "received")
+                                .map((d) => `✓ ${d.label || getDocumentLabel(d.document_type)}`)
+                                .join("\n");
+                              const text = `רשימת מסמכים שהתקבלו עבור ${lead.name || "לקוח"}:\n\n${docList || "אין מסמכים שהתקבלו עדיין"}`;
+                              navigator.clipboard.writeText(text).then(() => {
+                                setMsg({ text: "רשימת מסמכים הועתקה ✓", ok: true });
+                                setTimeout(() => setMsg({ text: "", ok: true }), 2500);
+                              }).catch(() => {});
+                            }}
+                            className="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-black">
+                            📋 העתק רשימת מסמכים
+                          </button>
+                          {bankerEmail && (
+                            <a href={`mailto:${bankerEmail}?subject=${encodeURIComponent(`תיק משכנתא - ${lead.name || ""}`)}&body=${encodeURIComponent(`שלום,\n\nמצורפים פרטי הלקוח לצורך טיפול בבקשת המשכנתא.\n\nשם: ${lead.name || ""}\nטלפון: ${lead.phone || ""}\nגובה המשכנתא: ${lead.mortgageAmount ? formatILS(lead.mortgageAmount) : "—"}\n\nבברכה,\n${lead.assignedAdvisor || ""}`)}`}
+                              className="px-3 py-2 rounded-xl bg-sky-50 text-sky-700 text-xs font-black border border-sky-200">
+                              ✉ שלח מייל לבנקאי
+                            </a>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1216,104 +1459,6 @@ export default function LeadDetailPage() {
                 )}
 
               </div>
-            </div>
-
-            {/* ── Document Upload Link (Portal) ── */}
-            <div className="bg-white rounded-2xl border border-slate-100 p-5">
-              <h2 className="text-sm font-black text-slate-950 mb-1">קישור להעלאת מסמכים</h2>
-              <p className="text-[11px] font-bold text-slate-400 mb-4">שלח ללקוח קישור מאובטח להעלאה עצמאית של המסמכים</p>
-
-              {uploadToken ? (
-                <>
-                  {/* URL display + copy */}
-                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 mb-3">
-                    <span className="text-xs text-slate-500 truncate flex-1 font-mono ltr" style={{ direction: "ltr" }}>
-                      {uploadToken.url}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={copyUploadLink}
-                      className="shrink-0 text-[11px] font-black px-2.5 py-1 rounded-lg bg-violet-100 text-violet-700 hover:bg-violet-200 transition-colors"
-                    >
-                      {linkCopied ? "הועתק ✓" : "העתק"}
-                    </button>
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex gap-2 flex-wrap mb-4">
-                    {lead?.phone && (
-                      <button type="button" onClick={openWaWithUploadLink}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black">
-                        💬 שלח ב-WA
-                      </button>
-                    )}
-                    <button type="button" onClick={generateUploadToken} disabled={tokenLoading}
-                      className="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-black disabled:opacity-50">
-                      {tokenLoading ? "יוצר..." : "🔄 חדש קישור"}
-                    </button>
-                    <button type="button" onClick={revokeUploadToken}
-                      className="px-3 py-2 rounded-xl bg-rose-50 text-rose-700 text-xs font-black border border-rose-200">
-                      בטל קישור
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mb-4">
-                    תוקף: {uploadToken.record?.expires_at ? new Date(uploadToken.record.expires_at).toLocaleDateString("he-IL") : "—"}
-                  </p>
-
-                  {/* Reminder section */}
-                  <div className="border-t border-slate-100 pt-4">
-                    <p className="text-xs font-black text-slate-700 mb-2">זמן יעד להעלאת מסמכים</p>
-                    <div className="flex gap-1.5 flex-wrap mb-2">
-                      {[24, 48, 72].map((h) => (
-                        <button key={h} type="button" onClick={() => setReminderHours(h)}
-                          className="px-2.5 py-1.5 rounded-lg text-[11px] font-black bg-slate-100 text-slate-700 hover:bg-violet-100 hover:text-violet-700 transition-colors">
-                          {h} שעות
-                        </button>
-                      ))}
-                      <input
-                        type="datetime-local"
-                        className="border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold outline-none focus:ring-2 focus:ring-violet-300"
-                        value={reminderDeadline}
-                        onChange={(e) => {
-                          setReminderDeadline(e.target.value);
-                          if (e.target.value) saveReminder(new Date(e.target.value).toISOString());
-                        }}
-                      />
-                    </div>
-
-                    {/* Status label */}
-                    {reminderStatusLabel && (
-                      <div className="rounded-lg bg-sky-50 border border-sky-200 px-3 py-2 mb-3">
-                        <p className="text-xs font-black text-sky-700">{reminderStatusLabel}</p>
-                      </div>
-                    )}
-
-                    {/* Manual reminder send */}
-                    {missingDocs > 0 && (
-                      <div className="flex gap-2 flex-wrap">
-                        <button type="button" onClick={copyReminderMessage}
-                          className="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-black">
-                          📋 העתק הודעת תזכורת
-                        </button>
-                        {lead?.phone && (
-                          <button type="button" onClick={openWaReminder}
-                            className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-black">
-                            💬 שלח תזכורת ב-WA
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-xs font-bold text-slate-400 mb-3">טרם נוצר קישור להעלאת מסמכים</p>
-                  <button type="button" onClick={generateUploadToken} disabled={tokenLoading}
-                    className="px-4 py-2.5 rounded-xl bg-violet-700 text-white text-xs font-black disabled:opacity-50">
-                    {tokenLoading ? "יוצר קישור..." : "✨ צור קישור להעלאה"}
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* Bank Guide Section (Phase 8) — refinance cases only */}
