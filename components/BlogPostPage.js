@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Head from "next/head";
 import { trackEvent } from "../lib/analytics";
@@ -35,7 +35,7 @@ function MidCta({ slug, category }) {
       <p className="text-sm font-semibold uppercase tracking-widest opacity-80 mb-2">כלי חינמי</p>
       <h3 className="text-xl md:text-2xl font-black mb-2">רוצים לבדוק זכאות למשכנתא?</h3>
       <p className="text-sm md:text-base opacity-90 mb-5 leading-7">
-        מחשבון MortgAI מנתח את הנתונים שלכם ומחזיר אומדן סיכוי אישור, החזר חודשי ומסגרת אפשרית — תוך דקה.
+        מחשבון Finzo מנתח את הנתונים שלכם ומחזיר אומדן סיכוי אישור, החזר חודשי ומסגרת אפשרית — תוך דקה.
       </p>
       <Link
         href="/#eligibility-check"
@@ -173,11 +173,24 @@ function FaqItem({ q, a }) {
 
 export default function BlogPostPage({ post, relatedPosts }) {
   const postPath = `/blog/${post.slug}`;
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const shareUrl = absoluteUrl(postPath);
+  const tableOfContents = useMemo(
+    () => post.sections.map((section, idx) => ({ id: `section-${idx + 1}`, heading: section.heading })),
+    [post.sections]
+  );
 
-  // fire view event once on mount
-  if (typeof window !== "undefined") {
-    // use a module-level flag pattern to avoid repeat fires during hydration
-  }
+  useEffect(() => {
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const total = doc.scrollHeight - doc.clientHeight;
+      const progress = total <= 0 ? 0 : Math.min(100, Math.max(0, (doc.scrollTop / total) * 100));
+      setScrollProgress(progress);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const schemaFaqs = post.faqs.map((f) => [f.q, f.a]);
 
@@ -217,6 +230,10 @@ export default function BlogPostPage({ post, relatedPosts }) {
       </Head>
 
       {/* ── Mobile sticky CTA ── */}
+      <div className="fixed top-0 inset-x-0 z-50 h-1 bg-slate-200">
+        <div className="h-full bg-violet-600 transition-all" style={{ width: `${scrollProgress}%` }} />
+      </div>
+
       <div className="fixed bottom-0 inset-x-0 z-50 md:hidden bg-white border-t border-slate-200 px-4 py-3 flex gap-3">
         <Link
           href="/#eligibility-check"
@@ -251,19 +268,33 @@ export default function BlogPostPage({ post, relatedPosts }) {
             <div className="flex gap-4 text-xs text-slate-400 flex-wrap">
               <span>⏱ {post.readingTime} דקות קריאה</span>
               <span>📅 {new Date(post.publishDate).toLocaleDateString("he-IL", { year: "numeric", month: "long", day: "numeric" })}</span>
+              <span>✍️ צוות Finzo</span>
             </div>
           </div>
         </div>
 
         {/* ── Article body ── */}
         <div className="max-w-3xl mx-auto px-4 pt-10">
+          <section className="mb-8 p-4 bg-surface-low rounded-2xl border border-surface-high">
+            <h2 className="text-sm font-black text-mort-ink mb-3">על מה נדבר במאמר?</h2>
+            <ul className="space-y-2">
+              {tableOfContents.map((item) => (
+                <li key={item.id}>
+                  <a href={`#${item.id}`} className="text-sm text-violet-700 hover:underline font-semibold">
+                    {item.heading}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+
           {/* Intro */}
           <p className="text-mort-text text-base md:text-lg leading-8 mb-10 font-medium">{post.intro}</p>
 
           {/* Sections — inject mid CTA after 2nd section */}
           {post.sections.map((section, idx) => (
             <div key={section.heading}>
-              <section className="mb-8">
+              <section id={`section-${idx + 1}`} className="mb-8 scroll-mt-20">
                 <h2 className="text-xl md:text-2xl font-black text-mort-ink mb-4 border-r-4 border-violet-500 pr-4">
                   {section.heading}
                 </h2>
@@ -286,6 +317,34 @@ export default function BlogPostPage({ post, relatedPosts }) {
               <Link href="/#eligibility-check" className="text-sm text-violet-700 hover:underline font-semibold">מחשבון זכאות ←</Link>
             </div>
           </div>
+
+          <section className="mb-10 p-5 bg-white rounded-2xl border border-slate-200">
+            <h2 className="text-lg font-black text-mort-ink mb-3">שיתוף המאמר</h2>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`${post.h1} - ${shareUrl}`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full font-bold"
+              >
+                WhatsApp
+              </a>
+              <a
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm bg-blue-50 text-blue-700 px-4 py-2 rounded-full font-bold"
+              >
+                Facebook
+              </a>
+              <a
+                href={`mailto:?subject=${encodeURIComponent(post.h1)}&body=${encodeURIComponent(shareUrl)}`}
+                className="text-sm bg-slate-100 text-slate-700 px-4 py-2 rounded-full font-bold"
+              >
+                Email
+              </a>
+            </div>
+          </section>
 
           {/* FAQ */}
           <section className="mb-12">

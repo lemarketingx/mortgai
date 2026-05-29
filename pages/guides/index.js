@@ -7,7 +7,7 @@ export default function GuidesIndexPage() {
   return (
     <>
       <Head>
-        <title>מדריכי משכנתא | MortgAI</title>
+        <title>מדריכי משכנתא | Finzo</title>
         <meta name="description" content="מדריכי משכנתא קצרים וברורים: יחס החזר, הון עצמי, אישור עקרוני, מחזור משכנתא, הלוואת גישור ועוד." />
         <link rel="canonical" href={canonicalUrl("/guides")} />
               <script

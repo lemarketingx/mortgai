@@ -1,41 +1,157 @@
 import Head from "next/head";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { formatILS } from "../../lib/format";
 
-const statusOptions = ["חדש", "נשלח ליועץ", "בטיפול", "אושר עקרונית", "נסגר", "לא רלוונטי"];
+const QUALITY_CONFIG = {
+  חם:     { cls: "bg-emerald-100 text-emerald-700 border-emerald-300", dot: "bg-emerald-500", icon: "🔥" },
+  בינוני: { cls: "bg-amber-100 text-amber-700 border-amber-300",   dot: "bg-amber-400",   icon: "☀️" },
+  חלש:    { cls: "bg-slate-100 text-slate-500 border-slate-200",   dot: "bg-slate-400",   icon: "❄️" },
+};
 
-function getLeadScore(lead) {
-  return Math.round(Number(lead.approvalScore || lead.approval || lead.leadScore) || 0);
+const STATUS_OPTIONS = ["חדש", "נשלח ליועץ", "בטיפול", "אושר עקרונית", "נסגר", "לא רלוונטי"];
+
+function QualityBadge({ quality }) {
+  const cfg = QUALITY_CONFIG[quality] || QUALITY_CONFIG["בינוני"];
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full border ${cfg.cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+      {cfg.icon} {quality || "בינוני"}
+    </span>
+  );
 }
 
-function getLeadAmount(lead) {
-  return Number(lead.mortgageAmount || lead.mortgage || 0);
+function ScoreBar({ score }) {
+  const pct = Math.min(100, Math.max(0, Number(score) || 0));
+  const color = pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-slate-300";
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-xs font-black text-mort-muted w-8 text-left">{pct}%</span>
+    </div>
+  );
 }
 
-function getStatusTone(status = "") {
-  if (status.includes("אושר") || status.includes("נסגר")) return "bg-emerald-50 text-emerald-800 ring-emerald-100";
-  if (status.includes("בטיפול") || status.includes("נשלח")) return "bg-violet-50 text-violet-800 ring-violet-100";
-  if (status.includes("לא")) return "bg-slate-100 text-slate-600 ring-slate-200";
-  return "bg-amber-50 text-amber-800 ring-amber-100";
+function LeadCard({ lead, onUpdate }) {
+  const [notes, setNotes] = useState(lead.internalNotes || "");
+  const [saving, setSaving] = useState(false);
+
+  async function saveNotes() {
+    setSaving(true);
+    await onUpdate(lead.id, { internalNotes: notes, lastContactedAt: new Date().toISOString() });
+    setSaving(false);
+  }
+
+  const score = Math.round(Number(lead.approvalScore) || 0);
+  const quality = lead.leadQuality || (score >= 70 ? "חם" : score >= 40 ? "בינוני" : "חלש");
+  const created = new Date(lead.createdAt).toLocaleDateString("he-IL", { day: "numeric", month: "short", year: "numeric" });
+
+  return (
+    <article className="bg-white border border-slate-200 rounded-2xl p-5 shadow-soft hover:border-violet-200 transition-colors">
+
+      {/* Header row */}
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <QualityBadge quality={quality} />
+            {lead.city && (
+              <span className="text-xs text-mort-muted font-bold">📍 {lead.city}</span>
+            )}
+          </div>
+          <h2 className="text-lg font-black text-mort-ink">{lead.name}</h2>
+          <a href={`tel:${lead.phone}`} className="text-sm font-bold text-violet-600 hover:underline">{lead.phone}</a>
+        </div>
+        <div className="text-left shrink-0">
+          <p className="text-xl font-black text-mort-ink font-number">{formatILS(lead.mortgageAmount || 0)}</p>
+          <p className="text-xs text-mort-muted mt-0.5">{created}</p>
+        </div>
+      </div>
+
+      {/* Score bar */}
+      <div className="mb-4">
+        <div className="flex justify-between text-xs font-bold text-mort-muted mb-1">
+          <span>סיכוי אישור</span>
+          <span>{score}%</span>
+        </div>
+        <ScoreBar score={score} />
+      </div>
+
+      {/* Meta pills */}
+      <div className="flex flex-wrap gap-2 mb-4 text-xs">
+        {lead.monthlyIncome && (
+          <span className="bg-surface-low border border-surface-high px-3 py-1 rounded-full font-bold text-mort-text">
+            הכנסה: {formatILS(lead.monthlyIncome)}
+          </span>
+        )}
+        {lead.purchaseStatus && (
+          <span className="bg-surface-low border border-surface-high px-3 py-1 rounded-full font-bold text-mort-text">
+            {lead.purchaseStatus}
+          </span>
+        )}
+        {lead.employmentStatus && (
+          <span className="bg-surface-low border border-surface-high px-3 py-1 rounded-full font-bold text-mort-text">
+            {lead.employmentStatus}
+          </span>
+        )}
+      </div>
+
+      {/* Status + follow-up */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label className="block text-xs font-black text-mort-muted mb-1">סטטוס</label>
+          <select
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+            value={lead.leadStatus || lead.status || "חדש"}
+            onChange={(e) => onUpdate(lead.id, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() })}
+          >
+            {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-black text-mort-muted mb-1">מעקב</label>
+          <input
+            type="date"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+            defaultValue={lead.followUpDate?.slice(0, 10) || ""}
+            onBlur={(e) => onUpdate(lead.id, { followUpDate: e.target.value })}
+          />
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div>
+        <label className="block text-xs font-black text-mort-muted mb-1">הערות פנימיות</label>
+        <textarea
+          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white resize-none"
+          rows={2}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          onBlur={saveNotes}
+          placeholder="הוסיפו הערות, תיאום שיחה, עדכון סטטוס..."
+        />
+        {saving && <p className="text-xs text-mort-muted mt-1">שומר...</p>}
+      </div>
+    </article>
+  );
 }
 
 export default function AdvisorDashboard() {
   const [leads, setLeads] = useState([]);
   const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("הכל");
 
   async function load() {
+    setLoading(true);
     const r = await fetch("/api/advisor/leads");
-    if (!r.ok) {
-      window.location.href = "/advisor/login";
-      return;
-    }
+    if (!r.ok) { window.location.href = "/advisor/login"; return; }
     const j = await r.json();
     setLeads(j.leads || []);
+    setLoading(false);
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   async function update(id, changes) {
     const r = await fetch("/api/advisor/leads", {
@@ -43,140 +159,95 @@ export default function AdvisorDashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, changes }),
     });
-    if (!r.ok) {
-      setMsg("שמירה נכשלה");
-      return;
-    }
+    if (!r.ok) { setMsg("שמירה נכשלה"); return; }
     const j = await r.json();
     setLeads((arr) => arr.map((l) => (l.id === id ? j.lead : l)));
-    setMsg("העדכון נשמר בהצלחה");
+    setMsg("");
   }
 
-  const stats = useMemo(() => {
-    const active = leads.filter((lead) => !["נסגר", "לא רלוונטי"].includes(lead.leadStatus || lead.status)).length;
-    const followUps = leads.filter((lead) => lead.followUpDate).length;
-    const avgScore = leads.length
-      ? Math.round(leads.reduce((sum, lead) => sum + getLeadScore(lead), 0) / leads.length)
-      : 0;
-    return { active, followUps, avgScore };
-  }, [leads]);
+  const hot   = leads.filter((l) => (l.leadQuality === "חם")     || (!l.leadQuality && Number(l.approvalScore) >= 70));
+  const warm  = leads.filter((l) => (l.leadQuality === "בינוני") || (!l.leadQuality && Number(l.approvalScore) >= 40 && Number(l.approvalScore) < 70));
+  const cold  = leads.filter((l) => (l.leadQuality === "חלש")    || (!l.leadQuality && Number(l.approvalScore) < 40));
+
+  const filtered = filter === "חם" ? hot : filter === "בינוני" ? warm : filter === "חלש" ? cold : leads;
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-50 px-4 py-6 text-slate-950 sm:px-6">
-      <Head>
-        <title>Advisor Portal</title>
-      </Head>
+    <>
+      <Head><title>פורטל לידים | MortgAI</title></Head>
 
-      <div className="mx-auto max-w-6xl">
-        <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
-          <div className="grid gap-6 p-6 lg:grid-cols-[1.4fr_1fr] lg:p-8">
+      <main dir="rtl" className="min-h-screen bg-surface-DEFAULT">
+
+        {/* ── Top bar ── */}
+        <header className="bg-mort-ink text-white px-4 py-4 sticky top-0 z-40">
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
             <div>
-              <span className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-800">
-                מרקטפלייס לידים ליועצים
-              </span>
-              <h1 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">פורטל יועץ</h1>
-              <p className="mt-3 max-w-2xl text-base font-bold leading-7 text-slate-600">
-                לידים משויכים בלבד, עם אומדן ראשוני, סטטוס טיפול ומועד מעקב. המטרה היא לעזור לכם לתעדף שיחות בלי לשנות את תהליך העבודה הקיים.
-              </p>
-              {msg && <p className="mt-4 rounded-2xl bg-white px-4 py-3 text-sm font-black text-violet-800 ring-1 ring-violet-100">{msg}</p>}
+              <span className="text-lg font-black">MortgAI</span>
+              <span className="text-xs text-violet-400 font-bold mr-2">פורטל לידים</span>
             </div>
-
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <Metric label="לידים פעילים" value={stats.active} />
-              <Metric label="מעקבים מתוזמנים" value={stats.followUps} />
-              <Metric label="ציון ממוצע" value={leads.length ? `${stats.avgScore}%` : "--"} />
-            </div>
+            <button
+              onClick={() => { document.cookie = "advisor_token=; max-age=0; path=/"; window.location.href = "/advisor/login"; }}
+              className="text-xs text-slate-400 hover:text-white font-bold transition-colors"
+            >
+              יציאה
+            </button>
           </div>
-        </section>
+        </header>
 
-        <section className="mt-5 grid gap-4">
-          {!leads.length && (
-            <article className="rounded-[26px] border border-dashed border-slate-300 bg-white p-8 text-center shadow-sm">
-              <h2 className="text-xl font-black text-slate-900">אין לידים משויכים כרגע</h2>
-              <p className="mt-2 font-bold text-slate-500">ברגע שיוקצו לידים ליועץ זה, הם יופיעו כאן עם פרטי קשר, אומדן ושדות טיפול.</p>
-            </article>
+        <div className="max-w-5xl mx-auto px-4 py-8">
+
+          {/* Stats row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {[
+              { label: "סה״כ לידים", value: leads.length, color: "text-mort-ink" },
+              { label: "🔥 חמים", value: hot.length, color: "text-emerald-600" },
+              { label: "☀️ בינוניים", value: warm.length, color: "text-amber-600" },
+              { label: "❄️ חלשים", value: cold.length, color: "text-slate-400" },
+            ].map((s) => (
+              <div key={s.label} className="bg-white border border-slate-200 rounded-2xl p-4 text-center shadow-soft">
+                <p className={`text-2xl font-black font-number ${s.color}`}>{s.value}</p>
+                <p className="text-xs font-bold text-mort-muted mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Filter pills */}
+          <div className="flex gap-2 flex-wrap mb-6">
+            {["הכל", "חם", "בינוני", "חלש"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`text-sm font-bold px-4 py-2 rounded-full border transition-colors ${
+                  filter === f
+                    ? "bg-violet-600 text-white border-violet-600"
+                    : "bg-white text-mort-muted border-slate-200 hover:border-violet-300"
+                }`}
+              >
+                {f === "הכל" ? `הכל (${leads.length})` : f === "חם" ? `🔥 חמים (${hot.length})` : f === "בינוני" ? `☀️ בינוניים (${warm.length})` : `❄️ חלשים (${cold.length})`}
+              </button>
+            ))}
+          </div>
+
+          {msg && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold">{msg}</div>
           )}
 
-          {leads.map((lead) => {
-            const status = lead.leadStatus || lead.status || "חדש";
-            const score = getLeadScore(lead);
-            const amount = getLeadAmount(lead);
-            return (
-              <article key={lead.id} className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-2xl font-black text-slate-950">{lead.name}</h2>
-                      <span className={`rounded-full px-3 py-1 text-xs font-black ring-1 ${getStatusTone(status)}`}>{status}</span>
-                      {score > 0 && <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">אומדן {score}%</span>}
-                    </div>
-                    <p className="mt-2 text-sm font-bold text-slate-500">
-                      נוצר: {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString("he-IL") : "לא ידוע"} · מעקב: {lead.followUpDate || "לא הוגדר"}
-                    </p>
-                  </div>
+          {/* Leads */}
+          {loading && (
+            <div className="text-center py-16 text-mort-muted font-bold">טוען לידים...</div>
+          )}
+          {!loading && filtered.length === 0 && (
+            <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl">
+              <p className="text-mort-muted font-bold">אין לידים בקטגוריה זו כרגע</p>
+            </div>
+          )}
+          <div className="grid gap-4">
+            {filtered.map((lead) => (
+              <LeadCard key={lead.id} lead={lead} onUpdate={update} />
+            ))}
+          </div>
 
-                  <div className="grid gap-2 text-sm font-black sm:grid-cols-3 lg:min-w-[420px]">
-                    <LeadFact label="טלפון" value={lead.phone || "--"} />
-                    <LeadFact label="סכום מבוקש" value={amount ? formatILS(amount) : "--"} />
-                    <LeadFact label="מקור" value={lead.source || lead.purchaseStatus || "--"} />
-                  </div>
-                </div>
-
-                <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_220px_180px]">
-                  <label className="block">
-                    <span className="text-sm font-black text-slate-700">הערות טיפול</span>
-                    <textarea
-                      className="mt-2 min-h-24 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 font-bold outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
-                      defaultValue={lead.internalNotes || ""}
-                      onBlur={(e) => update(lead.id, { internalNotes: e.target.value, lastContactedAt: new Date().toISOString() })}
-                      placeholder="סיכום שיחה, חסמים, מסמכים חסרים או הצעד הבא"
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="text-sm font-black text-slate-700">סטטוס</span>
-                    <select
-                      className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 font-black outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
-                      value={status}
-                      onChange={(e) => update(lead.id, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() })}
-                    >
-                      {statusOptions.map((option) => <option key={option}>{option}</option>)}
-                    </select>
-                  </label>
-
-                  <label className="block">
-                    <span className="text-sm font-black text-slate-700">מעקב הבא</span>
-                    <input
-                      type="date"
-                      className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 font-black outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
-                      defaultValue={lead.followUpDate?.slice(0, 10) || ""}
-                      onBlur={(e) => update(lead.id, { followUpDate: e.target.value })}
-                    />
-                  </label>
-                </div>
-              </article>
-            );
-          })}
-        </section>
-      </div>
-    </main>
-  );
-}
-
-function Metric({ label, value }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <p className="text-xs font-black text-slate-500">{label}</p>
-      <p className="number-display mt-1 text-2xl font-black text-slate-950">{value}</p>
-    </div>
-  );
-}
-
-function LeadFact({ label, value }) {
-  return (
-    <div className="rounded-2xl bg-slate-50 px-4 py-3">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 truncate text-slate-950">{value}</p>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }
