@@ -1,251 +1,667 @@
 import Head from "next/head";
-import { useEffect, useState } from "react";
-import { formatILS } from "../../lib/format";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import AdvisorHeader from "../../components/AdvisorHeader";
+import {
+  getPipelineStageLabel,
+  isClosedPipelineStage,
+  normalizePipelineStage,
+} from "../../lib/pipeline";
 
-const QUALITY_CONFIG = {
-  חם:     { cls: "bg-emerald-100 text-emerald-700 border-emerald-300", dot: "bg-emerald-500", icon: "🔥" },
-  בינוני: { cls: "bg-amber-100 text-amber-700 border-amber-300",   dot: "bg-amber-400",   icon: "☀️" },
-  חלש:    { cls: "bg-slate-100 text-slate-500 border-slate-200",   dot: "bg-slate-400",   icon: "❄️" },
+// ─── Pipeline groups (8 conceptual mortgage stages) ───────────────────────────
+// Each group aggregates multiple internal pipeline stages so the dashboard
+// shows a readable mortgage process, not the full 19-stage internal list.
+const PIPELINE_GROUPS = [
+  {
+    key: "new",
+    label: "ליד חדש",
+    stages: new Set(["new_lead", "contacted"]),
+    color: "bg-violet-500",
+    linkStage: "new_lead",
+  },
+  {
+    key: "docs",
+    label: "מסמכים",
+    stages: new Set(["documents_requested", "waiting_documents", "documents_received"]),
+    color: "bg-amber-500",
+    linkStage: "waiting_documents",
+  },
+  {
+    key: "eligibility",
+    label: "בדיקת זכאות",
+    stages: new Set(["eligibility_review"]),
+    color: "bg-sky-500",
+    linkStage: "eligibility_review",
+  },
+  {
+    key: "appraisal",
+    label: 'שמאות / עו"ד',
+    stages: new Set(["appraisal_ordered", "appraisal_completed", "lawyer_review"]),
+    color: "bg-cyan-500",
+    linkStage: "appraisal_ordered",
+  },
+  {
+    key: "bank",
+    label: "הגשה לבנק",
+    stages: new Set(["submitted_to_bank", "principle_approval", "bank_negotiation", "selected_track"]),
+    color: "bg-blue-500",
+    linkStage: "submitted_to_bank",
+  },
+  {
+    key: "signing",
+    label: "חתימות",
+    stages: new Set(["signing_scheduled", "signed"]),
+    color: "bg-emerald-500",
+    linkStage: "signing_scheduled",
+  },
+  {
+    key: "funds",
+    label: "שחרור כספים",
+    stages: new Set(["collateral_completion", "funds_released"]),
+    color: "bg-green-500",
+    linkStage: "collateral_completion",
+  },
+  {
+    key: "done",
+    label: "הושלם",
+    stages: new Set(["closed_won"]),
+    color: "bg-green-600",
+    linkStage: "closed_won",
+  },
+];
+
+// O(1) stage → group key lookup — built once at module level
+const STAGE_TO_GROUP = new Map(
+  PIPELINE_GROUPS.flatMap((g) => [...g.stages].map((s) => [s, g.key]))
+);
+
+// ─── Attention item tag styles ────────────────────────────────────────────────
+const TAG_META = {
+  danger:  { tag: "bg-rose-100 text-rose-700 border-rose-200",   dot: "bg-rose-500" },
+  warning: { tag: "bg-amber-100 text-amber-800 border-amber-200", dot: "bg-amber-500" },
+  docs:    { tag: "bg-amber-50 text-amber-600 border-amber-100",  dot: "bg-amber-400" },
+  stale:   { tag: "bg-sky-50 text-sky-700 border-sky-200",        dot: "bg-sky-400" },
+  low:     { tag: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" },
 };
 
-const STATUS_OPTIONS = ["חדש", "נשלח ליועץ", "בטיפול", "אושר עקרונית", "נסגר", "לא רלוונטי"];
+// ─── Utilities ────────────────────────────────────────────────────────────────
+const DAY_MS = 864e5;
 
-function QualityBadge({ quality }) {
-  const cfg = QUALITY_CONFIG[quality] || QUALITY_CONFIG["בינוני"];
+function getToday() { return new Date(new Date().toDateString()); }
+
+function diffDays(d) {
+  if (!d) return null;
+  const t = new Date(new Date(d).toDateString());
+  return Math.max(0, Math.floor((getToday().getTime() - t.getTime()) / DAY_MS));
+}
+
+function isOverdue(d) {
+  return Boolean(d) && new Date(d) < getToday();
+}
+
+function isToday(d) {
+  return Boolean(d) && new Date(d).toDateString() === new Date().toDateString();
+}
+
+function formatShort(d) {
+  if (!d) return "";
+  return new Date(d).toLocaleDateString("he-IL", { day: "numeric", month: "short" });
+}
+
+function formatRelative(d) {
+  if (!d) return "";
+  const days = diffDays(d);
+  if (days === 0) return "היום";
+  if (days === 1) return "אתמול";
+  if (days !== null && days < 7) return `לפני ${days} ימים`;
+  return formatShort(d);
+}
+
+function getStage(l) { return normalizePipelineStage(l.pipelineStage || l.leadStatus); }
+function isActive(l) { return !isClosedPipelineStage(l.pipelineStage || l.leadStatus); }
+
+// ─── Derives a list of leads that need immediate attention ────────────────────
+// All signals come from existing lead data fields — no invented data.
+function buildAttentionItems(active) {
+  const today = getToday(); // computed once for the whole loop
+  const items = [];
+  const seen = new Set();
+
+  for (const lead of active) {
+    if (seen.has(lead.id)) continue;
+    const stage = getStage(lead);
+
+    if ((lead.nextActionAt && isOverdue(lead.nextActionAt, today)) ||
+        (lead.followUpDate  && isOverdue(lead.followUpDate,  today))) {
+      items.push({ lead, priority: 10, reason: "פעולה באיחור", detail: formatShort(lead.nextActionAt || lead.followUpDate), tag: "danger" });
+      seen.add(lead.id); continue;
+    }
+
+    const daysSinceContact = diffDays(lead.lastContactedAt || lead.createdAt, today);
+    if (stage === "new_lead" && daysSinceContact !== null && daysSinceContact >= 2) {
+      items.push({ lead, priority: 9, reason: "ליד חדש ללא קשר", detail: `${daysSinceContact} ימים`, tag: "warning" });
+      seen.add(lead.id); continue;
+    }
+
+    const missingDocs = Number(lead.missingDocumentsCount || 0);
+    if (missingDocs > 0 && ["documents_requested", "waiting_documents"].includes(stage)) {
+      items.push({ lead, priority: 8, reason: "מסמכים חסרים", detail: `${missingDocs} חסרים`, tag: "docs" });
+      seen.add(lead.id); continue;
+    }
+
+    const daysSinceActivity = diffDays(lead.lastActivityAt || lead.createdAt, today);
+    if (daysSinceActivity !== null && daysSinceActivity >= 7 && stage !== "funds_released") {
+      items.push({ lead, priority: 7, reason: "ללא פעילות", detail: `${daysSinceActivity} ימים`, tag: "stale" });
+      seen.add(lead.id); continue;
+    }
+
+    const progress = Number(lead.overallProgressPercent || 0);
+    if (progress < 20 && !["new_lead", "contacted"].includes(stage)) {
+      items.push({ lead, priority: 6, reason: "התקדמות נמוכה", detail: `${progress}%`, tag: "low" });
+      seen.add(lead.id);
+    }
+  }
+
+  return items.sort((a, b) => b.priority - a.priority).slice(0, 8);
+}
+
+const STAGE_TASK_LABEL = {
+  waiting_documents:   "בקשת מסמכים",
+  documents_requested: "בקשת מסמכים",
+  new_lead:            "חזרה ראשונה לליד",
+};
+
+// ─── Derives today's task list from existing lead data ────────────────────────
+// Shows leads with scheduled actions today/overdue, and new uncontacted leads.
+function buildTodayTasks(active) {
+  const today = getToday();
+  const tasks = [];
+  const usedIds = new Set();
+
+  for (const lead of active) {
+    const hasTodayAction = isToday(lead.nextActionAt) || isToday(lead.followUpDate);
+    const overdueAction  = (lead.nextActionAt && isOverdue(lead.nextActionAt, today)) ||
+                           (lead.followUpDate  && isOverdue(lead.followUpDate,  today));
+
+    if (hasTodayAction || overdueAction) {
+      const stage = getStage(lead);
+      const task = lead.nextAction || STAGE_TASK_LABEL[stage] || "מעקב";
+      tasks.push({ lead, task, overdue: overdueAction && !hasTodayAction });
+      usedIds.add(lead.id);
+    }
+  }
+
+  // Supplement with new uncontacted leads when fewer than 3 explicit tasks
+  if (tasks.length < 3) {
+    active
+      .filter((l) => {
+        if (usedIds.has(l.id)) return false;
+        const days = diffDays(l.lastContactedAt || l.createdAt, today);
+        return getStage(l) === "new_lead" && days !== null && days >= 1;
+      })
+      .slice(0, 3 - tasks.length)
+      .forEach((lead) => tasks.push({ lead, task: "חזרה ראשונה לליד", overdue: false }));
+  }
+
+  return tasks.slice(0, 8);
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function AttentionItem({ item }) {
+  const meta = TAG_META[item.tag];
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full border ${cfg.cls}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.icon} {quality || "בינוני"}
-    </span>
+    <Link
+      href={`/advisor/lead/${item.lead.id}`}
+      className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50/80 transition-colors rounded-xl border border-slate-100"
+    >
+      <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${meta.dot}`} />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-black text-slate-900 truncate">{item.lead.name || "—"}</p>
+        <p className="text-xs font-bold text-slate-400 truncate">{getPipelineStageLabel(getStage(item.lead))}</p>
+      </div>
+      <div className="shrink-0 text-left">
+        <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${meta.tag}`}>
+          {item.reason}
+        </span>
+        {item.detail && (
+          <p className="text-[11px] text-slate-400 mt-0.5 text-left">{item.detail}</p>
+        )}
+      </div>
+    </Link>
   );
 }
 
-function ScoreBar({ score }) {
-  const pct = Math.min(100, Math.max(0, Number(score) || 0));
-  const color = pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-slate-300";
+function TodayTaskItem({ item }) {
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+    <Link
+      href={`/advisor/lead/${item.lead.id}`}
+      className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors rounded-xl border ${
+        item.overdue ? "border-rose-200 bg-rose-50/30" : "border-slate-100 bg-white"
+      }`}
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-black text-slate-900 truncate">{item.lead.name || "—"}</p>
+        <p className="text-xs font-bold text-violet-600 truncate">{item.task}</p>
       </div>
-      <span className="text-xs font-black text-mort-muted w-8 text-left">{pct}%</span>
+      <div className="shrink-0 text-left flex flex-col items-end gap-0.5">
+        <span className="text-[11px] font-bold text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
+          {getPipelineStageLabel(getStage(item.lead))}
+        </span>
+        <span className={`text-[11px] font-bold ${item.overdue ? "text-rose-600" : "text-slate-400"}`}>
+          {item.overdue ? "⚠ באיחור" : "פתח תיק →"}
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function PipelineGroupRow({ group, count, max }) {
+  return (
+    <Link
+      href={`/advisor/my-leads?stage=${encodeURIComponent(group.linkStage)}`}
+      className="flex items-center gap-3 group"
+    >
+      <span className="text-xs font-bold text-slate-500 w-28 shrink-0 truncate text-right">{group.label}</span>
+      <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${group.color} opacity-80 group-hover:opacity-100`}
+          style={{ width: count > 0 ? `${Math.max(8, (count / max) * 100)}%` : "0%" }}
+        />
+      </div>
+      <span className="text-xs font-black tabular-nums text-slate-700 w-5 text-left shrink-0">{count}</span>
+    </Link>
+  );
+}
+
+function RecentUpdateRow({ lead }) {
+  const date = lead.lastActivityAt || lead.stageUpdatedAt || lead.lastContactedAt || lead.createdAt;
+  return (
+    <Link
+      href={`/advisor/lead/${lead.id}`}
+      className="flex items-center gap-3 py-2.5 px-2 hover:bg-slate-50 transition-colors rounded-lg"
+    >
+      <span className="h-2 w-2 rounded-full shrink-0 bg-violet-400" />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-black text-slate-800 truncate">{lead.name || "—"}</p>
+        <p className="text-xs font-bold text-slate-400 truncate">{getPipelineStageLabel(getStage(lead))}</p>
+      </div>
+      <span className="text-[11px] font-bold text-slate-400 shrink-0">{formatRelative(date)}</span>
+    </Link>
+  );
+}
+
+function SectionSkeleton({ rows = 3 }) {
+  return (
+    <div className="p-4 space-y-2">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />
+      ))}
     </div>
   );
 }
 
-function LeadCard({ lead, onUpdate }) {
-  const [notes, setNotes] = useState(lead.internalNotes || "");
-  const [saving, setSaving] = useState(false);
-
-  async function saveNotes() {
-    setSaving(true);
-    await onUpdate(lead.id, { internalNotes: notes, lastContactedAt: new Date().toISOString() });
-    setSaving(false);
-  }
-
-  const score = Math.round(Number(lead.approvalScore) || 0);
-  const quality = lead.leadQuality || (score >= 70 ? "חם" : score >= 40 ? "בינוני" : "חלש");
-  const created = new Date(lead.createdAt).toLocaleDateString("he-IL", { day: "numeric", month: "short", year: "numeric" });
-
+function EmptySection({ icon, title, sub }) {
   return (
-    <article className="bg-white border border-slate-200 rounded-2xl p-5 shadow-soft hover:border-violet-200 transition-colors">
-
-      {/* Header row */}
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <QualityBadge quality={quality} />
-            {lead.city && (
-              <span className="text-xs text-mort-muted font-bold">📍 {lead.city}</span>
-            )}
-          </div>
-          <h2 className="text-lg font-black text-mort-ink">{lead.name}</h2>
-          <a href={`tel:${lead.phone}`} className="text-sm font-bold text-violet-600 hover:underline">{lead.phone}</a>
-        </div>
-        <div className="text-left shrink-0">
-          <p className="text-xl font-black text-mort-ink font-number">{formatILS(lead.mortgageAmount || 0)}</p>
-          <p className="text-xs text-mort-muted mt-0.5">{created}</p>
-        </div>
-      </div>
-
-      {/* Score bar */}
-      <div className="mb-4">
-        <div className="flex justify-between text-xs font-bold text-mort-muted mb-1">
-          <span>סיכוי אישור</span>
-          <span>{score}%</span>
-        </div>
-        <ScoreBar score={score} />
-      </div>
-
-      {/* Meta pills */}
-      <div className="flex flex-wrap gap-2 mb-4 text-xs">
-        {lead.monthlyIncome && (
-          <span className="bg-surface-low border border-surface-high px-3 py-1 rounded-full font-bold text-mort-text">
-            הכנסה: {formatILS(lead.monthlyIncome)}
-          </span>
-        )}
-        {lead.purchaseStatus && (
-          <span className="bg-surface-low border border-surface-high px-3 py-1 rounded-full font-bold text-mort-text">
-            {lead.purchaseStatus}
-          </span>
-        )}
-        {lead.employmentStatus && (
-          <span className="bg-surface-low border border-surface-high px-3 py-1 rounded-full font-bold text-mort-text">
-            {lead.employmentStatus}
-          </span>
-        )}
-      </div>
-
-      {/* Status + follow-up */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div>
-          <label className="block text-xs font-black text-mort-muted mb-1">סטטוס</label>
-          <select
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
-            value={lead.leadStatus || lead.status || "חדש"}
-            onChange={(e) => onUpdate(lead.id, { leadStatus: e.target.value, lastContactedAt: new Date().toISOString() })}
-          >
-            {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-black text-mort-muted mb-1">מעקב</label>
-          <input
-            type="date"
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
-            defaultValue={lead.followUpDate?.slice(0, 10) || ""}
-            onBlur={(e) => onUpdate(lead.id, { followUpDate: e.target.value })}
-          />
-        </div>
-      </div>
-
-      {/* Notes */}
-      <div>
-        <label className="block text-xs font-black text-mort-muted mb-1">הערות פנימיות</label>
-        <textarea
-          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white resize-none"
-          rows={2}
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          onBlur={saveNotes}
-          placeholder="הוסיפו הערות, תיאום שיחה, עדכון סטטוס..."
-        />
-        {saving && <p className="text-xs text-mort-muted mt-1">שומר...</p>}
-      </div>
-    </article>
+    <div className="px-5 py-8 text-center">
+      <p className="text-2xl mb-2">{icon}</p>
+      <p className="text-sm font-black text-slate-700">{title}</p>
+      {sub && <p className="text-xs font-bold text-slate-400 mt-1">{sub}</p>}
+    </div>
   );
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AdvisorDashboard() {
   const [leads, setLeads] = useState([]);
-  const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("הכל");
+  const [advisorName, setAdvisorName] = useState("");
 
-  async function load() {
-    setLoading(true);
-    const r = await fetch("/api/advisor/leads");
-    if (!r.ok) { window.location.href = "/advisor/login"; return; }
-    const j = await r.json();
-    setLeads(j.leads || []);
-    setLoading(false);
+  // Read display name from localStorage — safe, runs only after hydration
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("finzo_advisor_profile_v1");
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p.name) setAdvisorName(p.name);
+      }
+    } catch {}
+  }, []);
+
+  // Fetch all advisor leads from /api/advisor/my-leads
+  // This endpoint only returns leads that were purchased/assigned from FINZO.
+  useEffect(() => {
+    fetch("/api/advisor/my-leads")
+      .then((r) => {
+        if (r.status === 401) { window.location.href = "/advisor/login"; return null; }
+        return r.ok ? r.json() : { leads: [] };
+      })
+      .then((j) => { if (j) { setLeads(j.leads || []); setLoading(false); } })
+      .catch(() => setLoading(false));
+  }, []);
+
+  // ── Derived data — all useMemos, no calculations in render ──────────────────
+  const active    = useMemo(() => leads.filter(isActive), [leads]);
+  const newLeads  = useMemo(() => active.filter((l) => ["new_lead", "contacted"].includes(getStage(l))), [active]);
+  const inProgress = useMemo(() => active.filter((l) => !["new_lead", "contacted"].includes(getStage(l))), [active]);
+  const waitingDocs = useMemo(() =>
+    active.filter((l) => ["documents_requested", "waiting_documents"].includes(getStage(l))),
+  [active]);
+  const completed = useMemo(() => leads.filter((l) => getStage(l) === "closed_won"), [leads]);
+
+  const pipelineGroups = useMemo(() => {
+    const counts = Object.fromEntries(PIPELINE_GROUPS.map((g) => [g.key, 0]));
+    for (const l of leads) {
+      const key = STAGE_TO_GROUP.get(getStage(l));
+      if (key) counts[key]++;
+    }
+    return PIPELINE_GROUPS.map((g) => ({ ...g, count: counts[g.key] }));
+  }, [leads]);
+
+  const pipelineMax = useMemo(
+    () => Math.max(...pipelineGroups.map((g) => g.count), 1),
+    [pipelineGroups]
+  );
+
+  const attentionItems = useMemo(() => buildAttentionItems(active), [active]);
+  const todayTasks     = useMemo(() => buildTodayTasks(active),     [active]);
+
+  const recentUpdates  = useMemo(() =>
+    [...leads]
+      .filter((l) => l.lastActivityAt || l.stageUpdatedAt || l.lastContactedAt)
+      .sort((a, b) => {
+        const da = a.lastActivityAt || a.stageUpdatedAt || a.lastContactedAt || a.createdAt || "";
+        const db = b.lastActivityAt || b.stageUpdatedAt || b.lastContactedAt || b.createdAt || "";
+        return new Date(db) - new Date(da);
+      })
+      .slice(0, 6),
+  [leads]);
+
+  // ── Empty state — advisor has no leads yet ───────────────────────────────────
+  if (!loading && leads.length === 0) {
+    return (
+      <>
+        <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
+        <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
+          <AdvisorHeader active="/advisor" />
+          <div className="max-w-6xl mx-auto px-4 py-16 flex flex-col items-center text-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-violet-100 flex items-center justify-center text-3xl">📋</div>
+            <h2 className="text-xl font-black text-slate-950">עדיין אין לך לידים פעילים</h2>
+            <p className="text-sm font-bold text-slate-500 max-w-sm leading-relaxed">
+              כאן יוצגו הלידים שנרכשו מ-FINZO ושויכו אליך. עבור לשוק הלידים כדי לרכוש את הליד הראשון שלך.
+            </p>
+            <Link
+              href="/advisor/leads"
+              className="mt-2 inline-block rounded-2xl bg-violet-700 text-white font-black py-3 px-8 text-sm hover:bg-violet-800 transition-colors"
+            >
+              עבור לשוק הלידים ←
+            </Link>
+            <p className="text-xs font-bold text-slate-400">
+              לא ניתן ליצור לידים ידנית. כל הלידים מגיעים דרך FINZO.
+            </p>
+          </div>
+
+          {/* Mobile bottom nav */}
+          <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
+            <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">ראשי</Link>
+            <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">הלידים שלי</Link>
+            <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
+          </div>
+        </main>
+      </>
+    );
   }
 
-  useEffect(() => { load(); }, []);
-
-  async function update(id, changes) {
-    const r = await fetch("/api/advisor/leads", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, changes }),
-    });
-    if (!r.ok) { setMsg("שמירה נכשלה"); return; }
-    const j = await r.json();
-    setLeads((arr) => arr.map((l) => (l.id === id ? j.lead : l)));
-    setMsg("");
-  }
-
-  const hot   = leads.filter((l) => (l.leadQuality === "חם")     || (!l.leadQuality && Number(l.approvalScore) >= 70));
-  const warm  = leads.filter((l) => (l.leadQuality === "בינוני") || (!l.leadQuality && Number(l.approvalScore) >= 40 && Number(l.approvalScore) < 70));
-  const cold  = leads.filter((l) => (l.leadQuality === "חלש")    || (!l.leadQuality && Number(l.approvalScore) < 40));
-
-  const filtered = filter === "חם" ? hot : filter === "בינוני" ? warm : filter === "חלש" ? cold : leads;
-
+  // ── Full dashboard ────────────────────────────────────────────────────────────
   return (
     <>
-      <Head><title>פורטל לידים | MortgAI</title></Head>
+      <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
+      <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
+        <AdvisorHeader active="/advisor" />
 
-      <main dir="rtl" className="min-h-screen bg-surface-DEFAULT">
+        <div className="max-w-6xl mx-auto px-4 lg:px-6 py-5 space-y-5">
 
-        {/* ── Top bar ── */}
-        <header className="bg-mort-ink text-white px-4 py-4 sticky top-0 z-40">
-          <div className="max-w-5xl mx-auto flex items-center justify-between">
-            <div>
-              <span className="text-lg font-black">MortgAI</span>
-              <span className="text-xs text-violet-400 font-bold mr-2">פורטל לידים</span>
+          {/* ── Welcome / context banner ──────────────────────────────────── */}
+          <div className="flex items-start justify-between gap-3 rounded-2xl bg-gradient-to-l from-violet-50 to-white border border-violet-100 px-5 py-4">
+            <div className="min-w-0">
+              <h1 className="text-base font-black text-slate-950 mb-0.5">
+                {advisorName ? `שלום, ${advisorName} 👋` : "ברוך הבא למרכז העבודה"}
+              </h1>
+              <p className="text-xs font-bold text-slate-500 leading-relaxed">
+                ברוך הבא למרכז העבודה של FINZO. כאן מוצגים רק לידים שנכנסו דרך FINZO ושויכו אליך לאחר רכישה/הקצאה.
+              </p>
             </div>
-            <button
-              onClick={() => { document.cookie = "advisor_token=; max-age=0; path=/"; window.location.href = "/advisor/login"; }}
-              className="text-xs text-slate-400 hover:text-white font-bold transition-colors"
-            >
-              יציאה
-            </button>
-          </div>
-        </header>
-
-        <div className="max-w-5xl mx-auto px-4 py-8">
-
-          {/* Stats row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {[
-              { label: "סה״כ לידים", value: leads.length, color: "text-mort-ink" },
-              { label: "🔥 חמים", value: hot.length, color: "text-emerald-600" },
-              { label: "☀️ בינוניים", value: warm.length, color: "text-amber-600" },
-              { label: "❄️ חלשים", value: cold.length, color: "text-slate-400" },
-            ].map((s) => (
-              <div key={s.label} className="bg-white border border-slate-200 rounded-2xl p-4 text-center shadow-soft">
-                <p className={`text-2xl font-black font-number ${s.color}`}>{s.value}</p>
-                <p className="text-xs font-bold text-mort-muted mt-1">{s.label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Filter pills */}
-          <div className="flex gap-2 flex-wrap mb-6">
-            {["הכל", "חם", "בינוני", "חלש"].map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`text-sm font-bold px-4 py-2 rounded-full border transition-colors ${
-                  filter === f
-                    ? "bg-violet-600 text-white border-violet-600"
-                    : "bg-white text-mort-muted border-slate-200 hover:border-violet-300"
-                }`}
-              >
-                {f === "הכל" ? `הכל (${leads.length})` : f === "חם" ? `🔥 חמים (${hot.length})` : f === "בינוני" ? `☀️ בינוניים (${warm.length})` : `❄️ חלשים (${cold.length})`}
-              </button>
-            ))}
-          </div>
-
-          {msg && (
-            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold">{msg}</div>
-          )}
-
-          {/* Leads */}
-          {loading && (
-            <div className="text-center py-16 text-mort-muted font-bold">טוען לידים...</div>
-          )}
-          {!loading && filtered.length === 0 && (
-            <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl">
-              <p className="text-mort-muted font-bold">אין לידים בקטגוריה זו כרגע</p>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link href="/advisor/settings"
+                className="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-1.5 bg-white border border-slate-200 rounded-lg transition-colors hidden sm:block">
+                ⚙ הגדרות
+              </Link>
+              <Link href="/advisor/profile"
+                className="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-1.5 bg-white border border-slate-200 rounded-lg transition-colors hidden sm:block">
+                פרופיל
+              </Link>
             </div>
-          )}
-          <div className="grid gap-4">
-            {filtered.map((lead) => (
-              <LeadCard key={lead.id} lead={lead} onUpdate={update} />
-            ))}
           </div>
 
+          {/* ── Summary KPIs — only real counts from lead data ────────────── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {loading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2 animate-pulse">
+                    <div className="h-3 w-20 bg-slate-200 rounded" />
+                    <div className="h-8 w-10 bg-slate-200 rounded" />
+                  </div>
+                ))
+              : [
+                  { label: "לידים חדשים",     value: newLeads.length,   color: "text-violet-700" },
+                  { label: "לידים בטיפול",     value: inProgress.length, color: "text-sky-700" },
+                  { label: "ממתינים למסמכים", value: waitingDocs.length, color: "text-amber-700" },
+                  { label: "תיקים שהושלמו",   value: completed.length,  color: "text-emerald-700" },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="bg-white border border-slate-100 rounded-2xl p-4">
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+                    <p className={`text-3xl font-black tabular-nums leading-none ${color}`}>{value}</p>
+                  </div>
+                ))
+            }
+          </div>
+
+          {/* ── Main 2-column grid ────────────────────────────────────────── */}
+          <div className="grid lg:grid-cols-[1fr_340px] gap-4 items-start">
+
+            {/* ─ Left column ─────────────────────────────────────────────── */}
+            <div className="space-y-4">
+
+              {/* דורש טיפול */}
+              <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-black text-slate-950">דורש טיפול</h2>
+                    <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                      לידים עם פעולות באיחור, מסמכים חסרים או ללא מעקב
+                    </p>
+                  </div>
+                  <Link href="/advisor/my-leads" className="text-xs font-black text-violet-600 hover:underline shrink-0">
+                    כל הלידים →
+                  </Link>
+                </div>
+                {loading
+                  ? <SectionSkeleton rows={3} />
+                  : attentionItems.length > 0
+                    ? (
+                        <div className="p-3 space-y-2">
+                          {attentionItems.map((item) => (
+                            <AttentionItem key={item.lead.id} item={item} />
+                          ))}
+                        </div>
+                      )
+                    : (
+                        <EmptySection
+                          icon="✅"
+                          title="אין כרגע תיקים שדורשים טיפול מיוחד"
+                          sub="כל התיקים תקינים ומעודכנים — כל הכבוד!"
+                        />
+                      )
+                }
+              </section>
+
+              {/* המשימות שלי להיום */}
+              <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-black text-slate-950">המשימות שלי להיום</h2>
+                    <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                      פעולות מוגדרות להיום ולידים חדשים הממתינים לקשר ראשון
+                    </p>
+                  </div>
+                  {!loading && (
+                    <span className="text-[11px] font-black text-slate-400 bg-slate-100 rounded-full px-2 py-0.5 tabular-nums shrink-0">
+                      {todayTasks.length}
+                    </span>
+                  )}
+                </div>
+                {loading
+                  ? <SectionSkeleton rows={3} />
+                  : todayTasks.length > 0
+                    ? (
+                        <div className="p-3 space-y-2">
+                          {todayTasks.map((task) => (
+                            <TodayTaskItem key={task.lead.id} item={task} />
+                          ))}
+                        </div>
+                      )
+                    : (
+                        <EmptySection
+                          icon="🗓"
+                          title="אין משימות מוגדרות להיום"
+                          sub='הגדר "פעולה הבאה" בכל תיק כדי לראות כאן'
+                        />
+                      )
+                }
+              </section>
+
+              {/* עדכוני תיקים אחרונים */}
+              <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-50">
+                  <h2 className="text-sm font-black text-slate-950">עדכוני תיקים אחרונים</h2>
+                  <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                    לידים שעודכנו לאחרונה — לפי תאריך פעילות
+                  </p>
+                </div>
+                {loading
+                  ? (
+                      <div className="p-4 space-y-2">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <div key={i} className="h-10 bg-slate-100 rounded-lg animate-pulse" />
+                        ))}
+                      </div>
+                    )
+                  : recentUpdates.length > 0
+                    ? (
+                        <div className="px-3 py-2 divide-y divide-slate-50">
+                          {recentUpdates.map((l) => (
+                            <RecentUpdateRow key={l.id} lead={l} />
+                          ))}
+                        </div>
+                      )
+                    : (
+                        <EmptySection
+                          icon="📅"
+                          title="פעילות אחרונה תופיע כאן לאחר עדכונים בתיקים"
+                        />
+                      )
+                }
+              </section>
+            </div>
+
+            {/* ─ Right column ────────────────────────────────────────────── */}
+            <div className="space-y-4">
+
+              {/* מהלך הטיפול — Pipeline grouped overview */}
+              <section className="bg-white rounded-2xl border border-slate-100 p-5">
+                <div className="mb-4">
+                  <h2 className="text-sm font-black text-slate-950">מהלך הטיפול — Pipeline</h2>
+                  <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                    לחץ על שלב כדי לסנן את הרשימה
+                  </p>
+                </div>
+                {loading
+                  ? (
+                      <div className="space-y-2.5">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <div key={i} className="h-4 bg-slate-100 rounded animate-pulse" />
+                        ))}
+                      </div>
+                    )
+                  : (
+                      <div className="space-y-2.5">
+                        {pipelineGroups.map((g) => (
+                          <PipelineGroupRow key={g.key} group={g} count={g.count} max={pipelineMax} />
+                        ))}
+                      </div>
+                    )
+                }
+              </section>
+
+              {/* סטטוס מהיר */}
+              {!loading && (
+                <section className="bg-white rounded-2xl border border-slate-100 p-5">
+                  <h2 className="text-sm font-black text-slate-950 mb-3">סטטוס מהיר</h2>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      ["סה״כ לידים",  leads.length],
+                      ["פעיל",         active.length],
+                      ["הושלמו",       completed.length],
+                      ["ממתין מסמכים", waitingDocs.length],
+                    ].map(([label, value]) => (
+                      <div key={label} className="bg-slate-50 rounded-xl px-3 py-3">
+                        <p className="text-[11px] font-black text-slate-400 mb-0.5">{label}</p>
+                        <p className="text-2xl font-black text-slate-900 tabular-nums">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* פעולות מהירות */}
+              <section className="bg-white rounded-2xl border border-slate-100 p-5">
+                <h2 className="text-sm font-black text-slate-950 mb-3">פעולות מהירות</h2>
+                <div className="space-y-2">
+                  <Link href="/advisor/leads"
+                    className="flex items-center gap-3 rounded-xl bg-violet-700 text-white px-4 py-3 text-sm font-black hover:bg-violet-800 transition-colors">
+                    <span className="shrink-0">🏪</span>
+                    <span>שוק הלידים של FINZO</span>
+                  </Link>
+                  <Link href="/advisor/my-leads"
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 text-sm font-black hover:bg-slate-100 transition-colors">
+                    <span className="shrink-0">📋</span>
+                    <span>כל הלידים שלי</span>
+                  </Link>
+                  <Link href="/"
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 text-sm font-black hover:bg-slate-100 transition-colors">
+                    <span className="shrink-0">🧮</span>
+                    <span>מחשבון זכאות</span>
+                  </Link>
+                  <Link href="/refinance-check"
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 text-sm font-black hover:bg-slate-100 transition-colors">
+                    <span className="shrink-0">🔄</span>
+                    <span>מחשבון מחזור</span>
+                  </Link>
+                </div>
+                <p className="text-[10px] font-bold text-slate-300 mt-3 text-center">
+                  * לא ניתן ליצור לידים ידנית — כל הלידים מגיעים דרך FINZO
+                </p>
+              </section>
+
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile bottom nav */}
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
+          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">ראשי</Link>
+          <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">הלידים שלי</Link>
+          <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
         </div>
       </main>
     </>

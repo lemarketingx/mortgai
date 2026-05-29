@@ -1,6 +1,8 @@
 import { LeadStoreError, readLeads, updateLead } from "../../../lib/leadsStore";
+import { createActivity } from "../../../lib/activitiesStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
+import { getPipelineStageLabel, normalizePipelineStage } from "../../../lib/pipeline";
 
 function apiError(res, status, code, message, details = "") {
   return res.status(status).json({ error: code, message, details });
@@ -45,13 +47,28 @@ export default async function handler(req, res) {
         return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
       }
 
+      const now = new Date().toISOString();
+      const newStage = changes.leadStatus ? normalizePipelineStage(changes.leadStatus) : undefined;
+      const prevStage = normalizePipelineStage(lead.leadStatus || lead.status);
       const allowed = {
-        leadStatus: changes.leadStatus,
-        status: changes.leadStatus,
+        leadStatus: newStage,
+        status: newStage,
         internalNotes: changes.internalNotes,
         followUpDate: changes.followUpDate,
+        followUpStage: changes.followUpStage,
         lastContactedAt: changes.lastContactedAt,
+        lastActivityAt: now,
       };
+      if (newStage && newStage !== prevStage) {
+        if (!lead.firstContactAt && prevStage === "new_lead") allowed.firstContactAt = now;
+        createActivity({
+          leadId: id,
+          advisorId: session.advisorId,
+          activityType: "status_changed",
+          title: `סטטוס שונה ל"${getPipelineStageLabel(newStage)}"`,
+          metadata: { from: prevStage, to: newStage },
+        }).catch(() => {});
+      }
       const patch = Object.fromEntries(Object.entries(allowed).filter(([, v]) => v !== undefined));
 
       try {
