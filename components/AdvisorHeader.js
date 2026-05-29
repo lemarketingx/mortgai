@@ -88,9 +88,9 @@ export default function AdvisorHeader({ active }) {
           </div>
         </div>
 
-        {/* Mobile bottom nav strip */}
+        {/* Mobile bottom nav strip — show primary 4 links only (bankers accessible via desktop) */}
         <nav className="flex md:hidden border-t border-white/[0.06]">
-          {links.map(({ href, label }) => (
+          {links.filter((l) => l.href !== "/advisor/bankers").map(({ href, label }) => (
             <Link
               key={href}
               href={href}

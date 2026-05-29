@@ -69,6 +69,24 @@ const DETAIL_TABS = [
   { key: "collateral",label: "בטחונות" },
 ];
 
+// Bank tab: status display maps (module-level — never recreated)
+const CASE_BANK_STATUS_LABEL = {
+  selected:             "נבחר",
+  ready_to_send:        "מוכן לשליחה",
+  sent:                 "נשלח",
+  waiting_for_response: "ממתין לתשובה",
+  approved:             "אושר",
+  rejected:             "נדחה",
+};
+const CASE_BANK_STATUS_STYLE = {
+  selected:             "bg-slate-100 text-slate-600",
+  ready_to_send:        "bg-amber-50 text-amber-700",
+  sent:                 "bg-sky-50 text-sky-700",
+  waiting_for_response: "bg-violet-50 text-violet-700",
+  approved:             "bg-emerald-50 text-emerald-700",
+  rejected:             "bg-rose-50 text-rose-700",
+};
+
 const DEFAULT_WA_TEMPLATES = [
   {
     key: "missing_docs",
@@ -737,6 +755,97 @@ export default function LeadDetailPage() {
   const fundsReleased = lead?.fundsReleaseStatus === "fully_released";
   const fundsPct = fundsReleased ? 100 : lead?.fundsReleaseStatus === "partially_released" ? 50 : 0;
 
+  // Bank-tab derived values
+  const bankTabDerived = useMemo(() => {
+    const isReady = missingDocs === 0;
+    const readyReceivedDocs = computedDocumentSummary.checklist.filter(
+      (d) => d.status === "approved" || d.status === "received"
+    ).length;
+    const assignedBankerIds = new Set(caseBankers.map((cb) => cb.banker_id));
+    const availableBankers  = advisorBankers.filter((b) => !assignedBankerIds.has(b.id));
+    return { isReady, readyReceivedDocs, availableBankers };
+  }, [missingDocs, computedDocumentSummary, caseBankers, advisorBankers]);
+
+  // ── Bank-tab helpers ──────────────────────────────────────────────────────
+  // Defined after computedDocumentSummary so there is no temporal-dead-zone issue.
+
+  const buildCaseSummaryText = useCallback((bankerNameSnap) => {
+    const received = computedDocumentSummary.checklist
+      .filter((d) => d.status === "approved" || d.status === "received")
+      .map((d) => `✓ ${d.label || getDocumentLabel(d.document_type)}`);
+    const missing = computedDocumentSummary.missingDocuments
+      .map((d) => `✗ ${d.label || getDocumentLabel(d.document_type)}`);
+    return [
+      `שלום ${bankerNameSnap || ""},`,
+      ``,
+      `מצורף סיכום תיק המשכנתא של ${lead?.name || "הלקוח"}.`,
+      ``,
+      `סוג תיק: ${caseType || "—"}`,
+      `שלב נוכחי: ${getPipelineStageLabel(getStage(lead))}`,
+      lead?.mortgageAmount ? `גובה המשכנתא: ${formatILS(lead.mortgageAmount)}` : null,
+      ``,
+      received.length > 0 ? `מסמכים שהתקבלו/אושרו:\n${received.join("\n")}` : null,
+      missing.length > 0  ? `\nמסמכים שעדיין חסרים:\n${missing.join("\n")}` : null,
+      ``,
+      `תודה,`,
+      lead?.assignedAdvisor || "",
+    ].filter((l) => l !== null).join("\n");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [computedDocumentSummary, lead, caseType]);
+
+  const copyBankSummary = useCallback((bankerNameSnap) => {
+    navigator.clipboard.writeText(buildCaseSummaryText(bankerNameSnap)).then(() => {
+      setMsg({ text: "סיכום תיק הועתק ✓", ok: true });
+      setTimeout(() => setMsg({ text: "", ok: true }), 2500);
+    }).catch(() => {});
+  }, [buildCaseSummaryText]);
+
+  const addBankerToCase = useCallback(async () => {
+    if (!selectedBankerId) return;
+    setAddingBanker(true);
+    try {
+      const r = await fetch("/api/advisor/case-bankers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: id, bankerId: selectedBankerId }),
+      });
+      if (r.ok) {
+        const j = await r.json();
+        if (!j.alreadyExists) setCaseBankers((prev) => [...prev, j.caseBanker]);
+        setSelectedBankerId("");
+        pushActivity(`בנקאי נוסף לתיק`, "note_added");
+      } else {
+        setMsg({ text: "הוספה נכשלה", ok: false });
+        setTimeout(() => setMsg({ text: "", ok: true }), 3000);
+      }
+    } finally {
+      setAddingBanker(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBankerId, id]);
+
+  const removeBankerFromCase = useCallback(async (caseBankerId) => {
+    const r = await fetch("/api/advisor/case-bankers", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: caseBankerId, leadId: id }),
+    });
+    if (r.ok) setCaseBankers((prev) => prev.filter((cb) => cb.id !== caseBankerId));
+  }, [id]);
+
+  const markSent = useCallback(async (cb) => {
+    const now = new Date().toISOString();
+    const r = await fetch("/api/advisor/case-bankers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: cb.id, leadId: id, status: "sent", sent_at: now }),
+    });
+    if (r.ok) {
+      const j = await r.json();
+      setCaseBankers((prev) => prev.map((x) => x.id === cb.id ? j.caseBanker : x));
+    }
+  }, [id]);
+
   // Reminder status label for the advisor UI (computed from live state)
   const reminderStatusLabel = useMemo(() => {
     if (!reminder) return null;
@@ -1177,294 +1286,187 @@ export default function LeadDetailPage() {
                 )}
 
                 {/* בנק */}
-                {tab === "bank" && (() => {
-                  // ── Helpers ─────────────────────────────────────────────
-                  function buildCaseSummaryText(bankerNameSnap) {
-                    const received = computedDocumentSummary.checklist
-                      .filter((d) => d.status === "approved" || d.status === "received")
-                      .map((d) => `✓ ${d.label || getDocumentLabel(d.document_type)}`);
-                    const missing = computedDocumentSummary.missingDocuments
-                      .map((d) => `✗ ${d.label || getDocumentLabel(d.document_type)}`);
-                    return [
-                      `שלום ${bankerNameSnap || ""},`,
-                      ``,
-                      `מצורף סיכום תיק המשכנתא של ${lead.name || "הלקוח"}.`,
-                      ``,
-                      `סוג תיק: ${caseType || "—"}`,
-                      `שלב נוכחי: ${getPipelineStageLabel(getStage(lead))}`,
-                      lead.mortgageAmount ? `גובה המשכנתא: ${formatILS(lead.mortgageAmount)}` : null,
-                      ``,
-                      received.length > 0 ? `מסמכים שהתקבלו/אושרו:\n${received.join("\n")}` : null,
-                      missing.length > 0  ? `\nמסמכים שעדיין חסרים:\n${missing.join("\n")}` : null,
-                      ``,
-                      `תודה,`,
-                      lead.assignedAdvisor || "",
-                    ].filter((l) => l !== null).join("\n");
-                  }
+                {tab === "bank" && (
+                  <div className="space-y-4">
 
-                  function copyBankSummary(bankerNameSnap) {
-                    navigator.clipboard.writeText(buildCaseSummaryText(bankerNameSnap)).then(() => {
-                      setMsg({ text: "סיכום תיק הועתק ✓", ok: true });
-                      setTimeout(() => setMsg({ text: "", ok: true }), 2500);
-                    }).catch(() => {});
-                  }
+                    {/* ── Readiness indicator ── */}
+                    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${bankTabDerived.isReady ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"}`}>
+                      <span className="text-base shrink-0">{bankTabDerived.isReady ? "✅" : "⚠️"}</span>
+                      <div className="flex-1 min-w-0">
+                        {bankTabDerived.isReady ? (
+                          <p className="text-xs font-black text-emerald-700">מוכן לשליחה לבנק — כל {bankTabDerived.readyReceivedDocs} מסמכים התקבלו</p>
+                        ) : (
+                          <p className="text-xs font-black text-amber-700">חסרים {missingDocs} מסמכים לפני שליחה לבנק ({bankTabDerived.readyReceivedDocs} מתוך {computedDocumentSummary.totalCount} התקבלו)</p>
+                        )}
+                      </div>
+                      {!bankTabDerived.isReady && (
+                        <button type="button" onClick={() => setTab("docs")} className="shrink-0 text-[11px] font-black px-2.5 py-1.5 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors">
+                          📄 מסמכים
+                        </button>
+                      )}
+                    </div>
 
-                  async function addBankerToCase() {
-                    if (!selectedBankerId) return;
-                    setAddingBanker(true);
-                    try {
-                      const r = await fetch("/api/advisor/case-bankers", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ leadId: id, bankerId: selectedBankerId }),
-                      });
-                      if (r.ok) {
-                        const j = await r.json();
-                        if (!j.alreadyExists) {
-                          setCaseBankers((prev) => [...prev, j.caseBanker]);
-                        }
-                        setSelectedBankerId("");
-                        pushActivity(`בנקאי נוסף לתיק`, "note_added");
-                      } else {
-                        setMsg({ text: "הוספה נכשלה", ok: false });
-                        setTimeout(() => setMsg({ text: "", ok: true }), 3000);
-                      }
-                    } finally {
-                      setAddingBanker(false);
-                    }
-                  }
+                    {/* ── Overall bank submission status ── */}
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 mb-1">סטטוס הגשה כללי לבנק</label>
+                      <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                        value={bankSubmissionStatus}
+                        onChange={(e) => {
+                          setBankSubmissionStatus(e.target.value);
+                          patchLead({ bankSubmissionStatus: e.target.value }, `סטטוס הגשה: ${BANK_SUBMISSION_STATUS_MAP[e.target.value] || e.target.value}`, "status_changed");
+                        }}>
+                        {BANK_SUBMISSION_STATUSES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+                      </select>
+                    </div>
 
-                  async function removeBankerFromCase(caseBankerId) {
-                    const r = await fetch("/api/advisor/case-bankers", {
-                      method: "DELETE",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ id: caseBankerId, leadId: id }),
-                    });
-                    if (r.ok) setCaseBankers((prev) => prev.filter((cb) => cb.id !== caseBankerId));
-                  }
-
-                  async function markSent(cb) {
-                    const now = new Date().toISOString();
-                    const r = await fetch("/api/advisor/case-bankers", {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ id: cb.id, leadId: id, status: "sent", sent_at: now }),
-                    });
-                    if (r.ok) {
-                      const j = await r.json();
-                      setCaseBankers((prev) => prev.map((x) => x.id === cb.id ? j.caseBanker : x));
-                    }
-                  }
-
-                  // Readiness
-                  const isReady = missingDocs === 0;
-                  const readyReceivedDocs = computedDocumentSummary.checklist.filter(
-                    (d) => d.status === "approved" || d.status === "received"
-                  ).length;
-
-                  // Bankers not yet in this case
-                  const assignedBankerIds = new Set(caseBankers.map((cb) => cb.banker_id));
-                  const availableBankers  = advisorBankers.filter((b) => !assignedBankerIds.has(b.id));
-
-                  const STATUS_LABEL = {
-                    selected:          "נבחר",
-                    ready_to_send:     "מוכן לשליחה",
-                    sent:              "נשלח",
-                    waiting_for_response: "ממתין לתשובה",
-                    approved:          "אושר",
-                    rejected:          "נדחה",
-                  };
-                  const STATUS_STYLE = {
-                    selected:          "bg-slate-100 text-slate-600",
-                    ready_to_send:     "bg-amber-50 text-amber-700",
-                    sent:              "bg-sky-50 text-sky-700",
-                    waiting_for_response: "bg-violet-50 text-violet-700",
-                    approved:          "bg-emerald-50 text-emerald-700",
-                    rejected:          "bg-rose-50 text-rose-700",
-                  };
-
-                  return (
-                    <div className="space-y-4">
-
-                      {/* ── Readiness indicator ── */}
-                      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${isReady ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"}`}>
-                        <span className="text-base shrink-0">{isReady ? "✅" : "⚠️"}</span>
-                        <div className="flex-1 min-w-0">
-                          {isReady ? (
-                            <p className="text-xs font-black text-emerald-700">מוכן לשליחה לבנק — כל {readyReceivedDocs} מסמכים התקבלו</p>
-                          ) : (
-                            <p className="text-xs font-black text-amber-700">חסרים {missingDocs} מסמכים לפני שליחה לבנק ({readyReceivedDocs} מתוך {computedDocumentSummary.totalCount} התקבלו)</p>
-                          )}
+                    {/* ── Selected bankers ── */}
+                    <div>
+                      <p className="text-xs font-black text-slate-700 mb-2">בנקאים שנבחרו לתיק</p>
+                      {caseBankers.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-5 text-center">
+                          <p className="text-xs font-bold text-slate-400">עדיין לא נבחרו בנקאים לתיק זה</p>
                         </div>
-                        {!isReady && (
-                          <button type="button" onClick={() => setTab("docs")} className="shrink-0 text-[11px] font-black px-2.5 py-1.5 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors">
-                            📄 מסמכים
-                          </button>
-                        )}
-                      </div>
-
-                      {/* ── Overall bank submission status ── */}
-                      <div>
-                        <label className="block text-xs font-black text-slate-400 mb-1">סטטוס הגשה כללי לבנק</label>
-                        <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
-                          value={bankSubmissionStatus}
-                          onChange={(e) => {
-                            setBankSubmissionStatus(e.target.value);
-                            patchLead({ bankSubmissionStatus: e.target.value }, `סטטוס הגשה: ${BANK_SUBMISSION_STATUS_MAP[e.target.value] || e.target.value}`, "status_changed");
-                          }}>
-                          {BANK_SUBMISSION_STATUSES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
-                        </select>
-                      </div>
-
-                      {/* ── Selected bankers ── */}
-                      <div>
-                        <p className="text-xs font-black text-slate-700 mb-2">בנקאים שנבחרו לתיק</p>
-                        {caseBankers.length === 0 ? (
-                          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-5 text-center">
-                            <p className="text-xs font-bold text-slate-400">עדיין לא נבחרו בנקאים לתיק זה</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {caseBankers.map((cb) => (
-                              <div key={cb.id} className="rounded-xl border border-slate-100 bg-white p-3">
-                                {/* Banker header */}
-                                <div className="flex items-start justify-between gap-2 mb-2">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="text-sm font-black text-slate-950">{cb.banker_name_snapshot}</span>
-                                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${STATUS_STYLE[cb.status] || "bg-slate-100 text-slate-600"}`}>
-                                        {STATUS_LABEL[cb.status] || cb.status}
-                                      </span>
-                                    </div>
-                                    <p className="text-xs font-bold text-violet-600 mt-0.5">{cb.bank_name_snapshot}</p>
-                                    {cb.sent_at && (
-                                      <p className="text-[10px] font-bold text-slate-400 mt-0.5">נשלח: {new Date(cb.sent_at).toLocaleDateString("he-IL")}</p>
-                                    )}
+                      ) : (
+                        <div className="space-y-3">
+                          {caseBankers.map((cb) => (
+                            <div key={cb.id} className="rounded-xl border border-slate-100 bg-white p-3">
+                              {/* Banker header */}
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm font-black text-slate-950">{cb.banker_name_snapshot}</span>
+                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${CASE_BANK_STATUS_STYLE[cb.status] || "bg-slate-100 text-slate-600"}`}>
+                                      {CASE_BANK_STATUS_LABEL[cb.status] || cb.status}
+                                    </span>
                                   </div>
-                                  <button type="button" onClick={() => removeBankerFromCase(cb.id)}
-                                    className="shrink-0 text-[10px] font-black text-slate-400 hover:text-rose-600 transition-colors px-1.5 py-1 rounded-md hover:bg-rose-50">
-                                    ✕ הסר
-                                  </button>
-                                </div>
-
-                                {/* Contact */}
-                                <div className="flex flex-wrap gap-1.5 mb-3">
-                                  {cb.phone_snapshot && (
-                                    <>
-                                      <a href={`tel:${cb.phone_snapshot}`}
-                                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-violet-50 text-violet-700 text-[11px] font-black border border-violet-200">
-                                        ☎ {cb.phone_snapshot}
-                                      </a>
-                                      <a href={`https://wa.me/${cb.phone_snapshot.replace(/[^\d]/g,"").replace(/^0/,"972")}`}
-                                        target="_blank" rel="noopener noreferrer"
-                                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-black border border-emerald-200">
-                                        💬 WA
-                                      </a>
-                                    </>
-                                  )}
-                                  {cb.email_snapshot && (
-                                    <a href={`mailto:${cb.email_snapshot}`}
-                                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-50 text-sky-700 text-[11px] font-black border border-sky-200">
-                                      ✉ מייל
-                                    </a>
+                                  <p className="text-xs font-bold text-violet-600 mt-0.5">{cb.bank_name_snapshot}</p>
+                                  {cb.sent_at && (
+                                    <p className="text-[10px] font-bold text-slate-400 mt-0.5">נשלח: {new Date(cb.sent_at).toLocaleDateString("he-IL")}</p>
                                   )}
                                 </div>
-
-                                {/* Send actions */}
-                                <div className="flex flex-wrap gap-1.5">
-                                  <button type="button" onClick={() => copyBankSummary(cb.banker_name_snapshot)}
-                                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-black hover:bg-slate-200 transition-colors">
-                                    📋 העתק סיכום תיק
-                                  </button>
-                                  {cb.phone_snapshot && (
-                                    <a href={`https://wa.me/${cb.phone_snapshot.replace(/[^\d]/g,"").replace(/^0/,"972")}?text=${encodeURIComponent(buildCaseSummaryText(cb.banker_name_snapshot))}`}
-                                      target="_blank" rel="noopener noreferrer"
-                                      className="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-black border border-emerald-200 hover:bg-emerald-100 transition-colors">
-                                      💬 שלח ב-WA
-                                    </a>
-                                  )}
-                                  {cb.email_snapshot && (
-                                    <a href={`mailto:${cb.email_snapshot}?subject=${encodeURIComponent(`מסמכים לתיק משכנתא - ${lead.name || ""}`)}&body=${encodeURIComponent(buildCaseSummaryText(cb.banker_name_snapshot))}`}
-                                      className="px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-[11px] font-black border border-sky-200 hover:bg-sky-100 transition-colors">
-                                      ✉ שלח מייל
-                                    </a>
-                                  )}
-                                  {cb.status !== "sent" && cb.status !== "approved" && (
-                                    <button type="button" onClick={() => markSent(cb)}
-                                      className="px-2.5 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-[11px] font-black border border-violet-200 hover:bg-violet-100 transition-colors">
-                                      ✓ סמן כנשלח
-                                    </button>
-                                  )}
-                                </div>
-
-                                {/* Per-banker note */}
-                                <input
-                                  className="mt-2 w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-slate-50 outline-none focus:ring-1 focus:ring-violet-300"
-                                  placeholder="הערה לבנקאי זה (אופציונלי)..."
-                                  value={caseBankerNotes[cb.id] || cb.notes || ""}
-                                  onChange={(e) => setCaseBankerNotes((p) => ({ ...p, [cb.id]: e.target.value }))}
-                                  onBlur={(e) => {
-                                    const val = e.target.value;
-                                    fetch("/api/advisor/case-bankers", {
-                                      method: "PATCH",
-                                      headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify({ id: cb.id, leadId: id, notes: val }),
-                                    }).then((r) => r.ok ? r.json() : null).then((j) => {
-                                      if (j?.caseBanker) setCaseBankers((prev) => prev.map((x) => x.id === cb.id ? j.caseBanker : x));
-                                    }).catch(() => {});
-                                  }}
-                                />
+                                <button type="button" onClick={() => removeBankerFromCase(cb.id)}
+                                  className="shrink-0 text-[10px] font-black text-slate-400 hover:text-rose-600 transition-colors px-1.5 py-1 rounded-md hover:bg-rose-50">
+                                  ✕ הסר
+                                </button>
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
 
-                      {/* ── Add banker from directory ── */}
-                      <div className="border-t border-slate-100 pt-3">
-                        <p className="text-xs font-black text-slate-500 mb-2">הוסף בנקאי מהספר שלי</p>
-                        {advisorBankers.length === 0 ? (
-                          <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 p-4 text-center">
-                            <p className="text-xs font-bold text-violet-600 mb-2">עדיין לא הוספת בנקאים לספר הבנקאים שלך</p>
-                            <Link href="/advisor/bankers"
-                              className="inline-block px-3 py-1.5 rounded-lg bg-violet-700 text-white text-xs font-black hover:bg-violet-800 transition-colors">
-                              עבור לספר בנקאים ←
-                            </Link>
-                          </div>
-                        ) : availableBankers.length === 0 ? (
-                          <p className="text-xs font-bold text-slate-400">כל הבנקאים מספר הבנקאים שלך כבר נוספו לתיק זה.</p>
-                        ) : (
-                          <div className="flex gap-2">
-                            <select
-                              className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
-                              value={selectedBankerId}
-                              onChange={(e) => setSelectedBankerId(e.target.value)}
-                            >
-                              <option value="">בחר בנקאי מהספר...</option>
-                              {availableBankers.map((b) => (
-                                <option key={b.id} value={b.id}>
-                                  {b.banker_name} · {b.bank_name}{b.branch_name ? ` (${b.branch_name})` : ""}
-                                </option>
-                              ))}
-                            </select>
-                            <button type="button"
-                              disabled={!selectedBankerId || addingBanker}
-                              onClick={addBankerToCase}
-                              className="shrink-0 px-4 py-2 rounded-xl bg-violet-700 text-white text-xs font-black disabled:opacity-50 hover:bg-violet-800 transition-colors">
-                              {addingBanker ? "מוסיף..." : "+ הוסף"}
-                            </button>
-                          </div>
-                        )}
-                        <div className="mt-2">
-                          <Link href="/advisor/bankers" className="text-[11px] font-black text-violet-600 hover:text-violet-800 transition-colors">
-                            ← ניהול ספר הבנקאים
+                              {/* Contact */}
+                              <div className="flex flex-wrap gap-1.5 mb-3">
+                                {cb.phone_snapshot && (
+                                  <>
+                                    <a href={`tel:${cb.phone_snapshot}`}
+                                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-violet-50 text-violet-700 text-[11px] font-black border border-violet-200">
+                                      ☎ {cb.phone_snapshot}
+                                    </a>
+                                    <a href={`https://wa.me/${cb.phone_snapshot.replace(/[^\d]/g,"").replace(/^0/,"972")}`}
+                                      target="_blank" rel="noopener noreferrer"
+                                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-black border border-emerald-200">
+                                      💬 WA
+                                    </a>
+                                  </>
+                                )}
+                                {cb.email_snapshot && (
+                                  <a href={`mailto:${cb.email_snapshot}`}
+                                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-50 text-sky-700 text-[11px] font-black border border-sky-200">
+                                    ✉ מייל
+                                  </a>
+                                )}
+                              </div>
+
+                              {/* Send actions */}
+                              <div className="flex flex-wrap gap-1.5">
+                                <button type="button" onClick={() => copyBankSummary(cb.banker_name_snapshot)}
+                                  className="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-black hover:bg-slate-200 transition-colors">
+                                  📋 העתק סיכום תיק
+                                </button>
+                                {cb.phone_snapshot && (
+                                  <a href={`https://wa.me/${cb.phone_snapshot.replace(/[^\d]/g,"").replace(/^0/,"972")}?text=${encodeURIComponent(buildCaseSummaryText(cb.banker_name_snapshot))}`}
+                                    target="_blank" rel="noopener noreferrer"
+                                    className="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-black border border-emerald-200 hover:bg-emerald-100 transition-colors">
+                                    💬 שלח ב-WA
+                                  </a>
+                                )}
+                                {cb.email_snapshot && (
+                                  <a href={`mailto:${cb.email_snapshot}?subject=${encodeURIComponent(`מסמכים לתיק משכנתא - ${lead.name || ""}`)}&body=${encodeURIComponent(buildCaseSummaryText(cb.banker_name_snapshot))}`}
+                                    className="px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-[11px] font-black border border-sky-200 hover:bg-sky-100 transition-colors">
+                                    ✉ שלח מייל
+                                  </a>
+                                )}
+                                {cb.status !== "sent" && cb.status !== "approved" && (
+                                  <button type="button" onClick={() => markSent(cb)}
+                                    className="px-2.5 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-[11px] font-black border border-violet-200 hover:bg-violet-100 transition-colors">
+                                    ✓ סמן כנשלח
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Per-banker note */}
+                              <input
+                                className="mt-2 w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-slate-50 outline-none focus:ring-1 focus:ring-violet-300"
+                                placeholder="הערה לבנקאי זה (אופציונלי)..."
+                                value={caseBankerNotes[cb.id] || cb.notes || ""}
+                                onChange={(e) => setCaseBankerNotes((p) => ({ ...p, [cb.id]: e.target.value }))}
+                                onBlur={(e) => {
+                                  const val = e.target.value;
+                                  fetch("/api/advisor/case-bankers", {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ id: cb.id, leadId: id, notes: val }),
+                                  }).then((r) => r.ok ? r.json() : null).then((j) => {
+                                    if (j?.caseBanker) setCaseBankers((prev) => prev.map((x) => x.id === cb.id ? j.caseBanker : x));
+                                  }).catch(() => {});
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* ── Add banker from directory ── */}
+                    <div className="border-t border-slate-100 pt-3">
+                      <p className="text-xs font-black text-slate-500 mb-2">הוסף בנקאי מהספר שלי</p>
+                      {advisorBankers.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 p-4 text-center">
+                          <p className="text-xs font-bold text-violet-600 mb-2">עדיין לא הוספת בנקאים לספר הבנקאים שלך</p>
+                          <Link href="/advisor/bankers"
+                            className="inline-block px-3 py-1.5 rounded-lg bg-violet-700 text-white text-xs font-black hover:bg-violet-800 transition-colors">
+                            עבור לספר בנקאים ←
                           </Link>
                         </div>
+                      ) : bankTabDerived.availableBankers.length === 0 ? (
+                        <p className="text-xs font-bold text-slate-400">כל הבנקאים מספר הבנקאים שלך כבר נוספו לתיק זה.</p>
+                      ) : (
+                        <div className="flex gap-2">
+                          <select
+                            className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                            value={selectedBankerId}
+                            onChange={(e) => setSelectedBankerId(e.target.value)}
+                          >
+                            <option value="">בחר בנקאי מהספר...</option>
+                            {bankTabDerived.availableBankers.map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.banker_name} · {b.bank_name}{b.branch_name ? ` (${b.branch_name})` : ""}
+                              </option>
+                            ))}
+                          </select>
+                          <button type="button"
+                            disabled={!selectedBankerId || addingBanker}
+                            onClick={addBankerToCase}
+                            className="shrink-0 px-4 py-2 rounded-xl bg-violet-700 text-white text-xs font-black disabled:opacity-50 hover:bg-violet-800 transition-colors">
+                            {addingBanker ? "מוסיף..." : "+ הוסף"}
+                          </button>
+                        </div>
+                      )}
+                      <div className="mt-2">
+                        <Link href="/advisor/bankers" className="text-[11px] font-black text-violet-600 hover:text-violet-800 transition-colors">
+                          ← ניהול ספר הבנקאים
+                        </Link>
                       </div>
-
                     </div>
-                  );
-                })()}
+
+                  </div>
+                )}
 
                 {/* פעילות — ציר זמן (Phase 5) */}
                 {tab === "activity" && (
