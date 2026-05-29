@@ -150,8 +150,10 @@ export default async function handler(req, res) {
     return res.status(500).json({
       ok: false,
       success: false,
-      error: insertError?.code || "UNKNOWN_LEAD_ERROR",
-      message: "Lead was not saved to CRM",
+      step: "supabase_insert",
+      error: "SUPABASE_INSERT_FAILED",
+      supabaseCode: insertError?.internalCode || "",
+      message: "לא הצלחנו לשלוח את הפרטים כרגע. נסה שוב בעוד רגע.",
       localOnly,
     });
   }
