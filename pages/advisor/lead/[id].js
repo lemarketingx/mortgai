@@ -419,13 +419,13 @@ export default function LeadDetailPage() {
   const [reminderDeadline, setReminderDeadline] = useState("");     // datetime-local value
   const [reviewNotes,      setReviewNotes]      = useState({});     // docId → string
 
-  // Banker / bank submission state (fields stored on lead record)
-  const [bankerName,           setBankerName]           = useState("");
-  const [bankerPhone,          setBankerPhone]          = useState("");
-  const [bankerEmail,          setBankerEmail]          = useState("");
-  const [bankBranch,           setBankBranch]           = useState("");
-  const [bankNotes,            setBankNotes]            = useState("");
+  // Bank tab state
   const [bankSubmissionStatus, setBankSubmissionStatus] = useState("not_submitted");
+  const [advisorBankers,       setAdvisorBankers]       = useState([]);   // advisor's full directory
+  const [caseBankers,          setCaseBankers]          = useState([]);   // bankers selected for this case
+  const [selectedBankerId,     setSelectedBankerId]     = useState("");   // dropdown selection
+  const [addingBanker,         setAddingBanker]         = useState(false);
+  const [caseBankerNotes,      setCaseBankerNotes]      = useState({});   // caseBankerId → note string
 
   const debounceRef = useRef({});
 
@@ -437,18 +437,15 @@ export default function LeadDetailPage() {
       fetch(`/api/advisor/documents?leadId=${id}`).then((r) => r.ok ? r.json() : { documents: [] }),
       fetch(`/api/advisor/document-upload-token?leadId=${id}`).then((r) => r.ok ? r.json() : { token: null, uploadUrl: null }),
       fetch(`/api/advisor/document-reminders?leadId=${id}`).then((r) => r.ok ? r.json() : { reminder: null }),
-    ]).then(([leadsData, actData, docsData, tokenData, reminderData]) => {
+      fetch("/api/advisor/bankers").then((r) => r.ok ? r.json() : { bankers: [] }),
+      fetch(`/api/advisor/case-bankers?leadId=${id}`).then((r) => r.ok ? r.json() : { caseBankers: [] }),
+    ]).then(([leadsData, actData, docsData, tokenData, reminderData, bankersData, caseBankersData]) => {
       const found = leadsData.lead || (leadsData.leads || []).find((l) => l.id === id);
       if (!found) { router.push("/advisor/my-leads"); return; }
       setLead(found);
       setNotes(found.internalNotes || "");
       setNextActionText(found.nextAction || "");
       setNextActionDate(found.nextActionAt?.slice(0, 10) || "");
-      setBankerName(found.bankerName || "");
-      setBankerPhone(found.bankerPhone || "");
-      setBankerEmail(found.bankerEmail || "");
-      setBankBranch(found.bankBranch || "");
-      setBankNotes(found.bankNotes || "");
       setBankSubmissionStatus(found.bankSubmissionStatus || "not_submitted");
       const acts = Array.isArray(actData.activities) ? actData.activities : [];
       setActivities(acts.length > 0 ? acts : [{ title: "הליד נוצר", created_at: found.createdAt, activity_type: "lead_created" }]);
@@ -458,10 +455,11 @@ export default function LeadDetailPage() {
       if (reminderData.reminder) {
         setReminder(reminderData.reminder);
         if (reminderData.reminder.deadline_at) {
-          // Convert ISO to datetime-local format for the input
           setReminderDeadline(reminderData.reminder.deadline_at.slice(0, 16));
         }
       }
+      setAdvisorBankers(Array.isArray(bankersData.bankers) ? bankersData.bankers : []);
+      setCaseBankers(Array.isArray(caseBankersData.caseBankers) ? caseBankersData.caseBankers : []);
       setLoading(false);
     }).catch(() => { setLoading(false); router.push("/advisor/my-leads"); });
   }, [id]);
@@ -1179,35 +1177,135 @@ export default function LeadDetailPage() {
                 )}
 
                 {/* בנק */}
-                {tab === "bank" && (
-                  <div>
-                    <p className="text-sm font-black text-slate-950 mb-3">פרטי בנק ובנקאי</p>
-                    <div className="grid gap-3">
+                {tab === "bank" && (() => {
+                  // ── Helpers ─────────────────────────────────────────────
+                  function buildCaseSummaryText(bankerNameSnap) {
+                    const received = computedDocumentSummary.checklist
+                      .filter((d) => d.status === "approved" || d.status === "received")
+                      .map((d) => `✓ ${d.label || getDocumentLabel(d.document_type)}`);
+                    const missing = computedDocumentSummary.missingDocuments
+                      .map((d) => `✗ ${d.label || getDocumentLabel(d.document_type)}`);
+                    return [
+                      `שלום ${bankerNameSnap || ""},`,
+                      ``,
+                      `מצורף סיכום תיק המשכנתא של ${lead.name || "הלקוח"}.`,
+                      ``,
+                      `סוג תיק: ${caseType || "—"}`,
+                      `שלב נוכחי: ${getPipelineStageLabel(getStage(lead))}`,
+                      lead.mortgageAmount ? `גובה המשכנתא: ${formatILS(lead.mortgageAmount)}` : null,
+                      ``,
+                      received.length > 0 ? `מסמכים שהתקבלו/אושרו:\n${received.join("\n")}` : null,
+                      missing.length > 0  ? `\nמסמכים שעדיין חסרים:\n${missing.join("\n")}` : null,
+                      ``,
+                      `תודה,`,
+                      lead.assignedAdvisor || "",
+                    ].filter((l) => l !== null).join("\n");
+                  }
 
-                      {/* Bank selector */}
-                      <div>
-                        <label className="block text-xs font-black text-slate-400 mb-1">בנק</label>
-                        <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
-                          value={lead.bankName || ""}
-                          onChange={(e) => patchLead({ bankName: e.target.value }, e.target.value ? `בנק: ${e.target.value}` : "")}>
-                          <option value="">בחר בנק...</option>
-                          {BANKS.map((b) => <option key={b}>{b}</option>)}
-                        </select>
+                  function copyBankSummary(bankerNameSnap) {
+                    navigator.clipboard.writeText(buildCaseSummaryText(bankerNameSnap)).then(() => {
+                      setMsg({ text: "סיכום תיק הועתק ✓", ok: true });
+                      setTimeout(() => setMsg({ text: "", ok: true }), 2500);
+                    }).catch(() => {});
+                  }
+
+                  async function addBankerToCase() {
+                    if (!selectedBankerId) return;
+                    setAddingBanker(true);
+                    try {
+                      const r = await fetch("/api/advisor/case-bankers", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ leadId: id, bankerId: selectedBankerId }),
+                      });
+                      if (r.ok) {
+                        const j = await r.json();
+                        if (!j.alreadyExists) {
+                          setCaseBankers((prev) => [...prev, j.caseBanker]);
+                        }
+                        setSelectedBankerId("");
+                        pushActivity(`בנקאי נוסף לתיק`, "note_added");
+                      } else {
+                        setMsg({ text: "הוספה נכשלה", ok: false });
+                        setTimeout(() => setMsg({ text: "", ok: true }), 3000);
+                      }
+                    } finally {
+                      setAddingBanker(false);
+                    }
+                  }
+
+                  async function removeBankerFromCase(caseBankerId) {
+                    const r = await fetch("/api/advisor/case-bankers", {
+                      method: "DELETE",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ id: caseBankerId, leadId: id }),
+                    });
+                    if (r.ok) setCaseBankers((prev) => prev.filter((cb) => cb.id !== caseBankerId));
+                  }
+
+                  async function markSent(cb) {
+                    const now = new Date().toISOString();
+                    const r = await fetch("/api/advisor/case-bankers", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ id: cb.id, leadId: id, status: "sent", sent_at: now }),
+                    });
+                    if (r.ok) {
+                      const j = await r.json();
+                      setCaseBankers((prev) => prev.map((x) => x.id === cb.id ? j.caseBanker : x));
+                    }
+                  }
+
+                  // Readiness
+                  const isReady = missingDocs === 0;
+                  const readyReceivedDocs = computedDocumentSummary.checklist.filter(
+                    (d) => d.status === "approved" || d.status === "received"
+                  ).length;
+
+                  // Bankers not yet in this case
+                  const assignedBankerIds = new Set(caseBankers.map((cb) => cb.banker_id));
+                  const availableBankers  = advisorBankers.filter((b) => !assignedBankerIds.has(b.id));
+
+                  const STATUS_LABEL = {
+                    selected:          "נבחר",
+                    ready_to_send:     "מוכן לשליחה",
+                    sent:              "נשלח",
+                    waiting_for_response: "ממתין לתשובה",
+                    approved:          "אושר",
+                    rejected:          "נדחה",
+                  };
+                  const STATUS_STYLE = {
+                    selected:          "bg-slate-100 text-slate-600",
+                    ready_to_send:     "bg-amber-50 text-amber-700",
+                    sent:              "bg-sky-50 text-sky-700",
+                    waiting_for_response: "bg-violet-50 text-violet-700",
+                    approved:          "bg-emerald-50 text-emerald-700",
+                    rejected:          "bg-rose-50 text-rose-700",
+                  };
+
+                  return (
+                    <div className="space-y-4">
+
+                      {/* ── Readiness indicator ── */}
+                      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${isReady ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"}`}>
+                        <span className="text-base shrink-0">{isReady ? "✅" : "⚠️"}</span>
+                        <div className="flex-1 min-w-0">
+                          {isReady ? (
+                            <p className="text-xs font-black text-emerald-700">מוכן לשליחה לבנק — כל {readyReceivedDocs} מסמכים התקבלו</p>
+                          ) : (
+                            <p className="text-xs font-black text-amber-700">חסרים {missingDocs} מסמכים לפני שליחה לבנק ({readyReceivedDocs} מתוך {computedDocumentSummary.totalCount} התקבלו)</p>
+                          )}
+                        </div>
+                        {!isReady && (
+                          <button type="button" onClick={() => setTab("docs")} className="shrink-0 text-[11px] font-black px-2.5 py-1.5 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors">
+                            📄 מסמכים
+                          </button>
+                        )}
                       </div>
 
-                      {/* Branch */}
+                      {/* ── Overall bank submission status ── */}
                       <div>
-                        <label className="block text-xs font-black text-slate-400 mb-1">סניף</label>
-                        <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
-                          placeholder="שם/מספר סניף"
-                          value={bankBranch}
-                          onChange={(e) => setBankBranch(e.target.value)}
-                          onBlur={(e) => patchLead({ bankBranch: e.target.value })} />
-                      </div>
-
-                      {/* Submission status */}
-                      <div>
-                        <label className="block text-xs font-black text-slate-400 mb-1">סטטוס הגשה לבנק</label>
+                        <label className="block text-xs font-black text-slate-400 mb-1">סטטוס הגשה כללי לבנק</label>
                         <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
                           value={bankSubmissionStatus}
                           onChange={(e) => {
@@ -1218,105 +1316,155 @@ export default function LeadDetailPage() {
                         </select>
                       </div>
 
-                      {/* Divider — banker contact */}
+                      {/* ── Selected bankers ── */}
+                      <div>
+                        <p className="text-xs font-black text-slate-700 mb-2">בנקאים שנבחרו לתיק</p>
+                        {caseBankers.length === 0 ? (
+                          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-5 text-center">
+                            <p className="text-xs font-bold text-slate-400">עדיין לא נבחרו בנקאים לתיק זה</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {caseBankers.map((cb) => (
+                              <div key={cb.id} className="rounded-xl border border-slate-100 bg-white p-3">
+                                {/* Banker header */}
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-sm font-black text-slate-950">{cb.banker_name_snapshot}</span>
+                                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${STATUS_STYLE[cb.status] || "bg-slate-100 text-slate-600"}`}>
+                                        {STATUS_LABEL[cb.status] || cb.status}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs font-bold text-violet-600 mt-0.5">{cb.bank_name_snapshot}</p>
+                                    {cb.sent_at && (
+                                      <p className="text-[10px] font-bold text-slate-400 mt-0.5">נשלח: {new Date(cb.sent_at).toLocaleDateString("he-IL")}</p>
+                                    )}
+                                  </div>
+                                  <button type="button" onClick={() => removeBankerFromCase(cb.id)}
+                                    className="shrink-0 text-[10px] font-black text-slate-400 hover:text-rose-600 transition-colors px-1.5 py-1 rounded-md hover:bg-rose-50">
+                                    ✕ הסר
+                                  </button>
+                                </div>
+
+                                {/* Contact */}
+                                <div className="flex flex-wrap gap-1.5 mb-3">
+                                  {cb.phone_snapshot && (
+                                    <>
+                                      <a href={`tel:${cb.phone_snapshot}`}
+                                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-violet-50 text-violet-700 text-[11px] font-black border border-violet-200">
+                                        ☎ {cb.phone_snapshot}
+                                      </a>
+                                      <a href={`https://wa.me/${cb.phone_snapshot.replace(/[^\d]/g,"").replace(/^0/,"972")}`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-black border border-emerald-200">
+                                        💬 WA
+                                      </a>
+                                    </>
+                                  )}
+                                  {cb.email_snapshot && (
+                                    <a href={`mailto:${cb.email_snapshot}`}
+                                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-50 text-sky-700 text-[11px] font-black border border-sky-200">
+                                      ✉ מייל
+                                    </a>
+                                  )}
+                                </div>
+
+                                {/* Send actions */}
+                                <div className="flex flex-wrap gap-1.5">
+                                  <button type="button" onClick={() => copyBankSummary(cb.banker_name_snapshot)}
+                                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-black hover:bg-slate-200 transition-colors">
+                                    📋 העתק סיכום תיק
+                                  </button>
+                                  {cb.phone_snapshot && (
+                                    <a href={`https://wa.me/${cb.phone_snapshot.replace(/[^\d]/g,"").replace(/^0/,"972")}?text=${encodeURIComponent(buildCaseSummaryText(cb.banker_name_snapshot))}`}
+                                      target="_blank" rel="noopener noreferrer"
+                                      className="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-black border border-emerald-200 hover:bg-emerald-100 transition-colors">
+                                      💬 שלח ב-WA
+                                    </a>
+                                  )}
+                                  {cb.email_snapshot && (
+                                    <a href={`mailto:${cb.email_snapshot}?subject=${encodeURIComponent(`מסמכים לתיק משכנתא - ${lead.name || ""}`)}&body=${encodeURIComponent(buildCaseSummaryText(cb.banker_name_snapshot))}`}
+                                      className="px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-[11px] font-black border border-sky-200 hover:bg-sky-100 transition-colors">
+                                      ✉ שלח מייל
+                                    </a>
+                                  )}
+                                  {cb.status !== "sent" && cb.status !== "approved" && (
+                                    <button type="button" onClick={() => markSent(cb)}
+                                      className="px-2.5 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-[11px] font-black border border-violet-200 hover:bg-violet-100 transition-colors">
+                                      ✓ סמן כנשלח
+                                    </button>
+                                  )}
+                                </div>
+
+                                {/* Per-banker note */}
+                                <input
+                                  className="mt-2 w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-slate-50 outline-none focus:ring-1 focus:ring-violet-300"
+                                  placeholder="הערה לבנקאי זה (אופציונלי)..."
+                                  value={caseBankerNotes[cb.id] || cb.notes || ""}
+                                  onChange={(e) => setCaseBankerNotes((p) => ({ ...p, [cb.id]: e.target.value }))}
+                                  onBlur={(e) => {
+                                    const val = e.target.value;
+                                    fetch("/api/advisor/case-bankers", {
+                                      method: "PATCH",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ id: cb.id, leadId: id, notes: val }),
+                                    }).then((r) => r.ok ? r.json() : null).then((j) => {
+                                      if (j?.caseBanker) setCaseBankers((prev) => prev.map((x) => x.id === cb.id ? j.caseBanker : x));
+                                    }).catch(() => {});
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ── Add banker from directory ── */}
                       <div className="border-t border-slate-100 pt-3">
-                        <p className="text-xs font-black text-slate-500 mb-2">איש קשר בבנק (בנקאי)</p>
-                      </div>
-
-                      {/* Banker name */}
-                      <div>
-                        <label className="block text-xs font-black text-slate-400 mb-1">שם הבנקאי</label>
-                        <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
-                          placeholder="שם מלא"
-                          value={bankerName}
-                          onChange={(e) => setBankerName(e.target.value)}
-                          onBlur={(e) => patchLead({ bankerName: e.target.value })} />
-                      </div>
-
-                      {/* Banker phone */}
-                      <div>
-                        <label className="block text-xs font-black text-slate-400 mb-1">טלפון בנקאי</label>
-                        <div className="flex gap-2">
-                          <input className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
-                            placeholder="050-000-0000"
-                            value={bankerPhone}
-                            onChange={(e) => setBankerPhone(e.target.value)}
-                            onBlur={(e) => patchLead({ bankerPhone: e.target.value })} />
-                          {bankerPhone && (
-                            <a href={`tel:${bankerPhone}`}
-                              className="shrink-0 px-3 py-2 rounded-xl bg-violet-50 text-violet-700 text-xs font-black border border-violet-200">
-                              ☎ התקשר
-                            </a>
-                          )}
-                          {bankerPhone && (
-                            <a href={`https://wa.me/${bankerPhone.replace(/[^\d]/g, "").replace(/^0/, "972")}`}
-                              target="_blank" rel="noopener noreferrer"
-                              className="shrink-0 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-black border border-emerald-200">
-                              💬 WA
-                            </a>
-                          )}
+                        <p className="text-xs font-black text-slate-500 mb-2">הוסף בנקאי מהספר שלי</p>
+                        {advisorBankers.length === 0 ? (
+                          <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 p-4 text-center">
+                            <p className="text-xs font-bold text-violet-600 mb-2">עדיין לא הוספת בנקאים לספר הבנקאים שלך</p>
+                            <Link href="/advisor/bankers"
+                              className="inline-block px-3 py-1.5 rounded-lg bg-violet-700 text-white text-xs font-black hover:bg-violet-800 transition-colors">
+                              עבור לספר בנקאים ←
+                            </Link>
+                          </div>
+                        ) : availableBankers.length === 0 ? (
+                          <p className="text-xs font-bold text-slate-400">כל הבנקאים מספר הבנקאים שלך כבר נוספו לתיק זה.</p>
+                        ) : (
+                          <div className="flex gap-2">
+                            <select
+                              className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                              value={selectedBankerId}
+                              onChange={(e) => setSelectedBankerId(e.target.value)}
+                            >
+                              <option value="">בחר בנקאי מהספר...</option>
+                              {availableBankers.map((b) => (
+                                <option key={b.id} value={b.id}>
+                                  {b.banker_name} · {b.bank_name}{b.branch_name ? ` (${b.branch_name})` : ""}
+                                </option>
+                              ))}
+                            </select>
+                            <button type="button"
+                              disabled={!selectedBankerId || addingBanker}
+                              onClick={addBankerToCase}
+                              className="shrink-0 px-4 py-2 rounded-xl bg-violet-700 text-white text-xs font-black disabled:opacity-50 hover:bg-violet-800 transition-colors">
+                              {addingBanker ? "מוסיף..." : "+ הוסף"}
+                            </button>
+                          </div>
+                        )}
+                        <div className="mt-2">
+                          <Link href="/advisor/bankers" className="text-[11px] font-black text-violet-600 hover:text-violet-800 transition-colors">
+                            ← ניהול ספר הבנקאים
+                          </Link>
                         </div>
                       </div>
 
-                      {/* Banker email */}
-                      <div>
-                        <label className="block text-xs font-black text-slate-400 mb-1">מייל בנקאי</label>
-                        <div className="flex gap-2">
-                          <input className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
-                            placeholder="banker@bank.co.il"
-                            type="email"
-                            value={bankerEmail}
-                            onChange={(e) => setBankerEmail(e.target.value)}
-                            onBlur={(e) => patchLead({ bankerEmail: e.target.value })} />
-                          {bankerEmail && (
-                            <a href={`mailto:${bankerEmail}`}
-                              className="shrink-0 px-3 py-2 rounded-xl bg-sky-50 text-sky-700 text-xs font-black border border-sky-200">
-                              ✉ מייל
-                            </a>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Bank notes */}
-                      <div>
-                        <label className="block text-xs font-black text-slate-400 mb-1">הערות לבנק</label>
-                        <textarea className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold min-h-[80px] resize-y outline-none focus:ring-2 focus:ring-violet-300"
-                          placeholder="תנאים מיוחדים, הנחיות, עדכונים..."
-                          value={bankNotes}
-                          onChange={(e) => setBankNotes(e.target.value)}
-                          onBlur={(e) => patchLead({ bankNotes: e.target.value })} />
-                      </div>
-
-                      {/* Copy doc list for bank */}
-                      <div className="border-t border-slate-100 pt-3">
-                        <p className="text-xs font-black text-slate-500 mb-2">שליחה לבנק</p>
-                        <div className="flex gap-2 flex-wrap">
-                          <button type="button"
-                            onClick={() => {
-                              const docList = computedDocumentSummary.checklist
-                                .filter((d) => d.status === "approved" || d.status === "received")
-                                .map((d) => `✓ ${d.label || getDocumentLabel(d.document_type)}`)
-                                .join("\n");
-                              const text = `רשימת מסמכים שהתקבלו עבור ${lead.name || "לקוח"}:\n\n${docList || "אין מסמכים שהתקבלו עדיין"}`;
-                              navigator.clipboard.writeText(text).then(() => {
-                                setMsg({ text: "רשימת מסמכים הועתקה ✓", ok: true });
-                                setTimeout(() => setMsg({ text: "", ok: true }), 2500);
-                              }).catch(() => {});
-                            }}
-                            className="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-black">
-                            📋 העתק רשימת מסמכים
-                          </button>
-                          {bankerEmail && (
-                            <a href={`mailto:${bankerEmail}?subject=${encodeURIComponent(`תיק משכנתא - ${lead.name || ""}`)}&body=${encodeURIComponent(`שלום,\n\nמצורפים פרטי הלקוח לצורך טיפול בבקשת המשכנתא.\n\nשם: ${lead.name || ""}\nטלפון: ${lead.phone || ""}\nגובה המשכנתא: ${lead.mortgageAmount ? formatILS(lead.mortgageAmount) : "—"}\n\nבברכה,\n${lead.assignedAdvisor || ""}`)}`}
-                              className="px-3 py-2 rounded-xl bg-sky-50 text-sky-700 text-xs font-black border border-sky-200">
-                              ✉ שלח מייל לבנקאי
-                            </a>
-                          )}
-                        </div>
-                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* פעילות — ציר זמן (Phase 5) */}
                 {tab === "activity" && (

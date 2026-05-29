@@ -2,10 +2,11 @@ import Link from "next/link";
 
 export default function AdvisorHeader({ active }) {
   const links = [
-    { href: "/advisor",          label: "לוח בקרה" },
-    { href: "/advisor/leads",    label: "שוק לידים" },
-    { href: "/advisor/my-leads", label: "הלידים שלי" },
-    { href: "/advisor/settings", label: "הגדרות" },
+    { href: "/advisor",           label: "לוח בקרה" },
+    { href: "/advisor/leads",     label: "שוק לידים" },
+    { href: "/advisor/my-leads",  label: "הלידים שלי" },
+    { href: "/advisor/bankers",   label: "בנקאים" },
+    { href: "/advisor/settings",  label: "הגדרות" },
   ];
 
   function logout() {
