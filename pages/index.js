@@ -344,8 +344,8 @@ export default function Home() {
     });
 
     const phone = cleanNumber(lead.phone);
-    if (lead.name.trim().length < 2 || !/^05\d{8}$|^9725\d{8}$/.test(phone)) {
-      setLeadError("יש להזין שם וטלפון ישראלי תקין.");
+    if (lead.name.trim().length < 2 || phone.length < 7) {
+      setLeadError("יש להשלים שם וטלפון כדי לשלוח את הבדיקה");
       return;
     }
 
@@ -406,7 +406,7 @@ export default function Home() {
       });
     } catch (error) {
       setLeadSent(false);
-      addToast({ title: "הפנייה לא נשלחה", description: "נסו שוב או צרו קשר ישירות.", variant: "danger" });
+      addToast({ title: "הפנייה לא נשלחה", description: "לא הצלחנו לשלוח את הפרטים כרגע. נסה שוב בעוד רגע.", variant: "danger" });
       trackEvent("lead_submit_failed", {
         approvalEstimate: Math.round(analysis?.approval || 0),
         paymentEstimate: Math.round(analysis?.monthly || 0),

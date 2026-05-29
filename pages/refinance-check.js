@@ -295,8 +295,8 @@ export default function RefinanceCheck() {
     event.preventDefault();
     if (leadLoading || leadSent) return;
     const phone = cleanNumber(lead.phone);
-    if (lead.name.trim().length < 2 || !/^05\d{8}$|^9725\d{8}$/.test(phone)) {
-      setLeadError("יש להזין שם וטלפון ישראלי תקין.");
+    if (lead.name.trim().length < 2 || phone.length < 7) {
+      setLeadError("יש להשלים שם וטלפון כדי לשלוח את הבדיקה");
       return;
     }
 
@@ -335,7 +335,7 @@ export default function RefinanceCheck() {
       window.requestAnimationFrame(() => successRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
     } catch {
       setLeadSent(false);
-      setLeadError("הפנייה לא נשלחה. נסו שוב או צרו קשר ישירות.");
+      setLeadError("לא הצלחנו לשלוח את הפרטים כרגע. נסה שוב בעוד רגע.");
     } finally {
       setLeadLoading(false);
     }

@@ -2,6 +2,25 @@ import { createLead } from "../../lib/leadsStore";
 import { publicLeadSchema, validationErrorPayload } from "../../lib/validation";
 import { checkLoginRateLimit, getClientIp, recordFailedLogin } from "../../lib/rateLimit";
 
+function normalizeLeadFields(raw = {}) {
+  const lead = { ...raw };
+  // name aliases
+  if (!lead.name) lead.name = lead.fullName || lead.full_name || lead.customerName || "";
+  // phone aliases
+  if (!lead.phone) lead.phone = lead.phoneNumber || lead.phone_number || lead.mobile || "";
+  // city aliases
+  if (!lead.city) lead.city = lead.cityName || lead.location || "";
+  // numeric field snake_case → camelCase (passthrough already handles camelCase)
+  if (lead.mortgage_amount !== undefined && lead.mortgageAmount === undefined) lead.mortgageAmount = lead.mortgage_amount;
+  if (lead.property_price !== undefined && lead.propertyPrice === undefined) lead.propertyPrice = lead.property_price;
+  if (lead.equity_amount !== undefined && lead.equityAmount === undefined) lead.equityAmount = lead.equity_amount;
+  if (lead.monthly_income !== undefined && lead.monthlyIncome === undefined) lead.monthlyIncome = lead.monthly_income;
+  if (lead.purchase_status !== undefined && lead.purchaseStatus === undefined) lead.purchaseStatus = lead.purchase_status;
+  if (lead.approval_score !== undefined && lead.approvalScore === undefined) lead.approvalScore = lead.approval_score;
+  if (lead.main_issue !== undefined && lead.mainIssue === undefined) lead.mainIssue = lead.main_issue;
+  return lead;
+}
+
 function buildSafeLeadError(error) {
   const code = String(error?.code || "UNKNOWN_LEAD_ERROR");
   if (code === "SUPABASE_ENV_MISSING" || code === "SUPABASE_URL_INVALID") return "SUPABASE_NOT_CONFIGURED";
@@ -38,23 +57,36 @@ export default async function handler(req, res) {
   recordFailedLogin(ip);
 
   const q = req.query || {};
+  const rawLead = normalizeLeadFields(req.body?.lead || {});
+
+  const nameVal = String(rawLead.name || "").trim();
+  const phoneVal = String(rawLead.phone || "").trim();
+  const missingName = nameVal.length < 2;
+  const missingPhone = phoneVal.replace(/[^\d]/g, "").length < 7;
+
+  if (missingName || missingPhone) {
+    const code = missingName && missingPhone ? "missing_required_contact_fields" : missingName ? "missing_name" : "missing_phone";
+    logLeadFailure("missing_required_fields", { code, payloadKeys: Object.keys(rawLead), route: "/api/lead" });
+    return res.status(400).json({ ok: false, success: false, error: code });
+  }
+
   const bodyWithUtm = {
     ...req.body,
     lead: {
-      ...(req.body?.lead || {}),
-      utmSource: q.utm_source || req.body?.lead?.utmSource || "",
-      utmMedium: q.utm_medium || req.body?.lead?.utmMedium || "",
-      utmCampaign: q.utm_campaign || req.body?.lead?.utmCampaign || "",
-      utmContent: q.utm_content || req.body?.lead?.utmContent || "",
-      utmTerm: q.utm_term || req.body?.lead?.utmTerm || "",
-      referrer: req.body?.lead?.referrer || req.headers.referer || "",
-      landingPage: req.body?.lead?.landingPage || req.body?.lead?.landing_page || q.landing_page || "",
-      estimatedApprovalResult: req.body?.lead?.estimatedApprovalResult ?? req.body?.lead?.estimated_approval_result,
-      estimatedPayment: req.body?.lead?.estimatedPayment ?? req.body?.lead?.estimated_payment,
-      propertyPrice: req.body?.lead?.propertyPrice ?? req.body?.lead?.property_price,
-      equityAmount: req.body?.lead?.equityAmount ?? req.body?.lead?.equity_amount,
-      monthlyIncome: req.body?.lead?.monthlyIncome ?? req.body?.lead?.monthly_income,
-      debtLevel: req.body?.lead?.debtLevel ?? req.body?.lead?.debt_level,
+      ...rawLead,
+      utmSource: q.utm_source || rawLead.utmSource || "",
+      utmMedium: q.utm_medium || rawLead.utmMedium || "",
+      utmCampaign: q.utm_campaign || rawLead.utmCampaign || "",
+      utmContent: q.utm_content || rawLead.utmContent || "",
+      utmTerm: q.utm_term || rawLead.utmTerm || "",
+      referrer: rawLead.referrer || req.headers.referer || "",
+      landingPage: rawLead.landingPage || rawLead.landing_page || q.landing_page || "",
+      estimatedApprovalResult: rawLead.estimatedApprovalResult ?? rawLead.estimated_approval_result,
+      estimatedPayment: rawLead.estimatedPayment ?? rawLead.estimated_payment,
+      propertyPrice: rawLead.propertyPrice ?? rawLead.property_price,
+      equityAmount: rawLead.equityAmount ?? rawLead.equity_amount,
+      monthlyIncome: rawLead.monthlyIncome ?? rawLead.monthly_income,
+      debtLevel: rawLead.debtLevel ?? rawLead.debt_level,
     },
   };
 
