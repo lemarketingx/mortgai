@@ -670,10 +670,20 @@ export default function LeadDetailPage() {
 
   // ── Document review handlers ───────────────────────────────────────────────
   async function openDocFile(doc) {
-    const r = await fetch(`/api/advisor/document-review?docId=${doc.id}&leadId=${id}`);
-    if (!r.ok) { setMsg({ text: "לא ניתן לפתוח את הקובץ", ok: false }); setTimeout(() => setMsg({ text: "", ok: true }), 3000); return; }
-    const { url } = await r.json();
-    window.open(url, "_blank", "noopener,noreferrer");
+    try {
+      const r = await fetch(`/api/advisor/document-review?docId=${doc.id}&leadId=${id}`);
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.url) {
+        const errMsg = j.message || "לא הצלחנו לפתוח את הקובץ כרגע. נסה שוב בעוד רגע.";
+        setMsg({ text: errMsg, ok: false });
+        setTimeout(() => setMsg({ text: "", ok: true }), 4000);
+        return;
+      }
+      window.open(j.url, "_blank", "noopener,noreferrer");
+    } catch {
+      setMsg({ text: "לא הצלחנו לפתוח את הקובץ כרגע. נסה שוב בעוד רגע.", ok: false });
+      setTimeout(() => setMsg({ text: "", ok: true }), 4000);
+    }
   }
 
   async function reviewDoc(doc, status, note) {

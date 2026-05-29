@@ -41,7 +41,15 @@ export default async function handler(req, res) {
     if (!doc.storage_path) return apiError(res, 404, "NO_FILE_UPLOADED", "No file has been uploaded for this document");
 
     const url = await getSignedUrl(doc.storage_path);
-    if (!url) return apiError(res, 500, "SIGNED_URL_FAILED", "Could not generate signed URL");
+    if (!url) {
+      console.warn("[document-review] signed URL generation failed", {
+        docId,
+        leadId,
+        storagePath: doc.storage_path,
+        fileName: doc.file_name,
+      });
+      return apiError(res, 500, "SIGNED_URL_FAILED", "לא הצלחנו לפתוח את הקובץ כרגע. נסה שוב בעוד רגע.");
+    }
 
     return res.status(200).json({ url, expiresIn: 3600, fileName: doc.file_name, mimeType: doc.mime_type });
   }
