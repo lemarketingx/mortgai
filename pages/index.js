@@ -7,10 +7,12 @@ import {
   Header,
   Hero,
   TrustStrip,
+  ProblemSection,
   HowItWorks,
   SeoContentSection,
   RefinanceSection,
   TrustContentSection,
+  AdvisorTeaser,
   FaqSection,
   Footer,
   MobileStickyCta,
@@ -457,6 +459,7 @@ export default function Home() {
         <Header onCtaClick={handleCtaClick} />
         <Hero onCtaClick={handleCtaClick} />
         <TrustStrip />
+        <ProblemSection />
         <HowItWorks />
         <CalculatorSection
           data={data}
@@ -483,6 +486,7 @@ export default function Home() {
           trackEvent={trackEvent}
         />
         <FaqSection />
+        <AdvisorTeaser />
         <BottomLeadSection
           bottomLead={bottomLead}
           updateBottomLead={updateBottomLead}
@@ -508,9 +512,9 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation, 
     <section id="eligibility-check" className="bg-gradient-to-b from-slate-50 via-violet-50/40 to-white py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
-          eyebrow="בדיקת זכאות"
-          title="מלאו נתונים — קבלו אומדן ראשוני מיד"
-          text="כמה שאלות פיננסיות בסיסיות. תוצאה מיידית. ללא עלות ובלי שאף אחד מתקשר אליכם."
+          eyebrow="בדיקת התאמה"
+          title="מלאו נתונים — קבלו אומדן סיכוי התאמה מיד"
+          text="כמה שאלות פיננסיות בסיסיות. תוצאה מיידית. ללא עלות, ללא התחייבות."
         />
 
         <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
@@ -727,9 +731,9 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
   return (
     <section id="lead" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
-        eyebrow="כיוון ראשוני"
-        title="רוצים להבין איך לשפר את הסיכוי לאישור?"
-        text="השאירו פרטים ונחזור אליכם עם כיוון ראשוני לבדיקה מול יועץ מתאים."
+        eyebrow="קבלו תמונת מצב ראשונית"
+        title="מלאו כמה פרטים ונציג לכם כיוון ראשוני"
+        text="אם יש התאמה, ניתן יהיה להמשיך לבדיקה מקצועית — ללא לחץ, ללא עלות, ללא התחייבות."
       />
       <div className="mt-10 grid items-stretch gap-6 lg:grid-cols-2">
         <div className="rounded-[34px] bg-gradient-to-br from-violet-50 to-white p-7 ring-1 ring-violet-100">
@@ -831,8 +835,8 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
   return (
     <section id="bottom-lead" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
       <div className="rounded-[30px] border border-violet-200/70 bg-gradient-to-br from-slate-950 via-violet-950 to-violet-900 p-6 text-white shadow-[0_28px_70px_rgba(46,16,101,0.35)] sm:p-8">
-        <h2 className="text-2xl font-black sm:text-3xl">רוצים להבין איך לשפר את הסיכוי לאישור?</h2>
-        <p className="mt-2 text-sm font-semibold text-violet-100 sm:text-base">השאירו פרטים ונחזור אליכם עם כיוון ראשוני לבדיקה מול יועץ מתאים.</p>
+        <h2 className="text-2xl font-black sm:text-3xl">השאירו פרטים — נחזור אליכם עם כיוון ראשוני</h2>
+        <p className="mt-2 text-sm font-semibold text-violet-100 sm:text-base">איסוף פרטים מסודר לבדיקה ראשונית. אם יש התאמה, ניתן להמשיך לבדיקה מקצועית.</p>
         <form onSubmit={submitBottomLead} className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-4" dir="rtl">
           <TextField label="שם מלא" value={bottomLead.name} onChange={(value) => updateBottomLead("name", value)} autoComplete="name" required contrastMode="dark" />
           <TextField label="טלפון" value={bottomLead.phone} onChange={(value) => updateBottomLead("phone", value)} autoComplete="tel" placeholder="05X-XXXXXXX" inputMode="tel" required contrastMode="dark" />
