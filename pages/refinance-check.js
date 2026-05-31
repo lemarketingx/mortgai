@@ -314,7 +314,7 @@ export default function RefinanceCheck() {
       debtLevel: cleanNumber(lead.loans) || "",
       requestedContactTime: lead.requestedContactTime,
       purchaseStatus: "refinance",
-      hasExistingMortgage: true,
+      hasExistingMortgage: "yes",
       source: "refinance-check",
       estimatedPayment: result.newPayment ? String(Math.round(result.newPayment)) : "",
       estimatedApprovalResult: result.score ? String(result.score) : "",
@@ -334,7 +334,10 @@ export default function RefinanceCheck() {
         body: JSON.stringify({ lead: record, analysis: result }),
       });
       const apiResult = await response.json().catch(() => ({}));
-      if (!response.ok || apiResult?.ok !== true) throw new Error("Lead request was not confirmed");
+      if (!response.ok || apiResult?.ok !== true) {
+        const msg = apiResult?.message || apiResult?.error || "";
+        throw new Error(msg || "Lead request was not confirmed");
+      }
 
       try {
         const saved = JSON.parse(localStorage.getItem("mortgai2_leads") || "[]");
@@ -345,9 +348,11 @@ export default function RefinanceCheck() {
 
       setLeadSent(true);
       window.requestAnimationFrame(() => successRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
-    } catch {
+    } catch (err) {
       setLeadSent(false);
-      setLeadError("לא הצלחנו לשלוח את הפרטים כרגע. נסה שוב בעוד רגע.");
+      setLeadError(err?.message && err.message !== "Lead request was not confirmed"
+        ? err.message
+        : "לא הצלחנו לשלוח את הפרטים כרגע. נסה שוב בעוד רגע.");
     } finally {
       setLeadLoading(false);
     }
