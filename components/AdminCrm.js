@@ -8,6 +8,15 @@ const LEAD_QUALITIES = ["", "חם", "בינוני", "חלש", "לא סווג"];
 const LEAD_PRIORITIES = ["", "גבוה", "רגיל", "נמוך"];
 const FOLLOW_UP_STAGES = ["לא טופל", "ניסיון 1", "ניסיון 2", "נקבעה שיחה", "נשלחו מסמכים", "ממתין ללקוח", "נסגר"];
 
+const NAV_ITEMS = [
+  { id: "dashboard", label: "דשבורד", icon: "◈" },
+  { id: "all", label: "כל הלידים", icon: "≡" },
+  { id: "hot", label: "לידים חמים", icon: "◆" },
+  { id: "unassigned", label: "לא משויכים", icon: "○" },
+  { id: "advisors", label: "יועצים", icon: "◇" },
+  { id: "commissions", label: "עמלות", icon: "₪" },
+];
+
 function getAdminErrorMessage(code, fallback = "") {
   const messages = {
     ADMIN_AUTH_REQUIRED: "החיבור לאדמין פג או לא קיים. יש להתחבר מחדש.",
@@ -39,6 +48,13 @@ function formatDate(value) {
   return new Intl.DateTimeFormat("he-IL", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
+function formatDateShort(value) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat("he-IL", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(date);
+}
+
 function normalizeSearchText(value) {
   return String(value || "").toLowerCase().replace(/\s+/g, " ").trim();
 }
@@ -48,6 +64,13 @@ function qualityClasses(quality) {
   if (quality === "בינוני") return "border-amber-200 bg-amber-50 text-amber-800";
   if (quality === "חלש") return "border-red-200 bg-red-50 text-red-800";
   return "border-slate-200 bg-slate-50 text-slate-700";
+}
+
+function qualityDot(quality) {
+  if (quality === "חם") return "bg-emerald-500";
+  if (quality === "בינוני") return "bg-amber-400";
+  if (quality === "חלש") return "bg-red-400";
+  return "bg-slate-300";
 }
 
 function statusClasses(status) {
@@ -89,17 +112,35 @@ function Select({ label, value, onChange, options, allowEmpty = false }) {
   return <Field label={label}><select value={value || ""} onChange={(event) => onChange(event.target.value)} className="focus-field min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-mort-ink">{allowEmpty && <option value="">הכל</option>}{options.map((option) => <option key={option} value={option}>{option || "הכל"}</option>)}</select></Field>;
 }
 
-function Metric({ label, value, sub }) {
-  return <div className="surface-card p-4"><span className="block text-xs font-black text-mort-muted">{label}</span><strong className="number-display mt-1 block text-xl font-black text-mort-ink">{value}</strong>{sub && <span className="mt-1 block text-xs font-bold text-mort-muted">{sub}</span>}</div>;
-}
-
 function Detail({ label, value }) {
   return <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3"><span className="block text-xs font-black text-mort-muted">{label}</span><strong className="mt-1 block break-words text-sm font-black text-mort-ink">{value || "-"}</strong></div>;
 }
 
 function Bar({ label, value, total }) {
   const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-  return <div><div className="mb-1 flex justify-between text-xs font-black text-mort-muted"><span>{label}</span><span>{value} · {pct}%</span></div><div className="h-3 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-mort-ink" style={{ width: `${pct}%` }} /></div></div>;
+  return <div><div className="mb-1 flex justify-between text-xs font-black text-mort-muted"><span>{label}</span><span>{value} · {pct}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-finzo-cobalt" style={{ width: `${pct}%` }} /></div></div>;
+}
+
+function KpiCard({ label, value, sub, accent }) {
+  const accentMap = {
+    blue: "border-finzo-cobalt/30 bg-finzo-cobalt-l/40",
+    green: "border-emerald-200 bg-emerald-50/60",
+    amber: "border-amber-200 bg-amber-50/60",
+    red: "border-red-200 bg-red-50/60",
+    slate: "border-slate-200 bg-white",
+  };
+  const base = accentMap[accent] || accentMap.slate;
+  return (
+    <div className={`rounded-2xl border p-4 shadow-e-1 ${base}`}>
+      <span className="block text-xs font-bold text-mort-muted">{label}</span>
+      <strong className="mt-1.5 block font-number text-2xl font-black text-mort-ink">{value}</strong>
+      {sub && <span className="mt-1 block text-xs font-bold text-mort-muted">{sub}</span>}
+    </div>
+  );
+}
+
+function SectionTitle({ children }) {
+  return <h2 className="text-xs font-black uppercase tracking-widest text-mort-muted">{children}</h2>;
 }
 
 export default function AdminCrm() {
@@ -121,10 +162,20 @@ export default function AdminCrm() {
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState("");
   const [newAdvisor, setNewAdvisor] = useState({ advisorId: "", name: "", phone: "", email: "", commissionType: "lead", commissionAmount: "" });
+  const [activeSection, setActiveSection] = useState("all");
+  const [expandedLeadId, setExpandedLeadId] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const sectionLeads = useMemo(() => {
+    if (activeSection === "hot") return leads.filter((l) => l.leadQuality === "חם");
+    if (activeSection === "unassigned") return leads.filter((l) => !l.assignedAdvisor && !l.assignedAdvisorId);
+    if (activeSection === "commissions") return leads.filter((l) => l.commissionStatus || l.expectedCommission || l.commissionAmount);
+    return leads;
+  }, [leads, activeSection]);
 
   const filteredLeads = useMemo(() => {
     const term = normalizeSearchText(query);
-    return leads.filter((lead) => {
+    return sectionLeads.filter((lead) => {
       const leadStatus = lead.leadStatus || lead.status || "חדש";
       const quality = lead.leadQuality || "לא סווג";
       const priority = lead.leadPriority || "רגיל";
@@ -136,7 +187,7 @@ export default function AdminCrm() {
         && (!advisorFilter || leadAdvisorId === advisorFilter || lead.assignedAdvisor === advisorFilter)
         && (!term || searchable.includes(term));
     });
-  }, [leads, query, statusFilter, qualityFilter, priorityFilter, advisorFilter]);
+  }, [sectionLeads, query, statusFilter, qualityFilter, priorityFilter, advisorFilter]);
 
   const stats = useMemo(() => {
     const total = leads.length;
@@ -294,24 +345,552 @@ export default function AdminCrm() {
 
   function toggleSelected(id) { setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]); }
   function toggleSelectAll() { setSelectedIds((current) => current.length === filteredLeads.length ? [] : filteredLeads.map((lead) => lead.id)); }
+  function clearFilters() { setQuery(""); setStatusFilter(""); setQualityFilter(""); setPriorityFilter(""); setAdvisorFilter(""); }
+  const hasFilters = query || statusFilter || qualityFilter || priorityFilter || advisorFilter;
 
-  const messageClass = messageType === "error" ? "border-red-200 bg-red-50 text-red-800" : messageType === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-blue-200 bg-blue-50 text-blue-800";
+  const messageClass = messageType === "error"
+    ? "border-red-200 bg-red-50 text-red-800"
+    : messageType === "success"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+      : "border-blue-200 bg-blue-50 text-blue-800";
 
   if (!isAuthenticated) {
-    return <main dir="rtl" className="min-h-screen px-4 py-8 text-mort-text sm:px-6 lg:px-8"><Head><title>Admin CRM | Finzo</title><meta name="robots" content="noindex,nofollow" /></Head><section className="mx-auto max-w-xl glass-card p-6 sm:p-8"><span className="pill border-emerald-200 bg-emerald-50 text-emerald-800">CRM פרטי</span><h1 className="mt-4 text-3xl font-black text-mort-ink">כניסת אדמין</h1><p className="mt-2 text-sm font-bold text-mort-muted">התחברות לניהול לידים, סטטוסים, יועצים ועמלות.</p><form className="mt-6 grid gap-3" onSubmit={login}><input className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="סיסמת אדמין" autoComplete="current-password" /><button disabled={loading} className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white disabled:opacity-60" type="submit">{loading ? "מתחבר..." : "כניסה ל־CRM"}</button></form>{message && <div className={`mt-4 rounded-2xl border p-3 text-sm font-black ${messageClass}`}>{message}</div>}</section></main>;
+    return (
+      <main dir="rtl" className="flex min-h-screen items-center justify-center bg-finzo-paper px-4 py-12">
+        <Head><title>Admin Back Office | FINZO</title><meta name="robots" content="noindex,nofollow" /></Head>
+        <div className="w-full max-w-md">
+          <div className="mb-8 text-center">
+            <span className="inline-block rounded-full border border-finzo-line bg-white px-4 py-1.5 text-xs font-black tracking-widest text-finzo-ink-3 uppercase">FINZO</span>
+            <h1 className="mt-4 text-3xl font-black text-finzo-ink">Back Office</h1>
+            <p className="mt-2 text-sm font-bold text-mort-muted">מערכת ניהול לידים ויועצים — גישה מורשית בלבד</p>
+          </div>
+          <div className="rounded-3xl border border-finzo-line bg-white p-8 shadow-e-3">
+            <form className="grid gap-4" onSubmit={login}>
+              <div>
+                <label className="mb-1.5 block text-xs font-black text-mort-muted">סיסמת כניסה</label>
+                <input
+                  className="min-h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold text-mort-ink focus:border-finzo-cobalt focus:bg-white focus:outline-none focus:ring-2 focus:ring-finzo-cobalt/20"
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="הזן סיסמה"
+                  autoComplete="current-password"
+                />
+              </div>
+              <button
+                disabled={loading}
+                className="min-h-12 rounded-2xl bg-finzo-ink px-5 py-3 font-black text-white transition-opacity disabled:opacity-60"
+                type="submit"
+              >
+                {loading ? "מתחבר..." : "כניסה למערכת"}
+              </button>
+            </form>
+            {message && (
+              <div className={`mt-4 rounded-2xl border p-3 text-sm font-bold ${messageClass}`}>{message}</div>
+            )}
+          </div>
+          <p className="mt-6 text-center text-xs font-bold text-mort-muted">FINZO Admin · Back Office v1</p>
+        </div>
+      </main>
+    );
   }
 
-  return <main dir="rtl" className="min-h-screen px-4 py-6 text-mort-text sm:px-6 lg:px-8"><Head><title>Admin CRM | Finzo</title><meta name="robots" content="noindex,nofollow" /></Head><div className="mx-auto w-full max-w-[1560px]">
-    <section className="glass-card p-5 sm:p-7"><div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><span className="pill border-slate-200 bg-white text-mort-muted">Admin CRM</span><h1 className="mt-3 text-3xl font-black text-mort-ink sm:text-4xl">ניהול לידים ויועצים</h1><p className="mt-2 max-w-2xl text-sm font-bold text-mort-muted">שיוך מרוכז, דירוג איכות, מעקב, סינון וגרפים בסיסיים.</p></div><button disabled={loading} onClick={() => loadLeads()} className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white disabled:opacity-60" type="button">{loading ? "טוען..." : "רענון לידים"}</button></div>
-    <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"><Metric label="סה״כ לידים" value={stats.total} /><Metric label="לידים חמים" value={stats.hot} /><Metric label="פתוחים" value={stats.open} /><Metric label="משויכים" value={stats.assigned} /><Metric label="יחס סגירה" value={`${stats.closeRate}%`} /></div>
-    <div className="mt-5 grid gap-4 lg:grid-cols-3"><div className="fintech-card p-4"><h3 className="font-black text-mort-ink">איכות לידים</h3><div className="mt-3 grid gap-3"><Bar label="חם" value={stats.hot} total={stats.total} /><Bar label="בינוני" value={stats.medium} total={stats.total} /><Bar label="חלש" value={stats.weak} total={stats.total} /></div></div><div className="fintech-card p-4"><h3 className="font-black text-mort-ink">לפי יועץ</h3><div className="mt-3 grid gap-3">{advisorStats.length ? advisorStats.map((item) => <Bar key={item.id} label={item.name} value={item.count} total={stats.total} />) : <p className="text-sm font-bold text-mort-muted">עדיין אין יועצים.</p>}</div></div><div className="fintech-card p-4"><h3 className="font-black text-mort-ink">סטטוס טיפול</h3><div className="mt-3 grid gap-3"><Bar label="פתוחים" value={stats.open} total={stats.total} /><Bar label="נסגרו" value={stats.closed} total={stats.total} /><Bar label="היום" value={stats.todayCount} total={stats.total} /></div></div></div>
-    <div className="mt-5 grid gap-3 lg:grid-cols-5"><input className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink lg:col-span-2" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="חיפוש לפי שם, טלפון, עיר, מקור או יועץ" /><Select label="סטטוס" value={statusFilter} onChange={setStatusFilter} options={statuses} allowEmpty /><Select label="איכות" value={qualityFilter} onChange={setQualityFilter} options={LEAD_QUALITIES} /><Select label="עדיפות" value={priorityFilter} onChange={setPriorityFilter} options={LEAD_PRIORITIES} /></div>
-    <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_240px_180px]"><select className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={advisorFilter} onChange={(event) => setAdvisorFilter(event.target.value)}><option value="">כל היועצים</option>{advisors.map((advisor) => <option key={advisorId(advisor)} value={advisorId(advisor)}>{advisorName(advisor)}</option>)}</select><select className="focus-field min-h-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-mort-ink" value={bulkAdvisorId} onChange={(event) => setBulkAdvisorId(event.target.value)}><option value="">בחר יועץ לשיוך</option>{advisors.map((advisor) => <option key={advisorId(advisor)} value={advisorId(advisor)}>{advisorName(advisor)}</option>)}</select><button type="button" onClick={bulkAssignAdvisor} disabled={loading || selectedIds.length === 0} className="rounded-2xl bg-violet-700 px-5 py-3 font-black text-white disabled:opacity-50">שייך {selectedIds.length || ""} לידים</button></div>
-    {message && <div className={`mt-4 rounded-2xl border p-3 text-sm font-black ${messageClass}`}>{message}</div>}</section>
+  const showDashboard = activeSection === "dashboard";
+  const showAdvisors = activeSection === "advisors";
+  const showLeads = !showDashboard && !showAdvisors;
 
-    <section className="mt-5 grid gap-4 lg:grid-cols-[1fr_380px]"><div className="grid gap-4"><div className="fintech-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"><label className="flex items-center gap-2 text-sm font-black text-mort-ink"><input type="checkbox" checked={filteredLeads.length > 0 && selectedIds.length === filteredLeads.length} onChange={toggleSelectAll} /> בחר הכל ({filteredLeads.length})</label><div className="flex flex-wrap gap-2"><button type="button" onClick={() => bulkPatch({ leadQuality: "חם", leadPriority: "גבוה" })} disabled={!selectedIds.length} className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-800 disabled:opacity-50">סמן חם</button><button type="button" onClick={() => bulkPatch({ followUpStage: "ניסיון 1" })} disabled={!selectedIds.length} className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-black text-amber-800 disabled:opacity-50">מעקב ניסיון 1</button><button type="button" onClick={() => bulkPatch({ leadStatus: "לא רלוונטי", status: "לא רלוונטי" })} disabled={!selectedIds.length} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-black text-slate-700 disabled:opacity-50">לא רלוונטי</button><button type="button" onClick={bulkDeleteLeads} disabled={!selectedIds.length || loading} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 disabled:opacity-50">מחק נבחרים</button></div></div>
-    {!loading && filteredLeads.length === 0 && <div className="fintech-card p-8 text-center"><h2 className="text-2xl font-black text-mort-ink">אין לידים להצגה</h2><p className="mt-2 font-bold text-mort-muted">שנה סינון או בדוק שהלידים נשמרים ב־Supabase.</p></div>}
-    {filteredLeads.map((lead) => { const leadStatus = lead.leadStatus || lead.status || "חדש"; const isSaving = savingId === lead.id; const quality = lead.leadQuality || "לא סווג"; return <article key={lead.id} className="fintech-card overflow-hidden p-5 sm:p-6"><div className="flex flex-col gap-3 border-b border-slate-200 pb-4 lg:flex-row lg:items-start lg:justify-between"><div className="flex gap-3"><input className="mt-2" type="checkbox" checked={selectedIds.includes(lead.id)} onChange={() => toggleSelected(lead.id)} /><div><div className="flex flex-wrap items-center gap-2"><h2 className="text-2xl font-black text-mort-ink">{lead.name || "ליד ללא שם"}</h2><span className={`pill ${statusClasses(leadStatus)}`}>{leadStatus}</span><span className={`pill ${qualityClasses(quality)}`}>{quality}</span>{isSaving && <span className="pill border-amber-200 bg-amber-50 text-amber-800">שומר...</span>}</div><p className="mt-1 text-sm font-bold text-mort-muted">נוצר: {formatDate(lead.createdAt)} · יועץ: {lead.assignedAdvisor || "לא שויך"}</p></div></div><div className="flex items-center gap-2"><a className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-center font-black text-mort-ink" href={lead.phone ? `tel:${lead.phone}` : undefined}>חיוג</a><button type="button" onClick={() => deleteSingleLead(lead.id)} className="rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-center font-black text-red-700">מחק ליד</button></div></div><div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"><Detail label="טלפון" value={lead.phone} /><Detail label="עיר" value={lead.city} /><Detail label="משכנתא" value={formatILS(toNumber(lead.mortgageAmount))} /><Detail label="סיכוי אישור" value={lead.approvalScore || lead.estimatedApprovalResult ? `${lead.approvalScore || lead.estimatedApprovalResult}%` : "-"} /><Detail label="הכנסה" value={lead.monthlyIncome ? formatILS(toNumber(lead.monthlyIncome)) : "-"} /><Detail label="הון עצמי" value={lead.equityAmount ? formatILS(toNumber(lead.equityAmount)) : "-"} /><Detail label="סטטוס חוזה" value={lead.contractStatus || lead.purchaseStatus} /><Detail label="מועד חזרה" value={lead.requestedContactTime} /></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4"><Select label="סטטוס" value={leadStatus} options={statuses} onChange={(value) => patchLead(lead.id, { leadStatus: value, status: value })} /><Select label="איכות" value={quality} options={LEAD_QUALITIES.filter(Boolean)} onChange={(value) => patchLead(lead.id, { leadQuality: value })} /><Select label="שלב מעקב" value={lead.followUpStage || "לא טופל"} options={FOLLOW_UP_STAGES} onChange={(value) => patchLead(lead.id, { followUpStage: value })} /><Input label="תאריך מעקב" type="date" value={lead.followUpDate} onChange={(value) => patchLead(lead.id, { followUpDate: value })} /><Input label="שם יועץ" value={lead.assignedAdvisor} onChange={(value) => patchLead(lead.id, { assignedAdvisor: value })} /><Input label="טלפון יועץ" value={lead.advisorPhone} onChange={(value) => patchLead(lead.id, { advisorPhone: value })} /><Input label="עמלה" value={lead.expectedCommission || lead.commissionAmount} onChange={(value) => patchLead(lead.id, { expectedCommission: value, commissionAmount: value })} /><Select label="סטטוס עמלה" value={lead.commissionStatus || "pending"} options={commissionStatuses} onChange={(value) => patchLead(lead.id, { commissionStatus: value })} /></div><textarea className="focus-field mt-4 min-h-24 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-mort-ink" defaultValue={lead.internalNotes || ""} onBlur={(event) => { if (event.target.value !== (lead.internalNotes || "")) patchLead(lead.id, { internalNotes: event.target.value }); }} placeholder="הערות פנימיות לצוות" /></article>; })}</div>
-    <aside className="grid content-start gap-4"><section className="fintech-card p-5"><h2 className="text-xl font-black text-mort-ink">הוספת יועץ</h2><form className="mt-4 grid gap-3" onSubmit={createAdvisor}><Input label="שם יועץ" value={newAdvisor.name} onChange={(value) => setNewAdvisor((c) => ({ ...c, name: value, advisorId: c.advisorId || value }))} /><Input label="טלפון" value={newAdvisor.phone} onChange={(value) => setNewAdvisor((c) => ({ ...c, phone: value }))} /><Input label="אימייל" value={newAdvisor.email} onChange={(value) => setNewAdvisor((c) => ({ ...c, email: value }))} /><Input label="עמלה" value={newAdvisor.commissionAmount} onChange={(value) => setNewAdvisor((c) => ({ ...c, commissionAmount: value }))} /><button className="rounded-2xl bg-mort-ink px-5 py-3 font-black text-white" type="submit" disabled={loading}>הוסף יועץ</button></form></section><section className="fintech-card p-5"><h2 className="text-xl font-black text-mort-ink">יועצים קיימים</h2><div className="mt-4 grid gap-3">{advisors.length ? advisors.map((advisor) => <div key={advisorId(advisor)} className="rounded-2xl border border-slate-200 bg-white p-3"><strong className="block text-mort-ink">{advisorName(advisor)}</strong><span className="block text-sm font-bold text-mort-muted">{advisorPhone(advisor)}</span><span className="block text-sm font-bold text-mort-muted">{advisorEmail(advisor)}</span></div>) : <p className="text-sm font-bold text-mort-muted">אין יועצים עדיין.</p>}</div></section></aside></section>
-  </div></main>;
+  return (
+    <div dir="rtl" className="flex min-h-screen bg-finzo-paper text-mort-text">
+      <Head><title>Admin Back Office | FINZO</title><meta name="robots" content="noindex,nofollow" /></Head>
+
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — right side in RTL */}
+      <aside className={`fixed inset-y-0 right-0 z-30 flex w-60 flex-col border-l border-finzo-line bg-white shadow-e-3 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0 lg:shadow-none ${sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}`}>
+        <div className="border-b border-finzo-line px-5 py-5">
+          <span className="block text-xs font-black tracking-widest text-finzo-cobalt uppercase">FINZO</span>
+          <span className="mt-0.5 block text-base font-black text-finzo-ink">Back Office</span>
+          <span className="mt-0.5 block text-xs font-bold text-mort-muted">ניהול לידים ומכירות</span>
+        </div>
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <p className="mb-2 px-2 text-xs font-black uppercase tracking-widest text-mort-muted">תפריט ראשי</p>
+          <ul className="grid gap-0.5">
+            {NAV_ITEMS.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => { setActiveSection(item.id); setSidebarOpen(false); }}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-black transition-colors ${activeSection === item.id ? "bg-finzo-cobalt-l text-finzo-cobalt" : "text-mort-text hover:bg-finzo-paper"}`}
+                >
+                  <span className="w-5 text-center text-base leading-none">{item.icon}</span>
+                  <span>{item.label}</span>
+                  {item.id === "hot" && stats.hot > 0 && (
+                    <span className="mr-auto rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-black text-emerald-800">{stats.hot}</span>
+                  )}
+                  {item.id === "unassigned" && (stats.total - stats.assigned) > 0 && (
+                    <span className="mr-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-black text-amber-800">{stats.total - stats.assigned}</span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className="border-t border-finzo-line px-5 py-4">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="text-xs font-bold text-mort-muted">מערכת פעילה</span>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <div className="flex min-w-0 flex-1 flex-col">
+
+        {/* Top header */}
+        <header className="sticky top-0 z-10 border-b border-finzo-line bg-white/95 backdrop-blur-sm">
+          <div className="flex items-center justify-between px-5 py-3.5">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className="rounded-xl border border-finzo-line bg-white p-2 text-mort-muted shadow-e-1 lg:hidden"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+              </button>
+              <div>
+                <h1 className="text-base font-black text-finzo-ink leading-tight">
+                  {NAV_ITEMS.find((n) => n.id === activeSection)?.label || "ניהול לידים"}
+                </h1>
+                <p className="text-xs font-bold text-mort-muted">FINZO · ניהול לידים, יועצים ומכירות</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="hidden items-center gap-1.5 rounded-full border border-finzo-line bg-finzo-paper px-3 py-1.5 sm:flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <span className="text-xs font-bold text-mort-muted">מחובר</span>
+              </div>
+              <button
+                disabled={loading}
+                onClick={() => loadLeads()}
+                className="rounded-xl border border-finzo-line bg-white px-4 py-2 text-sm font-black text-mort-ink shadow-e-1 hover:bg-finzo-paper disabled:opacity-60 transition-colors"
+                type="button"
+              >
+                {loading ? "טוען..." : "רענון"}
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* System message banner */}
+        {message && (
+          <div className={`mx-5 mt-4 rounded-2xl border px-4 py-3 text-sm font-bold ${messageClass}`}>
+            {message}
+          </div>
+        )}
+
+        <main className="flex-1 overflow-y-auto p-5">
+
+          {/* ── Dashboard section ── */}
+          {showDashboard && (
+            <div className="grid gap-6">
+              <div>
+                <SectionTitle>מדדים עיקריים</SectionTitle>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <KpiCard label="סה״כ לידים" value={stats.total} accent="slate" />
+                  <KpiCard label="לידים חדשים היום" value={stats.todayCount} sub="תוך 24 שעות" accent="blue" />
+                  <KpiCard label="לידים חמים" value={stats.hot} accent="green" />
+                  <KpiCard label="לידים פתוחים" value={stats.open} accent="amber" />
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <KpiCard label="משויכים ליועץ" value={stats.assigned} accent="blue" />
+                  <KpiCard label="נסגרו" value={stats.closed} accent="green" />
+                  <KpiCard label="יחס סגירה" value={`${stats.closeRate}%`} sub={`${stats.closed} מתוך ${stats.total}`} accent="slate" />
+                </div>
+              </div>
+              <div className="grid gap-4 lg:grid-cols-3">
+                <div className="rounded-2xl border border-finzo-line bg-white p-5 shadow-e-1">
+                  <h3 className="text-sm font-black text-mort-ink">בקרת איכות לידים</h3>
+                  <div className="mt-4 grid gap-3">
+                    <Bar label="חם" value={stats.hot} total={stats.total} />
+                    <Bar label="בינוני" value={stats.medium} total={stats.total} />
+                    <Bar label="חלש" value={stats.weak} total={stats.total} />
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-finzo-line bg-white p-5 shadow-e-1">
+                  <h3 className="text-sm font-black text-mort-ink">שיוך ליועצים</h3>
+                  <div className="mt-4 grid gap-3">
+                    {advisorStats.length
+                      ? advisorStats.map((item) => <Bar key={item.id} label={item.name} value={item.count} total={stats.total} />)
+                      : <p className="text-sm font-bold text-mort-muted">עדיין אין יועצים.</p>}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-finzo-line bg-white p-5 shadow-e-1">
+                  <h3 className="text-sm font-black text-mort-ink">סטטוס מכירה</h3>
+                  <div className="mt-4 grid gap-3">
+                    <Bar label="פתוחים" value={stats.open} total={stats.total} />
+                    <Bar label="נסגרו" value={stats.closed} total={stats.total} />
+                    <Bar label="היום" value={stats.todayCount} total={stats.total} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Advisors section ── */}
+          {showAdvisors && (
+            <div className="grid gap-5 lg:grid-cols-[380px_1fr]">
+              <div className="rounded-2xl border border-finzo-line bg-white p-5 shadow-e-1">
+                <h2 className="text-sm font-black text-mort-ink">הוספת יועץ חדש</h2>
+                <form className="mt-4 grid gap-3" onSubmit={createAdvisor}>
+                  <Input label="שם מלא" value={newAdvisor.name} onChange={(value) => setNewAdvisor((c) => ({ ...c, name: value, advisorId: c.advisorId || value }))} />
+                  <Input label="טלפון" value={newAdvisor.phone} onChange={(value) => setNewAdvisor((c) => ({ ...c, phone: value }))} />
+                  <Input label="אימייל" value={newAdvisor.email} onChange={(value) => setNewAdvisor((c) => ({ ...c, email: value }))} />
+                  <Input label="עמלה" value={newAdvisor.commissionAmount} onChange={(value) => setNewAdvisor((c) => ({ ...c, commissionAmount: value }))} />
+                  <button className="min-h-11 rounded-2xl bg-finzo-ink px-5 py-3 text-sm font-black text-white disabled:opacity-60" type="submit" disabled={loading}>
+                    {loading ? "שומר..." : "הוסף יועץ"}
+                  </button>
+                </form>
+              </div>
+              <div className="rounded-2xl border border-finzo-line bg-white p-5 shadow-e-1">
+                <h2 className="text-sm font-black text-mort-ink">יועצים פעילים</h2>
+                {advisors.length ? (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {advisors.map((advisor) => {
+                      const stat = advisorStats.find((s) => s.id === advisorId(advisor));
+                      return (
+                        <div key={advisorId(advisor)} className="rounded-2xl border border-finzo-line bg-finzo-paper p-4">
+                          <strong className="block font-black text-finzo-ink">{advisorName(advisor)}</strong>
+                          <span className="mt-0.5 block text-xs font-bold text-mort-muted">{advisorPhone(advisor)}</span>
+                          <span className="block text-xs font-bold text-mort-muted">{advisorEmail(advisor)}</span>
+                          {stat && (
+                            <span className="mt-2 inline-block rounded-full bg-finzo-cobalt-l px-2.5 py-0.5 text-xs font-black text-finzo-cobalt">
+                              {stat.count} לידים
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm font-bold text-mort-muted">אין יועצים עדיין.</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Leads section ── */}
+          {showLeads && (
+            <div className="grid gap-4">
+
+              {/* KPI strip */}
+              <div className="grid gap-2 sm:grid-cols-4 lg:grid-cols-7">
+                <KpiCard label="סה״כ" value={stats.total} accent="slate" />
+                <KpiCard label="היום" value={stats.todayCount} accent="blue" />
+                <KpiCard label="חמים" value={stats.hot} accent="green" />
+                <KpiCard label="פתוחים" value={stats.open} accent="amber" />
+                <KpiCard label="משויכים" value={stats.assigned} accent="blue" />
+                <KpiCard label="נסגרו" value={stats.closed} accent="green" />
+                <KpiCard label="סגירה" value={`${stats.closeRate}%`} accent="slate" />
+              </div>
+
+              {/* Filters toolbar */}
+              <div className="rounded-2xl border border-finzo-line bg-white p-4 shadow-e-1">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+                  <div className="flex-1">
+                    <label className="mb-1 block text-xs font-black text-mort-muted">חיפוש</label>
+                    <input
+                      className="min-h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:bg-white focus:outline-none focus:ring-2 focus:ring-finzo-cobalt/20"
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="חיפוש לפי שם, טלפון, עיר, מקור, יועץ..."
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 lg:flex lg:items-end">
+                    <div>
+                      <label className="mb-1 block text-xs font-black text-mort-muted">סטטוס</label>
+                      <select className="min-h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                        <option value="">הכל</option>
+                        {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-black text-mort-muted">איכות</label>
+                      <select className="min-h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" value={qualityFilter} onChange={(e) => setQualityFilter(e.target.value)}>
+                        {LEAD_QUALITIES.map((q) => <option key={q} value={q}>{q || "כל האיכויות"}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-black text-mort-muted">עדיפות</label>
+                      <select className="min-h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+                        {LEAD_PRIORITIES.map((p) => <option key={p} value={p}>{p || "כל העדיפויות"}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-black text-mort-muted">יועץ</label>
+                      <select className="min-h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" value={advisorFilter} onChange={(e) => setAdvisorFilter(e.target.value)}>
+                        <option value="">כל היועצים</option>
+                        {advisors.map((a) => <option key={advisorId(a)} value={advisorId(a)}>{advisorName(a)}</option>)}
+                      </select>
+                    </div>
+                    {hasFilters && (
+                      <button
+                        type="button"
+                        onClick={clearFilters}
+                        className="min-h-11 self-end rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-black text-red-700 transition-colors hover:bg-red-100"
+                      >
+                        נקה סינון
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bulk actions toolbar */}
+              <div className="rounded-2xl border border-finzo-line bg-white p-4 shadow-e-1">
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex items-center gap-2 text-sm font-black text-mort-ink">
+                    <input type="checkbox" checked={filteredLeads.length > 0 && selectedIds.length === filteredLeads.length} onChange={toggleSelectAll} />
+                    <span>בחר הכל <span className="font-bold text-mort-muted">({filteredLeads.length})</span></span>
+                  </label>
+                  {selectedIds.length > 0 && (
+                    <span className="rounded-full bg-finzo-cobalt-l px-2.5 py-0.5 text-xs font-black text-finzo-cobalt">
+                      {selectedIds.length} נבחרו
+                    </span>
+                  )}
+                  <div className="mr-auto flex flex-wrap gap-2">
+                    <button type="button" onClick={() => bulkPatch({ leadQuality: "חם", leadPriority: "גבוה" })} disabled={!selectedIds.length} className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-800 disabled:opacity-40 hover:bg-emerald-100">
+                      סמן חם
+                    </button>
+                    <button type="button" onClick={() => bulkPatch({ followUpStage: "ניסיון 1" })} disabled={!selectedIds.length} className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-800 disabled:opacity-40 hover:bg-amber-100">
+                      מעקב ניסיון 1
+                    </button>
+                    <button type="button" onClick={() => bulkPatch({ leadStatus: "לא רלוונטי", status: "לא רלוונטי" })} disabled={!selectedIds.length} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-black text-slate-700 disabled:opacity-40 hover:bg-slate-100">
+                      לא רלוונטי
+                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <select className="min-h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-mort-ink" value={bulkAdvisorId} onChange={(e) => setBulkAdvisorId(e.target.value)}>
+                        <option value="">שיוך ליועץ...</option>
+                        {advisors.map((a) => <option key={advisorId(a)} value={advisorId(a)}>{advisorName(a)}</option>)}
+                      </select>
+                      <button type="button" onClick={bulkAssignAdvisor} disabled={loading || !selectedIds.length || !bulkAdvisorId} className="min-h-9 rounded-xl bg-finzo-ink px-3 py-1.5 text-xs font-black text-white disabled:opacity-40">
+                        שייך
+                      </button>
+                    </div>
+                    <button type="button" onClick={bulkDeleteLeads} disabled={!selectedIds.length || loading} className="rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-black text-red-700 disabled:opacity-40 hover:bg-red-100">
+                      מחק נבחרים
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Loading state */}
+              {loading && leads.length === 0 && (
+                <div className="rounded-2xl border border-finzo-line bg-white p-12 text-center shadow-e-1">
+                  <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-finzo-cobalt border-t-transparent" />
+                  <p className="text-sm font-bold text-mort-muted">טוען לידים...</p>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {!loading && filteredLeads.length === 0 && (
+                <div className="rounded-2xl border border-finzo-line bg-white p-12 text-center shadow-e-1">
+                  <p className="text-4xl">○</p>
+                  <h3 className="mt-3 text-lg font-black text-mort-ink">אין לידים להצגה</h3>
+                  <p className="mt-1 text-sm font-bold text-mort-muted">שנה את הסינון, או בדוק שהלידים נשמרים ב־Supabase.</p>
+                  {hasFilters && (
+                    <button type="button" onClick={clearFilters} className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-black text-mort-ink hover:bg-slate-100">
+                      נקה סינון
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Desktop table */}
+              {filteredLeads.length > 0 && (
+                <div className="hidden overflow-hidden rounded-2xl border border-finzo-line bg-white shadow-e-1 lg:block">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-finzo-line bg-finzo-paper">
+                        <th className="py-3 pr-4 text-right">
+                          <input type="checkbox" checked={filteredLeads.length > 0 && selectedIds.length === filteredLeads.length} onChange={toggleSelectAll} />
+                        </th>
+                        <th className="py-3 pr-1 text-right text-xs font-black uppercase tracking-wide text-mort-muted">שם</th>
+                        <th className="py-3 text-right text-xs font-black uppercase tracking-wide text-mort-muted">טלפון</th>
+                        <th className="py-3 text-right text-xs font-black uppercase tracking-wide text-mort-muted">עיר</th>
+                        <th className="py-3 text-right text-xs font-black uppercase tracking-wide text-mort-muted">משכנתא</th>
+                        <th className="py-3 text-right text-xs font-black uppercase tracking-wide text-mort-muted">איכות</th>
+                        <th className="py-3 text-right text-xs font-black uppercase tracking-wide text-mort-muted">סטטוס</th>
+                        <th className="py-3 text-right text-xs font-black uppercase tracking-wide text-mort-muted">יועץ</th>
+                        <th className="py-3 text-right text-xs font-black uppercase tracking-wide text-mort-muted">תאריך</th>
+                        <th className="py-3 pl-4 text-right text-xs font-black uppercase tracking-wide text-mort-muted">פעולות</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredLeads.map((lead) => {
+                        const leadStatus = lead.leadStatus || lead.status || "חדש";
+                        const quality = lead.leadQuality || "לא סווג";
+                        const isSaving = savingId === lead.id;
+                        const isExpanded = expandedLeadId === lead.id;
+                        return (
+                          <>
+                            <tr
+                              key={lead.id}
+                              className={`border-b border-finzo-line transition-colors hover:bg-finzo-paper/60 ${selectedIds.includes(lead.id) ? "bg-finzo-cobalt-l/30" : ""}`}
+                            >
+                              <td className="py-3 pr-4">
+                                <input type="checkbox" checked={selectedIds.includes(lead.id)} onChange={() => toggleSelected(lead.id)} />
+                              </td>
+                              <td className="py-3 pr-1">
+                                <span className="block font-black text-mort-ink">{lead.name || "—"}</span>
+                                {isSaving && <span className="text-xs font-bold text-amber-600">שומר...</span>}
+                              </td>
+                              <td className="py-3">
+                                <a href={lead.phone ? `tel:${lead.phone}` : undefined} className="font-bold text-finzo-cobalt hover:underline">{lead.phone || "—"}</a>
+                              </td>
+                              <td className="py-3 text-sm font-bold text-mort-muted">{lead.city || lead.propertyCity || "—"}</td>
+                              <td className="py-3 text-sm font-black text-mort-ink">{lead.mortgageAmount ? formatILS(toNumber(lead.mortgageAmount)) : "—"}</td>
+                              <td className="py-3">
+                                <span className="flex items-center gap-1.5">
+                                  <span className={`h-2 w-2 rounded-full ${qualityDot(quality)}`} />
+                                  <span className="text-xs font-black text-mort-text">{quality}</span>
+                                </span>
+                              </td>
+                              <td className="py-3">
+                                <span className={`rounded-full border px-2 py-0.5 text-xs font-black ${statusClasses(leadStatus)}`}>{leadStatus}</span>
+                              </td>
+                              <td className="py-3 text-sm font-bold text-mort-muted">{lead.assignedAdvisor || <span className="text-slate-400">—</span>}</td>
+                              <td className="py-3 text-xs font-bold text-mort-muted">{formatDateShort(lead.createdAt)}</td>
+                              <td className="py-3 pl-4">
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedLeadId(isExpanded ? null : lead.id)}
+                                    className="rounded-lg border border-finzo-line bg-finzo-paper px-2.5 py-1 text-xs font-black text-mort-ink hover:bg-finzo-cream"
+                                  >
+                                    {isExpanded ? "סגור" : "עריכה"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteSingleLead(lead.id)}
+                                    className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-black text-red-700 hover:bg-red-100"
+                                  >
+                                    מחק
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                            {isExpanded && (
+                              <tr key={`${lead.id}-expanded`} className="border-b border-finzo-line bg-finzo-paper/40">
+                                <td colSpan={10} className="px-6 py-5">
+                                  <div className="grid gap-4">
+                                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                      <Detail label="טלפון" value={lead.phone} />
+                                      <Detail label="עיר" value={lead.city} />
+                                      <Detail label="משכנתא" value={formatILS(toNumber(lead.mortgageAmount))} />
+                                      <Detail label="סיכוי אישור" value={lead.approvalScore || lead.estimatedApprovalResult ? `${lead.approvalScore || lead.estimatedApprovalResult}%` : "-"} />
+                                      <Detail label="הכנסה" value={lead.monthlyIncome ? formatILS(toNumber(lead.monthlyIncome)) : "-"} />
+                                      <Detail label="הון עצמי" value={lead.equityAmount ? formatILS(toNumber(lead.equityAmount)) : "-"} />
+                                      <Detail label="סטטוס חוזה" value={lead.contractStatus || lead.purchaseStatus} />
+                                      <Detail label="מועד חזרה" value={lead.requestedContactTime} />
+                                    </div>
+                                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                      <Select label="סטטוס" value={leadStatus} options={statuses} onChange={(value) => patchLead(lead.id, { leadStatus: value, status: value })} />
+                                      <Select label="איכות" value={quality} options={LEAD_QUALITIES.filter(Boolean)} onChange={(value) => patchLead(lead.id, { leadQuality: value })} />
+                                      <Select label="שלב מעקב" value={lead.followUpStage || "לא טופל"} options={FOLLOW_UP_STAGES} onChange={(value) => patchLead(lead.id, { followUpStage: value })} />
+                                      <Input label="תאריך מעקב" type="date" value={lead.followUpDate} onChange={(value) => patchLead(lead.id, { followUpDate: value })} />
+                                      <Input label="שם יועץ" value={lead.assignedAdvisor} onChange={(value) => patchLead(lead.id, { assignedAdvisor: value })} />
+                                      <Input label="טלפון יועץ" value={lead.advisorPhone} onChange={(value) => patchLead(lead.id, { advisorPhone: value })} />
+                                      <Input label="עמלה" value={lead.expectedCommission || lead.commissionAmount} onChange={(value) => patchLead(lead.id, { expectedCommission: value, commissionAmount: value })} />
+                                      <Select label="סטטוס עמלה" value={lead.commissionStatus || "pending"} options={commissionStatuses} onChange={(value) => patchLead(lead.id, { commissionStatus: value })} />
+                                    </div>
+                                    <textarea
+                                      className="min-h-20 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none"
+                                      defaultValue={lead.internalNotes || ""}
+                                      onBlur={(event) => { if (event.target.value !== (lead.internalNotes || "")) patchLead(lead.id, { internalNotes: event.target.value }); }}
+                                      placeholder="הערות פנימיות לצוות"
+                                    />
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Mobile cards */}
+              {filteredLeads.length > 0 && (
+                <div className="grid gap-3 lg:hidden">
+                  {filteredLeads.map((lead) => {
+                    const leadStatus = lead.leadStatus || lead.status || "חדש";
+                    const quality = lead.leadQuality || "לא סווג";
+                    const isSaving = savingId === lead.id;
+                    const isExpanded = expandedLeadId === lead.id;
+                    return (
+                      <article key={lead.id} className="overflow-hidden rounded-2xl border border-finzo-line bg-white shadow-e-1">
+                        <div className="flex items-start gap-3 border-b border-finzo-line p-4">
+                          <input className="mt-1" type="checkbox" checked={selectedIds.includes(lead.id)} onChange={() => toggleSelected(lead.id)} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="font-black text-mort-ink">{lead.name || "ליד ללא שם"}</h3>
+                              <span className={`rounded-full border px-2 py-0.5 text-xs font-black ${statusClasses(leadStatus)}`}>{leadStatus}</span>
+                              <span className="flex items-center gap-1"><span className={`h-1.5 w-1.5 rounded-full ${qualityDot(quality)}`} /><span className="text-xs font-black text-mort-muted">{quality}</span></span>
+                              {isSaving && <span className="text-xs font-bold text-amber-600">שומר...</span>}
+                            </div>
+                            <p className="mt-0.5 text-xs font-bold text-mort-muted">
+                              {formatDateShort(lead.createdAt)} · {lead.assignedAdvisor || "לא שויך"} · {lead.phone || "—"}
+                            </p>
+                          </div>
+                          <div className="flex gap-1.5 shrink-0">
+                            {lead.phone && <a href={`tel:${lead.phone}`} className="rounded-xl border border-finzo-line bg-finzo-paper px-2.5 py-1.5 text-xs font-black text-mort-ink">חיוג</a>}
+                            <button type="button" onClick={() => setExpandedLeadId(isExpanded ? null : lead.id)} className="rounded-xl border border-finzo-line bg-finzo-paper px-2.5 py-1.5 text-xs font-black text-mort-ink">{isExpanded ? "סגור" : "עריכה"}</button>
+                            <button type="button" onClick={() => deleteSingleLead(lead.id)} className="rounded-xl border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-black text-red-700">מחק</button>
+                          </div>
+                        </div>
+                        {isExpanded && (
+                          <div className="p-4 grid gap-3">
+                            <div className="grid grid-cols-2 gap-2">
+                              <Detail label="עיר" value={lead.city} />
+                              <Detail label="משכנתא" value={formatILS(toNumber(lead.mortgageAmount))} />
+                              <Detail label="הכנסה" value={lead.monthlyIncome ? formatILS(toNumber(lead.monthlyIncome)) : "-"} />
+                              <Detail label="הון עצמי" value={lead.equityAmount ? formatILS(toNumber(lead.equityAmount)) : "-"} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <Select label="סטטוס" value={leadStatus} options={statuses} onChange={(value) => patchLead(lead.id, { leadStatus: value, status: value })} />
+                              <Select label="איכות" value={quality} options={LEAD_QUALITIES.filter(Boolean)} onChange={(value) => patchLead(lead.id, { leadQuality: value })} />
+                              <Select label="שלב מעקב" value={lead.followUpStage || "לא טופל"} options={FOLLOW_UP_STAGES} onChange={(value) => patchLead(lead.id, { followUpStage: value })} />
+                              <Input label="תאריך מעקב" type="date" value={lead.followUpDate} onChange={(value) => patchLead(lead.id, { followUpDate: value })} />
+                              <Input label="שם יועץ" value={lead.assignedAdvisor} onChange={(value) => patchLead(lead.id, { assignedAdvisor: value })} />
+                              <Input label="טלפון יועץ" value={lead.advisorPhone} onChange={(value) => patchLead(lead.id, { advisorPhone: value })} />
+                              <Input label="עמלה" value={lead.expectedCommission || lead.commissionAmount} onChange={(value) => patchLead(lead.id, { expectedCommission: value, commissionAmount: value })} />
+                              <Select label="סטטוס עמלה" value={lead.commissionStatus || "pending"} options={commissionStatuses} onChange={(value) => patchLead(lead.id, { commissionStatus: value })} />
+                            </div>
+                            <textarea
+                              className="min-h-20 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-mort-ink"
+                              defaultValue={lead.internalNotes || ""}
+                              onBlur={(event) => { if (event.target.value !== (lead.internalNotes || "")) patchLead(lead.id, { internalNotes: event.target.value }); }}
+                              placeholder="הערות פנימיות"
+                            />
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
 }
