@@ -594,6 +594,10 @@ export function Footer({ onCtaClick }) {
           <a href="/blog" className="text-sm font-bold text-violet-700 hover:underline">בלוג משכנתאות ←</a>
           <a href="/guides" className="text-sm font-bold text-violet-700 hover:underline">מדריכי משכנתא ←</a>
         </div>
+        <p className="mt-4 text-xs text-slate-400">
+          יועצי משכנתאות?{" "}
+          <a href="/advisor/login" className="font-semibold text-slate-500 hover:underline">לחצו כאן לכניסה למערכת</a>
+        </p>
       </div>
     </footer>
   );
