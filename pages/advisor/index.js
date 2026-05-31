@@ -165,6 +165,15 @@ function buildAttentionItems(active) {
   return items.sort((a, b) => b.priority - a.priority).slice(0, 8);
 }
 
+// Maps attention reason to the most relevant lead detail tab
+function attentionHref(item) {
+  const base = `/advisor/lead/${item.lead.id}`;
+  if (item.tag === "docs") return `${base}?tab=docs`;
+  if (item.tag === "danger" || item.tag === "warning") return `${base}?tab=activity`;
+  if (item.reason === "מסמכים חסרים") return `${base}?tab=docs`;
+  return base;
+}
+
 const STAGE_TASK_LABEL = {
   waiting_documents:   "בקשת מסמכים",
   documents_requested: "בקשת מסמכים",
@@ -210,15 +219,18 @@ function buildTodayTasks(active) {
 
 function AttentionItem({ item }) {
   const meta = TAG_META[item.tag];
+  const nextAction = item.lead.nextAction;
   return (
     <Link
-      href={`/advisor/lead/${item.lead.id}`}
+      href={attentionHref(item)}
       className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50/80 transition-colors rounded-xl border border-slate-100"
     >
       <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${meta.dot}`} />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-black text-slate-900 truncate">{item.lead.name || "—"}</p>
-        <p className="text-xs font-bold text-slate-400 truncate">{getPipelineStageLabel(getStage(item.lead))}</p>
+        <p className="text-xs font-bold text-slate-400 truncate">
+          {nextAction ? nextAction : getPipelineStageLabel(getStage(item.lead))}
+        </p>
       </div>
       <div className="shrink-0 text-left">
         <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${meta.tag}`}>
@@ -235,7 +247,7 @@ function AttentionItem({ item }) {
 function TodayTaskItem({ item }) {
   return (
     <Link
-      href={`/advisor/lead/${item.lead.id}`}
+      href={item.overdue ? `/advisor/lead/${item.lead.id}?tab=activity` : `/advisor/lead/${item.lead.id}`}
       className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors rounded-xl border ${
         item.overdue ? "border-rose-200 bg-rose-50/30" : "border-slate-100 bg-white"
       }`}
@@ -383,7 +395,7 @@ export default function AdvisorDashboard() {
       <>
         <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
         <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
-          <AdvisorHeader active="/advisor" />
+          <AdvisorHeader active="/advisor" urgentItems={[]} />
           <div className="max-w-6xl mx-auto px-4 py-16 flex flex-col items-center text-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-violet-100 flex items-center justify-center text-3xl">📋</div>
             <h2 className="text-xl font-black text-slate-950">עדיין אין לך לידים פעילים</h2>
@@ -417,7 +429,7 @@ export default function AdvisorDashboard() {
     <>
       <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
       <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
-        <AdvisorHeader active="/advisor" />
+        <AdvisorHeader active="/advisor" urgentItems={attentionItems} />
 
         <div className="max-w-6xl mx-auto px-4 lg:px-6 py-5 space-y-5">
 
@@ -425,20 +437,22 @@ export default function AdvisorDashboard() {
           <div className="flex items-start justify-between gap-3 rounded-2xl bg-gradient-to-l from-violet-50 to-white border border-violet-100 px-5 py-4">
             <div className="min-w-0">
               <h1 className="text-base font-black text-slate-950 mb-0.5">
-                {advisorName ? `שלום, ${advisorName} 👋` : "ברוך הבא למרכז העבודה"}
+                {advisorName ? `שלום, ${advisorName} 👋` : "שלום, ברוך הבא למרכז העבודה"}
               </h1>
               <p className="text-xs font-bold text-slate-500 leading-relaxed">
-                ברוך הבא למרכז העבודה של FINZO. כאן מוצגים רק לידים שנכנסו דרך FINZO ושויכו אליך לאחר רכישה/הקצאה.
+                {!loading && attentionItems.length > 0
+                  ? <span className="text-rose-600">{attentionItems.length} לידים דורשים טיפול — בדקו את רשימת הדחוף למטה.</span>
+                  : "כל התיקים תקינים. עברו לשוק הלידים לרכוש לידים חדשים."}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <Link href="/advisor/leads"
+                className="text-xs font-bold text-violet-700 hover:text-violet-900 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-lg transition-colors hidden sm:block">
+                שוק לידים →
+              </Link>
               <Link href="/advisor/settings"
                 className="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-1.5 bg-white border border-slate-200 rounded-lg transition-colors hidden sm:block">
-                ⚙ הגדרות
-              </Link>
-              <Link href="/advisor/profile"
-                className="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-1.5 bg-white border border-slate-200 rounded-lg transition-colors hidden sm:block">
-                פרופיל
+                ⚙
               </Link>
             </div>
           </div>
@@ -476,7 +490,12 @@ export default function AdvisorDashboard() {
               <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-black text-slate-950">דורש טיפול</h2>
+                    <h2 className="text-sm font-black text-slate-950">
+                      דורש טיפול
+                      {!loading && attentionItems.length > 0 && (
+                        <span className="mr-2 text-[11px] font-black text-rose-600 bg-rose-50 rounded-full px-2 py-0.5 align-middle">{attentionItems.length}</span>
+                      )}
+                    </h2>
                     <p className="text-[11px] font-bold text-slate-400 mt-0.5">
                       לידים עם פעולות באיחור, מסמכים חסרים או ללא מעקב
                     </p>
@@ -498,8 +517,8 @@ export default function AdvisorDashboard() {
                     : (
                         <EmptySection
                           icon="✅"
-                          title="אין כרגע תיקים שדורשים טיפול מיוחד"
-                          sub="כל התיקים תקינים ומעודכנים — כל הכבוד!"
+                          title="כל התיקים תקינים"
+                          sub="לא נמצאו פעולות באיחור או מסמכים חסרים"
                         />
                       )
                 }
@@ -534,7 +553,7 @@ export default function AdvisorDashboard() {
                         <EmptySection
                           icon="🗓"
                           title="אין משימות מוגדרות להיום"
-                          sub='הגדר "פעולה הבאה" בכל תיק כדי לראות כאן'
+                          sub={<>פתחו תיק ליד והגדירו <strong>פעולה הבאה</strong> עם תאריך מעקב</>}
                         />
                       )
                 }

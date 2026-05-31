@@ -29,7 +29,7 @@ export default function AdvisorLogin() {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) { setMessage(j?.message || "אימייל או סיסמה שגויים."); return; }
-      router.push("/advisor/leads");
+      router.push("/advisor");
     } finally {
       setLoading(false);
     }

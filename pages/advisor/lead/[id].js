@@ -425,7 +425,16 @@ export default function LeadDetailPage() {
   const [notes, setNotes] = useState("");
   const [nextActionText, setNextActionText] = useState("");
   const [nextActionDate, setNextActionDate] = useState("");
-  const [tab, setTab] = useState("docs");
+  // Support ?tab= deep-link from dashboard attention items
+  const initialTab = (() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("tab");
+      const valid = ["docs", "bank", "activity", "notes", "appraisal", "legal", "signing", "collateral"];
+      if (p && valid.includes(p)) return p;
+    }
+    return "docs";
+  })();
+  const [tab, setTab] = useState(initialTab);
   const [showWaTemplates, setShowWaTemplates] = useState(false);
   const [msg, setMsg] = useState({ text: "", ok: true });
 
