@@ -29,7 +29,11 @@ const initialLead = {
   phone: "",
   city: "",
   mortgageAmount: "",
+  income: "",
+  loans: "",
+  requestedContactTime: "",
   purchaseStatus: "refinance",
+  hasExistingMortgage: true,
 };
 
 const navLinks = [
@@ -301,11 +305,19 @@ export default function RefinanceCheck() {
     }
 
     const record = {
-      ...lead,
+      name: lead.name.trim(),
       phone,
+      propertyCity: lead.city.trim(),
+      city: lead.city.trim(),
       mortgageAmount: cleanNumber(lead.mortgageAmount) || String(result.balance || ""),
+      monthlyIncome: cleanNumber(lead.income) || String(result.income || ""),
+      debtLevel: cleanNumber(lead.loans) || "",
+      requestedContactTime: lead.requestedContactTime,
       purchaseStatus: "refinance",
+      hasExistingMortgage: true,
       source: "refinance-check",
+      estimatedPayment: result.newPayment ? String(Math.round(result.newPayment)) : "",
+      estimatedApprovalResult: result.score ? String(result.score) : "",
       approval: result.score,
       mainIssue: result.recommendation,
       monthly: result.newPayment,
@@ -352,7 +364,7 @@ export default function RefinanceCheck() {
         <meta property="og:description" content={REFINANCE_SEO.description} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={absoluteUrl(REFINANCE_SEO.path)} />
-        <meta property="og:site_name" content="בדיקת זכאות למשכנתא" />
+        <meta property="og:site_name" content="FINZO" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={REFINANCE_SEO.title} />
         <meta name="twitter:description" content={REFINANCE_SEO.description} />
@@ -487,12 +499,9 @@ function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-        <a href="/" className="flex items-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-violet-100 text-lg font-black text-violet-700">זכ</span>
-          <span className="leading-tight">
-            <span className="block text-base font-black text-slate-950">בדיקת זכאות למשכנתא</span>
-            <span className="hidden text-xs font-bold text-slate-500 sm:block">תשובה פשוטה לפני שפונים לבנק</span>
-          </span>
+        <a href="/" className="flex items-center gap-2.5">
+          <span className="text-lg font-black text-slate-950">FINZO</span>
+          <span className="text-[11px] font-black text-violet-700 bg-violet-100 border border-violet-200 px-2 py-0.5 rounded-full">בדיקת מחזור משכנתא</span>
         </a>
         <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 text-sm font-bold text-slate-600 lg:flex">
           {navLinks.map(([label, href]) => (
@@ -659,7 +668,8 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
           <RateField label="ריבית חדשה לבדיקה" value={data.newRate} onChange={(value) => update("newRate", value)} />
           <MoneyField label="עלות מחזור משוערת" value={data.refinanceCost} onChange={(value) => update("refinanceCost", value)} />
           <MoneyField label="הכנסה נטו" value={data.income} onChange={(value) => update("income", value)} />
-          <MoneyField label="הוצאות והלוואות" value={data.expenses} onChange={(value) => update("expenses", value)} />
+          <MoneyField label="הוצאות חודשיות" value={data.expenses} onChange={(value) => update("expenses", value)} helper="שכירות, מזון, ביטוחים וכד׳ — לא כולל הלוואות." />
+          <MoneyField label="הלוואות חודשיות" value={data.loans} onChange={(value) => update("loans", value)} helper="סך החזרי הלוואות קיימות (לא כולל המשכנתא)." />
         </div>
       </form>
     </div>
@@ -697,20 +707,22 @@ function ResultPanel({ result }) {
   );
 }
 
-function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, leadError, successRef }) {
-  const title = result.isWorthwhile
-    ? "נראה שיש פוטנציאל - עכשיו צריך לבדוק איך מממשים אותו"
-    : result.isBorderline
-      ? "הכדאיות לא חד-משמעית - בדיקה מקצועית יכולה לעשות סדר"
-      : "המחזור לא תמיד משתלם - אבל כדאי להבין למה";
+const CONTACT_TIME_OPTIONS = [
+  { value: "", label: "מתי נוח לדבר?" },
+  { value: "morning", label: "בוקר (08:00–12:00)" },
+  { value: "afternoon", label: "צהריים (12:00–16:00)" },
+  { value: "evening", label: "אחה״צ-ערב (16:00–20:00)" },
+  { value: "anytime", label: "כל שעה" },
+];
 
+function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, leadError, successRef }) {
   return (
     <section id="lead" className="mt-10 grid items-stretch gap-6 rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] lg:grid-cols-2">
       <div>
-        <span className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-black text-violet-800 shadow-sm">בדיקה עם יועץ</span>
-        <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950">{title}</h2>
+        <span className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-black text-violet-800 shadow-sm">בדיקה ראשונית</span>
+        <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950">קבלו בדיקת מחזור ראשונית</h2>
         <p className="mt-4 leading-8 text-slate-600">
-          מחזור משכנתא יכול לחסוך כסף, אבל רק אם בודקים ריביות, עלויות, תקופה שנותרה ונקודת איזון. השאירו פרטים לבדיקה ראשונית.
+          מלאו את פרטי המשכנתא הקיימת ונציג כיוון ראשוני. אם יש פוטנציאל, ניתן יהיה להמשיך לבדיקה מקצועית.
         </p>
         <ul className="mt-5 space-y-3 font-bold text-slate-700">
           <li>• בדיקת הנתונים מול מצב המשכנתא הקיים</li>
@@ -718,21 +730,50 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
           <li>• בדיקת נקודת איזון ועלויות מחזור</li>
           <li>• בחינת תמהיל חלופי מול ריביות בפועל</li>
         </ul>
+        <p className="mt-6 text-xs font-bold text-slate-400">אומדן ראשוני בלבד, לא אישור בנקאי ולא ייעוץ אישי.</p>
       </div>
 
       <form onSubmit={submitLead} aria-busy={leadLoading ? "true" : "false"} className="rounded-[28px] bg-white p-5 shadow-sm">
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField label="שם מלא" value={lead.name} onChange={(value) => setLead({ ...lead, name: value })} autoComplete="name" />
           <TextField label="טלפון" value={lead.phone} onChange={(value) => setLead({ ...lead, phone: value })} placeholder="05X-XXXXXXX" autoComplete="tel" />
-          <TextField label="עיר" value={lead.city} onChange={(value) => setLead({ ...lead, city: value })} autoComplete="address-level2" />
-          <MoneyField label="סכום משכנתא" value={lead.mortgageAmount} onChange={(value) => setLead({ ...lead, mortgageAmount: value })} />
+          <TextField label="עיר הנכס" value={lead.city} onChange={(value) => setLead({ ...lead, city: value })} autoComplete="address-level2" />
+          <MoneyField
+            label="יתרת משכנתא נוכחית"
+            value={lead.mortgageAmount || (result.balance ? String(Math.round(result.balance)) : "")}
+            onChange={(value) => setLead({ ...lead, mortgageAmount: value })}
+          />
+          <MoneyField
+            label="הכנסה חודשית נטו"
+            value={lead.income}
+            onChange={(value) => setLead({ ...lead, income: value })}
+          />
+          <MoneyField
+            label="הלוואות חודשיות"
+            value={lead.loans}
+            onChange={(value) => setLead({ ...lead, loans: value })}
+          />
+          <div className="sm:col-span-2">
+            <label className="block">
+              <span className="text-sm font-black text-slate-700">מתי נוח לדבר?</span>
+              <select
+                value={lead.requestedContactTime}
+                onChange={(e) => setLead({ ...lead, requestedContactTime: e.target.value })}
+                className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+              >
+                {CONTACT_TIME_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
         {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
         {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-800">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
         <button type="submit" disabled={leadLoading || leadSent} className="mt-5 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70">
-          {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "בדיקה ראשונית ללא התחייבות"}
+          {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "שלחו לבדיקה ראשונית"}
         </button>
-        <p className="mt-3 text-center text-xs font-bold text-slate-500">הפרטים נשמרים לצורך חזרה אליך בלבד.</p>
+        <p className="mt-3 text-center text-xs font-bold text-slate-400">ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי</p>
       </form>
     </section>
   );
@@ -802,8 +843,8 @@ function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white py-10">
       <div className="mx-auto max-w-6xl px-4 text-sm font-semibold leading-7 text-slate-500 sm:px-6">
-        <p className="font-black text-slate-900">בדיקת זכאות למשכנתא</p>
-        <p>החישוב הוא סימולציה ראשונית בלבד ואינו מהווה ייעוץ משכנתאות, הצעה מחייבת או אישור בנקאי.</p>
+        <p className="font-black text-slate-900">FINZO · בדיקת מחזור משכנתא</p>
+        <p>אומדן ראשוני בלבד, לא אישור בנקאי ולא ייעוץ אישי. יש לוודא נתונים מול בנק או יועץ משכנתאות מורשה.</p>
       </div>
     </footer>
   );
