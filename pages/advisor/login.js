@@ -29,6 +29,16 @@ export default function AdvisorLogin() {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) { setMessage(j?.message || "אימייל או סיסמה שגויים."); return; }
+      // Seed localStorage so the header avatar can show real initials immediately
+      try {
+        const existing = JSON.parse(localStorage.getItem("finzo_advisor_profile_v1") || "{}");
+        const merged = {
+          ...existing,
+          email: email.trim(),
+          ...(j?.advisor?.name ? { name: j.advisor.name } : {}),
+        };
+        localStorage.setItem("finzo_advisor_profile_v1", JSON.stringify(merged));
+      } catch {}
       router.push("/advisor");
     } finally {
       setLoading(false);
