@@ -33,7 +33,7 @@ const initialLead = {
   loans: "",
   requestedContactTime: "",
   purchaseStatus: "refinance",
-  hasExistingMortgage: true,
+  hasExistingMortgage: "yes",
 };
 
 const navLinks = [
@@ -739,6 +739,11 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
       </div>
 
       <form onSubmit={submitLead} aria-busy={leadLoading ? "true" : "false"} className="rounded-[28px] bg-white p-5 shadow-sm">
+        {/* Classification chip — read-only, confirms lead type to user */}
+        <div className="mb-4 flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
+          <span className="text-[11px] font-black text-blue-500 uppercase tracking-wider">סוג הבדיקה</span>
+          <span className="text-sm font-black text-blue-900">🔄 מחזור משכנתא</span>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField label="שם מלא" value={lead.name} onChange={(value) => setLead({ ...lead, name: value })} autoComplete="name" />
           <TextField label="טלפון" value={lead.phone} onChange={(value) => setLead({ ...lead, phone: value })} placeholder="05X-XXXXXXX" autoComplete="tel" />
