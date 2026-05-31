@@ -4,6 +4,20 @@ import { cleanNumber, formatILS, formatPct } from "../lib/format";
 import { Tag, StatusDot } from "../components/ui/Tag";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 
+const PURCHASE_STATUS_OPTIONS = [
+  ["", "מה סוג הבדיקה?"],
+  ["new_purchase",       "רכישת דירה"],
+  ["first_apartment",    "דירה ראשונה"],
+  ["upgrader",           "משפר דיור"],
+  ["investment",         "דירה להשקעה / דירה שנייה"],
+  ["refinance",          "מחזור משכנתא"],
+  ["bank_declined",      "סורב בבנק"],
+  ["bdi_credit_issue",   "הייתה בעיה באישור בנקאי / אשראי"],
+  ["senior_60plus",      "משכנתא גיל 60+"],
+  ["debt_consolidation", "איחוד הלוואות"],
+  ["general",            "בדיקה כללית"],
+];
+
 const initialLead = {
   name: "",
   phone: "",
@@ -14,7 +28,7 @@ const initialLead = {
   equityAmount: "",
   monthlyIncome: "",
   debtLevel: "",
-  purchaseStatus: "לפני חוזה",
+  purchaseStatus: "",
   contractStatus: "לפני חוזה",
   employmentStatus: "שכיר",
   hasExistingMortgage: "לא",
@@ -132,9 +146,9 @@ function TextField({ label, value, onChange, placeholder, type = "text", inputMo
   );
 }
 
-function SelectField({ label, value, onChange, options }) {
+function SelectField({ label, value, onChange, options, className = "" }) {
   return (
-    <label className="block">
+    <label className={`block ${className}`}>
       <span className="mb-1 block text-xs font-black text-slate-500">{label}</span>
       <select
         value={value || ""}
@@ -243,6 +257,13 @@ export default function LeadPage() {
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <TextField label="שם מלא" value={lead.name} onChange={(v) => update("name", v)} placeholder="ישראל ישראלי" />
               <TextField label="טלפון" value={lead.phone} onChange={(v) => update("phone", v)} placeholder="05X-XXXXXXX" inputMode="tel" />
+              <SelectField
+                label="מה סוג הבדיקה?"
+                value={lead.purchaseStatus}
+                onChange={(v) => update("purchaseStatus", v)}
+                options={PURCHASE_STATUS_OPTIONS}
+                className="sm:col-span-2"
+              />
               <TextField label="עיר מגורים" value={lead.city} onChange={(v) => update("city", v)} placeholder="תל אביב" />
               <TextField label="עיר הנכס" value={lead.propertyCity} onChange={(v) => update("propertyCity", v)} placeholder="רחובות" />
               <MoneyField label="מחיר הנכס" value={lead.propertyPrice} onChange={(v) => update("propertyPrice", v)} />

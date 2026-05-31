@@ -183,7 +183,7 @@ export default function Home() {
     name: "", phone: "", city: "", propertyCity: "",
     checkType: "רכישת דירה",
     propertyPrice: "", equityAmount: "", monthlyIncome: "",
-    debtLevel: "", purchaseStatus: "before",
+    debtLevel: "", purchaseStatus: "",
     hasExistingMortgage: "no", requestedContactTime: "",
   });
   const [bottomLeadSent, setBottomLeadSent] = useState(false);
@@ -791,6 +791,13 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
 
           <p className="mb-4 mt-6 text-sm font-black text-slate-700">פרטי העסקה (אופציונלי — עוזר לנו להגיע מוכנים)</p>
           <div className="grid gap-4 sm:grid-cols-2">
+            <SelectField
+              label="מה סוג הבדיקה?"
+              value={lead.purchaseStatus}
+              onChange={(value) => updateLead("purchaseStatus", value)}
+              options={PURCHASE_STATUS_OPTIONS}
+              className="sm:col-span-2"
+            />
             <MoneyField label="מחיר נכס" value={lead.propertyPrice} onChange={(value) => updateLead("propertyPrice", value)} />
             <MoneyField label="הון עצמי" value={lead.equityAmount} onChange={(value) => updateLead("equityAmount", value)} />
             <MoneyField label="הכנסה חודשית נטו" value={lead.monthlyIncome} onChange={(value) => updateLead("monthlyIncome", value)} />
