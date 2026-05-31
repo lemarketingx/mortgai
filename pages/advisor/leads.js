@@ -6,6 +6,95 @@ import AdvisorHeader from "../../components/AdvisorHeader";
 
 const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi" };
 
+const PURCHASE_STATUS_LABELS = {
+  new_purchase:       "רכישת דירה",
+  first_apartment:    "דירה ראשונה",
+  upgrader:           "משפר דיור",
+  investment:         "דירה להשקעה",
+  refinance:          "מחזור משכנתא",
+  bank_declined:      "סורב בבנק",
+  bdi_credit_issue:   "מורכבות אשראית",
+  senior_60plus:      "גיל 60+",
+  debt_consolidation: "איחוד הלוואות",
+  general:            "בדיקה כללית",
+};
+
+function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
+  const label = lead?.purchaseStatus ? (PURCHASE_STATUS_LABELS[lead.purchaseStatus] || lead.purchaseStatus) : null;
+  const quality = lead?.leadQuality;
+  const city = lead?.city;
+  const amount = lead?.mortgageAmount;
+  const typeLabel = purchaseType === "exclusive" ? "ליד בלעדי" : purchaseType === "partner_claim" ? "לקיחת ליד" : "ליד רגיל";
+  const now = new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div className="mb-6 rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 to-white shadow-md overflow-hidden">
+      {/* Top bar */}
+      <div className="flex items-center justify-between gap-3 bg-emerald-600 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <svg className="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-sm font-black text-white">הליד נרכש בהצלחה ונוסף ל'הלקוחות שלי'</span>
+        </div>
+        <button onClick={onClose} className="text-emerald-200 hover:text-white font-black text-lg leading-none shrink-0">×</button>
+      </div>
+      {/* Details grid */}
+      <div className="px-4 pt-4 pb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {label && (
+          <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
+            <p className="text-[10px] font-black text-slate-400 mb-0.5">סוג תיק</p>
+            <p className="text-sm font-black text-slate-900">{label}</p>
+          </div>
+        )}
+        {city && (
+          <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
+            <p className="text-[10px] font-black text-slate-400 mb-0.5">עיר</p>
+            <p className="text-sm font-black text-slate-900">📍 {city}</p>
+          </div>
+        )}
+        {amount > 0 && (
+          <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
+            <p className="text-[10px] font-black text-slate-400 mb-0.5">משכנתא</p>
+            <p className="text-sm font-black text-slate-900 tabular-nums">{formatILS(amount)}</p>
+          </div>
+        )}
+        <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
+          <p className="text-[10px] font-black text-slate-400 mb-0.5">סוג רכישה · שעה</p>
+          <p className="text-sm font-black text-slate-900">{typeLabel} · {now}</p>
+        </div>
+        {quality && (
+          <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
+            <p className="text-[10px] font-black text-slate-400 mb-0.5">איכות ליד</p>
+            <p className="text-sm font-black text-slate-900">{quality}</p>
+          </div>
+        )}
+      </div>
+      {/* Actions */}
+      <div className="px-4 pb-4 flex flex-wrap gap-2">
+        <Link
+          href={`/advisor/lead/${leadId}?newPurchase=1`}
+          className="px-4 py-2.5 rounded-full bg-violet-700 text-white text-sm font-black hover:bg-violet-800 transition-colors"
+        >
+          פתח את הליד עכשיו ←
+        </Link>
+        <Link
+          href="/advisor/my-leads"
+          className="px-4 py-2.5 rounded-full border border-violet-200 bg-violet-50 text-violet-800 text-sm font-black hover:bg-violet-100 transition-colors"
+        >
+          עבור ללידים שלי
+        </Link>
+        <button
+          onClick={onClose}
+          className="px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-black hover:bg-slate-50 transition-colors"
+        >
+          המשך לקנות לידים
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function formatPrice(price) {
   if (!price || price === 0) return "פנו לתמחור";
   return new Intl.NumberFormat("he-IL", { style: "currency", currency: "ILS", maximumFractionDigits: 0 }).format(price);
@@ -233,6 +322,8 @@ export default function AdvisorLeadsStore() {
   const [isPartnerAdvisor, setIsPartnerAdvisor] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [successId, setSuccessId] = useState(null);
+  const [successLead, setSuccessLead] = useState(null);
+  const [successPurchaseType, setSuccessPurchaseType] = useState(null);
   const [filter, setFilter] = useState("הכל");
 
   useEffect(() => { load(); }, []);
@@ -264,7 +355,10 @@ export default function AdvisorLeadsStore() {
         setError(j.message || "הרכישה נכשלה. נסו שוב.");
         return { ok: false };
       }
+      const purchased = leads.find((l) => l.id === leadId) || null;
       setSuccessId(leadId);
+      setSuccessLead(purchased);
+      setSuccessPurchaseType(purchaseType);
       if (purchaseType === "exclusive" || purchaseType === "partner_claim") {
         setLeads((arr) => arr.filter((l) => l.id !== leadId));
       } else {
@@ -342,13 +436,12 @@ export default function AdvisorLeadsStore() {
           )}
 
           {successId && (
-            <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-700 font-black flex items-center justify-between gap-3">
-              <span>
-                הליד נרכש בהצלחה!{" "}
-                <Link href="/advisor/my-leads" className="underline">ראו בלשונית הלידים שלי ←</Link>
-              </span>
-              <button onClick={() => setSuccessId(null)} className="text-emerald-400 hover:text-emerald-600 font-black text-lg leading-none">×</button>
-            </div>
+            <PurchaseSuccessPanel
+              lead={successLead}
+              purchaseType={successPurchaseType}
+              leadId={successId}
+              onClose={() => { setSuccessId(null); setSuccessLead(null); setSuccessPurchaseType(null); }}
+            />
           )}
 
           {loading && (

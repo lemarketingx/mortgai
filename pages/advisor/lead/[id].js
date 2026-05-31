@@ -415,6 +415,7 @@ function BankGuideSection() {
 export default function LeadDetailPage() {
   const router = useRouter();
   const { id } = router.query;
+  const isNewPurchase = router.query.newPurchase === "1";
 
   const [lead, setLead] = useState(null);
   const [activities, setActivities] = useState([]);
@@ -950,6 +951,39 @@ export default function LeadDetailPage() {
             </button>
           </div>
         </div>
+
+        {isNewPurchase && (
+          <div className="max-w-6xl mx-auto mt-3 px-4">
+            <div className="rounded-2xl bg-gradient-to-l from-emerald-50 to-white border border-emerald-300 px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl shrink-0">✓</span>
+                <div>
+                  <p className="text-sm font-black text-emerald-800">זה הליד שרכשת עכשיו — אפשר להתחיל טיפול</p>
+                  <p className="text-xs font-bold text-emerald-600 mt-0.5">פרטי הקשר גלויים, כל הכלים זמינים</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 shrink-0">
+                {lead.phone && (
+                  <a href={`tel:${lead.phone}`}
+                    onClick={() => { pushActivity("בוצעה שיחה", "call_logged"); touchLead({ lastContactedAt: new Date().toISOString() }); }}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-700 text-white text-xs font-black hover:bg-violet-800 transition-colors">
+                    ☎ התקשר עכשיו
+                  </a>
+                )}
+                {lead.phone && (
+                  <button type="button" onClick={() => openWa()}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black hover:bg-emerald-700 transition-colors">
+                    💬 וואטסאפ
+                  </button>
+                )}
+                <button type="button" onClick={() => setTab("docs")}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-violet-200 bg-violet-50 text-violet-800 text-xs font-black hover:bg-violet-100 transition-colors">
+                  📎 שלח קישור מסמכים
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {msg.text && (
           <div className={`max-w-6xl mx-auto mt-3 px-4 py-2 rounded-xl text-sm font-bold ${msg.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>

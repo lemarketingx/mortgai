@@ -130,13 +130,17 @@ const MyLeadCard = memo(function MyLeadCard({ lead }) {
   const overall = Number(lead.overallProgressPercent ?? calculateOverallMortgageProgress(lead)) || 0;
   const dueDate = lead.nextActionAt || lead.followUpDate;
   const overdue = isOverdue(dueDate);
+  const isRecentlyPurchased = lead.purchasedAt && (Date.now() - new Date(lead.purchasedAt).getTime()) < 864e5;
 
   return (
-    <article className={`bg-white rounded-xl border shadow-sm p-4 ${priority >= 90 ? "border-rose-300 bg-rose-50/20" : "border-slate-100"}`}>
+    <article className={`bg-white rounded-xl border shadow-sm p-4 ${priority >= 90 ? "border-rose-300 bg-rose-50/20" : isRecentlyPurchased ? "border-emerald-200" : "border-slate-100"}`}>
       {/* Badges */}
       <div className="flex items-center gap-1.5 flex-wrap mb-2">
         <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${stageBadge}`}>{getPipelineStageLabel(stage)}</span>
         <span className={`text-[11px] font-black ${qualityColor}`}>{quality}</span>
+        {isRecentlyPurchased && (
+          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 whitespace-nowrap">נרכש לאחרונה ✓</span>
+        )}
         {badges.slice(0, 2).map((badge) => (
           <span key={badge} className={`text-[11px] font-black px-2 py-0.5 rounded-full ${badge === "דחוף" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>{badge}</span>
         ))}
@@ -300,7 +304,7 @@ export default function AdvisorMyLeads() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [view, setView] = useState("kanban"); // hydrated from localStorage in useEffect
-  const [sortBy, setSortBy] = useState("priority"); // hydrated from localStorage in useEffect
+  const [sortBy, setSortBy] = useState("purchased"); // hydrated from localStorage in useEffect
   // Separate controlled input state from the debounced value that drives filtering.
   // This lets the input feel instant while the expensive filter runs after 200ms.
   const [searchInput, setSearchInput] = useState("");
@@ -387,6 +391,9 @@ export default function AdvisorMyLeads() {
     }
 
     // Sort by advisor preference
+    if (sortBy === "purchased") {
+      return [...base].sort((a, b) => new Date(b.purchasedAt || b.createdAt || 0) - new Date(a.purchasedAt || a.createdAt || 0));
+    }
     if (sortBy === "newest") {
       return [...base].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     }
@@ -459,6 +466,7 @@ export default function AdvisorMyLeads() {
             </div>
             <select value={sortBy} onChange={(e) => setSortAndSave(e.target.value)}
               className="border border-slate-200 rounded-xl px-3 py-2 text-xs font-black bg-white outline-none focus:ring-2 focus:ring-violet-300 shrink-0 text-slate-600">
+              <option value="purchased">נרכש לאחרונה</option>
               <option value="priority">עדיפות</option>
               <option value="newest">חדש</option>
               <option value="amount">סכום</option>
