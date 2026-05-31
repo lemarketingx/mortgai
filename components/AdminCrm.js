@@ -10,6 +10,43 @@ const LEAD_QUALITIES = ["", "חם", "בינוני", "חלש", "לא סווג"];
 const LEAD_PRIORITIES = ["", "גבוה", "רגיל", "נמוך"];
 const FOLLOW_UP_STAGES = ["לא טופל", "ניסיון 1", "ניסיון 2", "נקבעה שיחה", "נשלחו מסמכים", "ממתין ללקוח", "נסגר"];
 
+const PURCHASE_STATUS_LABELS = {
+  new_purchase:       "רכישת דירה",
+  first_apartment:    "דירה ראשונה",
+  upgrader:           "משפר דיור",
+  investment:         "דירה להשקעה",
+  refinance:          "מחזור משכנתא",
+  bank_declined:      "סורב בבנק",
+  bdi_credit_issue:   "מורכבות אשראית",
+  senior_60plus:      "גיל 60+",
+  debt_consolidation: "איחוד הלוואות",
+  general:            "בדיקה כללית",
+};
+
+const PURCHASE_STATUS_COLORS = {
+  new_purchase:       "bg-sky-50 text-sky-700 border-sky-200",
+  first_apartment:    "bg-violet-50 text-violet-700 border-violet-200",
+  upgrader:           "bg-indigo-50 text-indigo-700 border-indigo-200",
+  investment:         "bg-amber-50 text-amber-700 border-amber-200",
+  refinance:          "bg-blue-50 text-blue-700 border-blue-200",
+  bank_declined:      "bg-rose-50 text-rose-700 border-rose-200",
+  bdi_credit_issue:   "bg-orange-50 text-orange-700 border-orange-200",
+  senior_60plus:      "bg-teal-50 text-teal-700 border-teal-200",
+  debt_consolidation: "bg-purple-50 text-purple-700 border-purple-200",
+  general:            "bg-slate-50 text-slate-600 border-slate-200",
+};
+
+function PurchaseStatusBadge({ value }) {
+  if (!value) return null;
+  const label = PURCHASE_STATUS_LABELS[value] || value;
+  const color = PURCHASE_STATUS_COLORS[value] || "bg-slate-50 text-slate-600 border-slate-200";
+  return (
+    <span className={`inline-flex text-[10px] font-black px-1.5 py-0.5 rounded-full border whitespace-nowrap ${color}`}>
+      {label}
+    </span>
+  );
+}
+
 const PIPELINE_STAGE_LABELS = {
   new_lead: "ליד חדש", contacted: "נוצר קשר", documents_requested: "נשלחה רשימת מסמכים",
   waiting_documents: "מחכה למסמכים", documents_received: "מסמכים התקבלו",
@@ -259,7 +296,13 @@ function LeadEditPanel({ lead, statuses, commissionStatuses, onPatch }) {
         <Detail label="הון עצמי" value={lead.equityAmount ? formatILS(toNumber(lead.equityAmount)) : null} />
         <Detail label="הכנסה חודשית" value={lead.monthlyIncome ? formatILS(toNumber(lead.monthlyIncome)) : null} />
         <Detail label="סיכוי אישור" value={(lead.approvalScore || lead.estimatedApprovalResult) ? `${lead.approvalScore || lead.estimatedApprovalResult}%` : null} />
-        <Detail label="סטטוס חוזה" value={lead.contractStatus || lead.purchaseStatus} />
+        <Detail label="סטטוס חוזה" value={lead.contractStatus} />
+        {lead.purchaseStatus && (
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3">
+            <span className="block text-xs font-bold text-mort-muted">סוג תיק</span>
+            <div className="mt-1.5"><PurchaseStatusBadge value={lead.purchaseStatus} /></div>
+          </div>
+        )}
         <Detail label="מועד חזרה" value={lead.requestedContactTime} />
         <Detail label="מקור" value={[lead.source, lead.utmSource, lead.utmCampaign].filter(Boolean).join(" · ") || null} />
         <Detail label="שלב ב-pipeline" value={pipelineLabel(lead.pipelineStage)} />
@@ -1199,6 +1242,7 @@ function LeadsView({
               <Th>שם</Th>
               <Th>טלפון</Th>
               <Th>עיר</Th>
+              <Th>סוג תיק</Th>
               <Th>משכנתא</Th>
               <Th>איכות</Th>
               <Th>סטטוס</Th>
@@ -1227,6 +1271,7 @@ function LeadsView({
                       <a href={lead.phone ? `tel:${lead.phone}` : undefined} className="font-bold text-finzo-cobalt hover:underline">{lead.phone || "—"}</a>
                     </Td>
                     <Td className="text-sm font-bold text-mort-muted">{lead.city || lead.propertyCity || "—"}</Td>
+                    <Td><PurchaseStatusBadge value={lead.purchaseStatus} /></Td>
                     <Td className="font-black text-mort-ink">{lead.mortgageAmount ? formatILS(toNumber(lead.mortgageAmount)) : "—"}</Td>
                     <Td>
                       <span className="flex items-center gap-1.5">
@@ -1278,6 +1323,7 @@ function LeadsView({
                       {isSaving && <span className="text-xs font-bold text-amber-600">שומר...</span>}
                     </div>
                     <p className="mt-0.5 text-xs font-bold text-mort-muted">{formatDateShort(lead.createdAt)} · {lead.phone || "—"} · {lead.city || "—"}</p>
+                    {lead.purchaseStatus && <div className="mt-1"><PurchaseStatusBadge value={lead.purchaseStatus} /></div>}
                     {lead.assignedAdvisor && <p className="text-xs font-bold text-mort-muted">יועץ: {lead.assignedAdvisor}</p>}
                   </div>
                   <div className="flex shrink-0 gap-1.5">

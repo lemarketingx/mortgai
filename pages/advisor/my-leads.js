@@ -12,6 +12,19 @@ import {
 } from "../../lib/pipeline";
 import { calculateOverallMortgageProgress } from "../../lib/mortgageCase";
 
+const PURCHASE_STATUS_LABELS = {
+  new_purchase:       "רכישת דירה",
+  first_apartment:    "דירה ראשונה",
+  upgrader:           "משפר דיור",
+  investment:         "דירה להשקעה",
+  refinance:          "מחזור משכנתא",
+  bank_declined:      "סורב בבנק",
+  bdi_credit_issue:   "מורכבות אשראית",
+  senior_60plus:      "גיל 60+",
+  debt_consolidation: "איחוד הלוואות",
+  general:            "בדיקה כללית",
+};
+
 // ─── Static lookup maps ───────────────────────────────────────────────────────
 const STAGE_BADGE = {
   new_lead:            "bg-violet-50 text-violet-700 border-violet-200",
@@ -137,6 +150,11 @@ const MyLeadCard = memo(function MyLeadCard({ lead }) {
       <div className="flex items-center gap-1.5 flex-wrap mb-2">
         <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${stageBadge}`}>{getPipelineStageLabel(stage)}</span>
         <span className={`text-[11px] font-black ${qualityColor}`}>{quality}</span>
+        {lead.purchaseStatus && PURCHASE_STATUS_LABELS[lead.purchaseStatus] && (
+          <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 whitespace-nowrap">
+            {PURCHASE_STATUS_LABELS[lead.purchaseStatus]}
+          </span>
+        )}
         {badges.slice(0, 2).map((badge) => (
           <span key={badge} className={`text-[11px] font-black px-2 py-0.5 rounded-full ${badge === "דחוף" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>{badge}</span>
         ))}

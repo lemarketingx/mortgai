@@ -35,6 +35,19 @@ import { BANK_SUBMISSION_STATUSES, BANK_SUBMISSION_STATUS_MAP } from "../../../l
 
 const ACTIVE_PIPELINE_STAGES = PIPELINE_STAGES.filter((s) => s !== "closed_lost");
 
+const PURCHASE_STATUS_LABELS = {
+  new_purchase:       "רכישת דירה",
+  first_apartment:    "דירה ראשונה",
+  upgrader:           "משפר דיור",
+  investment:         "דירה להשקעה",
+  refinance:          "מחזור משכנתא",
+  bank_declined:      "סורב בבנק",
+  bdi_credit_issue:   "מורכבות אשראית",
+  senior_60plus:      "גיל 60+",
+  debt_consolidation: "איחוד הלוואות",
+  general:            "בדיקה כללית",
+};
+
 const STAGE_COLORS = [
   "bg-violet-500", "bg-violet-400", "bg-indigo-400", "bg-amber-400",
   "bg-amber-500", "bg-sky-400", "bg-sky-500", "bg-blue-500",
@@ -973,6 +986,7 @@ export default function LeadDetailPage() {
                   ["משכנתא",   lead.mortgageAmount ? formatILS(lead.mortgageAmount) : null],
                   ["מחיר נכס", lead.propertyPrice ? formatILS(lead.propertyPrice) : null],
                   ["הון עצמי", lead.equityAmount ? formatILS(lead.equityAmount) : null],
+                  ["סוג תיק", PURCHASE_STATUS_LABELS[lead.purchaseStatus] || lead.purchaseStatus || null],
                 ].filter(([, v]) => v).map(([label, value]) => (
                   <div key={label} className="flex justify-between gap-2">
                     <span className="text-slate-400 font-black text-xs shrink-0">{label}</span>

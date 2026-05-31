@@ -6,6 +6,19 @@ import AdvisorHeader from "../../components/AdvisorHeader";
 
 const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi" };
 
+const PURCHASE_STATUS_LABELS = {
+  new_purchase:       "רכישת דירה",
+  first_apartment:    "דירה ראשונה",
+  upgrader:           "משפר דיור",
+  investment:         "דירה להשקעה",
+  refinance:          "מחזור משכנתא",
+  bank_declined:      "סורב בבנק",
+  bdi_credit_issue:   "מורכבות אשראית",
+  senior_60plus:      "גיל 60+",
+  debt_consolidation: "איחוד הלוואות",
+  general:            "בדיקה כללית",
+};
+
 function formatPrice(price) {
   if (!price || price === 0) return "פנו לתמחור";
   return new Intl.NumberFormat("he-IL", { style: "currency", currency: "ILS", maximumFractionDigits: 0 }).format(price);
@@ -86,6 +99,11 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
         <div>
           <div className="flex items-center gap-2 flex-wrap mb-1.5">
             {lead.leadQuality && <Tag variant={tagVariant}>{lead.leadQuality}</Tag>}
+            {lead.purchaseStatus && PURCHASE_STATUS_LABELS[lead.purchaseStatus] && (
+              <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full border bg-violet-50 text-violet-700 border-violet-200 whitespace-nowrap">
+                {PURCHASE_STATUS_LABELS[lead.purchaseStatus]}
+              </span>
+            )}
             {isSold && <Tag variant="danger">נמכר</Tag>}
             {lead._purchased && <Tag variant="upgrade">נרכש ✓</Tag>}
           </div>

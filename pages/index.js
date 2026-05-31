@@ -848,9 +848,17 @@ const CHECK_TYPES = [
 ];
 
 const PURCHASE_STATUS_OPTIONS = [
-  ["before", "מחפש נכס / רק בודק אפשרות"],
-  ["negotiation", "לפני חתימה / במשא ומתן"],
-  ["signed", "יש חוזה חתום"],
+  ["", "מה סוג הבדיקה?"],
+  ["new_purchase",       "רכישת דירה"],
+  ["first_apartment",    "דירה ראשונה"],
+  ["upgrader",           "משפר דיור"],
+  ["investment",         "דירה להשקעה / דירה שנייה"],
+  ["refinance",          "מחזור משכנתא"],
+  ["bank_declined",      "סורב בבנק"],
+  ["bdi_credit_issue",   "הייתה בעיה באישור בנקאי / אשראי"],
+  ["senior_60plus",      "משכנתא גיל 60+"],
+  ["debt_consolidation", "איחוד הלוואות"],
+  ["general",            "בדיקה כללית"],
 ];
 
 function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bottomLeadLoading, bottomLeadSent, bottomLeadError }) {
@@ -919,7 +927,7 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
 
           {/* Status selects */}
           <div>
-            <label className="mb-1.5 block text-sm font-black text-violet-100">שלב הרכישה</label>
+            <label className="mb-1.5 block text-sm font-black text-violet-100">מה סוג הבדיקה?</label>
             <select
               value={bottomLead.purchaseStatus}
               onChange={(e) => updateBottomLead("purchaseStatus", e.target.value)}
