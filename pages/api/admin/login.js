@@ -1,6 +1,11 @@
 import { isAdminPassword } from "../../../lib/leadsStore";
 import { clearAdminSessionCookie, createAdminSessionCookie } from "../../../lib/adminAuth";
-import { checkLoginRateLimit, clearLoginRateLimit, getClientIp, recordFailedLogin } from "../../../lib/rateLimit";
+import {
+  checkRateLimit as checkLoginRateLimit,
+  clearRateLimit as clearLoginRateLimit,
+  getClientIp,
+  recordRateLimitHit as recordFailedLogin,
+} from "../../../lib/rateLimit";
 
 export default function handler(req, res) {
   if (req.method === "DELETE") {
