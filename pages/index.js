@@ -7,6 +7,7 @@ import {
   Header,
   Hero,
   TrustStrip,
+  ProblemSection,
   HowItWorks,
   SeoContentSection,
   RefinanceSection,
@@ -178,7 +179,13 @@ export default function Home() {
   const [leadSent, setLeadSent] = useState(false);
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadError, setLeadError] = useState("");
-  const [bottomLead, setBottomLead] = useState({ name: "", phone: "", city: "" });
+  const [bottomLead, setBottomLead] = useState({
+    name: "", phone: "", city: "", propertyCity: "",
+    checkType: "רכישת דירה",
+    propertyPrice: "", equityAmount: "", monthlyIncome: "",
+    debtLevel: "", purchaseStatus: "before",
+    hasExistingMortgage: "no", requestedContactTime: "",
+  });
   const [bottomLeadSent, setBottomLeadSent] = useState(false);
   const [bottomLeadLoading, setBottomLeadLoading] = useState(false);
   const [bottomLeadError, setBottomLeadError] = useState("");
@@ -303,13 +310,18 @@ export default function Home() {
       source: "homepage_bottom",
       createdAt: new Date().toISOString(),
       approval: Math.round(analysis?.approval || 0),
-      mainIssue: ready ? analysis.mainIssue : "פנייה מהטופס התחתון",
+      mainIssue: ready ? analysis.mainIssue : `פנייה מהטופס התחתון — ${bottomLead.checkType || "לא צוין"}`,
       estimatedApprovalResult: Math.round(analysis?.approval || 0),
       estimatedPayment: Math.round(analysis?.monthly || 0),
-      propertyPrice: toNumeric(data?.price),
-      equityAmount: toNumeric(data?.equity),
-      monthlyIncome: toNumeric(data?.income),
-      debtLevel: toNumeric(data?.loans) || toNumeric(data?.expenses) || 0,
+      propertyPrice: toNumeric(bottomLead.propertyPrice) || toNumeric(data?.price),
+      equityAmount: toNumeric(bottomLead.equityAmount) || toNumeric(data?.equity),
+      monthlyIncome: toNumeric(bottomLead.monthlyIncome) || toNumeric(data?.income),
+      debtLevel: toNumeric(bottomLead.debtLevel) || toNumeric(data?.loans) || toNumeric(data?.expenses) || 0,
+      purchaseStatus: bottomLead.purchaseStatus || "",
+      hasExistingMortgage: bottomLead.hasExistingMortgage || "",
+      requestedContactTime: bottomLead.requestedContactTime || "",
+      propertyCity: bottomLead.propertyCity || "",
+      notes: bottomLead.checkType ? `סוג בדיקה: ${bottomLead.checkType}` : "",
     };
 
     try {
@@ -457,6 +469,7 @@ export default function Home() {
         <Header onCtaClick={handleCtaClick} />
         <Hero onCtaClick={handleCtaClick} />
         <TrustStrip />
+        <ProblemSection />
         <HowItWorks />
         <CalculatorSection
           data={data}
@@ -508,9 +521,9 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation, 
     <section id="eligibility-check" className="bg-gradient-to-b from-slate-50 via-violet-50/40 to-white py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
-          eyebrow="בדיקת זכאות"
-          title="מלאו נתונים — קבלו אומדן ראשוני מיד"
-          text="כמה שאלות פיננסיות בסיסיות. תוצאה מיידית. ללא עלות ובלי שאף אחד מתקשר אליכם."
+          eyebrow="בדיקת התאמה"
+          title="מלאו נתונים — קבלו אומדן סיכוי התאמה מיד"
+          text="כמה שאלות פיננסיות בסיסיות. תוצאה מיידית. ללא עלות, ללא התחייבות."
         />
 
         <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
@@ -727,9 +740,9 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
   return (
     <section id="lead" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
-        eyebrow="כיוון ראשוני"
-        title="רוצים להבין איך לשפר את הסיכוי לאישור?"
-        text="השאירו פרטים ונחזור אליכם עם כיוון ראשוני לבדיקה מול יועץ מתאים."
+        eyebrow="קבלו תמונת מצב ראשונית"
+        title="מלאו כמה פרטים ונציג לכם כיוון ראשוני"
+        text="אם יש התאמה, ניתן יהיה להמשיך לבדיקה מקצועית — ללא לחץ, ללא עלות, ללא התחייבות."
       />
       <div className="mt-10 grid items-stretch gap-6 lg:grid-cols-2">
         <div className="rounded-[34px] bg-gradient-to-br from-violet-50 to-white p-7 ring-1 ring-violet-100">
@@ -827,22 +840,145 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
 /*  BOTTOM LEAD SECTION                                                 */
 /* ------------------------------------------------------------------ */
 
+const CHECK_TYPES = [
+  "רכישת דירה",
+  "מחזור משכנתא",
+  "בדיקת יכולת ראשונית",
+  "משכנתא לכל מטרה",
+];
+
+const PURCHASE_STATUS_OPTIONS = [
+  ["before", "מחפש נכס / רק בודק אפשרות"],
+  ["negotiation", "לפני חתימה / במשא ומתן"],
+  ["signed", "יש חוזה חתום"],
+];
+
 function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bottomLeadLoading, bottomLeadSent, bottomLeadError }) {
+  if (bottomLeadSent) {
+    return (
+      <section id="bottom-lead" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <div className="rounded-[30px] border border-violet-200/70 bg-gradient-to-br from-slate-950 via-violet-950 to-violet-900 p-8 text-center text-white shadow-[0_28px_70px_rgba(46,16,101,0.35)]">
+          <span className="text-5xl">✓</span>
+          <h2 className="mt-4 text-2xl font-black">הבדיקה נשלחה בהצלחה</h2>
+          <p className="mt-2 font-semibold text-violet-100">נחזור אליכם בהקדם עם כיוון ראשוני בהתאם לפרטים שמסרתם.</p>
+          <p className="mt-4 text-xs font-bold text-violet-200">ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="bottom-lead" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
       <div className="rounded-[30px] border border-violet-200/70 bg-gradient-to-br from-slate-950 via-violet-950 to-violet-900 p-6 text-white shadow-[0_28px_70px_rgba(46,16,101,0.35)] sm:p-8">
-        <h2 className="text-2xl font-black sm:text-3xl">רוצים להבין איך לשפר את הסיכוי לאישור?</h2>
-        <p className="mt-2 text-sm font-semibold text-violet-100 sm:text-base">השאירו פרטים ונחזור אליכם עם כיוון ראשוני לבדיקה מול יועץ מתאים.</p>
-        <form onSubmit={submitBottomLead} className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-4" dir="rtl">
-          <TextField label="שם מלא" value={bottomLead.name} onChange={(value) => updateBottomLead("name", value)} autoComplete="name" required contrastMode="dark" />
-          <TextField label="טלפון" value={bottomLead.phone} onChange={(value) => updateBottomLead("phone", value)} autoComplete="tel" placeholder="05X-XXXXXXX" inputMode="tel" required contrastMode="dark" />
-          <TextField label="עיר" value={bottomLead.city} onChange={(value) => updateBottomLead("city", value)} autoComplete="address-level2" contrastMode="dark" />
-          <button type="submit" disabled={bottomLeadLoading || bottomLeadSent} className="min-h-[44px] rounded-2xl border border-violet-300 bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-[0_12px_28px_rgba(76,29,149,0.35)] transition hover:bg-violet-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-200 disabled:opacity-70">
-            {bottomLeadLoading ? "שולח..." : bottomLeadSent ? "נשלח בהצלחה" : "שליחה לנציג מקצועי"}
+
+        {/* Header */}
+        <div className="mb-6">
+          <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-black text-violet-200">
+            בדיקת התאמה ראשונית
+          </span>
+          <h2 className="mt-3 text-2xl font-black sm:text-3xl">קבלו בדיקת התאמה ראשונית למשכנתא</h2>
+          <p className="mt-2 font-semibold text-violet-100">
+            מלאו כמה פרטים בסיסיים ונציג כיוון ראשוני. אם תהיה התאמה, ניתן יהיה להמשיך לבדיקה מקצועית.
+          </p>
+        </div>
+
+        <form onSubmit={submitBottomLead} dir="rtl" className="grid gap-4 sm:grid-cols-2">
+
+          {/* Check type — full width */}
+          <div className="sm:col-span-2">
+            <label className="mb-1.5 block text-sm font-black text-violet-100">סוג הבדיקה</label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {CHECK_TYPES.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => updateBottomLead("checkType", type)}
+                  className={`rounded-2xl border px-3 py-2.5 text-sm font-black transition ${
+                    bottomLead.checkType === type
+                      ? "border-white bg-white text-violet-900"
+                      : "border-white/20 bg-white/10 text-white hover:bg-white/20"
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Contact fields */}
+          <TextField label="שם מלא" value={bottomLead.name} onChange={(v) => updateBottomLead("name", v)} autoComplete="name" required contrastMode="dark" />
+          <TextField label="טלפון" value={bottomLead.phone} onChange={(v) => updateBottomLead("phone", v)} autoComplete="tel" placeholder="05X-XXXXXXX" inputMode="tel" required contrastMode="dark" />
+          <TextField label="עיר מגורים" value={bottomLead.city} onChange={(v) => updateBottomLead("city", v)} autoComplete="address-level2" contrastMode="dark" />
+          <TextField label="עיר הנכס (אם ידוע)" value={bottomLead.propertyCity} onChange={(v) => updateBottomLead("propertyCity", v)} contrastMode="dark" />
+
+          {/* Financial fields */}
+          <MoneyField label="מחיר נכס משוער" value={bottomLead.propertyPrice} onChange={(v) => updateBottomLead("propertyPrice", v)} contrastMode="dark" />
+          <MoneyField label="הון עצמי" value={bottomLead.equityAmount} onChange={(v) => updateBottomLead("equityAmount", v)} contrastMode="dark" />
+          <MoneyField label="הכנסה חודשית נטו" value={bottomLead.monthlyIncome} onChange={(v) => updateBottomLead("monthlyIncome", v)} contrastMode="dark" />
+          <MoneyField label="החזרי הלוואות קיימים" value={bottomLead.debtLevel} onChange={(v) => updateBottomLead("debtLevel", v)} contrastMode="dark" />
+
+          {/* Status selects */}
+          <div>
+            <label className="mb-1.5 block text-sm font-black text-violet-100">שלב הרכישה</label>
+            <select
+              value={bottomLead.purchaseStatus}
+              onChange={(e) => updateBottomLead("purchaseStatus", e.target.value)}
+              className="h-12 w-full rounded-2xl border border-violet-200 bg-white px-4 text-base font-bold text-slate-950 outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-200 sm:h-14"
+            >
+              {PURCHASE_STATUS_OPTIONS.map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-black text-violet-100">יש לכם משכנתא קיימת?</label>
+            <div className="flex gap-3 pt-1">
+              {[["no", "לא"], ["yes", "כן"]].map(([val, label]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => updateBottomLead("hasExistingMortgage", val)}
+                  className={`h-12 flex-1 rounded-2xl border text-sm font-black transition sm:h-14 ${
+                    bottomLead.hasExistingMortgage === val
+                      ? "border-white bg-white text-violet-900"
+                      : "border-white/20 bg-white/10 text-white hover:bg-white/20"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Contact time — full width */}
+          <TextField
+            label="מועד נוח לחזרה (אופציונלי)"
+            value={bottomLead.requestedContactTime}
+            onChange={(v) => updateBottomLead("requestedContactTime", v)}
+            placeholder="למשל: א'-ה' 17:00-20:00"
+            contrastMode="dark"
+            className="sm:col-span-2"
+          />
+
+          {/* Error + submit — full width */}
+          {bottomLeadError && (
+            <p role="alert" className="sm:col-span-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+              {bottomLeadError}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={bottomLeadLoading}
+            className="sm:col-span-2 min-h-[52px] rounded-full bg-white px-7 py-4 text-base font-black text-violet-900 shadow-[0_14px_34px_rgba(255,255,255,0.15)] transition hover:bg-violet-50 disabled:opacity-70"
+          >
+            {bottomLeadLoading ? "שולח..." : "שלחו לבדיקה ראשונית"}
           </button>
         </form>
-        {bottomLeadError && <p role="alert" className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{bottomLeadError}</p>}
-        <p className="mt-3 text-xs font-bold text-violet-50">ללא התחייבות. הפרטים ישמשו לחזרה אליכם בלבד.</p>
+
+        <p className="mt-4 text-center text-xs font-bold text-violet-200">
+          ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי
+        </p>
       </div>
     </section>
   );

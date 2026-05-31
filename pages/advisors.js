@@ -31,52 +31,84 @@ const PROBLEMS = [
 const SOLUTION_ITEMS = [
   { icon: "🏪", title: "חנות לידים זמינים", body: "גישה לרשימת לידים זמינים בזמן אמת — כולם הגיעו ממשתמשים שמילאו בדיקת זכאות או מחזור." },
   { icon: "👁️", title: "Preview לפני רכישה", body: "ראו עיר, סכום משכנתא, הון עצמי, הכנסה חודשית, ציון אישור ובעיה מרכזית — לפני שמחליטים." },
-  { icon: "⭐", title: "דירוג איכות ליד", body: "כל ליד מקבל ציון (חם / בינוני) לפי יחס החזר, LTV, הכנסה ומצב חוזי. לידים חלשים לא מוצגים." },
+  { icon: "⭐", title: "דירוג איכות ותמחור בהתאם", body: "כל ליד מדורג לפי יחס החזר, LTV, הכנסה ומצב חוזי — ומתומחר בהתאם לרמתו. בוחרים לפי איכות ומחיר." },
   { icon: "🎯", title: "רכישה רגילה או בלעדית", body: "ליד רגיל פתוח למספר מוגבל של יועצים. ליד בלעדי שייך לכם בלבד ונחסם לרכישה נוספת." },
-  { icon: "📋", title: "ניהול לידים שנרכשו", body: "כל ליד שרכשתם נכנס לאזור האישי — סטטוס, הערות, מועד מעקב ופרטי קשר מלאים." },
+  { icon: "📋", title: "CRM אישי לניהול תיקים", body: "כל ליד שרכשתם נכנס לסביבת עבודה אישית — סטטוס, מסמכים, מעקב שלבים ופרטי לקוח מלאים." },
 ];
 
 const HOW_IT_WORKS = [
   { n: "01", title: "לקוח ממלא בדיקת זכאות או מחזור", body: "המשתמש מזין נתונים פיננסיים בסיסיים — הכנסה, הון עצמי, סכום משכנתא — ומקבל אומדן ראשוני." },
   { n: "02", title: "המערכת מסווגת ומדרגת את הליד", body: "אלגוריתם הניקוד מנתח יחס החזר, LTV, הכנסה ומצב חוזי. הליד מקבל ציון ותווית איכות." },
-  { n: "03", title: "הליד עולה לחנות FINZO PRO", body: "לידים חמים ובינוניים בלבד מופיעים בחנות — לידים חלשים מסוננים אוטומטית ולא מוצגים." },
+  { n: "03", title: "הליד מדורג ועולה לחנות", body: "FINZO מדרגת את הליד לפי איכות ומתמחרת בהתאם — ליד חם, בינוני, או הזדמנות במחיר כניסה. היועץ בוחר מה מתאים לו." },
   { n: "04", title: "היועץ רואה Preview", body: "לפני רכישה רואים: עיר, סכום משכנתא, הכנסה, ציון אישור ובעיה מרכזית. שם וטלפון מוסתרים." },
   { n: "05", title: "רכישה וקבלת פרטים מלאים", body: "לאחר רכישה — שם מלא, טלפון וכל הנתונים הפיננסיים נכנסים לאזור הניהול האישי." },
 ];
 
 const BENEFITS = [
   { icon: "⚡", title: "פחות זמן על סינון", body: "מגיעים לשיחה עם מידע פיננסי ראשוני. פחות שיחות סינון, יותר שיחות עבודה." },
-  { icon: "🎛️", title: "שליטה מלאה בתקציב", body: "בוחרים אילו לידים לרכוש ובאיזה מחיר. ללא מנוי חובה, ללא הפתעות." },
+  { icon: "🎛️", title: "שליטה מלאה בתקציב", body: "בוחרים אילו לידים לרכוש ובאיזה מחיר — לפי התאמה, אזור ואיכות. שקיפות מלאה לפני כל רכישה." },
   { icon: "📍", title: "בחירה לפי אזור ואיכות", body: "סננו לידים לפי עיר ואיכות. קבלו בדיוק את הלידים שמתאימים לאזור הפעילות שלכם." },
   { icon: "🔄", title: "ניהול המשך טיפול", body: "עדכנו סטטוס, הוסיפו הערות ותזכורות — הכל בפורטל אחד, בלי דפי Excel." },
   { icon: "🏢", title: "מתאים ליועצים ולמשרדים", body: "מערכת שמתאימה ליועץ עצמאי שרוצה גמישות, ולמשרד שמחפש זרם לידים קבוע." },
 ];
 
 const LEAD_TYPES = [
-  { emoji: "🏠", title: "רכישת דירה ראשונה", sub: "LTV עד 75%, הון עצמי מתגבש — ליד פעיל עם מוטיבציה גבוהה לסגור עסקה." },
+  { emoji: "🏠", title: "רכישת דירה ראשונה", sub: "לקוחות שבודקים רכישת דירה ראשונה, עם נתוני הון עצמי ומשכנתא ראשוניים — פעילים ומחפשים ייעוץ." },
   { emoji: "🔄", title: "מחזור משכנתא", sub: "לווים קיימים שבודקים חיסכון — מוכנות גבוהה ופוטנציאל ברור לסגירה מהירה." },
   { emoji: "⬆️", title: "משפרי דיור", sub: "מוכרים דירה, קונים חדשה — עסקאות גדולות עם הון עצמי, לרוב לקוחות בשלים." },
   { emoji: "💳", title: "איחוד הלוואות / בדיקת יכולת", sub: "לקוחות עם מספר התחייבויות שבודקים אפשרויות — ליד שדורש הכוונה מקצועית." },
 ];
 
 const PRICING_POINTS = [
-  { icon: "✓", title: "תשלום לפי ליד", body: "משלמים רק על לידים שרכשתם בפועל. אין עלות חודשית קבועה בשלב הראשון." },
+  { icon: "✓", title: "מודל רכישה גמיש לפי ליד", body: "בוחרים את הלידים שמתאימים לכם ורוכשים רק מה שרלוונטי לפעילות שלכם." },
   { icon: "✓", title: "מחיר מוצג לפני רכישה", body: "המחיר מופיע על כל כרטיס ליד לפני שמחליטים לרכוש. שקיפות מלאה בכל שלב." },
   { icon: "✓", title: "ליד רגיל או בלעדי", body: "ליד רגיל — עלות נמוכה יותר, פתוח למספר מוגבל של יועצים. ליד בלעדי — שלכם לגמרי." },
-  { icon: "✓", title: "ללא התחייבות ארוכת טווח", body: "מתנסים בחנות, בוחרים לידים שמתאימים לכם, ומחליטים אם להמשיך לפי תוצאות." },
+  { icon: "✓", title: "עובדים לפי בחירה", body: "רואים את פרטי הליד, בוחנים התאמה, ורוכשים רק לידים שרלוונטיים לפעילות שלכם." },
 ];
 
 const TRUST_ITEMS = [
   { icon: "🔒", title: "שקיפות לפני רכישה", body: "נתונים פיננסיים ראשוניים — כולל ציון אישור, הכנסה וסכום משכנתא — גלויים לפני כל רכישה." },
   { icon: "👤", title: "פרטי קשר רק אחרי רכישה", body: "שם מלא וטלפון נחשפים אך ורק לאחר רכישת הליד. כל ליד שייך לרוכש בלבד לפי סוג הרכישה." },
-  { icon: "📊", title: "ניקוד ואיכות לפני כל ליד", body: "לידים מדורגים אוטומטית לפי יחס החזר, LTV, הכנסה ומצב חוזי. לידים חלשים לא מוצגים." },
+  { icon: "📊", title: "ניקוד ואיכות לפני כל ליד", body: "לידים מדורגים אוטומטית לפי יחס החזר, LTV, הכנסה ומצב חוזי. כל ליד מתומחר לפי רמתו — ובוחרים בהתאם לצרכים." },
   { icon: "🗂️", title: "ניהול לידים באזור אישי", body: "כל הלידים שרכשתם מנוהלים בפורטל — סטטוס, הערות, מועד מעקב ופרטי לקוח מלאים." },
+];
+
+const CRM_FEATURES = [
+  "CRM אישי לניהול לידים",
+  "מעקב סטטוס טיפול בכל לקוח",
+  "ניהול תיק משכנתא לפי שלבים",
+  "קישור מסמכים ללקוח",
+  "מעקב אחרי מסמכים חסרים",
+  "ספריית בנקאים ואנשי קשר",
+  "הכנת תיק מסודר לבנק",
+  "תיעוד פעולות והמשך טיפול",
+];
+
+const LEAD_TIERS = [
+  {
+    label: "ליד חם",
+    color: "emerald",
+    badge: "🔥",
+    desc: "לקוח עם נתונים פיננסיים טובים ורמת בשלות גבוהה — הכנסה, הון עצמי ויחס החזר תקינים.",
+  },
+  {
+    label: "ליד בינוני",
+    color: "amber",
+    badge: "⚡",
+    desc: "לקוח שדורש בדיקה נוספת או השלמת מידע — פוטנציאל קיים, מצריך התעמקות.",
+  },
+  {
+    label: "הזדמנות במחיר כניסה",
+    color: "slate",
+    badge: "🔎",
+    desc: "ליד מוקדם או שדורש יותר עבודה — מתומחר בהתאם, מתאים ליועצים שמחפשים נפח או לידים בשלבים מוקדמים.",
+  },
 ];
 
 const FAQ_ITEMS = [
   {
     q: "מה זה FINZO PRO?",
-    a: "FINZO PRO היא חנות לידים ליועצי משכנתאות. לידים מגיעים ממשתמשים שמילאו בדיקת זכאות או מחזור משכנתא באתר FINZO. כל ליד עובר ניקוד אוטומטי לפי נתונים פיננסיים ראשוניים, ומוצג בחנות עם מידע חלקי לפני רכישה.",
+    a: "FINZO PRO היא פלטפורמה ליועצי משכנתאות המשלבת שני דברים: חנות לידים מדורגים לפי איכות, וסביבת CRM אישית לניהול הלידים והתיקים. הלידים מגיעים ממשתמשים שמילאו בדיקת זכאות או מחזור משכנתא, עוברים ניקוד אוטומטי, ומוצגים עם מידע פיננסי ראשוני לפני רכישה.",
   },
   {
     q: "האם אני רואה את פרטי הלקוח לפני רכישה?",
@@ -87,16 +119,16 @@ const FAQ_ITEMS = [
     a: "ליד רגיל עשוי להיות זמין למספר מוגבל של יועצים. ליד בלעדי נמכר ליועץ אחד בלבד — ברגע שרכשתם אותו הוא נחסם ואינו מוצג ליועצים אחרים.",
   },
   {
-    q: "האם יש התחייבות חודשית?",
-    a: "בשלב הראשון — לא. משלמים רק על לידים שרכשתם בפועל. אין מנוי חובה ואין עלות חודשית קבועה.",
+    q: "איך עובד מודל התשלום?",
+    a: "המחיר מוצג לפני רכישת ליד. היועץ רואה Preview, בוחן התאמה, ובוחר אם לרכוש ליד רגיל או בלעדי בהתאם למה שזמין בפורטל. תנאי השימוש והמחירים המלאים מוצגים לפני הצטרפות.",
   },
   {
     q: "איך מקבלים גישה?",
     a: "שלחו בקשת גישה דרך הטופס באתר. נחזור אליכם עם פרטי כניסה לפורטל ולחנות הלידים.",
   },
   {
-    q: "האם הלידים עוברים סינון?",
-    a: "כן. לידים מסוווגים אוטומטית לפי יחס החזר, LTV, הכנסה ומצב חוזי. לידים שלא עומדים בסף איכות בסיסי לא מופיעים בחנות — רק לידים חמים ובינוניים מוצגים.",
+    q: "איך מדורגים הלידים?",
+    a: "FINZO מדרגת כל ליד לפי יחס החזר, LTV, הכנסה ומצב חוזי. כל ליד מקבל תווית איכות ותמחור בהתאם: ליד חם, ליד בינוני, או הזדמנות במחיר כניסה — כך שכל יועץ בוחר לפי הצרכים שלו.",
   },
 ];
 
@@ -184,8 +216,8 @@ export default function FinzoProLanding() {
   return (
     <>
       <Head>
-        <title>FINZO PRO — חנות לידים ליועצי משכנתאות</title>
-        <meta name="description" content="FINZO PRO — חנות לידים חכמה ליועצי משכנתאות. גישה ללידים מסוננים עם נתונים פיננסיים ראשוניים, רכישה רגילה או בלעדית, וניהול בפורטל." />
+        <title>FINZO PRO — לידים ומערכת עבודה ליועצי משכנתאות</title>
+        <meta name="description" content="FINZO PRO — לידים מדורגים לפי איכות, CRM אישי לניהול תיקים, ומערכת עבודה שמרכזת את הטיפול בלקוח במקום אחד. ליועצי משכנתאות בלבד." />
         <meta name="robots" content="noindex,nofollow" />
         <link rel="canonical" href={canonicalUrl("/advisors")} />
       </Head>
@@ -218,26 +250,30 @@ export default function FinzoProLanding() {
               <span className="h-2 w-2 rounded-full bg-violet-400 animate-pulse" />
               ליועצי משכנתאות בלבד
             </div>
-            <h1 className="text-4xl font-black leading-tight tracking-tight sm:text-6xl">
-              FINZO PRO
-              <span className="mt-2 block text-3xl font-black text-violet-300 sm:text-4xl">
-                חנות לידים חכמה ליועצי משכנתאות
+            <div className="mb-5 flex flex-wrap justify-center gap-2 text-sm font-black">
+              <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-3 py-1 text-emerald-300">לידים מדורגים לפי איכות</span>
+              <span className="text-slate-600">+</span>
+              <span className="rounded-full bg-violet-500/20 border border-violet-500/40 px-3 py-1 text-violet-300">CRM אישי לניהול תיקי משכנתא</span>
+            </div>
+            <h1 className="text-4xl font-black leading-tight tracking-tight sm:text-5xl">
+              לידים מדורגים ומערכת עבודה אחת
+              <span className="mt-2 block text-violet-300">
+                לניהול הלקוח עד הסגירה
               </span>
             </h1>
             <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
-              קבלו גישה ללידים מסוננים של מתעניינים במשכנתא, מחזור ומשפרי דיור —
-              עם נתונים פיננסיים ראשוניים לפני רכישה.
+              FINZO PRO מחברת בין לידים שעברו בדיקה ראשונית לבין סביבת CRM אישית לניהול סטטוס, מסמכים, בנקאים והמשך טיפול.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href="/advisor/register" className="rounded-full bg-violet-600 hover:bg-violet-500 px-9 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.4)] transition hover:-translate-y-0.5">
-                פתיחת חשבון ב־FINZO PRO
+                הצטרפות ליועצים
               </Link>
               <Link href="/advisor/login" className="rounded-full border border-white/20 bg-white/10 hover:bg-white/15 px-9 py-4 text-base font-black text-white transition">
-                כניסה ליועצים
+                כניסה למערכת
               </Link>
             </div>
             <p className="mt-6 text-sm text-slate-500">
-              ללא התחייבות חודשית · תשלום לפי ליד · מחיר מוצג לפני רכישה
+              תשלום לפי ליד · מחיר מוצג לפני רכישה · CRM אישי לכל יועץ
             </p>
           </div>
         </section>
@@ -250,7 +286,7 @@ export default function FinzoProLanding() {
                 הבעיה
               </span>
               <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
-                רוב הלידים שמגיעים — לא שווים את הזמן
+                הבעיה היא לא כמות הלידים — אלא איכות המידע שמגיע איתם
               </h2>
             </div>
             <div className="grid gap-5 md:grid-cols-2">
@@ -380,6 +416,202 @@ export default function FinzoProLanding() {
           </div>
         </section>
 
+        {/* ── 6b. CRM section ───────────────────────────────────────────── */}
+        <section className="border-y border-slate-100 bg-slate-950 py-20 text-white">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mx-auto mb-12 max-w-2xl text-center">
+              <span className="inline-block rounded-full border border-violet-700/60 bg-violet-900/40 px-4 py-2 text-sm font-black text-violet-300">
+                לא רק לידים
+              </span>
+              <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
+                מערכת עבודה ליועצי משכנתאות
+              </h2>
+              <p className="mt-4 text-lg leading-8 text-slate-300">
+                FINZO נותנת לכל יועץ סביבת עבודה לניהול הלידים והתיקים שלו — סטטוס טיפול, מסמכים, בנקאים, תיעוד פעולות והמשך טיפול מסודר במקום אחד, במקום לעבוד עם אקסלים, פתקים ושיחות וואטסאפ מפוזרות.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {CRM_FEATURES.map((feature) => (
+                <div key={feature} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-violet-500/20 text-xs font-black text-violet-400">✓</span>
+                  <span className="text-sm font-bold text-slate-200">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 6c. CRM system preview (CSS mockups) ─────────────────────── */}
+        <section className="py-20 bg-white">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mx-auto mb-12 max-w-2xl text-center">
+              <span className="inline-block rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+                סביבת העבודה
+              </span>
+              <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
+                כך נראית סביבת העבודה של FINZO PRO
+              </h2>
+              <p className="mt-4 text-lg leading-8 text-slate-600">
+                היועץ לא מקבל רק פרטי קשר — הוא מקבל סביבת עבודה לניהול הליד, התיק והמשך הטיפול.
+              </p>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+
+              {/* Card 1 – Dashboard */}
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="bg-slate-950 px-4 pt-4 pb-0">
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-400/60" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-400/60" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/60" />
+                    <span className="mr-auto text-xs font-bold text-slate-500">דשבורד</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {[["לידים פעילים","12"],["תיקים בטיפול","7"],["ממתינים לפעולה","3"],["נסגרו החודש","2"]].map(([label, val]) => (
+                      <div key={label} className="rounded-xl bg-slate-800 px-2.5 py-2">
+                        <p className="text-xs text-slate-500 font-bold">{label}</p>
+                        <p className="text-lg font-black text-white">{val}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="rounded-t-xl bg-slate-800/50 px-3 py-2.5 h-12 flex items-end gap-1">
+                    {[3,5,4,7,6,8,5].map((h, i) => (
+                      <div key={i} className="flex-1 rounded-sm bg-violet-500/60" style={{ height: `${h * 5}px` }} />
+                    ))}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <p className="text-sm font-black text-slate-950">דשבורד ניהול</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">תמונת מצב של לידים, סטטוסים, תיקים והתקדמות במקום אחד.</p>
+                  <span className="mt-2 inline-block text-xs text-slate-400 font-bold">דוגמה בלבד</span>
+                </div>
+              </div>
+
+              {/* Card 2 – Lead / case management */}
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="bg-slate-50 border-b border-slate-100 px-4 py-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-black text-emerald-700">🔥 ליד חם</span>
+                    <span className="text-xs text-slate-400 font-bold">📍 תל אביב</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex gap-2 items-center">
+                      <span className="text-xs font-bold text-slate-500 w-20 shrink-0">שם לקוח</span>
+                      <span className="rounded bg-slate-200 h-3 flex-1" />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <span className="text-xs font-bold text-slate-500 w-20 shrink-0">טלפון</span>
+                      <span className="text-xs font-bold text-slate-400">05X-XXX-XXXX</span>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <span className="text-xs font-bold text-slate-500 w-20 shrink-0">משכנתא</span>
+                      <span className="text-xs font-black text-slate-700">1,800,000 ₪</span>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <span className="text-xs font-bold text-slate-500 w-20 shrink-0">סטטוס</span>
+                      <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-black text-violet-700">בטיפול</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <p className="text-sm font-black text-slate-950">ניהול ליד ותיק משכנתא</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">פרטי לקוח, סטטוס טיפול, נתונים פיננסיים והמשך מעקב בצורה מסודרת.</p>
+                  <span className="mt-2 inline-block text-xs text-slate-400 font-bold">דוגמה בלבד</span>
+                </div>
+              </div>
+
+              {/* Card 3 – Documents tracking */}
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="bg-slate-50 border-b border-slate-100 px-4 py-4">
+                  <p className="text-xs font-black text-slate-700 mb-2.5">מסמכים — לקוח לדוגמה</p>
+                  <div className="space-y-2">
+                    {[
+                      { name: "תלושי שכר", done: true },
+                      { name: "דפי חשבון בנק", done: true },
+                      { name: "הסכם רכישה", done: false },
+                      { name: "אישור עקרוני", done: false },
+                    ].map((doc) => (
+                      <div key={doc.name} className="flex items-center gap-2">
+                        <span className={`grid h-4 w-4 shrink-0 place-items-center rounded text-xs font-black ${doc.done ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-400"}`}>
+                          {doc.done ? "✓" : "○"}
+                        </span>
+                        <span className={`text-xs font-bold ${doc.done ? "text-slate-700" : "text-slate-400"}`}>{doc.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2.5 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-emerald-400" style={{ width: "50%" }} />
+                  </div>
+                </div>
+                <div className="p-4">
+                  <p className="text-sm font-black text-slate-950">מסמכים ובקרת חוסרים</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">קישור מסמכים ללקוח, מעקב אחרי מסמכים שהועלו ומה עדיין חסר.</p>
+                  <span className="mt-2 inline-block text-xs text-slate-400 font-bold">דוגמה בלבד</span>
+                </div>
+              </div>
+
+              {/* Card 4 – Bankers / contacts */}
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="bg-slate-50 border-b border-slate-100 px-4 py-4">
+                  <p className="text-xs font-black text-slate-700 mb-2.5">בנקאים משויכים לתיק</p>
+                  <div className="space-y-2">
+                    {[
+                      { bank: "בנק לאומי", name: "איש קשר לדוגמה", role: "משכנתאות" },
+                      { bank: "בנק הפועלים", name: "איש קשר לדוגמה", role: "לקוחות עסקיים" },
+                    ].map((b) => (
+                      <div key={b.bank} className="rounded-xl bg-white border border-slate-200 px-3 py-2">
+                        <p className="text-xs font-black text-slate-800">{b.bank}</p>
+                        <p className="text-xs text-slate-400 font-bold">{b.name} · {b.role}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <button className="mt-2.5 w-full rounded-xl border border-dashed border-slate-300 py-2 text-xs font-bold text-slate-400 cursor-default">
+                    + הוסף בנקאי
+                  </button>
+                </div>
+                <div className="p-4">
+                  <p className="text-sm font-black text-slate-950">עבודה מול בנקאים</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">ספריית אנשי קשר, שיוך בנקאים לתיק והכנת סיכום מסודר לשליחה.</p>
+                  <span className="mt-2 inline-block text-xs text-slate-400 font-bold">דוגמה בלבד</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* ── 6d. Lead quality tiers ────────────────────────────────────── */}
+        <section className="py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mx-auto mb-12 max-w-2xl text-center">
+              <span className="inline-block rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+                דירוג לידים
+              </span>
+              <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
+                בוחרים לפי איכות ומחיר
+              </h2>
+              <p className="mt-4 text-lg leading-8 text-slate-600">
+                כל ליד מדורג ומתומחר בהתאם לרמתו — אין לידים שנמחקים, יש לידים שמתאימים לסוגי יועצים שונים.
+              </p>
+            </div>
+            <div className="grid gap-5 md:grid-cols-3">
+              {LEAD_TIERS.map((tier) => (
+                <div key={tier.label} className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+                  <div className="mb-4 flex items-center gap-3">
+                    <span className="text-2xl">{tier.badge}</span>
+                    <span className={`inline-block rounded-full px-3 py-1 text-sm font-black ${
+                      tier.color === "emerald" ? "bg-emerald-100 text-emerald-700" :
+                      tier.color === "amber" ? "bg-amber-100 text-amber-700" :
+                      "bg-slate-100 text-slate-700"
+                    }`}>{tier.label}</span>
+                  </div>
+                  <p className="leading-7 text-slate-600">{tier.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ── 7. Lead types ─────────────────────────────────────────────── */}
         <section className="border-y border-slate-100 bg-slate-50 py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -414,7 +646,7 @@ export default function FinzoProLanding() {
                 שקיפות מלאה — גם במחיר
               </h2>
               <p className="mt-4 text-lg leading-8 text-slate-600">
-                כל מחיר מוצג לפני הרכישה. אין הפתעות, אין מנוי מוסתר.
+                מודל רכישה גמיש לפי ליד, עם שקיפות מלאה לפני כל רכישה.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -487,21 +719,21 @@ export default function FinzoProLanding() {
               <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs font-black text-white">PRO</span>
             </div>
             <h2 className="text-3xl font-black leading-tight sm:text-5xl">
-              מתחילים לעבוד עם לידים חכמים יותר
+              מערכת עבודה מלאה — לא רק לידים
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-slate-300">
-              הצטרפו ל־FINZO PRO וקבלו גישה לחנות לידים עם מידע פיננסי ראשוני, ניהול בפורטל ותשלום לפי ליד בלבד.
+              הצטרפו ל־FINZO PRO וקבלו לידים מדורגים לפי איכות, CRM אישי לניהול תיקים, ומערכת עבודה שמרכזת את הטיפול בלקוח במקום אחד.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href="/advisor/register" className="rounded-full bg-violet-600 hover:bg-violet-500 px-10 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.4)] transition hover:-translate-y-0.5">
-                פתיחת חשבון ב־FINZO PRO
+                הצטרפות ליועצים
               </Link>
               <Link href="/advisor/login" className="rounded-full border border-white/20 bg-white/10 hover:bg-white/15 px-10 py-4 text-base font-black text-white transition">
-                כניסה ליועצים
+                כניסה למערכת
               </Link>
             </div>
             <p className="mt-6 text-sm text-slate-500">
-              ללא התחייבות חודשית · מחיר מוצג לפני רכישה · פרטי קשר רק אחרי רכישה
+              תשלום לפי ליד · מחיר מוצג לפני רכישה · CRM אישי · פרטי קשר רק אחרי רכישה
             </p>
           </div>
         </section>

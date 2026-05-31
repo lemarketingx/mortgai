@@ -12,7 +12,7 @@ import BrandLogo from "./BrandLogo";
 
 const navLinks = [
   ["דף הבית", "#home"],
-  ["מחשבון משכנתא", "#eligibility-check"],
+  ["בדיקת התאמה", "#eligibility-check"],
   ["מחזור משכנתא", "#refinance"],
   ["איך זה עובד", "#how-it-works"],
   ["שאלות נפוצות", "#faq"],
@@ -22,29 +22,36 @@ const navLinks = [
 const trustItems = [
   { text: "הנתונים נשארים אצלנו ולא נשלחים לבנק ללא אישורך", icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" },
   { text: "הבדיקה היא אומדן ראשוני בלבד — לא אישור בנקאי", icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" },
-  { text: "המטרה היא לעזור לך להבין איפה אתה עומד לפני פנייה ליועץ או לבנק", icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
-  { text: "תוצאה ראשונית תוך דקה — ללא עלות", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
+  { text: "המטרה — לעזור לך להבין איפה אתה עומד לפני פנייה ליועץ", icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+  { text: "תמונת מצב ראשונית תוך דקה — ללא עלות", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
 ];
 
-const steps = [
+const problemItems = [
+  { text: "לא יודעים כמה משכנתא אפשר לקבל לפי ההכנסה", icon: "M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+  { text: "לא בטוחים אם כדאי למחזר את המשכנתא הקיימת", icon: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" },
+  { text: "קשה להבין מה יהיה ההחזר החודשי האמיתי", icon: "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" },
+  { text: "הבנקים ויועצים מדברים בשפה לא תמיד ברורה", icon: "M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" },
+  { text: "לא ברור מה בדיוק בודקים לפני שמגישים בקשה", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
+  { text: "כל יועץ מבקש מסמכים בצורה שונה ולא ברור מה הכרחי", icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" },
+];
+
+const processSteps = [
   {
-    title: "ממלאים נתונים",
-    text: "הכנסה, הוצאות, מחיר נכס, הון עצמי ותקופת החזר.",
+    number: "01",
+    title: "ממלאים כמה פרטים",
+    text: "הכנסה, הון עצמי, מחיר נכס — תהליך קצר שלוקח כדקה.",
     icon: "M12 6v12m6-6H6",
   },
   {
-    title: "מקבלים בדיקה חכמה",
-    text: "המערכת מבצעת ניתוח פיננסי ראשוני של יחס החזר, LTV והתחייבויות קיימות.",
-    icon: "M5 13l4 4L19 7",
+    number: "02",
+    title: "מקבלים תמונת מצב ראשונית",
+    text: "אומדן סיכוי התאמה, החזר חודשי משוער ויחס החזר — מיד ובחינם.",
+    icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
   },
   {
-    title: "רואים אומדן ראשוני",
-    text: "מקבלים הפרדה ברורה בין אומדן זכאות, החזר חודשי ואינדיקציית סיכון.",
-    icon: "M4 19h16M7 15l3-3 3 2 4-6",
-  },
-  {
-    title: "ממשיכים ליועץ מקצועי",
-    text: "רק אם תרצו, הנתונים עוברים להמשך בדיקה אנושית ללא התחייבות.",
+    number: "03",
+    title: "ממשיכים לבדיקה מקצועית במידת הצורך",
+    text: "אם יש התאמה, ניתן להתחיל בדיקה מעמיקה עם יועץ מתאים — ללא לחץ.",
     icon: "M8 11a4 4 0 118 0M4 20a8 8 0 0116 0",
   },
 ];
@@ -79,6 +86,11 @@ export const faqItems = [
     question: "מהו יחס החזר תקין?",
     answer:
       "ברוב המקרים נהוג לראות יחס החזר סביב 30%-35% כטווח נוח לבדיקה. יחס החזר גבוה מ-40% עשוי להקשות על קבלת אישור, תלוי בהכנסה, בהלוואות קיימות וביתרה למחיה.",
+  },
+  {
+    question: "מה ההבדל בין FINZO לבין יועץ משכנתאות?",
+    answer:
+      "FINZO מספקת בדיקה ראשונית ואומדן מהיר כנקודת פתיחה. יועץ משכנתאות מורשה הוא הגורם שמבצע את הבדיקה המלאה, מנהל מול הבנקים ומלווה את כל התהליך. FINZO יכולה לסייע להבין את המצב לפני שמגיעים לשלב הזה.",
   },
 ];
 
@@ -124,11 +136,11 @@ export function Header({ onCtaClick }) {
 
         <a
           href="#eligibility-check"
-          onClick={() => onCtaClick?.("hero")}
-          aria-label="מעבר מהיר למחשבון זכאות"
+          onClick={() => onCtaClick?.("header")}
+          aria-label="מעבר לבדיקת התאמה"
           className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800"
         >
-          בדקו זכאות עכשיו
+          בדיקת התאמה עכשיו
         </a>
       </div>
     </header>
@@ -175,31 +187,34 @@ export function Hero({ onCtaClick }) {
       <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2">
         <div className="mx-auto max-w-2xl text-center lg:text-right">
           <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-black text-violet-800">
-            בדיקה ראשונית · ללא עלות · ללא התחייבות
+            ללא עלות · ללא התחייבות · תהליך קצר
           </span>
           <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-            בדיקת זכאות למשכנתא בתוך דקה — בלי התחייבות
+            בדיקת התאמה למשכנתא או מחזור — בצורה חכמה, פשוטה ומהירה
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg font-semibold leading-8 text-slate-600 lg:mx-0">
-            FINZO מנתחת את הנתונים שלך ומציגה אומדן ראשוני לסיכוי אישור, החזר חודשי ויחס החזר — בצורה פשוטה וברורה.
+            FINZO עוזרת להבין את מצב המשכנתא, לבדוק כיוון ראשוני ולחבר אותך להמשך טיפול מקצועי במידת הצורך.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
             <a
               href="#eligibility-check"
-              onClick={() => onCtaClick?.("hero")}
-              aria-label="התחלת בדיקת זכאות"
+              onClick={() => onCtaClick?.("hero_primary")}
+              aria-label="בדיקת התאמה למשכנתא"
               className="rounded-full bg-violet-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-violet-800"
             >
-              בדקו זכאות עכשיו
+              בדיקת התאמה עכשיו
+            </a>
+            <a
+              href="#refinance"
+              onClick={() => onCtaClick?.("hero_refinance")}
+              className="rounded-full border border-violet-200 bg-violet-50 px-8 py-4 text-center text-base font-black text-violet-800 transition hover:bg-violet-100"
+            >
+              בדיקת מחזור משכנתא
             </a>
           </div>
           <p className="mt-5 text-sm font-bold text-slate-500">
-            ללא עלות · ללא התחייבות · לא מועבר לבנק ללא אישורך
+            ללא התחייבות · תהליך קצר · הנתונים משמשים לבדיקה ראשונית בלבד
           </p>
-          <a href="#eligibility-check" onClick={() => onCtaClick?.("hero")} className="mt-4 inline-flex items-center gap-2 text-sm font-black text-violet-700 hover:text-violet-800">
-            <span>הבדיקה מתחילה כאן</span>
-            <span aria-hidden="true">↓</span>
-          </a>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
               <p className="text-xs font-black text-slate-500">זמן מילוי</p>
@@ -207,7 +222,7 @@ export function Hero({ onCtaClick }) {
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
               <p className="text-xs font-black text-slate-500">תוצאה מיידית</p>
-              <p className="mt-1 text-lg font-black text-slate-900">סיכוי אישור + החזר חודשי</p>
+              <p className="mt-1 text-lg font-black text-slate-900">אומדן סיכוי + החזר חודשי</p>
             </div>
           </div>
         </div>
@@ -242,30 +257,77 @@ export function TrustStrip() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  HOW IT WORKS                                                        */
+/*  PROBLEM SECTION                                                     */
+/* ------------------------------------------------------------------ */
+
+export function ProblemSection() {
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+      <SectionHeader
+        eyebrow="הבעיה שאנחנו פותרים"
+        title="קשה להבין את עולם המשכנתאות לבד"
+        text="לפני שפונים לבנק או ליועץ, רוב האנשים מתמודדים עם אותן השאלות."
+      />
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {problemItems.map(({ text, icon }) => (
+          <div key={text} className="flex items-start gap-4 rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+            <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-50 text-violet-600">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d={icon} strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <p className="font-bold leading-7 text-slate-700">{text}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-10 rounded-[28px] border border-violet-100 bg-violet-50 p-6 text-center sm:p-8">
+        <p className="text-lg font-black text-violet-900">FINZO עוזרת לקבל תמונת מצב ראשונית ברורה — לפני שמגיעים לבנק</p>
+        <p className="mt-2 text-slate-600">בדיקה ראשונית חינמית, אומדן מהיר, וחיבור להמשך טיפול מקצועי רק אם רלוונטי.</p>
+        <a
+          href="#eligibility-check"
+          className="mt-5 inline-block rounded-full bg-violet-700 px-8 py-3.5 font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.25)] transition hover:bg-violet-800"
+        >
+          בדיקת התאמה עכשיו
+        </a>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  HOW IT WORKS — 3 steps                                             */
 /* ------------------------------------------------------------------ */
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-      <SectionHeader
-        eyebrow="איך זה עובד"
-        title="מדקה אחת לתמונת מצב ראשונית"
-        text="תהליך קצר וברור — בלי ניירת, בלי בנקים ובלי לחץ. רק מידע שיעזור לך להחליט."
-      />
-      <div className="mt-10 grid gap-4 md:grid-cols-2">
-        {steps.map((step, index) => (
-          <div key={step.title} className="flex h-full gap-5 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
-              <LineIcon path={step.icon} />
-            </span>
-            <div>
-              <p className="text-sm font-black text-violet-700">שלב {index + 1}</p>
-              <h3 className="mt-1 text-xl font-black text-slate-950">{step.title}</h3>
-              <p className="mt-2 leading-7 text-slate-600">{step.text}</p>
+    <section id="how-it-works" className="bg-slate-50/60 py-16 sm:py-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SectionHeader
+          eyebrow="איך זה עובד"
+          title="שלושה שלבים פשוטים לתמונת מצב ראשונית"
+          text="תהליך קצר וברור — בלי ניירת, בלי בנקים, בלי לחץ."
+        />
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {processSteps.map((step) => (
+            <div key={step.number} className="relative flex flex-col gap-5 rounded-[28px] border border-slate-200 bg-white p-7 shadow-sm">
+              <div className="flex items-center gap-4">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-700 font-black text-2xl text-white">
+                  {step.number}
+                </span>
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
+                  <LineIcon path={step.icon} />
+                </span>
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-slate-950">{step.title}</h3>
+                <p className="mt-2 leading-7 text-slate-600">{step.text}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        <p className="mt-8 text-center text-sm font-bold text-slate-500">
+          הבדיקה באתר היא אומדן ראשוני בלבד · אינה מהווה אישור בנקאי · המשך טיפול מקצועי יתבצע מול גורם מוסמך
+        </p>
       </div>
     </section>
   );
@@ -320,19 +382,30 @@ export function RefinanceSection() {
       <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-2">
         <div>
           <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-black text-violet-100">
-            מחזור משכנתא
+            יש לכם משכנתא קיימת?
           </span>
-          <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">בדיקת כדאיות למחזור משכנתא</h2>
+          <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
+            בדקו אם יש פוטנציאל לחיסכון במחזור
+          </h2>
           <p className="mt-4 max-w-xl text-lg leading-8 text-violet-100">
-            כבר יש לכם משכנתא? בדקו אם שינוי ריבית, תקופה או תמהיל עשוי להפחית החזר או ריבית כוללת. בהמשך ניתן להעלות דוח משכנתא לבדיקה נוחה יותר.
+            שינוי ריבית, תקופה או תמהיל עשוי להפחית את ההחזר החודשי או את עלות הריבית הכוללת. הבדיקה מוקדמת, ראשונית ובחינם.
           </p>
         </div>
         <div className="rounded-[32px] border border-white/10 bg-white/10 p-6">
-          <p className="text-xl font-black">מה בודקים?</p>
+          <p className="text-xl font-black">מה בודקים במחזור?</p>
           <ul className="mt-4 space-y-3 text-violet-50">
-            <li>• החזר חודשי נוכחי מול החזר חדש</li>
-            <li>• חיסכון ריבית משוער לאחר עלויות מחזור</li>
-            <li>• נקודת איזון והאם היא בתוך התקופה שנותרה</li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1 text-violet-300">•</span>
+              <span>החזר חודשי נוכחי מול החזר חדש משוער</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1 text-violet-300">•</span>
+              <span>חיסכון ריבית משוער לאחר עלויות המחזור</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1 text-violet-300">•</span>
+              <span>נקודת איזון — האם היא בתוך התקופה שנותרה</span>
+            </li>
           </ul>
           <a
             href="/refinance-check"
@@ -340,6 +413,9 @@ export function RefinanceSection() {
           >
             בדיקת מחזור משכנתא
           </a>
+          <p className="mt-3 text-center text-xs font-bold text-violet-200">
+            אומדן ראשוני בלבד · לא ייעוץ מקצועי
+          </p>
         </div>
       </div>
     </section>
@@ -376,7 +452,7 @@ const trustBlocks = [
 export function TrustContentSection() {
   return (
     <section id="why-finzo" aria-labelledby="trust-content-title" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-      <SectionHeader eyebrow="למה FINZO" title="שקיפות מלאה — לפני שמתחילים" text="אנחנו מאמינים שהחלטה פיננסית טובה מתחילה בהבנה ברורה של המצב, לא בלחץ מכירתי." />
+      <SectionHeader eyebrow="שקיפות מלאה" title="לפני שמתחילים — כמה דברים חשובים לדעת" text="אנחנו מאמינים שהחלטה פיננסית טובה מתחילה בהבנה ברורה של המצב, לא בלחץ מכירתי." />
       <h2 id="trust-content-title" className="sr-only">למה לבחור בבדיקה עם FINZO</h2>
       <div className="mt-10 grid gap-4 md:grid-cols-2">
         {trustBlocks.map((item) => (
@@ -393,6 +469,55 @@ export function TrustContentSection() {
           </article>
         ))}
       </div>
+
+      {/* Legal disclaimer block */}
+      <div className="mt-8 rounded-[24px] border border-amber-200 bg-amber-50 px-6 py-5">
+        <p className="text-sm font-black text-amber-900">גילוי נאות חשוב</p>
+        <p className="mt-1.5 text-sm leading-7 text-amber-800">
+          הבדיקה באתר היא אומדן ראשוני בלבד ואינה מהווה אישור בנקאי, ייעוץ משכנתאות אישי, או התחייבות לפעולה פיננסית כלשהי.
+          המשך טיפול מקצועי יתבצע מול גורם מורשה בלבד. התוצאות מבוססות על הנתונים שהוזנו ועשויות להשתנות.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  ADVISOR TEASER                                                      */
+/* ------------------------------------------------------------------ */
+
+export function AdvisorTeaser() {
+  return (
+    <section className="border-t border-slate-200 bg-slate-50 py-10 sm:py-14">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-right">
+          <div>
+            <span className="inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-black text-violet-700">
+              ליועצי משכנתאות
+            </span>
+            <h3 className="mt-2 text-xl font-black text-slate-950">
+              FINZO מספקת מערכת לניהול לידים ותיקי משכנתא
+            </h3>
+            <p className="mt-1 text-sm font-bold text-slate-600">
+              מערכת Back Office לניהול לידים, מעקב תיקים ושיוך לקוחות.
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            <a
+              href="/advisor/login"
+              className="rounded-full border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-700 shadow-sm transition hover:bg-violet-50"
+            >
+              כניסת יועצים
+            </a>
+            <a
+              href="/advisor/register"
+              className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-800"
+            >
+              הצטרפות ליועצים
+            </a>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -407,7 +532,7 @@ export function FaqSection() {
   return (
     <section id="faq" className="bg-slate-100/60 py-16 sm:py-20">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
-        <SectionHeader eyebrow="שאלות נפוצות" title="שאלות שכולם שואלים לפני שמתחילים" text="תשובות ישירות ופשוטות — בלי עמימות ובלי שיווק." />
+        <SectionHeader eyebrow="שאלות נפוצות" title="שאלות שכולם שואלים לפני שמתחילים" text="תשובות ישירות ופשוטות — בלי עמימות." />
         <div className="mt-10 space-y-3">
           {faqItems.map((item, index) => {
             const isOpen = openFaq === index;
@@ -460,14 +585,19 @@ export function Footer({ onCtaClick }) {
       <div className="mx-auto mt-6 max-w-6xl px-4 sm:px-6">
         <div className="flex flex-wrap items-center gap-3">
           <a href="#eligibility-check" onClick={() => onCtaClick?.("footer")} className="inline-flex rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
-            בדקו זכאות עכשיו
+            בדיקת התאמה עכשיו
           </a>
           <a href="#bottom-lead" onClick={() => onCtaClick?.("footer_bottom_lead")} className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800 transition hover:bg-violet-100">
             השאירו פרטים
           </a>
+          <a href="/refinance-check" className="text-sm font-bold text-violet-700 hover:underline">בדיקת מחזור ←</a>
           <a href="/blog" className="text-sm font-bold text-violet-700 hover:underline">בלוג משכנתאות ←</a>
           <a href="/guides" className="text-sm font-bold text-violet-700 hover:underline">מדריכי משכנתא ←</a>
         </div>
+        <p className="mt-4 text-xs text-slate-400">
+          יועצי משכנתאות?{" "}
+          <a href="/advisor/login" className="font-semibold text-slate-500 hover:underline">לחצו כאן לכניסה למערכת</a>
+        </p>
       </div>
     </footer>
   );
@@ -491,13 +621,13 @@ export function MobileStickyCta({ onCtaClick, hidden }) {
           onClick={() => onCtaClick?.("sticky_mobile")}
           className="flex min-h-[44px] items-center justify-center rounded-full bg-violet-700 px-4 text-sm font-black text-white shadow-[0_12px_28px_rgba(109,40,217,0.28)]"
         >
-          בדקו זכאות עכשיו
+          בדיקת התאמה
         </a>
         <a
-          href="#bottom-lead"
+          href="#refinance"
           className="flex min-h-[44px] items-center justify-center rounded-full border border-violet-200 bg-violet-50 px-4 text-sm font-black text-violet-800"
         >
-          השאירו פרטים
+          בדיקת מחזור
         </a>
       </div>
     </div>
