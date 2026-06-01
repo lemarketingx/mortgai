@@ -2,7 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 
 const LAST_UPDATED = "1 ביוני 2025";
-const CONTACT_EMAIL = "privacy@finzo.co.il";
+const CONTACT_EMAIL = "lemarketingx@gmail.com";
 
 export default function Privacy() {
   return (
