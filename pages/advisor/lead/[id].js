@@ -468,6 +468,15 @@ export default function LeadDetailPage() {
   const [addingBanker,         setAddingBanker]         = useState(false);
   const [caseBankerNotes,      setCaseBankerNotes]      = useState({});   // caseBankerId → note string
 
+  // ── Dispute state ────────────────────────────────────────────────────────
+  const [disputeOpen,    setDisputeOpen]    = useState(false);
+  const [disputeReason,  setDisputeReason]  = useState("");
+  const [disputeDesc,    setDisputeDesc]    = useState("");
+  const [disputeSaving,  setDisputeSaving]  = useState(false);
+  const [disputeError,   setDisputeError]   = useState("");
+  const [disputeSuccess, setDisputeSuccess] = useState(false);
+  const [isDisputed,     setIsDisputed]     = useState(false);
+
   const debounceRef = useRef({});
 
   useEffect(() => {
@@ -480,7 +489,8 @@ export default function LeadDetailPage() {
       fetch(`/api/advisor/document-reminders?leadId=${id}`).then((r) => r.ok ? r.json() : { reminder: null }),
       fetch("/api/advisor/bankers").then((r) => r.ok ? r.json() : { bankers: [] }),
       fetch(`/api/advisor/case-bankers?leadId=${id}`).then((r) => r.ok ? r.json() : { caseBankers: [] }),
-    ]).then(([leadsData, actData, docsData, tokenData, reminderData, bankersData, caseBankersData]) => {
+      fetch("/api/advisor/lead-disputes").then((r) => r.ok ? r.json() : { disputes: [] }),
+    ]).then(([leadsData, actData, docsData, tokenData, reminderData, bankersData, caseBankersData, disputesData]) => {
       const found = leadsData.lead || (leadsData.leads || []).find((l) => l.id === id);
       if (!found) { router.push("/advisor/my-leads"); return; }
       setLead(found);
@@ -501,6 +511,8 @@ export default function LeadDetailPage() {
       }
       setAdvisorBankers(Array.isArray(bankersData.bankers) ? bankersData.bankers : []);
       setCaseBankers(Array.isArray(caseBankersData.caseBankers) ? caseBankersData.caseBankers : []);
+      const existingDisputes = Array.isArray(disputesData?.disputes) ? disputesData.disputes : [];
+      if (existingDisputes.some((d) => d.lead_id === id)) setIsDisputed(true);
       setLoading(false);
     }).catch(() => { setLoading(false); router.push("/advisor/my-leads"); });
   }, [id]);
@@ -508,6 +520,28 @@ export default function LeadDetailPage() {
   function showSaved() {
     setSavedIndicator(true);
     setTimeout(() => setSavedIndicator(false), 2500);
+  }
+
+  const DISPUTE_REASONS_LIST = [
+    "מספר לא תקין", "הלקוח לא עונה", "הלקוח לא מעוניין",
+    "פרטים לא תואמים", "כבר מטופל אצל יועץ אחר", "אחר",
+  ];
+
+  async function submitDispute(e) {
+    e.preventDefault();
+    if (!disputeReason) { setDisputeError("יש לבחור סיבה."); return; }
+    setDisputeSaving(true); setDisputeError("");
+    try {
+      const res = await fetch("/api/advisor/lead-disputes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: id, reason: disputeReason, description: disputeDesc }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setDisputeError(json.message || "שגיאה בשליחת הדיווח."); return; }
+      setDisputeSuccess(true); setIsDisputed(true);
+    } catch { setDisputeError("שגיאת רשת. נסו שנית."); }
+    finally { setDisputeSaving(false); }
   }
 
   function pushActivity(title, activityType = "note_added") {
@@ -1147,6 +1181,15 @@ export default function LeadDetailPage() {
                   </div>
                 ))}
               </div>
+              {/* Dispute button */}
+              <div className="mt-3">
+                {isDisputed
+                  ? <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs font-black text-amber-700 text-center">✓ בקשת בדיקה נשלחה</div>
+                  : <button type="button" onClick={() => { setDisputeOpen(true); setDisputeReason(""); setDisputeDesc(""); setDisputeError(""); setDisputeSuccess(false); }}
+                      className="w-full rounded-xl border border-slate-200 text-slate-500 hover:text-rose-700 hover:bg-rose-50 hover:border-rose-200 py-2 text-xs font-black transition-colors">
+                      דווח על בעיה
+                    </button>}
+              </div>
             </div>
 
             {/* ── Tabs ── */}
@@ -1700,6 +1743,55 @@ export default function LeadDetailPage() {
           missingDocsList={computedDocumentSummary.missingDocuments}
           onClose={() => setShowWaTemplates(false)}
         />
+      )}
+
+      {/* Dispute modal */}
+      {disputeOpen && (
+        <div dir="rtl" className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4 pb-4 sm:pb-0"
+          onClick={(e) => { if (e.target === e.currentTarget && !disputeSaving) setDisputeOpen(false); }}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+            {disputeSuccess ? (
+              <div className="text-center py-4">
+                <div className="text-3xl mb-3">✅</div>
+                <h2 className="text-base font-black text-slate-900 mb-1">הבקשה נשלחה לבדיקה</h2>
+                <p className="text-sm font-bold text-slate-500 mb-4">צוות FINZO יטפל בבקשתך ויחזור אליך.</p>
+                <button type="button" onClick={() => setDisputeOpen(false)} className="rounded-xl bg-violet-700 text-white px-6 py-2.5 text-sm font-black">סגור</button>
+              </div>
+            ) : (
+              <form onSubmit={submitDispute}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-black text-slate-900">דיווח על בעיה</h2>
+                  <button type="button" onClick={() => setDisputeOpen(false)} className="text-slate-400 hover:text-slate-700 font-black text-lg leading-none">✕</button>
+                </div>
+                <div className="grid gap-3">
+                  <div>
+                    <label className="block text-xs font-black text-slate-500 mb-1">סיבה <span className="text-red-500">*</span></label>
+                    <select value={disputeReason} onChange={(e) => setDisputeReason(e.target.value)} required
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:border-violet-400 focus:outline-none bg-white">
+                      <option value="">בחר סיבה...</option>
+                      {DISPUTE_REASONS_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-500 mb-1">פירוט (אופציונלי)</label>
+                    <textarea value={disputeDesc} onChange={(e) => setDisputeDesc(e.target.value)} rows={3}
+                      placeholder="תאר את הבעיה בקצרה..."
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:border-violet-400 focus:outline-none resize-none" />
+                  </div>
+                </div>
+                {disputeError && <p className="mt-2 text-xs font-black text-red-700 bg-red-50 rounded-lg px-3 py-2">{disputeError}</p>}
+                <div className="flex gap-2 mt-4">
+                  <button type="button" onClick={() => setDisputeOpen(false)} disabled={disputeSaving}
+                    className="flex-1 rounded-xl border border-slate-200 text-slate-600 py-2.5 text-sm font-black disabled:opacity-50">ביטול</button>
+                  <button type="submit" disabled={disputeSaving}
+                    className="flex-1 rounded-xl bg-violet-700 text-white py-2.5 text-sm font-black disabled:opacity-60">
+                    {disputeSaving ? "שולח..." : "שלח לבדיקה"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
       )}
     </>
   );

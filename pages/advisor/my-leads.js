@@ -1,6 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatILS } from "../../lib/format";
 import { KpiTile, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
@@ -11,6 +11,15 @@ import {
   normalizePipelineStage,
 } from "../../lib/pipeline";
 import { calculateOverallMortgageProgress } from "../../lib/mortgageCase";
+
+const DISPUTE_REASONS = [
+  "מספר לא תקין",
+  "הלקוח לא עונה",
+  "הלקוח לא מעוניין",
+  "פרטים לא תואמים",
+  "כבר מטופל אצל יועץ אחר",
+  "אחר",
+];
 
 const PURCHASE_STATUS_LABELS = {
   new_purchase:       "רכישת דירה",
@@ -129,7 +138,7 @@ function openWaPhone(phone) {
 }
 
 // ─── Lead Card — memoized so it only re-renders when lead data changes ────────
-const MyLeadCard = memo(function MyLeadCard({ lead }) {
+const MyLeadCard = memo(function MyLeadCard({ lead, onDispute, isDisputed }) {
   const stage = getStage(lead);
   const stageBadge = STAGE_BADGE[stage] || "bg-slate-50 text-slate-600 border-slate-200";
   const score = Math.round(Number(lead.approvalScore || lead.estimatedApprovalResult) || 0);
@@ -200,12 +209,21 @@ const MyLeadCard = memo(function MyLeadCard({ lead }) {
           : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 text-slate-400">וואטסאפ</button>}
         <Link href={`/advisor/lead/${lead.id}`} className="text-center text-xs font-black rounded-lg py-2 bg-violet-700 text-white active:bg-violet-900">פתח תיק</Link>
       </div>
+      {/* Dispute button */}
+      <div className="mt-2">
+        {isDisputed
+          ? <div className="text-center text-[11px] font-black text-amber-700 bg-amber-50 border border-amber-200 rounded-lg py-1.5">✓ הבקשה נשלחה לבדיקה</div>
+          : <button type="button" onClick={() => onDispute && onDispute(lead.id)}
+              className="w-full text-center text-[11px] font-black rounded-lg py-1.5 text-slate-500 hover:text-rose-700 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-colors">
+              דווח על בעיה
+            </button>}
+      </div>
     </article>
   );
 });
 
 // ─── List View row — memoized ─────────────────────────────────────────────────
-const LeadListRow = memo(function LeadListRow({ lead }) {
+const LeadListRow = memo(function LeadListRow({ lead, onDispute, isDisputed }) {
   const stage = getStage(lead);
   const si = getStageIndex(lead);
   const overall = Number(lead.overallProgressPercent ?? calculateOverallMortgageProgress(lead)) || 0;
@@ -243,13 +261,16 @@ const LeadListRow = memo(function LeadListRow({ lead }) {
           {lead.phone && <a href={`tel:${lead.phone}`} className="text-[11px] font-black px-2 py-1 rounded-lg bg-violet-50 text-violet-700 active:bg-violet-100 whitespace-nowrap">התקשר</a>}
           {lead.phone && <button type="button" onClick={() => openWaPhone(lead.phone)} className="text-[11px] font-black px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 active:bg-emerald-100 whitespace-nowrap">וואטסאפ</button>}
           <Link href={`/advisor/lead/${lead.id}`} className="text-[11px] font-black px-2 py-1 rounded-lg bg-violet-700 text-white active:bg-violet-900 whitespace-nowrap">פתח תיק</Link>
+          {isDisputed
+            ? <span className="text-[11px] font-black px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">✓ בבדיקה</span>
+            : <button type="button" onClick={() => onDispute && onDispute(lead.id)} className="text-[11px] font-black px-2 py-1 rounded-lg border border-slate-200 text-slate-500 hover:text-rose-700 hover:bg-rose-50 hover:border-rose-200 whitespace-nowrap">דווח על בעיה</button>}
         </div>
       </td>
     </tr>
   );
 });
 
-function LeadListView({ leads }) {
+function LeadListView({ leads, onDispute, disputedIds }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
       <div className="overflow-x-auto">
@@ -262,7 +283,7 @@ function LeadListView({ leads }) {
             </tr>
           </thead>
           <tbody>
-            {leads.map((lead) => <LeadListRow key={lead.id} lead={lead} />)}
+            {leads.map((lead) => <LeadListRow key={lead.id} lead={lead} onDispute={onDispute} isDisputed={disputedIds?.has(lead.id)} />)}
           </tbody>
         </table>
         {leads.length === 0 && <div className="text-center py-12 text-slate-400 text-sm font-bold">אין לידים</div>}
@@ -272,7 +293,7 @@ function LeadListView({ leads }) {
 }
 
 // ─── Kanban View — memoized, O(1) stage lookup via Set ────────────────────────
-const KanbanView = memo(function KanbanView({ leads }) {
+const KanbanView = memo(function KanbanView({ leads, onDispute, disputedIds }) {
   const groups = useMemo(() =>
     KANBAN_GROUPS.map((g) => ({
       ...g,
@@ -295,7 +316,7 @@ const KanbanView = memo(function KanbanView({ leads }) {
             <div className="flex-1 h-px bg-slate-200" />
           </div>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {group.leads.map((lead) => <MyLeadCard key={lead.id} lead={lead} />)}
+            {group.leads.map((lead) => <MyLeadCard key={lead.id} lead={lead} onDispute={onDispute} isDisputed={disputedIds?.has(lead.id)} />)}
           </div>
         </div>
       ))}
@@ -308,7 +329,7 @@ const KanbanView = memo(function KanbanView({ leads }) {
             <div className="flex-1 h-px bg-slate-200" />
           </div>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {closedLost.map((lead) => <MyLeadCard key={lead.id} lead={lead} />)}
+            {closedLost.map((lead) => <MyLeadCard key={lead.id} lead={lead} onDispute={onDispute} isDisputed={disputedIds?.has(lead.id)} />)}
           </div>
         </div>
       )}
@@ -329,6 +350,15 @@ export default function AdvisorMyLeads() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const searchTimerRef = useRef(null);
   const [stageFilter, setStageFilter] = useState("all");
+
+  // ── Dispute state ────────────────────────────────────────────────────────
+  const [disputeTarget, setDisputeTarget]   = useState(null); // leadId or null
+  const [disputedIds, setDisputedIds]       = useState(new Set());
+  const [disputeReason, setDisputeReason]   = useState("");
+  const [disputeDesc, setDisputeDesc]       = useState("");
+  const [disputeSaving, setDisputeSaving]   = useState(false);
+  const [disputeError, setDisputeError]     = useState("");
+  const [disputeSuccess, setDisputeSuccess] = useState(false);
 
   useEffect(() => {
     // Restore URL stage filter
@@ -353,12 +383,46 @@ export default function AdvisorMyLeads() {
 
   async function load() {
     setLoading(true);
-    const r = await fetch("/api/advisor/my-leads");
-    if (r.status === 401) { window.location.href = "/advisor/login"; return; }
-    if (!r.ok) { setError("שגיאה בטעינת הלידים."); setLoading(false); return; }
-    const j = await r.json();
+    const [leadsRes, disputesRes] = await Promise.all([
+      fetch("/api/advisor/my-leads"),
+      fetch("/api/advisor/lead-disputes"),
+    ]);
+    if (leadsRes.status === 401) { window.location.href = "/advisor/login"; return; }
+    if (!leadsRes.ok) { setError("שגיאה בטעינת הלידים."); setLoading(false); return; }
+    const j = await leadsRes.json();
     setLeads(j.leads || []);
+    if (disputesRes.ok) {
+      const dj = await disputesRes.json().catch(() => ({}));
+      setDisputedIds(new Set((dj.disputes || []).map((d) => d.lead_id)));
+    }
     setLoading(false);
+  }
+
+  const openDispute = useCallback((leadId) => {
+    setDisputeTarget(leadId);
+    setDisputeReason("");
+    setDisputeDesc("");
+    setDisputeError("");
+    setDisputeSuccess(false);
+  }, []);
+
+  async function submitDispute(e) {
+    e.preventDefault();
+    if (!disputeReason) { setDisputeError("יש לבחור סיבה."); return; }
+    setDisputeSaving(true);
+    setDisputeError("");
+    try {
+      const res = await fetch("/api/advisor/lead-disputes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: disputeTarget, reason: disputeReason, description: disputeDesc }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setDisputeError(json.message || "שגיאה בשליחת הדיווח."); return; }
+      setDisputeSuccess(true);
+      setDisputedIds((cur) => new Set([...cur, disputeTarget]));
+    } catch { setDisputeError("שגיאת רשת. נסו שנית."); }
+    finally { setDisputeSaving(false); }
   }
 
   function handleSearchChange(e) {
@@ -528,13 +592,13 @@ export default function AdvisorMyLeads() {
             <EmptyState glyph="🔍" title="אין תוצאות" description="נסו לשנות את החיפוש או הסינון." />
           )}
 
-          {!loading && filtered.length > 0 && view === "kanban" && <KanbanView leads={filtered} />}
+          {!loading && filtered.length > 0 && view === "kanban" && <KanbanView leads={filtered} onDispute={openDispute} disputedIds={disputedIds} />}
           {!loading && filtered.length > 0 && view === "cards" && (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((lead) => <MyLeadCard key={lead.id} lead={lead} />)}
+              {filtered.map((lead) => <MyLeadCard key={lead.id} lead={lead} onDispute={openDispute} isDisputed={disputedIds.has(lead.id)} />)}
             </div>
           )}
-          {!loading && filtered.length > 0 && view === "list" && <LeadListView leads={filtered} />}
+          {!loading && filtered.length > 0 && view === "list" && <LeadListView leads={filtered} onDispute={openDispute} disputedIds={disputedIds} />}
 
         </div>
       </main>
@@ -545,6 +609,55 @@ export default function AdvisorMyLeads() {
         <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50  rounded-xl py-2.5">הלידים שלי</Link>
         <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
       </div>
+
+      {/* ── Dispute Modal ── */}
+      {disputeTarget && (
+        <div dir="rtl" className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4 pb-4 sm:pb-0"
+          onClick={(e) => { if (e.target === e.currentTarget && !disputeSaving) setDisputeTarget(null); }}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+            {disputeSuccess ? (
+              <div className="text-center py-4">
+                <div className="text-3xl mb-3">✅</div>
+                <h2 className="text-base font-black text-slate-900 mb-1">הבקשה נשלחה לבדיקה</h2>
+                <p className="text-sm font-bold text-slate-500 mb-4">צוות FINZO יטפל בבקשתך ויחזור אליך.</p>
+                <button type="button" onClick={() => setDisputeTarget(null)} className="rounded-xl bg-violet-700 text-white px-6 py-2.5 text-sm font-black">סגור</button>
+              </div>
+            ) : (
+              <form onSubmit={submitDispute}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-black text-slate-900">דיווח על בעיה</h2>
+                  <button type="button" onClick={() => setDisputeTarget(null)} className="text-slate-400 hover:text-slate-700 font-black text-lg leading-none">✕</button>
+                </div>
+                <div className="grid gap-3">
+                  <div>
+                    <label className="block text-xs font-black text-slate-500 mb-1">סיבה <span className="text-red-500">*</span></label>
+                    <select value={disputeReason} onChange={(e) => setDisputeReason(e.target.value)} required
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:border-violet-400 focus:outline-none bg-white">
+                      <option value="">בחר סיבה...</option>
+                      {DISPUTE_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-500 mb-1">פירוט (אופציונלי)</label>
+                    <textarea value={disputeDesc} onChange={(e) => setDisputeDesc(e.target.value)} rows={3}
+                      placeholder="תאר את הבעיה בקצרה..."
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:border-violet-400 focus:outline-none resize-none" />
+                  </div>
+                </div>
+                {disputeError && <p className="mt-2 text-xs font-black text-red-700 bg-red-50 rounded-lg px-3 py-2">{disputeError}</p>}
+                <div className="flex gap-2 mt-4">
+                  <button type="button" onClick={() => setDisputeTarget(null)} disabled={disputeSaving}
+                    className="flex-1 rounded-xl border border-slate-200 text-slate-600 py-2.5 text-sm font-black disabled:opacity-50">ביטול</button>
+                  <button type="submit" disabled={disputeSaving}
+                    className="flex-1 rounded-xl bg-violet-700 text-white py-2.5 text-sm font-black disabled:opacity-60">
+                    {disputeSaving ? "שולח..." : "שלח לבדיקה"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }

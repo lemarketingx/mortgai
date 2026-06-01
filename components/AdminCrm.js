@@ -106,14 +106,30 @@ const PIPELINE_PROGRESS = {
 const COMMISSION_STATUS_LABELS = { pending: "ממתין", invoiced: "חויב", paid: "שולם" };
 
 const NAV_SECTIONS = [
-  { id: "dashboard", label: "דשבורד", icon: "⬡" },
-  { id: "new_leads", label: "לידים חדשים", icon: "⊕" },
-  { id: "all_leads", label: "כל הלידים", icon: "≡" },
-  { id: "marketplace", label: "חנות לידים", icon: "◈" },
-  { id: "cases", label: "תיקי משכנתא", icon: "◇" },
-  { id: "advisors", label: "יועצים", icon: "○" },
-  { id: "revenue", label: "הכנסות ועמלות", icon: "₪" },
+  { id: "dashboard",  label: "דשבורד",        icon: "⬡" },
+  { id: "new_leads",  label: "לידים חדשים",    icon: "⊕" },
+  { id: "all_leads",  label: "כל הלידים",      icon: "≡" },
+  { id: "marketplace",label: "חנות לידים",      icon: "◈" },
+  { id: "cases",      label: "תיקי משכנתא",    icon: "◇" },
+  { id: "advisors",   label: "יועצים",          icon: "○" },
+  { id: "revenue",    label: "הכנסות ועמלות",  icon: "₪" },
+  { id: "disputes",   label: "ערעורי לידים",   icon: "⚑" },
 ];
+
+const DISPUTE_STATUS_LABELS_ADMIN = {
+  open:      "פתוח",
+  reviewing: "בבדיקה",
+  approved:  "אושר",
+  rejected:  "נדחה",
+  credited:  "זוכה",
+};
+const DISPUTE_STATUS_COLORS_ADMIN = {
+  open:      "text-blue-700 bg-blue-50 border-blue-200",
+  reviewing: "text-amber-700 bg-amber-50 border-amber-200",
+  approved:  "text-emerald-700 bg-emerald-50 border-emerald-200",
+  rejected:  "text-red-700 bg-red-50 border-red-200",
+  credited:  "text-violet-700 bg-violet-50 border-violet-200",
+};
 
 // ── Error messages ────────────────────────────────────────────────────────────
 
@@ -404,6 +420,12 @@ export default function AdminCrm() {
   };
   const [createForm, setCreateForm] = useState(EMPTY_CREATE_FORM);
 
+  // ── Disputes state ───────────────────────────────────────────────────────
+  const [disputes, setDisputes] = useState([]);
+  const [disputesLoading, setDisputesLoading] = useState(false);
+  const [disputesSavingId, setDisputesSavingId] = useState("");
+  const [disputeNotes, setDisputeNotes] = useState({}); // id → note text
+
   // ── Computed: stats ───────────────────────────────────────────────────────
   const stats = useMemo(() => {
     const total = leads.length;
@@ -485,6 +507,7 @@ export default function AdminCrm() {
 
   // ── Effects ───────────────────────────────────────────────────────────────
   useEffect(() => { loadLeads({ silent: true }); }, []);
+  useEffect(() => { if (activeSection === "disputes") loadDisputes(); }, [activeSection]);
 
   // ── API actions (all original logic preserved) ────────────────────────────
   function showMessage(text, type = "info") { setMessage(text || ""); setMessageType(type); }
@@ -603,6 +626,29 @@ export default function AdminCrm() {
     finally { setLoading(false); }
   }
 
+  async function loadDisputes() {
+    setDisputesLoading(true);
+    try {
+      const res = await fetch("/api/admin/lead-disputes");
+      const json = await res.json().catch(() => ({}));
+      if (res.ok) setDisputes(Array.isArray(json.disputes) ? json.disputes : []);
+    } finally { setDisputesLoading(false); }
+  }
+
+  async function patchDispute(id, changes) {
+    setDisputesSavingId(id);
+    try {
+      const res = await fetch("/api/admin/lead-disputes", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...changes }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json.dispute) {
+        setDisputes((cur) => cur.map((d) => d.id === id ? { ...d, ...json.dispute } : d));
+      }
+    } finally { setDisputesSavingId(""); }
+  }
+
   async function createLeadHandler(e) {
     e.preventDefault();
     setCreateError("");
@@ -667,9 +713,11 @@ export default function AdminCrm() {
 
   // ── Authenticated shell ───────────────────────────────────────────────────
 
+  const openDisputeCount = disputes.filter((d) => d.status === "open").length;
   const navBadge = (id) => {
     if (id === "new_leads") return newLeads.length > 0 ? newLeads.length : null;
     if (id === "cases") return caseLeads.length > 0 ? caseLeads.length : null;
+    if (id === "disputes") return openDisputeCount > 0 ? openDisputeCount : null;
     return null;
   };
 
@@ -1192,6 +1240,144 @@ export default function AdminCrm() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════════════
+              DISPUTES
+          ════════════════════════════════════════════════════ */}
+          {activeSection === "disputes" && (
+            <div className="grid gap-4">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <KpiCard label="ערעורים פתוחים" value={disputes.filter((d) => d.status === "open").length} color={disputes.filter((d) => d.status === "open").length > 0 ? "amber" : "default"} />
+                <KpiCard label="בבדיקה" value={disputes.filter((d) => d.status === "reviewing").length} color="blue" />
+                <KpiCard label="סה״כ ערעורים" value={disputes.length} />
+              </div>
+
+              {disputesLoading && (
+                <div className="flex items-center justify-center rounded-2xl border border-finzo-line bg-white py-14">
+                  <div className="h-7 w-7 animate-spin rounded-full border-2 border-finzo-cobalt border-t-transparent" />
+                </div>
+              )}
+
+              {!disputesLoading && disputes.length === 0 && (
+                <Empty icon="⚑" title="אין ערעורים" sub="ערעורים שיועצים ישלחו יופיעו כאן." />
+              )}
+
+              {!disputesLoading && disputes.length > 0 && (
+                <>
+                  {/* Desktop table */}
+                  <TableWrap>
+                    <thead>
+                      <tr>
+                        <Th>לקוח</Th>
+                        <Th>יועץ</Th>
+                        <Th>סיבה</Th>
+                        <Th>פירוט</Th>
+                        <Th>סטטוס</Th>
+                        <Th>תאריך</Th>
+                        <Th>פעולות</Th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {disputes.map((d) => {
+                        const isSaving = disputesSavingId === d.id;
+                        const statusColor = DISPUTE_STATUS_COLORS_ADMIN[d.status] || "text-slate-600 bg-slate-50 border-slate-200";
+                        return (
+                          <>
+                            <tr key={d.id} className="hover:bg-finzo-paper/60">
+                              <Td>
+                                <span className="block font-black text-mort-ink">{d.customerName || "—"}</span>
+                                {d.purchaseStatus && <PurchaseStatusBadge value={d.purchaseStatus} />}
+                              </Td>
+                              <Td className="text-sm font-bold text-mort-muted">{d.advisor_id || "—"}</Td>
+                              <Td><span className="text-xs font-black text-mort-ink">{d.reason}</span></Td>
+                              <Td className="max-w-xs"><span className="text-xs text-mort-muted line-clamp-2">{d.description || "—"}</span></Td>
+                              <Td>
+                                <Pill color={statusColor}>{DISPUTE_STATUS_LABELS_ADMIN[d.status] || d.status}</Pill>
+                              </Td>
+                              <Td className="text-xs text-mort-muted">{formatDateShort(d.created_at)}</Td>
+                              <Td>
+                                <div className="flex flex-wrap gap-1">
+                                  {["reviewing", "approved", "rejected", "credited"].map((s) => s !== d.status && (
+                                    <button key={s} type="button" disabled={isSaving}
+                                      onClick={() => patchDispute(d.id, { status: s })}
+                                      className={`rounded-lg px-2 py-1 text-[10px] font-black border disabled:opacity-50 ${DISPUTE_STATUS_COLORS_ADMIN[s]}`}>
+                                      {DISPUTE_STATUS_LABELS_ADMIN[s]}
+                                    </button>
+                                  ))}
+                                </div>
+                              </Td>
+                            </tr>
+                            <tr key={`${d.id}-note`} className="bg-finzo-paper/40">
+                              <td colSpan={7} className="border-b border-finzo-line px-4 py-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-black text-mort-muted shrink-0">הערה פנימית:</span>
+                                  <input
+                                    className="flex-1 min-h-8 rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none"
+                                    value={disputeNotes[d.id] !== undefined ? disputeNotes[d.id] : (d.admin_note || "")}
+                                    onChange={(e) => setDisputeNotes((c) => ({ ...c, [d.id]: e.target.value }))}
+                                    placeholder="הוסף הערה..."
+                                  />
+                                  <button type="button" disabled={isSaving}
+                                    onClick={() => patchDispute(d.id, { admin_note: disputeNotes[d.id] !== undefined ? disputeNotes[d.id] : (d.admin_note || "") })}
+                                    className="shrink-0 rounded-lg bg-finzo-ink px-3 py-1 text-xs font-black text-white disabled:opacity-50">
+                                    {isSaving ? "..." : "שמור"}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          </>
+                        );
+                      })}
+                    </tbody>
+                  </TableWrap>
+
+                  {/* Mobile cards */}
+                  <div className="grid gap-3 lg:hidden">
+                    {disputes.map((d) => {
+                      const isSaving = disputesSavingId === d.id;
+                      const statusColor = DISPUTE_STATUS_COLORS_ADMIN[d.status] || "text-slate-600 bg-slate-50 border-slate-200";
+                      return (
+                        <div key={d.id} className="rounded-2xl border border-finzo-line bg-white p-4 shadow-e-1">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div>
+                              <span className="font-black text-mort-ink">{d.customerName || "—"}</span>
+                              <p className="text-xs font-bold text-mort-muted">{d.advisor_id}</p>
+                            </div>
+                            <Pill color={statusColor}>{DISPUTE_STATUS_LABELS_ADMIN[d.status] || d.status}</Pill>
+                          </div>
+                          <p className="text-xs font-black text-mort-ink mb-1">{d.reason}</p>
+                          {d.description && <p className="text-xs text-mort-muted mb-2">{d.description}</p>}
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {["reviewing", "approved", "rejected", "credited"].map((s) => s !== d.status && (
+                              <button key={s} type="button" disabled={isSaving}
+                                onClick={() => patchDispute(d.id, { status: s })}
+                                className={`rounded-lg px-2 py-1 text-[10px] font-black border disabled:opacity-50 ${DISPUTE_STATUS_COLORS_ADMIN[s]}`}>
+                                {DISPUTE_STATUS_LABELS_ADMIN[s]}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              className="flex-1 min-h-8 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-mort-ink focus:outline-none"
+                              value={disputeNotes[d.id] !== undefined ? disputeNotes[d.id] : (d.admin_note || "")}
+                              onChange={(e) => setDisputeNotes((c) => ({ ...c, [d.id]: e.target.value }))}
+                              placeholder="הערה פנימית..."
+                            />
+                            <button type="button" disabled={isSaving}
+                              onClick={() => patchDispute(d.id, { admin_note: disputeNotes[d.id] !== undefined ? disputeNotes[d.id] : (d.admin_note || "") })}
+                              className="shrink-0 rounded-lg bg-finzo-ink px-3 py-1 text-xs font-black text-white disabled:opacity-50">
+                              {isSaving ? "..." : "שמור"}
+                            </button>
+                          </div>
+                          <p className="mt-2 text-xs text-mort-muted">{formatDateShort(d.created_at)}</p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </>
               )}
