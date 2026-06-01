@@ -106,13 +106,14 @@ const PIPELINE_PROGRESS = {
 const COMMISSION_STATUS_LABELS = { pending: "ממתין", invoiced: "חויב", paid: "שולם" };
 
 const NAV_SECTIONS = [
-  { id: "dashboard", label: "דשבורד", icon: "⬡" },
-  { id: "new_leads", label: "לידים חדשים", icon: "⊕" },
-  { id: "all_leads", label: "כל הלידים", icon: "≡" },
-  { id: "marketplace", label: "חנות לידים", icon: "◈" },
-  { id: "cases", label: "תיקי משכנתא", icon: "◇" },
-  { id: "advisors", label: "יועצים", icon: "○" },
-  { id: "revenue", label: "הכנסות ועמלות", icon: "₪" },
+  { id: "dashboard",  label: "דשבורד",          icon: "⬡" },
+  { id: "new_leads",  label: "לידים חדשים",      icon: "⊕" },
+  { id: "all_leads",  label: "כל הלידים",        icon: "≡" },
+  { id: "marketplace",label: "חנות לידים",        icon: "◈" },
+  { id: "cases",      label: "תיקי משכנתא",      icon: "◇" },
+  { id: "advisors",   label: "יועצים",            icon: "○" },
+  { id: "revenue",    label: "הכנסות ועמלות",    icon: "₪" },
+  { id: "analytics",  label: "אנליטיקס",         icon: "📊" },
 ];
 
 // ── Error messages ────────────────────────────────────────────────────────────
@@ -443,6 +444,83 @@ export default function AdminCrm() {
     const paidCount = leads.filter((l) => l.commissionStatus === "paid").length;
     return { soldCount: soldLeads.length, potentialStore, potentialExclusive, actualCommissions, expectedCommissions, paidCommissions, pendingCommissions, invoicedCommissions, paidCount };
   }, [leads]);
+
+  // ── Computed: analytics ───────────────────────────────────────────────────
+  const analyticsStats = useMemo(() => {
+    const now = new Date();
+    const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0,0,0,0);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const leadsThisWeek  = leads.filter((l) => l.createdAt && new Date(l.createdAt) >= startOfWeek).length;
+    const leadsThisMonth = leads.filter((l) => l.createdAt && new Date(l.createdAt) >= startOfMonth).length;
+
+    const storeLeads  = leads.filter((l) => l.storeStatus === "available" || l.storeStatus === "sold");
+    const soldLeads   = leads.filter((l) => l.soldAt || l.buyerAdvisorId);
+    const mktConvRate = storeLeads.length > 0 ? Math.round((soldLeads.length / storeLeads.length) * 100) : null;
+
+    const soldWithDates = soldLeads.filter((l) => l.soldAt && l.createdAt);
+    const avgDaysToSell = soldWithDates.length > 0
+      ? Math.round(soldWithDates.reduce((s, l) => s + (new Date(l.soldAt) - new Date(l.createdAt)) / 86400000, 0) / soldWithDates.length)
+      : null;
+
+    const realizedRevenue = soldLeads.reduce((s, l) => s + toNumber(l.storePrice || l.exclusivePrice), 0);
+    const avgLeadPrice    = soldLeads.length > 0 ? Math.round(realizedRevenue / soldLeads.length) : null;
+
+    // Leads by source
+    const bySrc = {};
+    for (const l of leads) {
+      const src = l.source || l.utmSource || "לא ידוע";
+      bySrc[src] = (bySrc[src] || 0) + 1;
+    }
+    const sourceBreakdown = Object.entries(bySrc).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+    // Leads by purchaseStatus
+    const byType = {};
+    for (const l of leads) {
+      const t = l.purchaseStatus || "general";
+      if (!byType[t]) byType[t] = { count: 0, mortgageSum: 0, mortgageCount: 0, hot: 0, medium: 0, sold: 0 };
+      byType[t].count++;
+      if (toNumber(l.mortgageAmount) > 0) { byType[t].mortgageSum += toNumber(l.mortgageAmount); byType[t].mortgageCount++; }
+      if (l.leadQuality === "חם") byType[t].hot++;
+      if (l.leadQuality === "בינוני") byType[t].medium++;
+      if (l.soldAt || l.buyerAdvisorId) byType[t].sold++;
+    }
+    const typeBreakdown = Object.entries(byType).sort((a, b) => b[1].count - a[1].count);
+
+    // Monthly lead volume — last 6 months
+    const monthlyBuckets = {};
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      monthlyBuckets[key] = { label: new Intl.DateTimeFormat("he-IL", { month: "short", year: "2-digit" }).format(d), count: 0, sold: 0 };
+    }
+    for (const l of leads) {
+      if (!l.createdAt) continue;
+      const d = new Date(l.createdAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (monthlyBuckets[key]) { monthlyBuckets[key].count++; if (l.soldAt || l.buyerAdvisorId) monthlyBuckets[key].sold++; }
+    }
+    const monthlyTrend = Object.values(monthlyBuckets);
+    const maxMonthly   = Math.max(...monthlyTrend.map((m) => m.count), 1);
+
+    // Advisor performance
+    const advisorPerf = advisors.map((a) => {
+      const id   = advisorId(a);
+      const name = advisorName(a);
+      const aLeads = leads.filter((l) => l.assignedAdvisorId === id || l.assignedAdvisor === name);
+      const aClosed = aLeads.filter((l) => ["נסגר", "closed_won"].includes(l.leadStatus || l.status)).length;
+      const aCommission = aLeads.filter((l) => l.commissionStatus === "paid").reduce((s, l) => s + toNumber(l.actualCommission || l.commissionAmount), 0);
+      const aPurchased = leads.filter((l) => l.buyerAdvisorId === id).length;
+      return { id, name, assigned: aLeads.length, closed: aClosed, purchased: aPurchased, commission: aCommission };
+    }).filter((a) => a.name).sort((a, b) => b.assigned - a.assigned);
+
+    return {
+      leadsThisWeek, leadsThisMonth,
+      storeCount: storeLeads.length, soldCount: soldLeads.length, mktConvRate, avgDaysToSell,
+      realizedRevenue, avgLeadPrice,
+      sourceBreakdown, typeBreakdown, monthlyTrend, maxMonthly, advisorPerf,
+    };
+  }, [leads, advisors]);
 
   // ── Computed: section-scoped leads ────────────────────────────────────────
   const newLeads = useMemo(() =>
@@ -1198,6 +1276,19 @@ export default function AdminCrm() {
             </div>
           )}
 
+          {/* ════════════════════════════════════════════════════
+              ANALYTICS
+          ════════════════════════════════════════════════════ */}
+          {activeSection === "analytics" && (
+            <AnalyticsSection
+              leads={leads}
+              stats={stats}
+              revenueStats={revenueStats}
+              analyticsStats={analyticsStats}
+              advisors={advisors}
+            />
+          )}
+
         </main>
       </div>
 
@@ -1212,6 +1303,248 @@ export default function AdminCrm() {
           error={createError}
         />
       )}
+    </div>
+  );
+}
+
+// ── AnalyticsSection ──────────────────────────────────────────────────────────
+
+const NO_DATA = "לא קיים מספיק מידע";
+
+function StatRow({ label, value, sub, color = "" }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2 border-b border-finzo-line/60 last:border-0">
+      <span className="text-sm font-bold text-mort-muted">{label}</span>
+      <div className="text-right">
+        <span className={`text-sm font-black text-mort-ink ${color}`}>{value}</span>
+        {sub && <span className="block text-xs font-bold text-mort-muted">{sub}</span>}
+      </div>
+    </div>
+  );
+}
+
+function MiniBar({ label, value, total, color = "bg-finzo-cobalt", sub = "" }) {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+  return (
+    <div className="grid gap-1">
+      <div className="flex justify-between text-xs font-bold text-mort-muted">
+        <span>{label}</span>
+        <span className="font-black text-mort-ink">{value} <span className="font-bold text-mort-muted">({pct}%)</span></span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+      {sub && <span className="text-xs font-bold text-mort-muted">{sub}</span>}
+    </div>
+  );
+}
+
+function Card({ title, children, className = "" }) {
+  return (
+    <div className={`rounded-2xl border border-finzo-line bg-white p-5 shadow-e-1 ${className}`}>
+      {title && <p className="mb-4 text-xs font-black uppercase tracking-widest text-mort-muted">{title}</p>}
+      {children}
+    </div>
+  );
+}
+
+function AnalyticsSection({ leads, stats, revenueStats, analyticsStats, advisors }) {
+  const {
+    leadsThisWeek, leadsThisMonth,
+    storeCount, soldCount, mktConvRate, avgDaysToSell,
+    realizedRevenue, avgLeadPrice,
+    sourceBreakdown, typeBreakdown, monthlyTrend, maxMonthly, advisorPerf,
+  } = analyticsStats;
+
+  const totalLeads = leads.length;
+
+  return (
+    <div className="grid gap-5">
+
+      {/* ── Row 1: Top KPIs ── */}
+      <div>
+        <p className="mb-2 text-xs font-black uppercase tracking-widest text-mort-muted">מדדי ביצוע עיקריים</p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard label="סה״כ לידים" value={totalLeads} sub={`${leadsThisMonth} החודש · ${leadsThisWeek} השבוע`} />
+          <KpiCard label="לידים בחנות" value={storeCount} sub={`${soldCount} נמכרו`} color="blue" />
+          <KpiCard label="יחס המרה — חנות" value={mktConvRate !== null ? `${mktConvRate}%` : NO_DATA} sub={storeCount > 0 ? `${soldCount} מתוך ${storeCount}` : ""} color={mktConvRate >= 30 ? "green" : mktConvRate !== null ? "amber" : "default"} />
+          <KpiCard label="ממוצע ימים למכירה" value={avgDaysToSell !== null ? `${avgDaysToSell} ימים` : NO_DATA} sub={soldCount > 0 ? `מבוסס על ${soldCount} מכירות` : ""} />
+        </div>
+      </div>
+
+      {/* ── Row 2: Revenue KPIs ── */}
+      <div>
+        <p className="mb-2 text-xs font-black uppercase tracking-widest text-mort-muted">הכנסות</p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard label="הכנסות ממומשות" value={realizedRevenue > 0 ? formatILS(realizedRevenue) : NO_DATA} sub="ממכירות בחנות הלידים" color={realizedRevenue > 0 ? "green" : "default"} />
+          <KpiCard label="ממוצע מחיר ליד" value={avgLeadPrice !== null ? formatILS(avgLeadPrice) : NO_DATA} sub={soldCount > 0 ? `מבוסס על ${soldCount} מכירות` : ""} />
+          <KpiCard label="פוטנציאל חנות" value={revenueStats.potentialStore > 0 ? formatILS(revenueStats.potentialStore) : NO_DATA} sub="לידים זמינים למכירה" />
+          <KpiCard label="עמלות ששולמו" value={revenueStats.paidCommissions > 0 ? formatILS(revenueStats.paidCommissions) : NO_DATA} color={revenueStats.paidCommissions > 0 ? "green" : "default"} sub={`${revenueStats.paidCount} עמלות · ${revenueStats.pendingCommissions} ממתינות`} />
+        </div>
+      </div>
+
+      {/* ── Row 3: Monthly trend + Quality breakdown ── */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card title="נפח לידים — 6 חודשים אחרונים">
+          {monthlyTrend.every((m) => m.count === 0)
+            ? <p className="text-sm font-bold text-mort-muted">{NO_DATA}</p>
+            : <div className="grid gap-3">
+                {monthlyTrend.map((m) => (
+                  <div key={m.label} className="grid gap-1">
+                    <div className="flex justify-between text-xs font-bold text-mort-muted">
+                      <span>{m.label}</span>
+                      <span>
+                        <span className="font-black text-mort-ink">{m.count}</span> לידים
+                        {m.sold > 0 && <span className="mr-2 text-emerald-700"> · {m.sold} נמכרו</span>}
+                      </span>
+                    </div>
+                    <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full rounded-full bg-finzo-cobalt transition-all" style={{ width: `${Math.round((m.count / maxMonthly) * 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+          }
+        </Card>
+
+        <Card title="התפלגות איכות לידים">
+          {totalLeads === 0
+            ? <p className="text-sm font-bold text-mort-muted">{NO_DATA}</p>
+            : <div className="grid gap-3">
+                <MiniBar label="חם 🔥" value={stats.hot} total={totalLeads} color="bg-emerald-500" />
+                <MiniBar label="בינוני" value={stats.medium} total={totalLeads} color="bg-amber-400" />
+                <MiniBar label="חלש" value={stats.weak} total={totalLeads} color="bg-red-400" />
+                <MiniBar label="לא סווג" value={totalLeads - stats.hot - stats.medium - stats.weak} total={totalLeads} color="bg-slate-300" />
+                <div className="mt-2 border-t border-finzo-line pt-3">
+                  <StatRow label="אחוז לידים חמים" value={totalLeads > 0 ? `${Math.round((stats.hot / totalLeads) * 100)}%` : NO_DATA} />
+                  <StatRow label="אחוז משויכים ליועץ" value={totalLeads > 0 ? `${Math.round((stats.assigned / totalLeads) * 100)}%` : NO_DATA} />
+                  <StatRow label="יחס סגירה" value={totalLeads > 0 ? `${stats.closeRate}%` : NO_DATA} />
+                </div>
+              </div>
+          }
+        </Card>
+      </div>
+
+      {/* ── Row 4: Lead type performance ── */}
+      <Card title="ביצועים לפי סוג תיק">
+        {typeBreakdown.length === 0
+          ? <p className="text-sm font-bold text-mort-muted">{NO_DATA}</p>
+          : <>
+              <div className="hidden overflow-hidden rounded-xl border border-finzo-line lg:block">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr>
+                      <Th>סוג תיק</Th>
+                      <Th>כמות</Th>
+                      <Th>% מהסה"כ</Th>
+                      <Th>ממוצע משכנתא</Th>
+                      <Th>חמים</Th>
+                      <Th>נמכרו</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {typeBreakdown.map(([type, d]) => (
+                      <tr key={type} className="hover:bg-finzo-paper/60">
+                        <Td><PurchaseStatusBadge value={type} /></Td>
+                        <Td><span className="font-black text-mort-ink">{d.count}</span></Td>
+                        <Td><span className="text-xs font-bold text-mort-muted">{Math.round((d.count / totalLeads) * 100)}%</span></Td>
+                        <Td className="font-black text-mort-ink">{d.mortgageCount > 0 ? formatILS(Math.round(d.mortgageSum / d.mortgageCount)) : <span className="text-mort-muted">—</span>}</Td>
+                        <Td>
+                          {d.hot > 0
+                            ? <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-black text-emerald-700">{d.hot}</span>
+                            : <span className="text-xs text-mort-muted">—</span>}
+                        </Td>
+                        <Td>
+                          {d.sold > 0
+                            ? <span className="rounded-full bg-finzo-cobalt-l border border-finzo-cobalt/30 px-2 py-0.5 text-xs font-black text-finzo-cobalt">{d.sold}</span>
+                            : <span className="text-xs text-mort-muted">—</span>}
+                        </Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Mobile */}
+              <div className="grid gap-3 lg:hidden">
+                {typeBreakdown.map(([type, d]) => (
+                  <div key={type} className="flex items-center justify-between rounded-xl border border-finzo-line bg-finzo-paper p-3">
+                    <PurchaseStatusBadge value={type} />
+                    <div className="flex gap-3 text-xs font-bold text-mort-muted">
+                      <span className="font-black text-mort-ink">{d.count}</span>
+                      {d.hot > 0 && <span className="text-emerald-700">🔥 {d.hot}</span>}
+                      {d.sold > 0 && <span className="text-finzo-cobalt">✓ {d.sold}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+        }
+      </Card>
+
+      {/* ── Row 5: Source breakdown + Advisor performance ── */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card title="מקורות לידים">
+          {sourceBreakdown.length === 0
+            ? <p className="text-sm font-bold text-mort-muted">{NO_DATA}</p>
+            : <div className="grid gap-3">
+                {sourceBreakdown.map(([src, count]) => (
+                  <MiniBar key={src} label={src} value={count} total={totalLeads} color="bg-violet-500" />
+                ))}
+              </div>
+          }
+        </Card>
+
+        <Card title="ביצועי יועצים">
+          {advisorPerf.length === 0
+            ? <p className="text-sm font-bold text-mort-muted">{NO_DATA}</p>
+            : <div className="grid gap-2">
+                {advisorPerf.map((a) => (
+                  <div key={a.id} className="rounded-xl border border-finzo-line bg-finzo-paper p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-black text-mort-ink text-sm">{a.name}</span>
+                      <span className="rounded-full bg-finzo-cobalt-l px-2 py-0.5 text-xs font-black text-finzo-cobalt">{a.assigned} לידים</span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                      <div><span className="font-bold text-mort-muted">נסגרו: </span><strong className="text-mort-ink">{a.closed}</strong></div>
+                      <div><span className="font-bold text-mort-muted">רכישות: </span><strong className="text-mort-ink">{a.purchased}</strong></div>
+                      <div><span className="font-bold text-mort-muted">עמלה: </span><strong className="text-mort-ink">{a.commission > 0 ? formatILS(a.commission) : "—"}</strong></div>
+                    </div>
+                    {a.assigned > 0 && (
+                      <div className="mt-2">
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                          <div className="h-full rounded-full bg-finzo-cobalt" style={{ width: `${Math.min(100, Math.round((a.closed / a.assigned) * 100))}%` }} />
+                        </div>
+                        <span className="text-xs font-bold text-mort-muted">יחס סגירה: {Math.round((a.closed / a.assigned) * 100)}%</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+          }
+        </Card>
+      </div>
+
+      {/* ── Row 6: Marketplace health ── */}
+      <Card title="בריאות חנות הלידים">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <StatRow label="לידים זמינים" value={leads.filter((l) => l.storeStatus === "available").length} />
+            <StatRow label="לידים נמכרו" value={soldCount} color="text-emerald-700" />
+            <StatRow label="לידים בבדיקה" value={leads.filter((l) => l.storeStatus === "pending_review").length} />
+          </div>
+          <div>
+            <StatRow label="יחס המרה" value={mktConvRate !== null ? `${mktConvRate}%` : NO_DATA} />
+            <StatRow label="ממוצע ימים למכירה" value={avgDaysToSell !== null ? `${avgDaysToSell} ימים` : NO_DATA} />
+            <StatRow label="הכנסה ממומשת" value={realizedRevenue > 0 ? formatILS(realizedRevenue) : NO_DATA} />
+          </div>
+          <div>
+            <StatRow label="ממוצע מחיר ליד" value={avgLeadPrice !== null ? formatILS(avgLeadPrice) : NO_DATA} />
+            <StatRow label="פוטנציאל נותר" value={revenueStats.potentialStore > 0 ? formatILS(revenueStats.potentialStore) : NO_DATA} />
+            <StatRow label="עמלות צפויות" value={revenueStats.expectedCommissions > 0 ? formatILS(revenueStats.expectedCommissions) : NO_DATA} />
+          </div>
+        </div>
+      </Card>
+
     </div>
   );
 }
