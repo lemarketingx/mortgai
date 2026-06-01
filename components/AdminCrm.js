@@ -392,6 +392,18 @@ export default function AdminCrm() {
   const [expandedLeadId, setExpandedLeadId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // ── Create lead modal state ───────────────────────────────────────────────
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createSaving, setCreateSaving] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const EMPTY_CREATE_FORM = {
+    name: "", phone: "", city: "", propertyCity: "",
+    purchaseStatus: "", mortgageAmount: "", equityAmount: "",
+    monthlyIncome: "", debtLevel: "", hasExistingMortgage: "",
+    requestedContactTime: "", source: "phone", publishToStore: false,
+  };
+  const [createForm, setCreateForm] = useState(EMPTY_CREATE_FORM);
+
   // ── Computed: stats ───────────────────────────────────────────────────────
   const stats = useMemo(() => {
     const total = leads.length;
@@ -591,6 +603,25 @@ export default function AdminCrm() {
     finally { setLoading(false); }
   }
 
+  async function createLeadHandler(e) {
+    e.preventDefault();
+    setCreateError("");
+    if (!createForm.name.trim()) { setCreateError("שם הלקוח הוא שדה חובה."); return; }
+    if (!createForm.phone.trim()) { setCreateError("מספר טלפון הוא שדה חובה."); return; }
+    if (!createForm.purchaseStatus) { setCreateError("יש לבחור סוג תיק."); return; }
+    setCreateSaving(true);
+    try {
+      const res = await fetch("/api/admin/create-lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...createForm, publishToStore: createForm.publishToStore }) });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.message || "יצירת הליד נכשלה.");
+      setLeads((cur) => [json.lead, ...cur]);
+      setShowCreateModal(false);
+      setCreateForm(EMPTY_CREATE_FORM);
+      showMessage("הליד נוצר בהצלחה.", "success");
+    } catch (err) { setCreateError(err.message || "יצירת הליד נכשלה."); }
+    finally { setCreateSaving(false); }
+  }
+
   function toggleSelected(id) { setSelectedIds((cur) => cur.includes(id) ? cur.filter((i) => i !== id) : [...cur, id]); }
   function toggleSelectAll() { setSelectedIds((cur) => cur.length === filteredLeads.length ? [] : filteredLeads.map((l) => l.id)); }
   function clearFilters() { setQuery(""); setStatusFilter(""); setQualityFilter(""); setPriorityFilter(""); setAdvisorFilter(""); }
@@ -710,6 +741,9 @@ export default function AdminCrm() {
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                 <span className="text-xs font-bold text-mort-muted">{leads.length} לידים</span>
               </div>
+              <button onClick={() => { setShowCreateModal(true); setCreateError(""); }} className="rounded-xl bg-finzo-cobalt px-4 py-1.5 text-sm font-black text-white shadow-e-1 hover:bg-finzo-cobalt/90" type="button">
+                ➕ הוסף ליד
+              </button>
               <button disabled={loading} onClick={() => loadLeads()} className="rounded-xl border border-finzo-line bg-white px-4 py-1.5 text-sm font-black text-mort-ink shadow-e-1 hover:bg-finzo-paper disabled:opacity-60" type="button">
                 {loading ? "טוען..." : "רענון"}
               </button>
@@ -1165,6 +1199,214 @@ export default function AdminCrm() {
           )}
 
         </main>
+      </div>
+
+      {/* ── Create Lead Modal ── */}
+      {showCreateModal && (
+        <CreateLeadModal
+          form={createForm}
+          setForm={setCreateForm}
+          onSubmit={createLeadHandler}
+          onClose={() => { setShowCreateModal(false); setCreateError(""); setCreateForm(EMPTY_CREATE_FORM); }}
+          saving={createSaving}
+          error={createError}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── CreateLeadModal ───────────────────────────────────────────────────────────
+
+const SOURCE_OPTIONS = [
+  { value: "phone",    label: "שיחת טלפון" },
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "facebook", label: "פייסבוק" },
+  { value: "google",   label: "גוגל" },
+  { value: "referral", label: "הפנייה" },
+  { value: "partner",  label: "שותף עסקי" },
+  { value: "website",  label: "אתר" },
+  { value: "manual",   label: "ידני / אחר" },
+];
+
+function CreateLeadModal({ form, setForm, onSubmit, onClose, saving, error }) {
+  const f = (field) => (val) => setForm((c) => ({ ...c, [field]: val }));
+
+  const liveInput = {
+    hasName: Boolean(form.name),
+    hasPhone: Boolean(form.phone),
+    city: form.city,
+    mortgageAmount: form.mortgageAmount,
+    equityAmount: form.equityAmount,
+    monthlyIncome: form.monthlyIncome,
+    debtLevel: form.debtLevel,
+    purchaseStatus: form.purchaseStatus,
+    requestedContactTime: form.requestedContactTime,
+    hasExistingMortgage: form.hasExistingMortgage,
+    createdAt: new Date().toISOString(),
+    purchaseCount: 0,
+  };
+  const pricing = computePricing(liveInput);
+  const scoreColor = pricing.finzoScore >= 70 ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+    : pricing.finzoScore >= 50 ? "text-amber-700 bg-amber-50 border-amber-200"
+    : "text-slate-600 bg-slate-50 border-slate-200";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 px-4 py-8" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div dir="rtl" className="w-full max-w-2xl rounded-3xl border border-finzo-line bg-white shadow-e-3">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-finzo-line px-6 py-4">
+          <div>
+            <h2 className="text-base font-black text-finzo-ink">➕ הוספת ליד ידנית</h2>
+            <p className="text-xs font-bold text-mort-muted">מקור: טלפון / WhatsApp / פייסבוק / הפנייה / אופליין</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg border border-finzo-line px-3 py-1.5 text-sm font-black text-mort-muted hover:bg-finzo-paper">✕</button>
+        </div>
+
+        {/* Live FINZO Score preview */}
+        <div className="border-b border-finzo-line bg-finzo-paper/60 px-6 py-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-black ${scoreColor}`}>
+              FINZO {pricing.finzoScore}/100 · {pricing.quality}
+            </span>
+            {pricing.finzoScore > 0 && (
+              <span className="text-xs font-bold text-mort-muted">
+                מחיר רגיל: <strong className="text-mort-ink">{formatILS(pricing.regularPrice)}</strong>
+                {" · "}
+                בלעדי: <strong className="text-mort-ink">{formatILS(pricing.exclusivePrice)}</strong>
+              </span>
+            )}
+            <span className="text-xs font-bold text-mort-muted">
+              {pricing.pricingBullets?.join(" · ")}
+            </span>
+          </div>
+        </div>
+
+        <form onSubmit={onSubmit} className="grid gap-5 px-6 py-5">
+          {/* Required fields */}
+          <div>
+            <p className="mb-3 text-xs font-black uppercase tracking-widest text-mort-muted">פרטי לקוח — חובה</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-black text-mort-muted">שם מלא <span className="text-red-500">*</span></label>
+                <input value={form.name} onChange={(e) => f("name")(e.target.value)} placeholder="שם הלקוח"
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none focus:ring-1 focus:ring-finzo-cobalt/30" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-black text-mort-muted">טלפון <span className="text-red-500">*</span></label>
+                <input value={form.phone} onChange={(e) => f("phone")(e.target.value)} placeholder="05X-XXXXXXX" type="tel"
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none focus:ring-1 focus:ring-finzo-cobalt/30" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-xs font-black text-mort-muted">סוג תיק <span className="text-red-500">*</span></label>
+                <select value={form.purchaseStatus} onChange={(e) => f("purchaseStatus")(e.target.value)}
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none">
+                  <option value="">בחר סוג תיק...</option>
+                  {Object.entries(PURCHASE_STATUS_LABELS).map(([v, l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Location & Mortgage */}
+          <div>
+            <p className="mb-3 text-xs font-black uppercase tracking-widest text-mort-muted">מיקום ומשכנתא</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-black text-mort-muted">עיר מגורים</label>
+                <input value={form.city} onChange={(e) => f("city")(e.target.value)} placeholder="תל אביב"
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-black text-mort-muted">עיר הנכס</label>
+                <input value={form.propertyCity} onChange={(e) => f("propertyCity")(e.target.value)} placeholder="כמו עיר מגורים"
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-black text-mort-muted">סכום משכנתא (₪)</label>
+                <input value={form.mortgageAmount} onChange={(e) => f("mortgageAmount")(e.target.value)} placeholder="1,200,000" type="number"
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-black text-mort-muted">הון עצמי (₪)</label>
+                <input value={form.equityAmount} onChange={(e) => f("equityAmount")(e.target.value)} placeholder="400,000" type="number"
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-black text-mort-muted">הכנסה חודשית (₪)</label>
+                <input value={form.monthlyIncome} onChange={(e) => f("monthlyIncome")(e.target.value)} placeholder="15,000" type="number"
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-black text-mort-muted">רמת חוב חודשית (₪)</label>
+                <input value={form.debtLevel} onChange={(e) => f("debtLevel")(e.target.value)} placeholder="3,000" type="number"
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+              </div>
+            </div>
+          </div>
+
+          {/* Extra fields */}
+          <div>
+            <p className="mb-3 text-xs font-black uppercase tracking-widest text-mort-muted">פרטים נוספים</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-black text-mort-muted">משכנתא קיימת?</label>
+                <select value={form.hasExistingMortgage} onChange={(e) => f("hasExistingMortgage")(e.target.value)}
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none">
+                  <option value="">לא ידוע</option>
+                  <option value="yes">כן</option>
+                  <option value="no">לא</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-black text-mort-muted">זמן חזרה מועדף</label>
+                <input value={form.requestedContactTime} onChange={(e) => f("requestedContactTime")(e.target.value)} placeholder="בוקר / צהריים / ערב"
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+              </div>
+            </div>
+          </div>
+
+          {/* Source & Marketplace */}
+          <div>
+            <p className="mb-3 text-xs font-black uppercase tracking-widest text-mort-muted">מקור ופרסום</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-black text-mort-muted">מקור הליד <span className="text-red-500">*</span></label>
+                <select value={form.source} onChange={(e) => f("source")(e.target.value)}
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none">
+                  {SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div className="flex items-end pb-1">
+                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 w-full">
+                  <input type="checkbox" checked={form.publishToStore} onChange={(e) => f("publishToStore")(e.target.checked)}
+                    className="h-4 w-4 rounded accent-violet-600" />
+                  <div>
+                    <span className="block text-sm font-black text-mort-ink">פרסם לחנות הלידים</span>
+                    <span className="block text-xs font-bold text-mort-muted">יועצים יוכלו לרכוש ליד זה</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{error}</div>
+          )}
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 border-t border-finzo-line pt-4">
+            <button type="button" onClick={onClose} disabled={saving} className="rounded-xl border border-finzo-line px-5 py-2.5 text-sm font-black text-mort-ink hover:bg-finzo-paper disabled:opacity-50">
+              ביטול
+            </button>
+            <button type="submit" disabled={saving} className="rounded-xl bg-finzo-ink px-6 py-2.5 text-sm font-black text-white hover:bg-finzo-ink/90 disabled:opacity-60">
+              {saving ? "שומר..." : "צור ליד"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
