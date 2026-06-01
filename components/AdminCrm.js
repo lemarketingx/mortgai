@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { useEffect, useMemo, useState } from "react";
 import { formatILS } from "../lib/format";
-import { computePricing, computeFinzoScore } from "../lib/leadScoring";
+import { computePricing } from "../lib/leadScoring";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 

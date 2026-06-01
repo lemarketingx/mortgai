@@ -50,9 +50,7 @@ export default async function handler(req, res) {
 
     if (publishToStore && lead?.id) {
       const qualityUpgrade = lead.leadQuality === "חלש" ? { leadQuality: "בינוני" } : {};
-      console.log("[admin.create-lead] publishToStore", { id: lead.id, currentQuality: lead.leadQuality, qualityUpgrade });
-      const updated = await updateLead(lead.id, { storeStatus: "available", ...qualityUpgrade });
-      console.log("[admin.create-lead] updateLead result storeStatus", updated?.storeStatus, "leadQuality", updated?.leadQuality);
+      await updateLead(lead.id, { storeStatus: "available", ...qualityUpgrade });
       lead.storeStatus = "available";
       if (qualityUpgrade.leadQuality) lead.leadQuality = qualityUpgrade.leadQuality;
     }
