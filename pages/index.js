@@ -181,10 +181,9 @@ export default function Home() {
   const [leadError, setLeadError] = useState("");
   const [bottomLead, setBottomLead] = useState({
     name: "", phone: "", city: "", propertyCity: "",
-    checkType: "רכישת דירה",
-    propertyPrice: "", equityAmount: "", monthlyIncome: "",
-    debtLevel: "", purchaseStatus: "",
-    hasExistingMortgage: "no", requestedContactTime: "",
+    purchaseStatus: "",
+    propertyPrice: "", equityAmount: "", mortgageAmount: "", monthlyIncome: "",
+    debtLevel: "", hasExistingMortgage: "no", requestedContactTime: "",
   });
   const [bottomLeadSent, setBottomLeadSent] = useState(false);
   const [bottomLeadLoading, setBottomLeadLoading] = useState(false);
@@ -310,18 +309,18 @@ export default function Home() {
       source: "homepage_bottom",
       createdAt: new Date().toISOString(),
       approval: Math.round(analysis?.approval || 0),
-      mainIssue: ready ? analysis.mainIssue : `פנייה מהטופס התחתון — ${bottomLead.checkType || "לא צוין"}`,
+      mainIssue: ready ? analysis.mainIssue : "פנייה מהטופס התחתון",
       estimatedApprovalResult: Math.round(analysis?.approval || 0),
       estimatedPayment: Math.round(analysis?.monthly || 0),
       propertyPrice: toNumeric(bottomLead.propertyPrice) || toNumeric(data?.price),
       equityAmount: toNumeric(bottomLead.equityAmount) || toNumeric(data?.equity),
+      mortgageAmount: cleanNumber(bottomLead.mortgageAmount) || "",
       monthlyIncome: toNumeric(bottomLead.monthlyIncome) || toNumeric(data?.income),
       debtLevel: toNumeric(bottomLead.debtLevel) || toNumeric(data?.loans) || toNumeric(data?.expenses) || 0,
       purchaseStatus: bottomLead.purchaseStatus || "",
       hasExistingMortgage: bottomLead.hasExistingMortgage || "",
       requestedContactTime: bottomLead.requestedContactTime || "",
       propertyCity: bottomLead.propertyCity || "",
-      notes: bottomLead.checkType ? `סוג בדיקה: ${bottomLead.checkType}` : "",
     };
 
     try {
@@ -356,8 +355,12 @@ export default function Home() {
     });
 
     const phone = cleanNumber(lead.phone);
-    if (lead.name.trim().length < 2 || phone.length < 7) {
-      setLeadError("יש להשלים שם וטלפון כדי לשלוח את הבדיקה");
+    if (lead.name.trim().length < 2) {
+      setLeadError("יש להזין שם מלא כדי שנדע כיצד לפנות אליכם.");
+      return;
+    }
+    if (phone.length < 7) {
+      setLeadError("יש להזין מספר טלפון תקין כדי שנוכל לחזור אליכם.");
       return;
     }
 
@@ -800,7 +803,9 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
             />
             <MoneyField label="מחיר נכס" value={lead.propertyPrice} onChange={(value) => updateLead("propertyPrice", value)} />
             <MoneyField label="הון עצמי" value={lead.equityAmount} onChange={(value) => updateLead("equityAmount", value)} />
+            <MoneyField label="סכום משכנתא מבוקש" value={lead.mortgageAmount} onChange={(value) => updateLead("mortgageAmount", value)} />
             <MoneyField label="הכנסה חודשית נטו" value={lead.monthlyIncome} onChange={(value) => updateLead("monthlyIncome", value)} />
+            <MoneyField label="החזרי הלוואות חודשיים" value={lead.debtLevel} onChange={(value) => updateLead("debtLevel", value)} />
             <SelectField
               label="סטטוס חוזה"
               value={lead.contractStatus}
@@ -822,20 +827,17 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
 
           {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
 
-          <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm font-black text-slate-700">מה קורה אחרי השליחה?</p>
-            <p className="mt-1 text-sm font-semibold text-slate-600">יועץ חוזר אליכם לשיחה קצרה, עובר על האומדן הראשוני ומכוון לצעד הבא. ללא התחייבות.</p>
-          </div>
+          <p className="mt-4 text-xs font-semibold text-slate-500">ככל שתמלאו יותר נתונים, הבדיקה הראשונית תהיה מדויקת יותר.</p>
 
           <button
             type="submit"
             disabled={leadLoading || leadSent}
-            className="mt-4 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-3 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה ✓" : "שלחו פרטים — נחזור אליכם"}
+            {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה ✓" : "שלחו לבדיקה ראשונית"}
           </button>
           <p className="mt-3 text-center text-xs font-bold text-slate-500">
-            ללא עלות · ללא התחייבות · המידע לא נשלח לבנק ללא אישורך
+            ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי
           </p>
         </form>
       </div>
@@ -846,13 +848,6 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
 /* ------------------------------------------------------------------ */
 /*  BOTTOM LEAD SECTION                                                 */
 /* ------------------------------------------------------------------ */
-
-const CHECK_TYPES = [
-  "רכישת דירה",
-  "מחזור משכנתא",
-  "בדיקת יכולת ראשונית",
-  "משכנתא לכל מטרה",
-];
 
 const PURCHASE_STATUS_OPTIONS = [
   ["", "מה סוג הבדיקה?"],
@@ -899,25 +894,18 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
 
         <form onSubmit={submitBottomLead} dir="rtl" className="grid gap-4 sm:grid-cols-2">
 
-          {/* Check type — full width */}
+          {/* Purchase status select — full width */}
           <div className="sm:col-span-2">
             <label className="mb-1.5 block text-sm font-black text-violet-100">סוג הבדיקה</label>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {CHECK_TYPES.map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => updateBottomLead("checkType", type)}
-                  className={`rounded-2xl border px-3 py-2.5 text-sm font-black transition ${
-                    bottomLead.checkType === type
-                      ? "border-white bg-white text-violet-900"
-                      : "border-white/20 bg-white/10 text-white hover:bg-white/20"
-                  }`}
-                >
-                  {type}
-                </button>
+            <select
+              value={bottomLead.purchaseStatus}
+              onChange={(e) => updateBottomLead("purchaseStatus", e.target.value)}
+              className="h-12 w-full rounded-2xl border border-violet-200 bg-white px-4 text-base font-bold text-slate-950 outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-200 sm:h-14"
+            >
+              {PURCHASE_STATUS_OPTIONS.map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
               ))}
-            </div>
+            </select>
           </div>
 
           {/* Contact fields */}
@@ -929,22 +917,11 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
           {/* Financial fields */}
           <MoneyField label="מחיר נכס משוער" value={bottomLead.propertyPrice} onChange={(v) => updateBottomLead("propertyPrice", v)} contrastMode="dark" />
           <MoneyField label="הון עצמי" value={bottomLead.equityAmount} onChange={(v) => updateBottomLead("equityAmount", v)} contrastMode="dark" />
+          <MoneyField label="סכום משכנתא מבוקש" value={bottomLead.mortgageAmount} onChange={(v) => updateBottomLead("mortgageAmount", v)} contrastMode="dark" />
           <MoneyField label="הכנסה חודשית נטו" value={bottomLead.monthlyIncome} onChange={(v) => updateBottomLead("monthlyIncome", v)} contrastMode="dark" />
-          <MoneyField label="החזרי הלוואות קיימים" value={bottomLead.debtLevel} onChange={(v) => updateBottomLead("debtLevel", v)} contrastMode="dark" />
+          <MoneyField label="החזרי הלוואות חודשיים" value={bottomLead.debtLevel} onChange={(v) => updateBottomLead("debtLevel", v)} contrastMode="dark" />
 
-          {/* Status selects */}
-          <div>
-            <label className="mb-1.5 block text-sm font-black text-violet-100">מה סוג הבדיקה?</label>
-            <select
-              value={bottomLead.purchaseStatus}
-              onChange={(e) => updateBottomLead("purchaseStatus", e.target.value)}
-              className="h-12 w-full rounded-2xl border border-violet-200 bg-white px-4 text-base font-bold text-slate-950 outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-200 sm:h-14"
-            >
-              {PURCHASE_STATUS_OPTIONS.map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
-              ))}
-            </select>
-          </div>
+          {/* Existing mortgage toggle */}
           <div>
             <label className="mb-1.5 block text-sm font-black text-violet-100">יש לכם משכנתא קיימת?</label>
             <div className="flex gap-3 pt-1">
@@ -1046,11 +1023,12 @@ function DetailRow({ label, value }) {
 /*  FORM FIELD COMPONENTS                                               */
 /* ------------------------------------------------------------------ */
 
-function MoneyField({ label, value, onChange, helper, className = "" }) {
+function MoneyField({ label, value, onChange, helper, className = "", contrastMode = "light" }) {
   const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
+  const isDark = contrastMode === "dark";
   return (
     <label className={`block ${className}`}>
-      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
+      <span className={`text-sm font-black ${isDark ? "text-violet-50" : "text-slate-700"}`} id={`${fieldId}-label`}>{label}</span>
       <span className="relative mt-2 block">
         <input
           id={fieldId}
@@ -1060,7 +1038,7 @@ function MoneyField({ label, value, onChange, helper, className = "" }) {
           pattern="[0-9,]*"
           value={displayNumber(value || "")}
           onChange={(event) => onChange(cleanNumber(event.target.value))}
-          className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 sm:h-14"
+          className={`h-12 w-full rounded-2xl px-4 pl-10 text-base font-black text-slate-950 outline-none transition sm:h-14 ${isDark ? "border border-violet-200 bg-white focus:border-violet-300 focus:ring-4 focus:ring-violet-200" : "border border-slate-200 bg-slate-50 focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"}`}
         />
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">₪</span>
       </span>
