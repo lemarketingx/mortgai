@@ -234,6 +234,7 @@ export default function RefinanceCheck() {
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadSent, setLeadSent] = useState(false);
   const [leadError, setLeadError] = useState("");
+  const [leadConsent, setLeadConsent] = useState(false);
   const [pdfState, setPdfState] = useState({ status: "idle", message: "", fields: null });
   const [pdfConfirmed, setPdfConfirmed] = useState(false);
   const successRef = useRef(null);
@@ -299,6 +300,10 @@ export default function RefinanceCheck() {
     event.preventDefault();
     if (leadLoading || leadSent) return;
     const phone = cleanNumber(lead.phone);
+    if (!leadConsent) {
+      setLeadError("יש לאשר את תנאי השימוש ומדיניות הפרטיות לפני השליחה.");
+      return;
+    }
     if (lead.name.trim().length < 2 || phone.length < 7) {
       setLeadError("יש להשלים שם וטלפון כדי לשלוח את הבדיקה");
       return;
@@ -429,6 +434,8 @@ export default function RefinanceCheck() {
           leadLoading={leadLoading}
           leadSent={leadSent}
           leadError={leadError}
+          leadConsent={leadConsent}
+          setLeadConsent={setLeadConsent}
           successRef={successRef}
         />
       </section>
@@ -720,7 +727,7 @@ const CONTACT_TIME_OPTIONS = [
   { value: "anytime", label: "כל שעה" },
 ];
 
-function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, leadError, successRef }) {
+function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, leadError, leadConsent, setLeadConsent, successRef }) {
   return (
     <section id="lead" className="mt-10 grid items-stretch gap-6 rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] lg:grid-cols-2">
       <div>
@@ -780,7 +787,28 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
         </div>
         {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
         {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-800">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
-        <button type="submit" disabled={leadLoading || leadSent} className="mt-5 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70">
+
+        <label className="mt-4 flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={leadConsent}
+            onChange={(e) => setLeadConsent(e.target.checked)}
+            className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 accent-violet-600 focus:ring-violet-400"
+            aria-required="true"
+          />
+          <span className="text-xs font-semibold leading-5 text-slate-600">
+            אני מאשר/ת את{" "}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-black text-violet-700 underline">תנאי השימוש</a>
+            {" "}ו
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-black text-violet-700 underline">מדיניות הפרטיות</a>
+            {" "}ומסכים/ה להעברת הפרטים לצורך קבלת שירות מיועצי משכנתאות.
+          </span>
+        </label>
+        <p className="mt-2 text-xs font-semibold text-slate-400">
+          הפרטים עשויים להיות מועברים ליועצי משכנתאות לצורך יצירת קשר ומתן שירות.
+        </p>
+
+        <button type="submit" disabled={leadLoading || leadSent} className="mt-4 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70">
           {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "שלחו לבדיקה ראשונית"}
         </button>
         <p className="mt-3 text-center text-xs font-bold text-slate-400">ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי</p>

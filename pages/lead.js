@@ -176,6 +176,7 @@ export default function LeadPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [consent, setConsent] = useState(false);
   const { toasts, addToast, removeToast } = useToast();
 
   const scoring = useMemo(() => scoreLead(lead), [lead]);
@@ -190,6 +191,10 @@ export default function LeadPage() {
     event.preventDefault();
     if (loading || sent) return;
     const phone = cleanNumber(lead.phone);
+    if (!consent) {
+      setError("יש לאשר את תנאי השימוש ומדיניות הפרטיות לפני השליחה.");
+      return;
+    }
     if (lead.name.trim().length < 2 || !/^05\d{8}$|^9725\d{8}$/.test(phone)) {
       setError("יש להזין שם וטלפון ישראלי תקין.");
       return;
@@ -353,10 +358,30 @@ export default function LeadPage() {
               </div>
             )}
 
+            <label className="mt-4 flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 accent-violet-600 focus:ring-violet-400"
+                aria-required="true"
+              />
+              <span className="text-xs font-semibold leading-5 text-slate-600">
+                אני מאשר/ת את{" "}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-black text-violet-700 underline">תנאי השימוש</a>
+                {" "}ו
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-black text-violet-700 underline">מדיניות הפרטיות</a>
+                {" "}ומסכים/ה להעברת הפרטים לצורך קבלת שירות מיועצי משכנתאות.
+              </span>
+            </label>
+            <p className="mt-2 text-xs font-semibold text-slate-400">
+              הפרטים עשויים להיות מועברים ליועצי משכנתאות לצורך יצירת קשר ומתן שירות.
+            </p>
+
             <button
               type="submit"
               disabled={loading || sent}
-              className="mt-5 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-4 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {loading ? "שולח..." : sent ? "נשלח בהצלחה ✓" : "שליחת פנייה לבדיקת זכאות"}
             </button>

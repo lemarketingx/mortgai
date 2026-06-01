@@ -179,6 +179,8 @@ export default function Home() {
   const [leadSent, setLeadSent] = useState(false);
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadError, setLeadError] = useState("");
+  const [leadConsent, setLeadConsent] = useState(false);
+  const [bottomLeadConsent, setBottomLeadConsent] = useState(false);
   const [bottomLead, setBottomLead] = useState({
     name: "", phone: "", city: "", propertyCity: "",
     purchaseStatus: "",
@@ -294,6 +296,10 @@ export default function Home() {
     trackEvent("bottom_lead_submit_started");
 
     const phone = cleanNumber(bottomLead.phone);
+    if (!bottomLeadConsent) {
+      setBottomLeadError("יש לאשר את תנאי השימוש ומדיניות הפרטיות לפני השליחה.");
+      return;
+    }
     if (bottomLead.name.trim().length < 2 || !/^05\d{8}$|^9725\d{8}$/.test(phone)) {
       setBottomLeadError("יש להזין שם וטלפון ישראלי תקין.");
       return;
@@ -355,6 +361,10 @@ export default function Home() {
     });
 
     const phone = cleanNumber(lead.phone);
+    if (!leadConsent) {
+      setLeadError("יש לאשר את תנאי השימוש ומדיניות הפרטיות לפני השליחה.");
+      return;
+    }
     if (lead.name.trim().length < 2) {
       setLeadError("יש להזין שם מלא כדי שנדע כיצד לפנות אליכם.");
       return;
@@ -494,6 +504,8 @@ export default function Home() {
           leadLoading={leadLoading}
           leadSent={leadSent}
           leadError={leadError}
+          leadConsent={leadConsent}
+          setLeadConsent={setLeadConsent}
           analysis={analysis}
           ready={ready}
           trackEvent={trackEvent}
@@ -506,6 +518,8 @@ export default function Home() {
           bottomLeadLoading={bottomLeadLoading}
           bottomLeadSent={bottomLeadSent}
           bottomLeadError={bottomLeadError}
+          bottomLeadConsent={bottomLeadConsent}
+          setBottomLeadConsent={setBottomLeadConsent}
         />
         <Footer onCtaClick={handleCtaClick} />
         <MobileStickyCta onCtaClick={handleCtaClick} hidden={isInsideEligibility} />
@@ -739,7 +753,7 @@ function ResultsSection({ analysis, ready }) {
 /*  LEAD SECTION                                                        */
 /* ------------------------------------------------------------------ */
 
-function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, analysis, ready, trackEvent }) {
+function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, leadConsent, setLeadConsent, analysis, ready, trackEvent }) {
   return (
     <section id="lead" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
@@ -829,6 +843,12 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
 
           <p className="mt-4 text-xs font-semibold text-slate-500">ככל שתמלאו יותר נתונים, הבדיקה הראשונית תהיה מדויקת יותר.</p>
 
+          <ConsentCheckbox checked={leadConsent} onChange={setLeadConsent} />
+
+          <p className="mt-3 text-xs font-semibold text-slate-400">
+            הפרטים עשויים להיות מועברים ליועצי משכנתאות לצורך יצירת קשר ומתן שירות.
+          </p>
+
           <button
             type="submit"
             disabled={leadLoading || leadSent}
@@ -863,7 +883,7 @@ const PURCHASE_STATUS_OPTIONS = [
   ["general",            "בדיקה כללית"],
 ];
 
-function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bottomLeadLoading, bottomLeadSent, bottomLeadError }) {
+function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bottomLeadLoading, bottomLeadSent, bottomLeadError, bottomLeadConsent, setBottomLeadConsent }) {
   if (bottomLeadSent) {
     return (
       <section id="bottom-lead" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
@@ -952,7 +972,14 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
             className="sm:col-span-2"
           />
 
-          {/* Error + submit — full width */}
+          {/* Consent + error + submit — full width */}
+          <div className="sm:col-span-2">
+            <ConsentCheckbox checked={bottomLeadConsent} onChange={setBottomLeadConsent} dark />
+            <p className="mt-2 text-xs font-semibold text-violet-300">
+              הפרטים עשויים להיות מועברים ליועצי משכנתאות לצורך יצירת קשר ומתן שירות.
+            </p>
+          </div>
+
           {bottomLeadError && (
             <p role="alert" className="sm:col-span-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
               {bottomLeadError}
@@ -1128,6 +1155,31 @@ function SelectField({ label, value, onChange, options, className = "" }) {
           </option>
         ))}
       </select>
+    </label>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  CONSENT CHECKBOX                                                    */
+/* ------------------------------------------------------------------ */
+
+function ConsentCheckbox({ checked, onChange, dark = false }) {
+  return (
+    <label className="mt-4 flex cursor-pointer items-start gap-3">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 text-violet-600 accent-violet-600 focus:ring-violet-400"
+        aria-required="true"
+      />
+      <span className={`text-xs font-semibold leading-5 ${dark ? "text-violet-200" : "text-slate-600"}`}>
+        אני מאשר/ת את{" "}
+        <a href="/terms" target="_blank" rel="noopener noreferrer" className={`font-black underline ${dark ? "text-white" : "text-violet-700"}`}>תנאי השימוש</a>
+        {" "}ו
+        <a href="/privacy" target="_blank" rel="noopener noreferrer" className={`font-black underline ${dark ? "text-white" : "text-violet-700"}`}>מדיניות הפרטיות</a>
+        {" "}ומסכים/ה להעברת הפרטים לצורך קבלת שירות מיועצי משכנתאות.
+      </span>
     </label>
   );
 }

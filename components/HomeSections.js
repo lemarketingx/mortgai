@@ -574,12 +574,14 @@ export function Footer({ onCtaClick }) {
         </div>
         <div className="space-y-2">
           <p className="font-black text-slate-900">פרטיות ושימוש במידע</p>
-          <p>המידע נמסר מרצון ומשמש לצורך אומדן ראשוני וחזרה מקצועית בלבד. לא מתבצעת התחייבות לפעולה פיננסית.</p>
+          <p>המידע נמסר מרצון ומשמש לצורך אומדן ראשוני וחזרה מקצועית בלבד. הפרטים עשויים להיות מועברים ליועצי משכנתאות לצורך מתן שירות.</p>
+          <p><a href="/privacy" className="text-violet-600 hover:underline font-bold">מדיניות פרטיות מלאה ←</a></p>
         </div>
         <address className="not-italic space-y-2">
-          <p className="font-black text-slate-900">יצירת קשר</p>
-          <p>לשאלות או הבהרות ניתן להשאיר פנייה בטופס ונחזור בהקדם.</p>
-          <p className="text-xs">התוכן באתר הינו מידע כללי בלבד ואינו ייעוץ פיננסי או משפטי.</p>
+          <p className="font-black text-slate-900">יצירת קשר ומידע משפטי</p>
+          <p>FINZO אינה בנק ואינה מתחייבת לאישור משכנתא. התוצאות הן אומדן ראשוני בלבד.</p>
+          <p><a href="/contact" className="text-violet-600 hover:underline font-bold">לטופס יצירת קשר ←</a></p>
+          <p><a href="/terms" className="text-violet-600 hover:underline font-bold">תנאי שימוש ←</a></p>
         </address>
       </div>
       <div className="mx-auto mt-6 max-w-6xl px-4 sm:px-6">
@@ -594,10 +596,13 @@ export function Footer({ onCtaClick }) {
           <a href="/blog" className="text-sm font-bold text-violet-700 hover:underline">בלוג משכנתאות ←</a>
           <a href="/guides" className="text-sm font-bold text-violet-700 hover:underline">מדריכי משכנתא ←</a>
         </div>
-        <p className="mt-4 text-xs text-slate-400">
-          יועצי משכנתאות?{" "}
-          <a href="/advisor/login" className="font-semibold text-slate-500 hover:underline">לחצו כאן לכניסה למערכת</a>
-        </p>
+        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-xs font-bold text-slate-400">
+          <a href="/privacy" className="hover:text-violet-600 hover:underline">מדיניות פרטיות</a>
+          <a href="/terms" className="hover:text-violet-600 hover:underline">תנאי שימוש</a>
+          <a href="/accessibility" className="hover:text-violet-600 hover:underline">הצהרת נגישות</a>
+          <a href="/contact" className="hover:text-violet-600 hover:underline">יצירת קשר</a>
+          <a href="/advisor/login" className="hover:text-violet-600 hover:underline">כניסה ליועצים</a>
+        </div>
       </div>
     </footer>
   );
