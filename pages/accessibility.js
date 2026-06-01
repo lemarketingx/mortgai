@@ -5,8 +5,8 @@ export default function AccessibilityPage() {
   return (
     <>
       <Head>
-        <title>הצהרת נגישות | FINZO</title>
-        <meta name="description" content="הצהרת הנגישות של FINZO — מחויבות לנגישות דיגיטלית לכלל המשתמשים." />
+        <title>נגישות | FINZO</title>
+        <meta name="description" content="מחויבות FINZO לנגישות דיגיטלית — אנו פועלים לשיפור הנגישות באופן שוטף." />
         <meta name="robots" content="index, follow" />
       </Head>
       <div dir="rtl" className="min-h-screen bg-white">
@@ -14,59 +14,50 @@ export default function AccessibilityPage() {
           <div className="mx-auto flex max-w-4xl items-center gap-3">
             <Link href="/" className="text-xl font-black text-violet-700">FINZO</Link>
             <span className="text-slate-300">/</span>
-            <span className="text-sm font-bold text-slate-500">הצהרת נגישות</span>
+            <span className="text-sm font-bold text-slate-500">נגישות</span>
           </div>
         </header>
         <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-          <h1 className="text-3xl font-black text-slate-900 sm:text-4xl">הצהרת נגישות</h1>
+          <h1 className="text-3xl font-black text-slate-900 sm:text-4xl">נגישות</h1>
           <p className="mt-2 text-sm text-slate-500">עדכון אחרון: ינואר 2026</p>
 
           <div className="mt-8 space-y-8 text-slate-700 leading-relaxed">
 
             <section>
-              <h2 className="text-xl font-black text-slate-900 mb-3">מחויבות לנגישות</h2>
+              <h2 className="text-xl font-black text-slate-900 mb-3">המחויבות שלנו לנגישות</h2>
               <p>
-                ל.א.ה שיווק, מפעילת שירות FINZO, מחויבת להנגשת השירות הדיגיטלי לכלל המשתמשים, לרבות אנשים עם מוגבלויות. אנו פועלים לעמוד בדרישות תקן ישראלי 5568 ובהנחיות WCAG 2.1 ברמה AA.
+                ל.א.ה שיווק, מפעילת שירות FINZO, מאמינה שכל אדם זכאי לגישה נוחה לשירותים דיגיטליים.
+                אנו עושים מאמצים סבירים להנגיש את האתר למגוון משתמשים, ופועלים לשיפור הנגישות באופן שוטף.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-black text-slate-900 mb-3">מה כולל הסדר הנגישות</h2>
-              <ul className="list-disc list-inside space-y-1 mr-4">
-                <li>תמיכה בקוראי מסך (Screen Readers)</li>
-                <li>ניווט מלא באמצעות מקלדת</li>
-                <li>יחסי ניגודיות עומדים בדרישות תקן AA</li>
-                <li>תגיות ARIA לרכיבים אינטראקטיביים</li>
-                <li>טקסטים חלופיים לאלמנטים גרפיים</li>
-                <li>עיצוב RTL מלא לתמיכה בשפה העברית</li>
-              </ul>
+              <h2 className="text-xl font-black text-slate-900 mb-3">גישת הפיתוח</h2>
+              <p>
+                האתר נבנה תוך התחשבות בעקרונות נגישות מקובלים, כגון שימוש בתגיות HTML סמנטיות, ניגודיות טקסט,
+                ותמיכה בכיוון RTL לעברית. ייתכן שחלקים מסוימים עדיין דורשים שיפור, ואנחנו עובדים על כך.
+              </p>
             </section>
 
             <section>
               <h2 className="text-xl font-black text-slate-900 mb-3">מגבלות ידועות</h2>
               <p>
-                למרות מאמצינו, ייתכן שחלק מהרכיבים אינם עומדים בכל דרישות הנגישות. אנו עובדים באופן שוטף לשיפור הנגישות. אם נתקלתם בחסם נגישות, פנו אלינו ונטפל בכך בהקדם.
+                לא ביצענו ביקורת נגישות פורמלית מלאה. ייתכן שחלק מהרכיבים אינם נגישים במלואם לכלל המשתמשים.
+                אנו מזמינים אתכם לדווח לנו על כל חסם שנתקלתם בו, ונפעל לטפל בו בהקדם.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-black text-slate-900 mb-3">דיווח על בעיית נגישות</h2>
               <p>
-                לדיווח על בעיית נגישות או לקבלת עזרה, ניתן לפנות אלינו בדואר אלקטרוני:{" "}
+                אם נתקלתם בבעיה כלשהי בגישה לתכנים באתר, נשמח לקבל פנייה לכתובת:{" "}
                 <a href="mailto:lemarketingx@gmail.com" className="text-violet-700 hover:underline">lemarketingx@gmail.com</a>
               </p>
               <p className="mt-2">
-                נציג הנגישות שלנו יחזור אליכם בהקדם האפשרי.
+                נחזור אליכם בהקדם ונעשה כמיטב יכולתנו לסייע.
               </p>
             </section>
 
-            <section>
-              <h2 className="text-xl font-black text-slate-900 mb-3">פניות לאחראי נגישות</h2>
-              <p>
-                אחראי הנגישות של ל.א.ה שיווק זמין לפניות בנושא נגישות בלבד דרך כתובת האימייל:{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-violet-700 hover:underline">lemarketingx@gmail.com</a>
-              </p>
-            </section>
           </div>
 
           <div className="mt-12 border-t border-slate-200 pt-6 text-sm text-slate-400">
