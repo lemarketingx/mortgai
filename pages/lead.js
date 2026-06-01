@@ -176,6 +176,7 @@ export default function LeadPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [consent, setConsent] = useState(false);
   const { toasts, addToast, removeToast } = useToast();
 
   const scoring = useMemo(() => scoreLead(lead), [lead]);
@@ -192,6 +193,10 @@ export default function LeadPage() {
     const phone = cleanNumber(lead.phone);
     if (lead.name.trim().length < 2 || !/^05\d{8}$|^9725\d{8}$/.test(phone)) {
       setError("יש להזין שם וטלפון ישראלי תקין.");
+      return;
+    }
+    if (!consent) {
+      setError("יש לאשר את הסכמתכם לשיתוף המידע לפני שליחה.");
       return;
     }
     setLoading(true);
@@ -353,10 +358,25 @@ export default function LeadPage() {
               </div>
             )}
 
+            <label className="mt-4 flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-violet-600 shrink-0"
+              />
+              <span className="text-xs font-bold text-slate-600 leading-5">
+                אני מסכים/ה לשיתוף הפרטים עם יועצי משכנתאות מורשים לצורך קבלת ייעוץ.{" "}
+                <a href="/privacy" className="text-violet-600 hover:underline">מדיניות פרטיות</a>
+              </span>
+            </label>
+            <p className="mt-1 text-xs text-slate-400 font-semibold">
+              הפרטים שמסרתם עשויים להיות מועברים ליועץ משכנתאות עצמאי שיצור אתכם קשר.
+            </p>
             <button
               type="submit"
               disabled={loading || sent}
-              className="mt-5 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-4 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {loading ? "שולח..." : sent ? "נשלח בהצלחה ✓" : "שליחת פנייה לבדיקת זכאות"}
             </button>

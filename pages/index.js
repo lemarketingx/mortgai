@@ -179,6 +179,7 @@ export default function Home() {
   const [leadSent, setLeadSent] = useState(false);
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadError, setLeadError] = useState("");
+  const [leadConsent, setLeadConsent] = useState(false);
   const [bottomLead, setBottomLead] = useState({
     name: "", phone: "", city: "", propertyCity: "",
     purchaseStatus: "",
@@ -186,6 +187,7 @@ export default function Home() {
     debtLevel: "", hasExistingMortgage: "no", requestedContactTime: "",
   });
   const [bottomLeadSent, setBottomLeadSent] = useState(false);
+  const [bottomLeadConsent, setBottomLeadConsent] = useState(false);
   const [bottomLeadLoading, setBottomLeadLoading] = useState(false);
   const [bottomLeadError, setBottomLeadError] = useState("");
   const [isInsideEligibility, setIsInsideEligibility] = useState(false);
@@ -298,6 +300,10 @@ export default function Home() {
       setBottomLeadError("יש להזין שם וטלפון ישראלי תקין.");
       return;
     }
+    if (!bottomLeadConsent) {
+      setBottomLeadError("יש לאשר את הסכמתכם לשיתוף המידע לפני שליחה.");
+      return;
+    }
 
     setBottomLeadLoading(true);
     setBottomLeadError("");
@@ -361,6 +367,10 @@ export default function Home() {
     }
     if (phone.length < 7) {
       setLeadError("יש להזין מספר טלפון תקין כדי שנוכל לחזור אליכם.");
+      return;
+    }
+    if (!leadConsent) {
+      setLeadError("יש לאשר את הסכמתכם לשיתוף המידע לפני שליחה.");
       return;
     }
 
@@ -497,6 +507,8 @@ export default function Home() {
           analysis={analysis}
           ready={ready}
           trackEvent={trackEvent}
+          consent={leadConsent}
+          setConsent={setLeadConsent}
         />
         <FaqSection />
         <BottomLeadSection
@@ -506,6 +518,8 @@ export default function Home() {
           bottomLeadLoading={bottomLeadLoading}
           bottomLeadSent={bottomLeadSent}
           bottomLeadError={bottomLeadError}
+          consent={bottomLeadConsent}
+          setConsent={setBottomLeadConsent}
         />
         <Footer onCtaClick={handleCtaClick} />
         <MobileStickyCta onCtaClick={handleCtaClick} hidden={isInsideEligibility} />
@@ -739,7 +753,7 @@ function ResultsSection({ analysis, ready }) {
 /*  LEAD SECTION                                                        */
 /* ------------------------------------------------------------------ */
 
-function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, analysis, ready, trackEvent }) {
+function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, analysis, ready, trackEvent, consent, setConsent }) {
   return (
     <section id="lead" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
@@ -829,6 +843,22 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
 
           <p className="mt-4 text-xs font-semibold text-slate-500">ככל שתמלאו יותר נתונים, הבדיקה הראשונית תהיה מדויקת יותר.</p>
 
+          <label className="mt-4 flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-violet-600 shrink-0"
+            />
+            <span className="text-xs font-bold text-slate-600 leading-5">
+              אני מסכים/ה לשיתוף הפרטים עם יועצי משכנתאות מורשים לצורך קבלת ייעוץ.{" "}
+              <a href="/privacy" className="text-violet-600 hover:underline">מדיניות פרטיות</a>
+            </span>
+          </label>
+          <p className="mt-2 text-xs text-slate-400 font-semibold">
+            הפרטים שמסרתם עשויים להיות מועברים ליועץ משכנתאות עצמאי שיצור אתכם קשר.
+          </p>
+
           <button
             type="submit"
             disabled={leadLoading || leadSent}
@@ -863,7 +893,7 @@ const PURCHASE_STATUS_OPTIONS = [
   ["general",            "בדיקה כללית"],
 ];
 
-function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bottomLeadLoading, bottomLeadSent, bottomLeadError }) {
+function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bottomLeadLoading, bottomLeadSent, bottomLeadError, consent, setConsent }) {
   if (bottomLeadSent) {
     return (
       <section id="bottom-lead" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
@@ -958,6 +988,22 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
               {bottomLeadError}
             </p>
           )}
+
+          <label className="sm:col-span-2 flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-violet-400 shrink-0"
+            />
+            <span className="text-xs font-bold text-violet-200 leading-5">
+              אני מסכים/ה לשיתוף הפרטים עם יועצי משכנתאות מורשים לצורך קבלת ייעוץ.{" "}
+              <a href="/privacy" className="text-violet-300 hover:underline">מדיניות פרטיות</a>
+            </span>
+          </label>
+          <p className="sm:col-span-2 text-xs text-violet-300 font-semibold">
+            הפרטים שמסרתם עשויים להיות מועברים ליועץ משכנתאות עצמאי שיצור אתכם קשר.
+          </p>
 
           <button
             type="submit"
