@@ -5,6 +5,20 @@ import { KpiTile, Pill, Tag, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
 
 const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi" };
+const MAX_REGULAR_SLOTS = 3;
+
+const PURCHASE_STATUS_LABELS = {
+  before: "לפני חוזה",
+  signed: "חתם חוזה",
+  refinance: "מחזור משכנתא",
+  construction: "בנייה עצמית",
+  investor: "משקיע",
+  upgrade: "שיפור דיור",
+  firstHome: "דירה ראשונה",
+  secondHome: "דירה שנייה",
+  vacation: "דירת נופש",
+  commercial: "מסחרי",
+};
 
 function formatPrice(price) {
   if (!price || price === 0) return "פנו לתמחור";
@@ -22,6 +36,68 @@ function ScoreBar({ score }) {
   return (
     <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
       <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+function AgeBadge({ createdAt }) {
+  const diffDays = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000);
+  const label = diffDays === 0 ? "היום" : `לפני ${diffDays} ימים`;
+  if (diffDays <= 3)
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+        {label}
+      </span>
+    );
+  if (diffDays <= 14)
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-black text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+        {label}
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-black text-slate-500 bg-slate-100 border border-slate-200 rounded-full px-2 py-0.5">
+      <span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" />
+      {label}
+    </span>
+  );
+}
+
+function MarketplaceTags({ lead }) {
+  const diffDays = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86400000);
+  const tags = [];
+  if (diffDays <= 3) tags.push({ label: "חדש", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" });
+  if (lead.purchaseCount >= 2) tags.push({ label: "כמעט נסגר 🔥", cls: "bg-red-100 text-red-700 border-red-200" });
+  else if (lead.purchaseCount >= 1) tags.push({ label: "פופולרי", cls: "bg-amber-100 text-amber-800 border-amber-200" });
+  if (lead.exclusivePrice > 0) tags.push({ label: "בלעדי זמין", cls: "bg-violet-100 text-violet-800 border-violet-200" });
+  if (tags.length === 0) return null;
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      {tags.map((t) => (
+        <span key={t.label} className={`text-[10px] font-black border rounded-full px-2 py-0.5 ${t.cls}`}>{t.label}</span>
+      ))}
+    </div>
+  );
+}
+
+function SlotBar({ purchaseCount }) {
+  const filled = Math.min(purchaseCount, MAX_REGULAR_SLOTS);
+  const remaining = MAX_REGULAR_SLOTS - filled;
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex gap-1">
+        {Array.from({ length: MAX_REGULAR_SLOTS }).map((_, i) => (
+          <span
+            key={i}
+            className={`w-2.5 h-2.5 rounded-full border ${i < filled ? "bg-violet-500 border-violet-500" : "bg-slate-100 border-slate-300"}`}
+          />
+        ))}
+      </div>
+      <p className="text-[10px] font-bold text-slate-500 tabular-nums">
+        {filled}/{MAX_REGULAR_SLOTS} נרכשו · {remaining} מקומות פנויים
+      </p>
     </div>
   );
 }
@@ -56,14 +132,8 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
   const isSold = lead.storeStatus === "sold";
   const tagVariant = QUALITY_TAG[lead.leadQuality] || "default";
   const isHot = lead.leadQuality === "חם";
-  const timeAgo = (() => {
-    const diff = Date.now() - new Date(lead.createdAt).getTime();
-    const h = Math.floor(diff / 3600000);
-    if (h < 1) return "לפני פחות משעה";
-    if (h < 24) return `לפני ${h} שעות`;
-    const d = Math.floor(h / 24);
-    return `לפני ${d} ימים`;
-  })();
+  const diffDays = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86400000);
+  const isNew = diffDays <= 3;
 
   async function handleConfirm() {
     const result = await onPurchase(lead.id, confirm);
@@ -76,25 +146,42 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
         ? "border-emerald-200 bg-emerald-50/30"
         : isSold
           ? "border-slate-100 opacity-60"
-          : isHot
-            ? "border-emerald-200 ring-1 ring-emerald-300/60 shadow-md hover:shadow-lg"
-            : "border-slate-100 hover:border-violet-200 hover:shadow-sm"
+          : isNew
+            ? "border-emerald-200 ring-1 ring-emerald-300/40 shadow-md hover:shadow-lg"
+            : isHot
+              ? "border-violet-200 ring-1 ring-violet-300/50 shadow-md hover:shadow-lg"
+              : "border-slate-100 hover:border-violet-200 hover:shadow-sm"
     }`}>
 
-      {/* Header row: tags left, price right */}
-      <div className="flex items-start justify-between gap-3 p-4 pb-2.5">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+      {/* Header row: quality tag + price */}
+      <div className="flex items-start justify-between gap-3 p-4 pb-3">
+        <div className="flex-1 min-w-0">
+          {/* Quality + status tags */}
+          <div className="flex items-center gap-2 flex-wrap mb-2">
             {lead.leadQuality && <Tag variant={tagVariant}>{lead.leadQuality}</Tag>}
             {isSold && <Tag variant="danger">נמכר</Tag>}
             {lead._purchased && <Tag variant="upgrade">נרכש ✓</Tag>}
           </div>
-          {lead.city && <p className="text-xs font-bold text-slate-400">📍 {lead.city} · {timeAgo}</p>}
+          {/* Marketplace status tags */}
+          <MarketplaceTags lead={lead} />
         </div>
         <div className="text-start shrink-0">
           <p className="text-xl font-black text-slate-950 tabular-nums leading-none">{formatPrice(lead.storePrice)}</p>
           <p className="text-[10px] font-bold text-slate-400 mt-0.5">לליד</p>
         </div>
+      </div>
+
+      {/* Location + age + classification */}
+      <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
+        {lead.city && (
+          <span className="text-xs font-bold text-slate-500">📍 {lead.city}</span>
+        )}
+        {lead.createdAt && <AgeBadge createdAt={lead.createdAt} />}
+        {lead.purchaseStatus && PURCHASE_STATUS_LABELS[lead.purchaseStatus] && (
+          <span className="text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-100 rounded-full px-2 py-0.5">
+            {PURCHASE_STATUS_LABELS[lead.purchaseStatus]}
+          </span>
+        )}
       </div>
 
       {/* Lead title from mainIssue */}
@@ -132,6 +219,11 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
           </div>
           <ScoreBar score={lead.approvalScore} />
         </div>
+
+        {/* Slot inventory */}
+        {!lead._purchased && !isSold && !isPartnerAdvisor && (
+          <SlotBar purchaseCount={lead.purchaseCount || 0} />
+        )}
 
         {/* Locked contact */}
         {!lead._purchased && !isSold && (
