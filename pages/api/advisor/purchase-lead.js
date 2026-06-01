@@ -1,4 +1,4 @@
-import { LeadStoreError, readStoreLeads, createLeadPurchase } from "../../../lib/leadsStore";
+import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 
 const MAX_REGULAR_SLOTS = 3;
@@ -31,6 +31,12 @@ export default async function handler(req, res) {
     }
 
     const purchaseCount = lead.purchaseCount || 0;
+
+    // Block duplicate purchase by the same advisor for the same lead
+    const ownedIds = await readAdvisorPurchasedLeadIds(session.advisorId);
+    if (ownedIds.has(leadId)) {
+      return apiError(res, 409, "ALREADY_PURCHASED_BY_ADVISOR", "כבר רכשתם את הליד הזה. ניתן למצוא אותו באזור 'הלידים שלי'.");
+    }
 
     if (purchaseType === "exclusive") {
       // Block exclusive if any regular purchases already exist.

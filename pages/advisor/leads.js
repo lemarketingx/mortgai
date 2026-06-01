@@ -137,6 +137,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
   const purchaseCount = lead.purchaseCount || 0;
   const regularSlotsFull = purchaseCount >= MAX_REGULAR_SLOTS;
   const exclusiveBlocked = purchaseCount > 0;
+  const alreadyOwnedByMe = Boolean(lead._ownedByAdvisor);
 
   async function handleConfirm() {
     const result = await onPurchase(lead.id, confirm);
@@ -228,8 +229,8 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
           <SlotBar purchaseCount={lead.purchaseCount || 0} />
         )}
 
-        {/* Locked contact */}
-        {!lead._purchased && !isSold && (
+        {/* Locked contact — only shown when lead is not yet purchased by this advisor */}
+        {!lead._purchased && !alreadyOwnedByMe && !isSold && (
           <div className="rounded-xl bg-slate-50 border border-dashed border-slate-200 px-3 py-2.5 flex items-center gap-2">
             <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -238,23 +239,26 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
           </div>
         )}
 
-        {/* Purchased state */}
-        {lead._purchased && (
-          <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center gap-2">
-            <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-            <div>
-              <p className="text-sm font-black text-emerald-700">הליד נרכש</p>
-              <Link href="/advisor/my-leads" className="text-xs font-bold text-emerald-600 hover:underline">
-                ראו בלשונית הלידים שלי ←
-              </Link>
+        {/* Already owned by this advisor (loaded from server) or just purchased in this session */}
+        {(lead._purchased || alreadyOwnedByMe) && (
+          <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <p className="text-sm font-black text-emerald-700">כבר נרכש על ידכם</p>
             </div>
+            <Link
+              href={`/advisor/lead/${lead.id}`}
+              className="text-xs font-black text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 rounded-full px-3 py-1.5 transition-colors shrink-0"
+            >
+              פתח בלידים שלי ←
+            </Link>
           </div>
         )}
 
         {/* Purchase buttons */}
-        {!isSold && !lead._purchased && !confirm && (
+        {!isSold && !lead._purchased && !alreadyOwnedByMe && !confirm && (
           isPartnerAdvisor ? (
             <button
               onClick={() => setConfirm("partner_claim")}
@@ -302,7 +306,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
         )}
 
         {/* Confirm dialog */}
-        {confirm && !lead._purchased && (
+        {confirm && !lead._purchased && !alreadyOwnedByMe && (
           <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
             <p className="text-sm font-black text-violet-900 mb-1">
               {confirm === "partner_claim" ? "אישור לקיחת ליד לטיפול" : `אישור רכישת ליד ${confirm === "exclusive" ? "בלעדי" : "רגיל"}`}
