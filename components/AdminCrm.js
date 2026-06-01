@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { useEffect, useMemo, useState } from "react";
 import { formatILS } from "../lib/format";
+import { computePricing } from "../lib/leadScoring";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,40 @@ const PURCHASE_STATUS_COLORS = {
   debt_consolidation: "bg-purple-50 text-purple-700 border-purple-200",
   general:            "bg-slate-50 text-slate-600 border-slate-200",
 };
+
+function FinzoScorePanel({ lead }) {
+  const pricing = computePricing({
+    hasName:              Boolean(lead.name),
+    hasPhone:             Boolean(lead.phone),
+    city:                 lead.city,
+    mortgageAmount:       lead.mortgageAmount || lead.mortgage_amount,
+    monthlyIncome:        lead.monthlyIncome  || lead.monthly_income,
+    equityAmount:         lead.equityAmount   || lead.equity_amount,
+    debtLevel:            lead.debtLevel      || lead.debt_level,
+    purchaseStatus:       lead.purchaseStatus || lead.purchase_status,
+    requestedContactTime: lead.requestedContactTime || lead.requested_contact_time,
+    hasExistingMortgage:  lead.hasExistingMortgage  || lead.has_existing_mortgage,
+    createdAt:            lead.createdAt || lead.created_at,
+    purchaseCount:        0,
+  });
+  const scoreColor = pricing.finzoScore >= 70 ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+    : pricing.finzoScore >= 50 ? "text-amber-700 bg-amber-50 border-amber-200"
+    : "text-slate-600 bg-slate-50 border-slate-200";
+  return (
+    <div className="mt-2 space-y-1.5">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full border ${scoreColor}`}>
+          FINZO {pricing.finzoScore}/100 · {pricing.quality}
+        </span>
+        <span className="text-[10px] font-bold text-slate-500">
+          מחיר רגיל: <strong className="text-slate-800">{formatILS(pricing.regularPrice)}</strong>
+          {" · "}
+          בלעדי: <strong className="text-slate-800">{formatILS(pricing.exclusivePrice)}</strong>
+        </span>
+      </div>
+    </div>
+  );
+}
 
 function PurchaseStatusBadge({ value }) {
   if (!value) return null;
@@ -301,6 +336,7 @@ function LeadEditPanel({ lead, statuses, commissionStatuses, onPatch }) {
           <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3">
             <span className="block text-xs font-bold text-mort-muted">סוג תיק</span>
             <div className="mt-1.5"><PurchaseStatusBadge value={lead.purchaseStatus} /></div>
+            <FinzoScorePanel lead={lead} />
           </div>
         )}
         <Detail label="מועד חזרה" value={lead.requestedContactTime} />
@@ -828,6 +864,7 @@ export default function AdminCrm() {
                         <Th>עיר</Th>
                         <Th>משכנתא</Th>
                         <Th>איכות</Th>
+                        <Th>FINZO Score</Th>
                         <Th>מחיר חנות</Th>
                         <Th>מחיר בלעדי</Th>
                         <Th>סטטוס חנות</Th>
@@ -842,8 +879,9 @@ export default function AdminCrm() {
                           <Td className="text-sm text-mort-muted">{l.city || "—"}</Td>
                           <Td className="font-black text-mort-ink">{l.mortgageAmount ? formatILS(toNumber(l.mortgageAmount)) : "—"}</Td>
                           <Td><Pill color={qualityColor(l.leadQuality || "לא סווג")}>{l.leadQuality || "לא סווג"}</Pill></Td>
-                          <Td className="font-black text-mort-ink">{toNumber(l.storePrice) > 0 ? formatILS(toNumber(l.storePrice)) : <span className="font-bold text-mort-muted">לא הוגדר</span>}</Td>
-                          <Td className="font-bold text-mort-muted">{toNumber(l.exclusivePrice) > 0 ? formatILS(toNumber(l.exclusivePrice)) : "—"}</Td>
+                          <Td>{(() => { const p = computePricing({ hasName: Boolean(l.name), hasPhone: Boolean(l.phone), city: l.city, mortgageAmount: l.mortgageAmount, monthlyIncome: l.monthlyIncome, equityAmount: l.equityAmount, debtLevel: l.debtLevel, purchaseStatus: l.purchaseStatus, requestedContactTime: l.requestedContactTime, hasExistingMortgage: l.hasExistingMortgage, createdAt: l.createdAt, purchaseCount: 0 }); return <span className="text-xs font-black text-violet-700">{p.finzoScore}/100 · {p.quality}</span>; })()}</Td>
+                          <Td className="font-black text-mort-ink">{toNumber(l.storePrice) > 0 ? formatILS(toNumber(l.storePrice)) : (() => { const p = computePricing({ hasName: Boolean(l.name), hasPhone: Boolean(l.phone), city: l.city, mortgageAmount: l.mortgageAmount, monthlyIncome: l.monthlyIncome, equityAmount: l.equityAmount, debtLevel: l.debtLevel, purchaseStatus: l.purchaseStatus, requestedContactTime: l.requestedContactTime, hasExistingMortgage: l.hasExistingMortgage, createdAt: l.createdAt, purchaseCount: 0 }); return <span className="text-emerald-700 font-black">{formatILS(p.regularPrice)}</span>; })()}</Td>
+                          <Td className="font-bold text-mort-muted">{toNumber(l.exclusivePrice) > 0 ? formatILS(toNumber(l.exclusivePrice)) : (() => { const p = computePricing({ hasName: Boolean(l.name), hasPhone: Boolean(l.phone), city: l.city, mortgageAmount: l.mortgageAmount, monthlyIncome: l.monthlyIncome, equityAmount: l.equityAmount, debtLevel: l.debtLevel, purchaseStatus: l.purchaseStatus, requestedContactTime: l.requestedContactTime, hasExistingMortgage: l.hasExistingMortgage, createdAt: l.createdAt, purchaseCount: 0 }); return <span className="text-violet-600 font-black">{formatILS(p.exclusivePrice)}</span>; })()}</Td>
                           <Td><span className="text-xs font-bold text-mort-muted">{l.storeStatus || "—"}</span></Td>
                           <Td className="text-sm font-bold text-mort-muted">{l.buyerAdvisorId || "—"}</Td>
                           <Td className="text-xs text-mort-muted">{l.soldAt ? formatDateShort(l.soldAt) : "—"}</Td>
@@ -1324,6 +1362,7 @@ function LeadsView({
                     </div>
                     <p className="mt-0.5 text-xs font-bold text-mort-muted">{formatDateShort(lead.createdAt)} · {lead.phone || "—"} · {lead.city || "—"}</p>
                     {lead.purchaseStatus && <div className="mt-1"><PurchaseStatusBadge value={lead.purchaseStatus} /></div>}
+                    <FinzoScorePanel lead={lead} />
                     {lead.assignedAdvisor && <p className="text-xs font-bold text-mort-muted">יועץ: {lead.assignedAdvisor}</p>}
                   </div>
                   <div className="flex shrink-0 gap-1.5">
