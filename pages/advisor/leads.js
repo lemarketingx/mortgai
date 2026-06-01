@@ -134,6 +134,9 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
   const isHot = lead.leadQuality === "חם";
   const diffDays = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86400000);
   const isNew = diffDays <= 3;
+  const purchaseCount = lead.purchaseCount || 0;
+  const regularSlotsFull = purchaseCount >= MAX_REGULAR_SLOTS;
+  const exclusiveBlocked = purchaseCount > 0;
 
   async function handleConfirm() {
     const result = await onPurchase(lead.id, confirm);
@@ -262,22 +265,38 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
             </button>
           ) : (
             <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setConfirm("regular")}
-                disabled={purchasing}
-                className="text-sm font-black px-3 py-2.5 rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 transition-colors disabled:opacity-50 min-h-[46px]"
-              >
-                <span className="block text-xs font-bold text-violet-500 mb-0.5">ליד רגיל</span>
-                {formatPrice(lead.storePrice)}
-              </button>
-              <button
-                onClick={() => setConfirm("exclusive")}
-                disabled={purchasing}
-                className="text-sm font-black px-3 py-2.5 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[46px]"
-              >
-                <span className="block text-xs font-bold text-violet-300 mb-0.5">בלעדי</span>
-                {formatPrice(lead.exclusivePrice)}
-              </button>
+              {/* Regular purchase — disabled when all 3 slots are filled */}
+              {regularSlotsFull ? (
+                <div className="text-center px-3 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 min-h-[46px] flex flex-col items-center justify-center">
+                  <span className="text-[10px] font-bold text-slate-400 mb-0.5">ליד רגיל</span>
+                  <span className="text-xs font-black text-slate-400">אזל לרכישה רגילה</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirm("regular")}
+                  disabled={purchasing}
+                  className="text-sm font-black px-3 py-2.5 rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 transition-colors disabled:opacity-50 min-h-[46px]"
+                >
+                  <span className="block text-xs font-bold text-violet-500 mb-0.5">ליד רגיל</span>
+                  {formatPrice(lead.storePrice)}
+                </button>
+              )}
+              {/* Exclusive purchase — disabled when any regular buyer exists */}
+              {exclusiveBlocked ? (
+                <div className="text-center px-3 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 min-h-[46px] flex flex-col items-center justify-center">
+                  <span className="text-[10px] font-bold text-slate-400 mb-0.5">בלעדי</span>
+                  <span className="text-[10px] font-black text-slate-400 leading-tight">בלעדיות לא זמינה לאחר רכישה רגילה</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirm("exclusive")}
+                  disabled={purchasing}
+                  className="text-sm font-black px-3 py-2.5 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[46px]"
+                >
+                  <span className="block text-xs font-bold text-violet-300 mb-0.5">בלעדי</span>
+                  {formatPrice(lead.exclusivePrice)}
+                </button>
+              )}
             </div>
           )
         )}
@@ -357,10 +376,14 @@ export default function AdvisorLeadsStore() {
         return { ok: false };
       }
       setSuccessId(leadId);
-      if (purchaseType === "exclusive" || purchaseType === "partner_claim") {
+      if (purchaseType === "partner_claim") {
         setLeads((arr) => arr.filter((l) => l.id !== leadId));
+      } else if (purchaseType === "exclusive") {
+        // Mark sold in client state so the card immediately shows as unavailable
+        // rather than remaining purchasable until the next fetch.
+        setLeads((arr) => arr.map((l) => l.id === leadId ? { ...l, storeStatus: "sold", _purchased: true } : l));
       } else {
-        setLeads((arr) => arr.map((l) => l.id === leadId ? { ...l, _purchased: true } : l));
+        setLeads((arr) => arr.map((l) => l.id === leadId ? { ...l, _purchased: true, purchaseCount: (l.purchaseCount || 0) + 1 } : l));
       }
       return { ok: true };
     } catch {

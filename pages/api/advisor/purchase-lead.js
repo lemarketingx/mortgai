@@ -1,6 +1,8 @@
 import { LeadStoreError, readStoreLeads, createLeadPurchase } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 
+const MAX_REGULAR_SLOTS = 3;
+
 function apiError(res, status, code, message, details = "") {
   return res.status(status).json({ error: code, message, ...(details ? { details } : {}) });
 }
@@ -22,7 +24,27 @@ export default async function handler(req, res) {
     const lead = storeLeads.find((l) => l.id === leadId);
 
     if (!lead) return apiError(res, 404, "LEAD_NOT_AVAILABLE", "Lead is not available in the store");
-    if (lead.storeStatus === "sold") return apiError(res, 409, "LEAD_ALREADY_SOLD", "Lead has already been sold exclusively");
+
+    // Sold check (exclusive purchase already removed lead; race window covered below)
+    if (lead.storeStatus === "sold") {
+      return apiError(res, 409, "LEAD_ALREADY_SOLD", "הליד כבר נמכר ואינו זמין לרכישה.");
+    }
+
+    const purchaseCount = lead.purchaseCount || 0;
+
+    if (purchaseType === "exclusive") {
+      // Block exclusive if any regular purchases already exist.
+      // Note: concurrent requests can still race through this check before either commits;
+      // true prevention requires a DB-level unique constraint or transaction.
+      if (purchaseCount > 0) {
+        return apiError(res, 409, "LEAD_HAS_REGULAR_BUYERS", "הליד כבר נרכש כרכישה רגילה ולכן לא ניתן לרכוש אותו בבלעדיות.");
+      }
+    } else {
+      // Block regular purchase if all slots are taken.
+      if (purchaseCount >= MAX_REGULAR_SLOTS) {
+        return apiError(res, 409, "LEAD_SLOTS_FULL", "כל המקומות לרכישת הליד כבר התמלאו.");
+      }
+    }
 
     const isExclusive = purchaseType === "exclusive";
     const price = isExclusive ? (lead.exclusivePrice || 0) : (lead.storePrice || 0);
@@ -40,6 +62,9 @@ export default async function handler(req, res) {
     if (error instanceof LeadStoreError) {
       if (error.code === "TABLE_MISSING") {
         return apiError(res, 503, "TABLE_MISSING", "Lead store not configured — run SQL migration");
+      }
+      if (error.code === "EXCLUSIVE_STATUS_UPDATE_FAILED") {
+        return apiError(res, 502, error.code, error.message, error.details || "");
       }
       const status = error.code === "SUPABASE_ENV_MISSING" ? 503 : 502;
       return apiError(res, status, error.code, error.message, error.details || "");
