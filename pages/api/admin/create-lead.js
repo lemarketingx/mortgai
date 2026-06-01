@@ -49,8 +49,12 @@ export default async function handler(req, res) {
     });
 
     if (publishToStore && lead?.id) {
-      await updateLead(lead.id, { storeStatus: "available" });
+      const qualityUpgrade = lead.leadQuality === "חלש" ? { leadQuality: "בינוני" } : {};
+      console.log("[admin.create-lead] publishToStore", { id: lead.id, currentQuality: lead.leadQuality, qualityUpgrade });
+      const updated = await updateLead(lead.id, { storeStatus: "available", ...qualityUpgrade });
+      console.log("[admin.create-lead] updateLead result storeStatus", updated?.storeStatus, "leadQuality", updated?.leadQuality);
       lead.storeStatus = "available";
+      if (qualityUpgrade.leadQuality) lead.leadQuality = qualityUpgrade.leadQuality;
     }
 
     return res.status(200).json({ ok: true, lead });
