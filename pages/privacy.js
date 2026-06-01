@@ -51,7 +51,7 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-black text-slate-900 mb-3">3. כיצד אנחנו משתמשים במידע</h2>
               <ul className="list-disc list-inside space-y-1 mr-4">
                 <li>לצורך אומדן ראשוני של התאמה למשכנתא</li>
-                <li>להעברת הליד ליועץ משכנתאות מורשה שיצור איתכם קשר</li>
+                <li>להעברת הליד ליועץ משכנתאות או נותן שירות רלוונטי הרשום בפלטפורמה שיצור איתכם קשר</li>
                 <li>לשיפור השירות ויכולות ה-matching</li>
                 <li>לצורכי אנליטיקה פנימית ושיפור חוויית המשתמש</li>
               </ul>
