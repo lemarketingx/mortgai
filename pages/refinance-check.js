@@ -234,6 +234,7 @@ export default function RefinanceCheck() {
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadSent, setLeadSent] = useState(false);
   const [leadError, setLeadError] = useState("");
+  const [leadConsent, setLeadConsent] = useState(false);
   const [pdfState, setPdfState] = useState({ status: "idle", message: "", fields: null });
   const [pdfConfirmed, setPdfConfirmed] = useState(false);
   const successRef = useRef(null);
@@ -301,6 +302,10 @@ export default function RefinanceCheck() {
     const phone = cleanNumber(lead.phone);
     if (lead.name.trim().length < 2 || phone.length < 7) {
       setLeadError("יש להשלים שם וטלפון כדי לשלוח את הבדיקה");
+      return;
+    }
+    if (!leadConsent) {
+      setLeadError("יש לאשר את הסכמתכם לשיתוף המידע לפני שליחה.");
       return;
     }
 
@@ -430,6 +435,8 @@ export default function RefinanceCheck() {
           leadSent={leadSent}
           leadError={leadError}
           successRef={successRef}
+          consent={leadConsent}
+          setConsent={setLeadConsent}
         />
       </section>
 
@@ -720,7 +727,7 @@ const CONTACT_TIME_OPTIONS = [
   { value: "anytime", label: "כל שעה" },
 ];
 
-function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, leadError, successRef }) {
+function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, leadError, successRef, consent, setConsent }) {
   return (
     <section id="lead" className="mt-10 grid items-stretch gap-6 rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] lg:grid-cols-2">
       <div>
@@ -780,7 +787,22 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
         </div>
         {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
         {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-800">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
-        <button type="submit" disabled={leadLoading || leadSent} className="mt-5 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70">
+        <label className="mt-4 flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            className="mt-0.5 w-4 h-4 accent-violet-600 shrink-0"
+          />
+          <span className="text-xs font-bold text-slate-600 leading-5">
+            אני מסכים/ה לשיתוף הפרטים עם יועצי משכנתאות מורשים לצורך קבלת ייעוץ.{" "}
+            <a href="/privacy" className="text-violet-600 hover:underline">מדיניות פרטיות</a>
+          </span>
+        </label>
+        <p className="mt-1 text-xs text-slate-400 font-semibold">
+          הפרטים שמסרתם עשויים להיות מועברים ליועץ משכנתאות עצמאי שיצור אתכם קשר.
+        </p>
+        <button type="submit" disabled={leadLoading || leadSent} className="mt-4 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70">
           {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "שלחו לבדיקה ראשונית"}
         </button>
         <p className="mt-3 text-center text-xs font-bold text-slate-400">ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי</p>

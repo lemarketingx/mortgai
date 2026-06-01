@@ -598,6 +598,15 @@ export function Footer({ onCtaClick }) {
           יועצי משכנתאות?{" "}
           <a href="/advisor/login" className="font-semibold text-slate-500 hover:underline">לחצו כאן לכניסה למערכת</a>
         </p>
+        <nav aria-label="קישורים משפטיים" className="mt-4 flex flex-wrap gap-x-4 gap-y-1">
+          <a href="/privacy" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">מדיניות פרטיות</a>
+          <a href="/terms" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">תנאי שימוש</a>
+          <a href="/accessibility" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">נגישות</a>
+          <a href="/cookies" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">עוגיות</a>
+          <a href="/contact" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">יצירת קשר</a>
+          <a href="/advisor/register" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">הצטרפות יועצים</a>
+        </nav>
+        <p className="mt-3 text-xs text-slate-400">© 2026 ל.א.ה שיווק. כל הזכויות שמורות.</p>
       </div>
     </footer>
   );

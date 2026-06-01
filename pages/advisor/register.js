@@ -188,7 +188,8 @@ export default function AdvisorRegister() {
                 className="mt-1 w-4 h-4 accent-violet-600 shrink-0"
               />
               <span className="text-sm text-slate-600 font-bold leading-6">
-                קראתי ואני מסכים/ה לתנאי השימוש של FINZO PRO
+                קראתי ואני מסכים/ה ל
+                <a href="/advisor/terms" target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:underline">תנאי השימוש של FINZO PRO</a>
                 <span className="text-red-500 mr-1">*</span>
               </span>
             </label>
