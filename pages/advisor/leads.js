@@ -1,10 +1,9 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { KpiTile, Pill, Tag, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
 
-const QUALITY_TAG = { "חם": "upgrade", "בינוני": "refi" };
 const MAX_REGULAR_SLOTS = 3;
 
 const PURCHASE_STATUS_LABELS = {
@@ -20,92 +19,37 @@ const PURCHASE_STATUS_LABELS = {
   general:            "בדיקה כללית",
 };
 
-function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
-  const label = lead?.purchaseStatus ? (PURCHASE_STATUS_LABELS[lead.purchaseStatus] || lead.purchaseStatus) : null;
-  const quality = lead?.leadQuality;
-  const city = lead?.city;
-  const amount = lead?.mortgageAmount;
-  const typeLabel = purchaseType === "exclusive" ? "ליד בלעדי" : purchaseType === "partner_claim" ? "לקיחת ליד" : "ליד רגיל";
-  const now = new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+// Department definitions — order determines display order
+const DEPARTMENTS = [
+  { key: "first_apartment", label: "🏠 דירה ראשונה",          types: ["first_apartment"] },
+  { key: "refinance",       label: "🔄 מחזור משכנתא",         types: ["refinance"] },
+  { key: "upgrader",        label: "📈 משפרי דיור",            types: ["upgrader"] },
+  { key: "investment",      label: "🏢 השקעה / דירה שנייה",   types: ["investment", "new_purchase"] },
+  { key: "bank_issues",     label: "⚠️ מסורבי בנק ו-BDI",   types: ["bank_declined", "bdi_credit_issue"] },
+  { key: "senior_60plus",   label: "👴 גיל 60+",               types: ["senior_60plus"] },
+  { key: "debt",            label: "💳 איחוד הלוואות",         types: ["debt_consolidation"] },
+  { key: "general",         label: "📋 כללי",                  types: ["general", ""] },
+];
 
-  return (
-    <div className="mb-6 rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 to-white shadow-md overflow-hidden">
-      {/* Top bar */}
-      <div className="flex items-center justify-between gap-3 bg-emerald-600 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-          <span className="text-sm font-black text-white">הליד נרכש בהצלחה ונוסף ל'הלקוחות שלי'</span>
-        </div>
-        <button onClick={onClose} className="text-emerald-200 hover:text-white font-black text-lg leading-none shrink-0">×</button>
-      </div>
-      {/* Details grid */}
-      <div className="px-4 pt-4 pb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {label && (
-          <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
-            <p className="text-[10px] font-black text-slate-400 mb-0.5">סוג תיק</p>
-            <p className="text-sm font-black text-slate-900">{label}</p>
-          </div>
-        )}
-        {city && (
-          <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
-            <p className="text-[10px] font-black text-slate-400 mb-0.5">עיר</p>
-            <p className="text-sm font-black text-slate-900">📍 {city}</p>
-          </div>
-        )}
-        {amount > 0 && (
-          <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
-            <p className="text-[10px] font-black text-slate-400 mb-0.5">משכנתא</p>
-            <p className="text-sm font-black text-slate-900 tabular-nums">{formatILS(amount)}</p>
-          </div>
-        )}
-        <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
-          <p className="text-[10px] font-black text-slate-400 mb-0.5">סוג רכישה · שעה</p>
-          <p className="text-sm font-black text-slate-900">{typeLabel} · {now}</p>
-        </div>
-        {quality && (
-          <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
-            <p className="text-[10px] font-black text-slate-400 mb-0.5">איכות ליד</p>
-            <p className="text-sm font-black text-slate-900">{quality}</p>
-          </div>
-        )}
-      </div>
-      {/* Actions */}
-      <div className="px-4 pb-4 flex flex-wrap gap-2">
-        <Link
-          href={`/advisor/lead/${leadId}?newPurchase=1`}
-          className="px-4 py-2.5 rounded-full bg-violet-700 text-white text-sm font-black hover:bg-violet-800 transition-colors"
-        >
-          פתח את הליד עכשיו ←
-        </Link>
-        <Link
-          href="/advisor/my-leads"
-          className="px-4 py-2.5 rounded-full border border-violet-200 bg-violet-50 text-violet-800 text-sm font-black hover:bg-violet-100 transition-colors"
-        >
-          עבור ללידים שלי
-        </Link>
-        <button
-          onClick={onClose}
-          className="px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-black hover:bg-slate-50 transition-colors"
-        >
-          המשך לקנות לידים
-        </button>
-      </div>
-    </div>
-  );
+function deptForLead(lead) {
+  const ps = lead.purchaseStatus || "";
+  for (const dept of DEPARTMENTS) {
+    if (dept.types.includes(ps)) return dept.key;
+  }
+  return "general";
 }
 
+// ─── Formatters ────────────────────────────────────────────────────────────────
+function formatILS(v) {
+  if (!v || v === 0) return "—";
+  return new Intl.NumberFormat("he-IL", { style: "currency", currency: "ILS", maximumFractionDigits: 0 }).format(v);
+}
 function formatPrice(price) {
   if (!price || price === 0) return "פנו לתמחור";
   return new Intl.NumberFormat("he-IL", { style: "currency", currency: "ILS", maximumFractionDigits: 0 }).format(price);
 }
 
-function formatILS(v) {
-  if (!v || v === 0) return "—";
-  return new Intl.NumberFormat("he-IL", { style: "currency", currency: "ILS", maximumFractionDigits: 0 }).format(v);
-}
-
+// ─── Sub-components ────────────────────────────────────────────────────────────
 function ScoreBar({ score }) {
   const pct = Math.min(100, Math.max(0, Number(score) || 0));
   const color = pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-slate-300";
@@ -147,8 +91,8 @@ function MarketplaceTags({ lead }) {
   if (diffDays <= 3) tags.push({ label: "חדש", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" });
   if (lead.purchaseCount >= 2) tags.push({ label: "כמעט נסגר 🔥", cls: "bg-red-100 text-red-700 border-red-200" });
   else if (lead.purchaseCount >= 1) tags.push({ label: "פופולרי", cls: "bg-amber-100 text-amber-800 border-amber-200" });
-  if (lead.exclusivePrice > 0) tags.push({ label: "בלעדי זמין", cls: "bg-violet-100 text-violet-800 border-violet-200" });
-  if (tags.length === 0) return null;
+  if (lead.exclusivePrice > 0 && !lead.purchaseCount) tags.push({ label: "בלעדי זמין", cls: "bg-violet-100 text-violet-800 border-violet-200" });
+  if (!tags.length) return null;
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
       {tags.map((t) => (
@@ -159,21 +103,67 @@ function MarketplaceTags({ lead }) {
 }
 
 function SlotBar({ purchaseCount }) {
-  const filled = Math.min(purchaseCount, MAX_REGULAR_SLOTS);
+  const filled    = Math.min(purchaseCount, MAX_REGULAR_SLOTS);
   const remaining = MAX_REGULAR_SLOTS - filled;
   return (
     <div className="flex items-center gap-2">
       <div className="flex gap-1">
         {Array.from({ length: MAX_REGULAR_SLOTS }).map((_, i) => (
-          <span
-            key={i}
-            className={`w-2.5 h-2.5 rounded-full border ${i < filled ? "bg-violet-500 border-violet-500" : "bg-slate-100 border-slate-300"}`}
-          />
+          <span key={i} className={`w-2.5 h-2.5 rounded-full border ${i < filled ? "bg-violet-500 border-violet-500" : "bg-slate-100 border-slate-300"}`} />
         ))}
       </div>
       <p className="text-[10px] font-bold text-slate-500 tabular-nums">
         {filled}/{MAX_REGULAR_SLOTS} נרכשו · {remaining} מקומות פנויים
       </p>
+    </div>
+  );
+}
+
+function PricingBreakdown({ lead }) {
+  const [open, setOpen] = useState(false);
+  if (!lead.finzoScore && lead.finzoScore !== 0) return null;
+  return (
+    <div className="rounded-xl border border-slate-200 overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 hover:bg-slate-100 transition-colors text-right"
+      >
+        <span className="text-[10px] font-black text-slate-500">למה המחיר הזה? ↕</span>
+        <span className="text-[10px] font-black text-violet-700">FINZO Score: {lead.finzoScore}/100</span>
+      </button>
+      {open && (
+        <div className="px-3 py-3 bg-white space-y-2.5">
+          {/* Bullets */}
+          <div className="space-y-1">
+            {(lead.pricingBullets || []).map((b, i) => {
+              const isGood = b.startsWith("✓");
+              const isMid  = b.startsWith("~");
+              return (
+                <p key={i} className={`text-[11px] font-bold ${isGood ? "text-emerald-700" : isMid ? "text-amber-700" : "text-red-600"}`}>{b}</p>
+              );
+            })}
+          </div>
+          <div className="border-t border-slate-100 pt-2 grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p className="text-[9px] font-black text-slate-400 mb-0.5">מחיר בסיס</p>
+              <p className="text-xs font-black text-slate-800">{formatPrice(lead.regularBasePrice)}</p>
+            </div>
+            <div>
+              <p className="text-[9px] font-black text-slate-400 mb-0.5">הנחת גיל</p>
+              <p className={`text-xs font-black ${lead.ageDiscountPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                {lead.ageDiscountPct > 0 ? `${lead.ageDiscountPct}%` : "ללא הנחה"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[9px] font-black text-slate-400 mb-0.5">מחיר סופי</p>
+              <p className="text-xs font-black text-violet-800">{formatPrice(lead.storePrice)}</p>
+            </div>
+          </div>
+          <p className="text-[9px] text-slate-400 font-bold border-t border-slate-100 pt-2">
+            רמת איכות: <span className="text-slate-700">{lead.computedQuality || lead.leadQuality}</span>
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -202,15 +192,76 @@ function CardSkeleton() {
   );
 }
 
+function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
+  const label     = lead?.purchaseStatus ? (PURCHASE_STATUS_LABELS[lead.purchaseStatus] || lead.purchaseStatus) : null;
+  const quality   = lead?.computedQuality || lead?.leadQuality;
+  const city      = lead?.city;
+  const amount    = lead?.mortgageAmount;
+  const typeLabel = purchaseType === "exclusive" ? "ליד בלעדי" : purchaseType === "partner_claim" ? "לקיחת ליד" : "ליד רגיל";
+  const now       = new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+  return (
+    <div className="mb-6 rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 to-white shadow-md overflow-hidden">
+      <div className="flex items-center justify-between gap-3 bg-emerald-600 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <svg className="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-sm font-black text-white">הליד נרכש בהצלחה ונוסף ל'הלקוחות שלי'</span>
+        </div>
+        <button onClick={onClose} className="text-emerald-200 hover:text-white font-black text-lg leading-none shrink-0">×</button>
+      </div>
+      <div className="px-4 pt-4 pb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {label && (
+          <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
+            <p className="text-[10px] font-black text-slate-400 mb-0.5">סוג תיק</p>
+            <p className="text-sm font-black text-slate-900">{label}</p>
+          </div>
+        )}
+        {city && (
+          <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
+            <p className="text-[10px] font-black text-slate-400 mb-0.5">עיר</p>
+            <p className="text-sm font-black text-slate-900">📍 {city}</p>
+          </div>
+        )}
+        {amount > 0 && (
+          <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
+            <p className="text-[10px] font-black text-slate-400 mb-0.5">משכנתא</p>
+            <p className="text-sm font-black text-slate-900 tabular-nums">{formatILS(amount)}</p>
+          </div>
+        )}
+        <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
+          <p className="text-[10px] font-black text-slate-400 mb-0.5">סוג רכישה · שעה</p>
+          <p className="text-sm font-black text-slate-900">{typeLabel} · {now}</p>
+        </div>
+        {quality && (
+          <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
+            <p className="text-[10px] font-black text-slate-400 mb-0.5">איכות ליד</p>
+            <p className="text-sm font-black text-slate-900">{quality}</p>
+          </div>
+        )}
+      </div>
+      <div className="px-4 pb-4 flex flex-wrap gap-2">
+        <Link href={`/advisor/lead/${leadId}?newPurchase=1`} className="px-4 py-2.5 rounded-full bg-violet-700 text-white text-sm font-black hover:bg-violet-800 transition-colors">
+          פתח את הליד עכשיו ←
+        </Link>
+        <Link href="/advisor/my-leads" className="px-4 py-2.5 rounded-full border border-violet-200 bg-violet-50 text-violet-800 text-sm font-black hover:bg-violet-100 transition-colors">
+          עבור ללידים שלי
+        </Link>
+        <button onClick={onClose} className="px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-black hover:bg-slate-50 transition-colors">
+          המשך לקנות לידים
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
   const [confirm, setConfirm] = useState(null);
 
-  const isSold = lead.storeStatus === "sold";
-  const tagVariant = QUALITY_TAG[lead.leadQuality] || "default";
-  const isHot = lead.leadQuality === "חם";
-  const diffDays = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86400000);
-  const isNew = diffDays <= 3;
-  const purchaseCount = lead.purchaseCount || 0;
+  const isSold          = lead.storeStatus === "sold";
+  const diffDays        = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86400000);
+  const isNew           = diffDays <= 3;
+  const purchaseCount   = lead.purchaseCount || 0;
   const regularSlotsFull = purchaseCount >= MAX_REGULAR_SLOTS;
   const exclusiveBlocked = purchaseCount > 0;
   const alreadyOwnedByMe = Boolean(lead._ownedByAdvisor);
@@ -220,34 +271,38 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
     if (result?.ok) setConfirm(null);
   }
 
+  const qualityLabel = lead.computedQuality || lead.leadQuality || "";
+
   return (
     <article className={`bg-white rounded-2xl shadow-sm transition-all border ${
-      lead._purchased
+      lead._purchased || alreadyOwnedByMe
         ? "border-emerald-200 bg-emerald-50/30"
         : isSold
           ? "border-slate-100 opacity-60"
           : isNew
             ? "border-emerald-200 ring-1 ring-emerald-300/40 shadow-md hover:shadow-lg"
-            : isHot
-              ? "border-violet-200 ring-1 ring-violet-300/50 shadow-md hover:shadow-lg"
-              : "border-slate-100 hover:border-violet-200 hover:shadow-sm"
+            : "border-slate-100 hover:border-violet-200 hover:shadow-sm"
     }`}>
 
-      {/* Header row: quality tag + price */}
+      {/* Header: quality + tags / price */}
       <div className="flex items-start justify-between gap-3 p-4 pb-3">
         <div className="flex-1 min-w-0">
-          {/* Quality + status tags */}
           <div className="flex items-center gap-2 flex-wrap mb-2">
-            {lead.leadQuality && <Tag variant={tagVariant}>{lead.leadQuality}</Tag>}
+            {qualityLabel && (
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border whitespace-nowrap ${
+                qualityLabel === "פרימיום" || qualityLabel === "חם מאוד" ? "bg-emerald-50 text-emerald-800 border-emerald-200" :
+                qualityLabel === "חם"       ? "bg-amber-50 text-amber-800 border-amber-200" :
+                "bg-slate-50 text-slate-600 border-slate-200"
+              }`}>{qualityLabel}</span>
+            )}
             {lead.purchaseStatus && PURCHASE_STATUS_LABELS[lead.purchaseStatus] && (
               <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full border bg-violet-50 text-violet-700 border-violet-200 whitespace-nowrap">
                 {PURCHASE_STATUS_LABELS[lead.purchaseStatus]}
               </span>
             )}
-            {isSold && <Tag variant="danger">נמכר</Tag>}
-            {lead._purchased && <Tag variant="upgrade">נרכש ✓</Tag>}
+            {isSold && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-red-50 text-red-700 border-red-200">נמכר</span>}
+            {(lead._purchased || alreadyOwnedByMe) && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-emerald-100 text-emerald-800 border-emerald-200">נרכש ✓</span>}
           </div>
-          {/* Marketplace status tags */}
           <MarketplaceTags lead={lead} />
         </div>
         <div className="text-start shrink-0">
@@ -256,20 +311,13 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
         </div>
       </div>
 
-      {/* Location + age + classification */}
+      {/* Location + age */}
       <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
-        {lead.city && (
-          <span className="text-xs font-bold text-slate-500">📍 {lead.city}</span>
-        )}
+        {lead.city && <span className="text-xs font-bold text-slate-500">📍 {lead.city}</span>}
         {lead.createdAt && <AgeBadge createdAt={lead.createdAt} />}
-        {lead.purchaseStatus && PURCHASE_STATUS_LABELS[lead.purchaseStatus] && (
-          <span className="text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-100 rounded-full px-2 py-0.5">
-            {PURCHASE_STATUS_LABELS[lead.purchaseStatus]}
-          </span>
-        )}
       </div>
 
-      {/* Lead title from mainIssue */}
+      {/* Main issue */}
       {lead.mainIssue && (
         <div className="px-4 pb-3">
           <p className="text-sm font-black text-slate-900 leading-snug">{lead.mainIssue}</p>
@@ -277,7 +325,6 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
       )}
 
       <div className="px-4 pb-3 space-y-3">
-
         {/* Key numbers */}
         {(lead.mortgageAmount > 0 || lead.propertyPrice > 0) && (
           <div className="grid grid-cols-2 gap-3">
@@ -296,21 +343,24 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
           </div>
         )}
 
-        {/* Score */}
+        {/* FINZO Score bar */}
         <div>
           <div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5">
-            <span>ציון FINZO</span>
-            <span className="tabular-nums font-black text-slate-700">{lead.approvalScore}/100</span>
+            <span>FINZO Score</span>
+            <span className="tabular-nums font-black text-slate-700">{lead.finzoScore ?? lead.approvalScore}/100</span>
           </div>
-          <ScoreBar score={lead.approvalScore} />
+          <ScoreBar score={lead.finzoScore ?? lead.approvalScore} />
         </div>
 
+        {/* Pricing transparency */}
+        <PricingBreakdown lead={lead} />
+
         {/* Slot inventory */}
-        {!lead._purchased && !isSold && !isPartnerAdvisor && (
-          <SlotBar purchaseCount={lead.purchaseCount || 0} />
+        {!lead._purchased && !alreadyOwnedByMe && !isSold && !isPartnerAdvisor && (
+          <SlotBar purchaseCount={purchaseCount} />
         )}
 
-        {/* Locked contact — only shown when lead is not yet purchased by this advisor */}
+        {/* Locked contact */}
         {!lead._purchased && !alreadyOwnedByMe && !isSold && (
           <div className="rounded-xl bg-slate-50 border border-dashed border-slate-200 px-3 py-2.5 flex items-center gap-2">
             <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -320,7 +370,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
           </div>
         )}
 
-        {/* Already owned by this advisor (loaded from server) or just purchased in this session */}
+        {/* Owned state */}
         {(lead._purchased || alreadyOwnedByMe) && (
           <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -329,10 +379,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
               </svg>
               <p className="text-sm font-black text-emerald-700">כבר נרכש על ידכם</p>
             </div>
-            <Link
-              href={`/advisor/lead/${lead.id}`}
-              className="text-xs font-black text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 rounded-full px-3 py-1.5 transition-colors shrink-0"
-            >
+            <Link href={`/advisor/lead/${lead.id}`} className="text-xs font-black text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 rounded-full px-3 py-1.5 transition-colors shrink-0">
               פתח בלידים שלי ←
             </Link>
           </div>
@@ -341,43 +388,32 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
         {/* Purchase buttons */}
         {!isSold && !lead._purchased && !alreadyOwnedByMe && !confirm && (
           isPartnerAdvisor ? (
-            <button
-              onClick={() => setConfirm("partner_claim")}
-              disabled={purchasing}
-              className="w-full text-sm font-black px-3 py-2.5 rounded-2xl bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-50 min-h-[46px]"
-            >
+            <button onClick={() => setConfirm("partner_claim")} disabled={purchasing}
+              className="w-full text-sm font-black px-3 py-2.5 rounded-2xl bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-50 min-h-[46px]">
               קח לטיפול
             </button>
           ) : (
             <div className="grid grid-cols-2 gap-2">
-              {/* Regular purchase — disabled when all 3 slots are filled */}
               {regularSlotsFull ? (
                 <div className="text-center px-3 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 min-h-[46px] flex flex-col items-center justify-center">
                   <span className="text-[10px] font-bold text-slate-400 mb-0.5">ליד רגיל</span>
                   <span className="text-xs font-black text-slate-400">אזל לרכישה רגילה</span>
                 </div>
               ) : (
-                <button
-                  onClick={() => setConfirm("regular")}
-                  disabled={purchasing}
-                  className="text-sm font-black px-3 py-2.5 rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 transition-colors disabled:opacity-50 min-h-[46px]"
-                >
+                <button onClick={() => setConfirm("regular")} disabled={purchasing}
+                  className="text-sm font-black px-3 py-2.5 rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 transition-colors disabled:opacity-50 min-h-[46px]">
                   <span className="block text-xs font-bold text-violet-500 mb-0.5">ליד רגיל</span>
                   {formatPrice(lead.storePrice)}
                 </button>
               )}
-              {/* Exclusive purchase — disabled when any regular buyer exists */}
               {exclusiveBlocked ? (
                 <div className="text-center px-3 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 min-h-[46px] flex flex-col items-center justify-center">
                   <span className="text-[10px] font-bold text-slate-400 mb-0.5">בלעדי</span>
                   <span className="text-[10px] font-black text-slate-400 leading-tight">בלעדיות לא זמינה לאחר רכישה רגילה</span>
                 </div>
               ) : (
-                <button
-                  onClick={() => setConfirm("exclusive")}
-                  disabled={purchasing}
-                  className="text-sm font-black px-3 py-2.5 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[46px]"
-                >
+                <button onClick={() => setConfirm("exclusive")} disabled={purchasing}
+                  className="text-sm font-black px-3 py-2.5 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[46px]">
                   <span className="block text-xs font-bold text-violet-300 mb-0.5">בלעדי</span>
                   {formatPrice(lead.exclusivePrice)}
                 </button>
@@ -400,18 +436,12 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
                   : "לאחר רכישה תקבלו גישה לפרטי הקשר המלאים."}
             </p>
             <div className="flex gap-2">
-              <button
-                onClick={handleConfirm}
-                disabled={purchasing}
-                className="flex-1 text-sm font-black px-4 py-2.5 rounded-full bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-70 min-h-[44px]"
-              >
+              <button onClick={handleConfirm} disabled={purchasing}
+                className="flex-1 text-sm font-black px-4 py-2.5 rounded-full bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-70 min-h-[44px]">
                 {purchasing ? "מעבד..." : (confirm === "partner_claim" ? "אשר לקיחה" : "אשר רכישה")}
               </button>
-              <button
-                onClick={() => setConfirm(null)}
-                disabled={purchasing}
-                className="text-sm font-bold px-4 py-2.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors min-h-[44px]"
-              >
+              <button onClick={() => setConfirm(null)} disabled={purchasing}
+                className="text-sm font-bold px-4 py-2.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors min-h-[44px]">
                 ביטול
               </button>
             </div>
@@ -422,16 +452,65 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
   );
 }
 
+function DepartmentSection({ dept, leads, onPurchase, purchasing, isPartnerAdvisor }) {
+  const [collapsed, setCollapsed] = useState(false);
+  if (!leads.length) return null;
+  return (
+    <section className="mb-6">
+      <button
+        onClick={() => setCollapsed((v) => !v)}
+        className="w-full flex items-center justify-between gap-3 mb-3 group"
+      >
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-black text-slate-800 group-hover:text-violet-700 transition-colors">{dept.label}</h2>
+          <span className="text-xs font-black text-slate-400 bg-slate-100 rounded-full px-2 py-0.5 tabular-nums">{leads.length}</span>
+        </div>
+        <span className="text-slate-400 font-black text-sm">{collapsed ? "▼" : "▲"}</span>
+      </button>
+      {!collapsed && (
+        <div className="grid gap-3 md:grid-cols-2">
+          {leads.map((lead) => (
+            <LeadStoreCard key={lead.id} lead={lead} onPurchase={onPurchase} purchasing={purchasing} isPartnerAdvisor={isPartnerAdvisor} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
+const PRICE_RANGES = [
+  { label: "הכל", max: Infinity },
+  { label: "עד ₪50", max: 50 },
+  { label: "עד ₪100", max: 100 },
+  { label: "עד ₪200", max: 200 },
+  { label: "עד ₪300", max: 300 },
+];
+
+const AGE_RANGES = [
+  { label: "הכל", maxDays: Infinity },
+  { label: "היום", maxDays: 0 },
+  { label: "3 ימים", maxDays: 3 },
+  { label: "שבוע", maxDays: 7 },
+  { label: "חודש", maxDays: 30 },
+];
+
 export default function AdvisorLeadsStore() {
-  const [leads, setLeads] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [leads, setLeads]               = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState("");
   const [isPartnerAdvisor, setIsPartnerAdvisor] = useState(false);
-  const [purchasing, setPurchasing] = useState(false);
-  const [successId, setSuccessId] = useState(null);
-  const [successLead, setSuccessLead] = useState(null);
+  const [purchasing, setPurchasing]     = useState(false);
+  const [successId, setSuccessId]       = useState(null);
+  const [successLead, setSuccessLead]   = useState(null);
   const [successPurchaseType, setSuccessPurchaseType] = useState(null);
-  const [filter, setFilter] = useState("הכל");
+  // Filters
+  const [filterDept, setFilterDept]         = useState("all");
+  const [filterQuality, setFilterQuality]   = useState("all");
+  const [filterPriceMax, setFilterPriceMax] = useState(Infinity);
+  const [filterCity, setFilterCity]         = useState("");
+  const [filterMaxDays, setFilterMaxDays]   = useState(Infinity);
+  const [searchCity, setSearchCity]         = useState("");
 
   useEffect(() => { load(); }, []);
 
@@ -451,17 +530,10 @@ export default function AdvisorLeadsStore() {
     setError("");
     try {
       const endpoint = purchaseType === "partner_claim" ? "/api/advisor/partner-claim-lead" : "/api/advisor/purchase-lead";
-      const payload = purchaseType === "partner_claim" ? { leadId } : { leadId, purchaseType };
-      const r = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const payload  = purchaseType === "partner_claim" ? { leadId } : { leadId, purchaseType };
+      const r = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const j = await r.json();
-      if (!r.ok) {
-        setError(j.message || "הרכישה נכשלה. נסו שוב.");
-        return { ok: false };
-      }
+      if (!r.ok) { setError(j.message || "הרכישה נכשלה. נסו שוב."); return { ok: false }; }
       const purchased = leads.find((l) => l.id === leadId) || null;
       setSuccessId(leadId);
       setSuccessLead(purchased);
@@ -469,8 +541,6 @@ export default function AdvisorLeadsStore() {
       if (purchaseType === "partner_claim") {
         setLeads((arr) => arr.filter((l) => l.id !== leadId));
       } else if (purchaseType === "exclusive") {
-        // Mark sold in client state so the card immediately shows as unavailable
-        // rather than remaining purchasable until the next fetch.
         setLeads((arr) => arr.map((l) => l.id === leadId ? { ...l, storeStatus: "sold", _purchased: true } : l));
       } else {
         setLeads((arr) => arr.map((l) => l.id === leadId ? { ...l, _purchased: true, purchaseCount: (l.purchaseCount || 0) + 1 } : l));
@@ -484,9 +554,53 @@ export default function AdvisorLeadsStore() {
     }
   }
 
-  const hot    = leads.filter((l) => l.leadQuality === "חם");
-  const warm   = leads.filter((l) => l.leadQuality === "בינוני");
-  const filtered = filter === "חם" ? hot : filter === "בינוני" ? warm : leads;
+  // Available cities for filter dropdown
+  const cities = useMemo(() => {
+    const set = new Set(leads.map((l) => l.city).filter(Boolean));
+    return ["הכל", ...Array.from(set).sort()];
+  }, [leads]);
+
+  // Apply filters
+  const filtered = useMemo(() => {
+    return leads.filter((l) => {
+      if (filterDept !== "all") {
+        const dept = DEPARTMENTS.find((d) => d.key === filterDept);
+        if (dept && !dept.types.includes(l.purchaseStatus || "")) return false;
+      }
+      if (filterQuality !== "all" && (l.computedQuality || l.leadQuality) !== filterQuality) return false;
+      if (filterPriceMax !== Infinity && (l.storePrice || 0) > filterPriceMax) return false;
+      if (filterCity && filterCity !== "הכל" && l.city !== filterCity) return false;
+      if (filterMaxDays !== Infinity) {
+        const days = Math.floor((Date.now() - new Date(l.createdAt).getTime()) / 86400000);
+        if (days > filterMaxDays) return false;
+      }
+      return true;
+    });
+  }, [leads, filterDept, filterQuality, filterPriceMax, filterCity, filterMaxDays]);
+
+  // Unique quality levels from actual leads
+  const qualityLevels = useMemo(() => {
+    const set = new Set(leads.map((l) => l.computedQuality || l.leadQuality).filter(Boolean));
+    return ["all", ...Array.from(set)];
+  }, [leads]);
+
+  // Group filtered leads by department
+  const departments = useMemo(() => {
+    return DEPARTMENTS.map((dept) => ({
+      ...dept,
+      leads: filtered.filter((l) => deptForLead(l) === dept.key),
+    })).filter((d) => d.leads.length > 0);
+  }, [filtered]);
+
+  const hasFilters = filterDept !== "all" || filterQuality !== "all" || filterPriceMax !== Infinity || (filterCity && filterCity !== "הכל") || filterMaxDays !== Infinity;
+
+  function clearFilters() {
+    setFilterDept("all");
+    setFilterQuality("all");
+    setFilterPriceMax(Infinity);
+    setFilterCity("");
+    setFilterMaxDays(Infinity);
+  }
 
   return (
     <>
@@ -501,16 +615,16 @@ export default function AdvisorLeadsStore() {
         <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5">
 
           {/* Hero */}
-          <div className="mb-6">
-            <p className="text-[10px] font-black text-violet-600 tracking-[0.15em] uppercase mb-3">
+          <div className="mb-5">
+            <p className="text-[10px] font-black text-violet-600 tracking-[0.15em] uppercase mb-2">
               FINZO MARKETPLACE · שוק לידים
             </p>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-950 leading-tight mb-2">
-              לידים חדשים, מסוננים<br />
-              <span className="text-violet-700">לפי האזור שלכם.</span>
+            <h1 className="text-2xl md:text-3xl font-black text-slate-950 leading-tight mb-1.5">
+              לידים מסווגים לפי מחלקות<br />
+              <span className="text-violet-700">מחיר שקוף, ניקוד מוסבר.</span>
             </h1>
             <p className="text-sm text-slate-500 font-bold max-w-lg">
-              כל ליד עובר אימות זהות ובדיקת איכות לפני שהוא נכנס לשוק. שם וטלפון נחשפים רק אחרי הרכישה.
+              כל ליד מקבל ציון FINZO ומחיר דינמי. לחצו "למה המחיר הזה?" על כל כרטיס לקבלת הפירוט המלא.
             </p>
           </div>
 
@@ -526,17 +640,78 @@ export default function AdvisorLeadsStore() {
             ) : (
               <>
                 <KpiTile label="לידים זמינים" value={leads.length} />
-                <KpiTile label="חמים" value={hot.length} delta={hot.length > 0 ? "פוטנציאל גבוה" : undefined} deltaDir="up" />
-                <KpiTile label="בינוניים" value={warm.length} />
+                <KpiTile label="מחלקות פעילות" value={departments.length} delta={departments.length > 0 ? "מגוון גבוה" : undefined} deltaDir="up" />
+                <KpiTile label="לאחר סינון" value={filtered.length} />
               </>
             )}
           </div>
 
-          {/* Filter pills */}
-          <div className="flex gap-2 flex-wrap mb-5">
-            <Pill active={filter === "הכל"}    count={leads.length} onClick={() => setFilter("הכל")}>הכל</Pill>
-            <Pill active={filter === "חם"}     count={hot.length}   onClick={() => setFilter("חם")}>חמים</Pill>
-            <Pill active={filter === "בינוני"} count={warm.length}  onClick={() => setFilter("בינוני")}>בינוניים</Pill>
+          {/* ─── Filter bar ─────────────────────────────────────────────────── */}
+          <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 mb-5 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-black text-slate-700">סינון לידים</p>
+              {hasFilters && (
+                <button onClick={clearFilters} className="text-[10px] font-black text-violet-600 hover:text-violet-800 transition-colors">
+                  נקה סינון ×
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {/* Department filter */}
+              <select
+                value={filterDept}
+                onChange={(e) => setFilterDept(e.target.value)}
+                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400"
+              >
+                <option value="all">כל המחלקות</option>
+                {DEPARTMENTS.map((d) => (
+                  <option key={d.key} value={d.key}>{d.label}</option>
+                ))}
+              </select>
+
+              {/* Quality filter */}
+              <select
+                value={filterQuality}
+                onChange={(e) => setFilterQuality(e.target.value)}
+                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400"
+              >
+                <option value="all">כל הרמות</option>
+                {qualityLevels.filter((q) => q !== "all").map((q) => (
+                  <option key={q} value={q}>{q}</option>
+                ))}
+              </select>
+
+              {/* Price range filter */}
+              <select
+                value={filterPriceMax === Infinity ? "Infinity" : String(filterPriceMax)}
+                onChange={(e) => setFilterPriceMax(e.target.value === "Infinity" ? Infinity : Number(e.target.value))}
+                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400"
+              >
+                {PRICE_RANGES.map((p) => (
+                  <option key={p.label} value={p.max === Infinity ? "Infinity" : String(p.max)}>{p.label}</option>
+                ))}
+              </select>
+
+              {/* City filter */}
+              <select
+                value={filterCity || "הכל"}
+                onChange={(e) => setFilterCity(e.target.value === "הכל" ? "" : e.target.value)}
+                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400"
+              >
+                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+
+              {/* Age filter */}
+              <select
+                value={filterMaxDays === Infinity ? "Infinity" : String(filterMaxDays)}
+                onChange={(e) => setFilterMaxDays(e.target.value === "Infinity" ? Infinity : Number(e.target.value))}
+                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400"
+              >
+                {AGE_RANGES.map((a) => (
+                  <option key={a.label} value={a.maxDays === Infinity ? "Infinity" : String(a.maxDays)}>{a.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {error && (
@@ -555,27 +730,33 @@ export default function AdvisorLeadsStore() {
             />
           )}
 
+          {/* Skeletons */}
           {loading && (
             <div className="grid gap-3 md:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           )}
 
+          {/* Empty state */}
           {!loading && filtered.length === 0 && (
             <EmptyState
               glyph="🏪"
-              title={filter === "הכל" ? "אין לידים זמינים כרגע" : "אין לידים בקטגוריה זו"}
-              description={filter === "הכל"
-                ? "לידים חדשים מתווספים לאחר שמשתמשים ממלאים את מחשבון הזכאות."
-                : "נסו לשנות את הסינון."}
+              title={hasFilters ? "אין לידים התואמים את הסינון" : "אין לידים זמינים כרגע"}
+              description={hasFilters ? "נסו לשנות או לנקות את הסינון." : "לידים חדשים מתווספים לאחר שמשתמשים ממלאים את מחשבון הזכאות."}
             />
           )}
 
-          <div className="grid gap-3 md:grid-cols-2">
-            {filtered.map((lead) => (
-              <LeadStoreCard key={lead.id} lead={lead} onPurchase={purchase} purchasing={purchasing} isPartnerAdvisor={isPartnerAdvisor} />
-            ))}
-          </div>
+          {/* ─── Department sections ──────────────────────────────────────── */}
+          {!loading && departments.map((dept) => (
+            <DepartmentSection
+              key={dept.key}
+              dept={dept}
+              leads={dept.leads}
+              onPurchase={purchase}
+              purchasing={purchasing}
+              isPartnerAdvisor={isPartnerAdvisor}
+            />
+          ))}
 
         </div>
       </main>
