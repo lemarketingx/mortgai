@@ -185,6 +185,15 @@ CREATE INDEX IF NOT EXISTS lead_purchases_advisor_idx  ON lead_purchases (adviso
 CREATE INDEX IF NOT EXISTS lead_purchases_lead_idx     ON lead_purchases (lead_id);
 CREATE INDEX IF NOT EXISTS lead_purchases_purchased_idx ON lead_purchases (purchased_at DESC);
 
+-- Prevent same advisor from purchasing the same lead twice (race-condition safety net)
+ALTER TABLE lead_purchases ADD CONSTRAINT IF NOT EXISTS lead_purchases_advisor_lead_unique
+  UNIQUE (lead_id, advisor_id);
+
+-- Prevent more than one exclusive purchase per lead
+-- (application layer also guards this, but DB enforces it atomically)
+CREATE UNIQUE INDEX IF NOT EXISTS lead_purchases_one_exclusive_per_lead
+  ON lead_purchases (lead_id) WHERE is_exclusive = true;
+
 -- Row Level Security
 ALTER TABLE lead_purchases ENABLE ROW LEVEL SECURITY;
 
