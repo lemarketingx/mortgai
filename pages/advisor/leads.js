@@ -121,16 +121,6 @@ function PricingBreakdown({ lead }) {
               );
             })}
           </div>
-          <div className="border-t border-slate-100 pt-2 grid grid-cols-2 gap-2 text-center">
-            <div>
-              <p className="text-[9px] font-black text-slate-400 mb-0.5">מחיר בסיס (FINZO)</p>
-              <p className="text-xs font-black text-slate-800">{formatPrice(lead.basePrice)}</p>
-            </div>
-            <div>
-              <p className="text-[9px] font-black text-slate-400 mb-0.5">מחיר סופי</p>
-              <p className="text-xs font-black text-violet-800">{formatPrice(lead.storePrice)}</p>
-            </div>
-          </div>
           <p className="text-[9px] text-slate-400 font-bold border-t border-slate-100 pt-2">
             רמת איכות: <span className="text-slate-700">{lead.computedQuality || lead.leadQuality}</span>
           </p>
@@ -272,8 +262,8 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
           <MarketplaceTags lead={lead} />
         </div>
         <div className="text-start shrink-0">
+          <p className="text-[10px] font-bold text-violet-600 mb-0.5">מחיר הליד</p>
           <p className="text-xl font-black text-slate-950 tabular-nums leading-none">{formatPrice(lead.storePrice)}</p>
-          <p className="text-[10px] font-bold text-slate-400 mt-0.5">לליד</p>
         </div>
       </div>
 
