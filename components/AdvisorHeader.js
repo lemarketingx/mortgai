@@ -24,19 +24,21 @@ function BellIcon() {
 
 export default function AdvisorHeader({ active, urgentItems = [] }) {
   const links = [
-    { href: "/advisor",          label: "לוח בקרה" },
-    { href: "/advisor/leads",    label: "שוק לידים" },
-    { href: "/advisor/my-leads", label: "הלידים שלי" },
-    { href: "/advisor/bankers",  label: "בנקאים" },
-    { href: "/advisor/settings", label: "הגדרות" },
+    { href: "/advisor",               label: "לוח בקרה" },
+    { href: "/advisor/marketplace",   label: "מרקטפלייס" },
+    { href: "/advisor/leads",         label: "שוק לידים" },
+    { href: "/advisor/my-leads",      label: "הלידים שלי" },
+    { href: "/advisor/purchases",     label: "רכישות" },
+    { href: "/advisor/bankers",       label: "בנקאים" },
+    { href: "/advisor/settings",      label: "הגדרות" },
   ];
 
   const mobileLinks = [
-    { href: "/advisor",          label: "ראשי" },
-    { href: "/advisor/my-leads", label: "הלידים שלי" },
-    { href: "/advisor/leads",    label: "שוק" },
-    { href: "/advisor/bankers",  label: "בנקאים" },
-    { href: "/advisor/settings", label: "הגדרות" },
+    { href: "/advisor",              label: "ראשי" },
+    { href: "/advisor/marketplace",  label: "מרקטפלייס" },
+    { href: "/advisor/my-leads",     label: "הלידים שלי" },
+    { href: "/advisor/purchases",    label: "רכישות" },
+    { href: "/advisor/settings",     label: "הגדרות" },
   ];
 
   const [initials, setInitials] = useState("P");
