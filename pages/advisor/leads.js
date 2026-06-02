@@ -4,8 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { KpiTile, Pill, Tag, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
 
-const MAX_REGULAR_SLOTS = 3;
-
 const PURCHASE_STATUS_LABELS = {
   new_purchase:       "רכישת דירה",
   first_apartment:    "דירה ראשונה",
@@ -89,32 +87,12 @@ function MarketplaceTags({ lead }) {
   const diffDays = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86400000);
   const tags = [];
   if (diffDays <= 3) tags.push({ label: "חדש", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" });
-  if (lead.purchaseCount >= 2) tags.push({ label: "כמעט נסגר 🔥", cls: "bg-red-100 text-red-700 border-red-200" });
-  else if (lead.purchaseCount >= 1) tags.push({ label: "פופולרי", cls: "bg-amber-100 text-amber-800 border-amber-200" });
-  if (lead.exclusivePrice > 0 && !lead.purchaseCount) tags.push({ label: "בלעדי זמין", cls: "bg-violet-100 text-violet-800 border-violet-200" });
   if (!tags.length) return null;
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
       {tags.map((t) => (
         <span key={t.label} className={`text-[10px] font-black border rounded-full px-2 py-0.5 ${t.cls}`}>{t.label}</span>
       ))}
-    </div>
-  );
-}
-
-function SlotBar({ purchaseCount }) {
-  const filled    = Math.min(purchaseCount, MAX_REGULAR_SLOTS);
-  const remaining = MAX_REGULAR_SLOTS - filled;
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex gap-1">
-        {Array.from({ length: MAX_REGULAR_SLOTS }).map((_, i) => (
-          <span key={i} className={`w-2.5 h-2.5 rounded-full border ${i < filled ? "bg-violet-500 border-violet-500" : "bg-slate-100 border-slate-300"}`} />
-        ))}
-      </div>
-      <p className="text-[10px] font-bold text-slate-500 tabular-nums">
-        {filled}/{MAX_REGULAR_SLOTS} נרכשו · {remaining} מקומות פנויים
-      </p>
     </div>
   );
 }
@@ -143,16 +121,10 @@ function PricingBreakdown({ lead }) {
               );
             })}
           </div>
-          <div className="border-t border-slate-100 pt-2 grid grid-cols-3 gap-2 text-center">
+          <div className="border-t border-slate-100 pt-2 grid grid-cols-2 gap-2 text-center">
             <div>
-              <p className="text-[9px] font-black text-slate-400 mb-0.5">מחיר בסיס</p>
-              <p className="text-xs font-black text-slate-800">{formatPrice(lead.regularBasePrice)}</p>
-            </div>
-            <div>
-              <p className="text-[9px] font-black text-slate-400 mb-0.5">הנחת גיל</p>
-              <p className={`text-xs font-black ${lead.ageDiscountPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                {lead.ageDiscountPct > 0 ? `${lead.ageDiscountPct}%` : "ללא הנחה"}
-              </p>
+              <p className="text-[9px] font-black text-slate-400 mb-0.5">מחיר בסיס (FINZO)</p>
+              <p className="text-xs font-black text-slate-800">{formatPrice(lead.basePrice)}</p>
             </div>
             <div>
               <p className="text-[9px] font-black text-slate-400 mb-0.5">מחיר סופי</p>
@@ -184,21 +156,18 @@ function CardSkeleton() {
         <Skeleton variant="block" className="h-14" />
       </div>
       <Skeleton variant="line" />
-      <div className="grid grid-cols-2 gap-2">
-        <Skeleton variant="block" className="h-12 rounded-2xl" />
-        <Skeleton variant="block" className="h-12 rounded-2xl" />
-      </div>
+      <Skeleton variant="block" className="h-12 rounded-2xl" />
     </div>
   );
 }
 
 function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
-  const label     = lead?.purchaseStatus ? (PURCHASE_STATUS_LABELS[lead.purchaseStatus] || lead.purchaseStatus) : null;
-  const quality   = lead?.computedQuality || lead?.leadQuality;
-  const city      = lead?.city;
-  const amount    = lead?.mortgageAmount;
-  const typeLabel = purchaseType === "exclusive" ? "ליד בלעדי" : purchaseType === "partner_claim" ? "לקיחת ליד" : "ליד רגיל";
-  const now       = new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+  const label   = lead?.purchaseStatus ? (PURCHASE_STATUS_LABELS[lead.purchaseStatus] || lead.purchaseStatus) : null;
+  const quality = lead?.computedQuality || lead?.leadQuality;
+  const city    = lead?.city;
+  const amount  = lead?.mortgageAmount;
+  const now     = new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+  const typeLabel = purchaseType === "partner_claim" ? "לקיחת ליד" : "ליד";
   return (
     <div className="mb-6 rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 to-white shadow-md overflow-hidden">
       <div className="flex items-center justify-between gap-3 bg-emerald-600 px-4 py-3">
@@ -258,12 +227,9 @@ function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
 function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
   const [confirm, setConfirm] = useState(null);
 
-  const isSold          = lead.storeStatus === "sold";
-  const diffDays        = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86400000);
-  const isNew           = diffDays <= 3;
-  const purchaseCount   = lead.purchaseCount || 0;
-  const regularSlotsFull = purchaseCount >= MAX_REGULAR_SLOTS;
-  const exclusiveBlocked = purchaseCount > 0;
+  const isSold         = lead.storeStatus === "sold";
+  const diffDays       = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86400000);
+  const isNew          = diffDays <= 3;
   const alreadyOwnedByMe = Boolean(lead._ownedByAdvisor);
 
   async function handleConfirm() {
@@ -355,11 +321,6 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
         {/* Pricing transparency */}
         <PricingBreakdown lead={lead} />
 
-        {/* Slot inventory */}
-        {!lead._purchased && !alreadyOwnedByMe && !isSold && !isPartnerAdvisor && (
-          <SlotBar purchaseCount={purchaseCount} />
-        )}
-
         {/* Locked contact */}
         {!lead._purchased && !alreadyOwnedByMe && !isSold && (
           <div className="rounded-xl bg-slate-50 border border-dashed border-slate-200 px-3 py-2.5 flex items-center gap-2">
@@ -385,7 +346,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
           </div>
         )}
 
-        {/* Purchase buttons */}
+        {/* Purchase button */}
         {!isSold && !lead._purchased && !alreadyOwnedByMe && !confirm && (
           isPartnerAdvisor ? (
             <button onClick={() => setConfirm("partner_claim")} disabled={purchasing}
@@ -393,32 +354,10 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
               קח לטיפול
             </button>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
-              {regularSlotsFull ? (
-                <div className="text-center px-3 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 min-h-[46px] flex flex-col items-center justify-center">
-                  <span className="text-[10px] font-bold text-slate-400 mb-0.5">ליד רגיל</span>
-                  <span className="text-xs font-black text-slate-400">אזל לרכישה רגילה</span>
-                </div>
-              ) : (
-                <button onClick={() => setConfirm("regular")} disabled={purchasing}
-                  className="text-sm font-black px-3 py-2.5 rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 transition-colors disabled:opacity-50 min-h-[46px]">
-                  <span className="block text-xs font-bold text-violet-500 mb-0.5">ליד רגיל</span>
-                  {formatPrice(lead.storePrice)}
-                </button>
-              )}
-              {exclusiveBlocked ? (
-                <div className="text-center px-3 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 min-h-[46px] flex flex-col items-center justify-center">
-                  <span className="text-[10px] font-bold text-slate-400 mb-0.5">בלעדי</span>
-                  <span className="text-[10px] font-black text-slate-400 leading-tight">בלעדיות לא זמינה לאחר רכישה רגילה</span>
-                </div>
-              ) : (
-                <button onClick={() => setConfirm("exclusive")} disabled={purchasing}
-                  className="text-sm font-black px-3 py-2.5 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[46px]">
-                  <span className="block text-xs font-bold text-violet-300 mb-0.5">בלעדי</span>
-                  {formatPrice(lead.exclusivePrice)}
-                </button>
-              )}
-            </div>
+            <button onClick={() => setConfirm("buy")} disabled={purchasing}
+              className="w-full text-sm font-black px-3 py-2.5 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[46px]">
+              קנה ליד · {formatPrice(lead.storePrice)}
+            </button>
           )
         )}
 
@@ -426,14 +365,12 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
         {confirm && !lead._purchased && !alreadyOwnedByMe && (
           <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
             <p className="text-sm font-black text-violet-900 mb-1">
-              {confirm === "partner_claim" ? "אישור לקיחת ליד לטיפול" : `אישור רכישת ליד ${confirm === "exclusive" ? "בלעדי" : "רגיל"}`}
+              {confirm === "partner_claim" ? "אישור לקיחת ליד לטיפול" : "אישור רכישת ליד"}
             </p>
             <p className="text-xs text-violet-700 mb-4 leading-relaxed">
               {confirm === "partner_claim"
                 ? "הליד יוקצה לטיפולך ויוסר מהשוק ליועצים אחרים."
-                : confirm === "exclusive"
-                  ? "ליד בלעדי יימכר לך בלבד ויחסם לרכישה נוספת."
-                  : "לאחר רכישה תקבלו גישה לפרטי הקשר המלאים."}
+                : "לאחר רכישה תקבלו גישה לפרטי הקשר המלאים. הליד יוקצה לכם בלבד."}
             </p>
             <div className="flex gap-2">
               <button onClick={handleConfirm} disabled={purchasing}
@@ -481,10 +418,10 @@ function DepartmentSection({ dept, leads, onPurchase, purchasing, isPartnerAdvis
 // ─── Page ──────────────────────────────────────────────────────────────────────
 const PRICE_RANGES = [
   { label: "הכל", max: Infinity },
-  { label: "עד ₪50", max: 50 },
   { label: "עד ₪100", max: 100 },
   { label: "עד ₪200", max: 200 },
   { label: "עד ₪300", max: 300 },
+  { label: "עד ₪400", max: 400 },
 ];
 
 const AGE_RANGES = [
@@ -510,7 +447,6 @@ export default function AdvisorLeadsStore() {
   const [filterPriceMax, setFilterPriceMax] = useState(Infinity);
   const [filterCity, setFilterCity]         = useState("");
   const [filterMaxDays, setFilterMaxDays]   = useState(Infinity);
-  const [searchCity, setSearchCity]         = useState("");
 
   useEffect(() => { load(); }, []);
 
@@ -529,22 +465,17 @@ export default function AdvisorLeadsStore() {
     setPurchasing(true);
     setError("");
     try {
-      const endpoint = purchaseType === "partner_claim" ? "/api/advisor/partner-claim-lead" : "/api/advisor/purchase-lead";
-      const payload  = purchaseType === "partner_claim" ? { leadId } : { leadId, purchaseType };
-      const r = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const apiEndpoint = purchaseType === "partner_claim" ? "/api/advisor/partner-claim-lead" : "/api/advisor/purchase-lead";
+      const payload     = { leadId };
+      const r = await fetch(apiEndpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const j = await r.json();
       if (!r.ok) { setError(j.message || "הרכישה נכשלה. נסו שוב."); return { ok: false }; }
       const purchased = leads.find((l) => l.id === leadId) || null;
       setSuccessId(leadId);
       setSuccessLead(purchased);
       setSuccessPurchaseType(purchaseType);
-      if (purchaseType === "partner_claim") {
-        setLeads((arr) => arr.filter((l) => l.id !== leadId));
-      } else if (purchaseType === "exclusive") {
-        setLeads((arr) => arr.map((l) => l.id === leadId ? { ...l, storeStatus: "sold", _purchased: true } : l));
-      } else {
-        setLeads((arr) => arr.map((l) => l.id === leadId ? { ...l, _purchased: true, purchaseCount: (l.purchaseCount || 0) + 1 } : l));
-      }
+      // Lead is now sold/claimed — remove from marketplace
+      setLeads((arr) => arr.filter((l) => l.id !== leadId));
       return { ok: true };
     } catch {
       setError("שגיאת רשת. נסו שוב.");
@@ -624,7 +555,7 @@ export default function AdvisorLeadsStore() {
               <span className="text-violet-700">מחיר שקוף, ניקוד מוסבר.</span>
             </h1>
             <p className="text-sm text-slate-500 font-bold max-w-lg">
-              כל ליד מקבל ציון FINZO ומחיר דינמי. לחצו "למה המחיר הזה?" על כל כרטיס לקבלת הפירוט המלא.
+              כל ליד מקבל ציון FINZO ומחיר בהתאם. לחצו "למה המחיר הזה?" על כל כרטיס לקבלת הפירוט המלא.
             </p>
           </div>
 
