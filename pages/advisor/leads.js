@@ -1,10 +1,8 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { KpiTile, Pill, Tag, Skeleton, EmptyState } from "../../components/ui";
+import { KpiTile, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
-
-const MAX_REGULAR_SLOTS = 3;
 
 const PURCHASE_STATUS_LABELS = {
   new_purchase:       "רכישת דירה",
@@ -19,16 +17,15 @@ const PURCHASE_STATUS_LABELS = {
   general:            "בדיקה כללית",
 };
 
-// Department definitions — order determines display order
 const DEPARTMENTS = [
-  { key: "first_apartment", label: "🏠 דירה ראשונה",          types: ["first_apartment"] },
-  { key: "refinance",       label: "🔄 מחזור משכנתא",         types: ["refinance"] },
-  { key: "upgrader",        label: "📈 משפרי דיור",            types: ["upgrader"] },
-  { key: "investment",      label: "🏢 השקעה / דירה שנייה",   types: ["investment", "new_purchase"] },
-  { key: "bank_issues",     label: "⚠️ מסורבי בנק ו-BDI",   types: ["bank_declined", "bdi_credit_issue"] },
-  { key: "senior_60plus",   label: "👴 גיל 60+",               types: ["senior_60plus"] },
-  { key: "debt",            label: "💳 איחוד הלוואות",         types: ["debt_consolidation"] },
-  { key: "general",         label: "📋 כללי",                  types: ["general", ""] },
+  { key: "first_apartment", label: "🏠 דירה ראשונה",         types: ["first_apartment"] },
+  { key: "refinance",       label: "🔄 מחזור משכנתא",        types: ["refinance"] },
+  { key: "upgrader",        label: "📈 משפרי דיור",           types: ["upgrader"] },
+  { key: "investment",      label: "🏢 השקעה / דירה שנייה",  types: ["investment", "new_purchase"] },
+  { key: "bank_issues",     label: "⚠️ מסורבי בנק ו-BDI",  types: ["bank_declined", "bdi_credit_issue"] },
+  { key: "senior_60plus",   label: "👴 גיל 60+",              types: ["senior_60plus"] },
+  { key: "debt",            label: "💳 איחוד הלוואות",        types: ["debt_consolidation"] },
+  { key: "general",         label: "📋 כללי",                 types: ["general", ""] },
 ];
 
 function deptForLead(lead) {
@@ -39,7 +36,6 @@ function deptForLead(lead) {
   return "general";
 }
 
-// ─── Formatters ────────────────────────────────────────────────────────────────
 function formatILS(v) {
   if (!v || v === 0) return "—";
   return new Intl.NumberFormat("he-IL", { style: "currency", currency: "ILS", maximumFractionDigits: 0 }).format(v);
@@ -50,9 +46,10 @@ function formatPrice(price) {
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
+
 function ScoreBar({ score }) {
   const pct = Math.min(100, Math.max(0, Number(score) || 0));
-  const color = pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-slate-300";
+  const color = pct >= 76 ? "bg-emerald-500" : pct >= 61 ? "bg-amber-400" : pct >= 41 ? "bg-sky-400" : "bg-slate-300";
   return (
     <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
       <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
@@ -85,43 +82,9 @@ function AgeBadge({ createdAt }) {
   );
 }
 
-function MarketplaceTags({ lead }) {
-  const diffDays = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86400000);
-  const tags = [];
-  if (diffDays <= 3) tags.push({ label: "חדש", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" });
-  if (lead.purchaseCount >= 2) tags.push({ label: "כמעט נסגר 🔥", cls: "bg-red-100 text-red-700 border-red-200" });
-  else if (lead.purchaseCount >= 1) tags.push({ label: "פופולרי", cls: "bg-amber-100 text-amber-800 border-amber-200" });
-  if (lead.exclusivePrice > 0 && !lead.purchaseCount) tags.push({ label: "בלעדי זמין", cls: "bg-violet-100 text-violet-800 border-violet-200" });
-  if (!tags.length) return null;
-  return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      {tags.map((t) => (
-        <span key={t.label} className={`text-[10px] font-black border rounded-full px-2 py-0.5 ${t.cls}`}>{t.label}</span>
-      ))}
-    </div>
-  );
-}
-
-function SlotBar({ purchaseCount }) {
-  const filled    = Math.min(purchaseCount, MAX_REGULAR_SLOTS);
-  const remaining = MAX_REGULAR_SLOTS - filled;
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex gap-1">
-        {Array.from({ length: MAX_REGULAR_SLOTS }).map((_, i) => (
-          <span key={i} className={`w-2.5 h-2.5 rounded-full border ${i < filled ? "bg-violet-500 border-violet-500" : "bg-slate-100 border-slate-300"}`} />
-        ))}
-      </div>
-      <p className="text-[10px] font-bold text-slate-500 tabular-nums">
-        {filled}/{MAX_REGULAR_SLOTS} נרכשו · {remaining} מקומות פנויים
-      </p>
-    </div>
-  );
-}
-
 function PricingBreakdown({ lead }) {
   const [open, setOpen] = useState(false);
-  if (!lead.finzoScore && lead.finzoScore !== 0) return null;
+  if (lead.finzoScore == null) return null;
   return (
     <div className="rounded-xl border border-slate-200 overflow-hidden">
       <button
@@ -133,7 +96,6 @@ function PricingBreakdown({ lead }) {
       </button>
       {open && (
         <div className="px-3 py-3 bg-white space-y-2.5">
-          {/* Bullets */}
           <div className="space-y-1">
             {(lead.pricingBullets || []).map((b, i) => {
               const isGood = b.startsWith("✓");
@@ -143,19 +105,13 @@ function PricingBreakdown({ lead }) {
               );
             })}
           </div>
-          <div className="border-t border-slate-100 pt-2 grid grid-cols-3 gap-2 text-center">
+          <div className="border-t border-slate-100 pt-2 grid grid-cols-2 gap-2 text-center">
             <div>
-              <p className="text-[9px] font-black text-slate-400 mb-0.5">מחיר בסיס</p>
-              <p className="text-xs font-black text-slate-800">{formatPrice(lead.regularBasePrice)}</p>
+              <p className="text-[9px] font-black text-slate-400 mb-0.5">ציון FINZO</p>
+              <p className="text-xs font-black text-slate-800">{lead.finzoScore}/100</p>
             </div>
             <div>
-              <p className="text-[9px] font-black text-slate-400 mb-0.5">הנחת גיל</p>
-              <p className={`text-xs font-black ${lead.ageDiscountPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                {lead.ageDiscountPct > 0 ? `${lead.ageDiscountPct}%` : "ללא הנחה"}
-              </p>
-            </div>
-            <div>
-              <p className="text-[9px] font-black text-slate-400 mb-0.5">מחיר סופי</p>
+              <p className="text-[9px] font-black text-slate-400 mb-0.5">מחיר</p>
               <p className="text-xs font-black text-violet-800">{formatPrice(lead.storePrice)}</p>
             </div>
           </div>
@@ -184,21 +140,17 @@ function CardSkeleton() {
         <Skeleton variant="block" className="h-14" />
       </div>
       <Skeleton variant="line" />
-      <div className="grid grid-cols-2 gap-2">
-        <Skeleton variant="block" className="h-12 rounded-2xl" />
-        <Skeleton variant="block" className="h-12 rounded-2xl" />
-      </div>
+      <Skeleton variant="block" className="h-12 rounded-2xl" />
     </div>
   );
 }
 
-function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
-  const label     = lead?.purchaseStatus ? (PURCHASE_STATUS_LABELS[lead.purchaseStatus] || lead.purchaseStatus) : null;
-  const quality   = lead?.computedQuality || lead?.leadQuality;
-  const city      = lead?.city;
-  const amount    = lead?.mortgageAmount;
-  const typeLabel = purchaseType === "exclusive" ? "ליד בלעדי" : purchaseType === "partner_claim" ? "לקיחת ליד" : "ליד רגיל";
-  const now       = new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+function PurchaseSuccessPanel({ lead, leadId, onClose }) {
+  const label   = lead?.purchaseStatus ? (PURCHASE_STATUS_LABELS[lead.purchaseStatus] || lead.purchaseStatus) : null;
+  const quality = lead?.computedQuality || lead?.leadQuality;
+  const city    = lead?.city;
+  const amount  = lead?.mortgageAmount;
+  const now     = new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
   return (
     <div className="mb-6 rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 to-white shadow-md overflow-hidden">
       <div className="flex items-center justify-between gap-3 bg-emerald-600 px-4 py-3">
@@ -206,7 +158,7 @@ function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
           <svg className="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
-          <span className="text-sm font-black text-white">הליד נרכש בהצלחה ונוסף ל'הלקוחות שלי'</span>
+          <span className="text-sm font-black text-white">הליד נרכש בהצלחה ונוסף ל&#39;הלקוחות שלי&#39;</span>
         </div>
         <button onClick={onClose} className="text-emerald-200 hover:text-white font-black text-lg leading-none shrink-0">×</button>
       </div>
@@ -230,8 +182,8 @@ function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
           </div>
         )}
         <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
-          <p className="text-[10px] font-black text-slate-400 mb-0.5">סוג רכישה · שעה</p>
-          <p className="text-sm font-black text-slate-900">{typeLabel} · {now}</p>
+          <p className="text-[10px] font-black text-slate-400 mb-0.5">שעת רכישה</p>
+          <p className="text-sm font-black text-slate-900">{now}</p>
         </div>
         {quality && (
           <div className="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
@@ -256,22 +208,18 @@ function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
 }
 
 function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
-  const [confirm, setConfirm] = useState(null);
+  const [confirm, setConfirm] = useState(false);
 
-  const isSold          = lead.storeStatus === "sold";
-  const diffDays        = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86400000);
-  const isNew           = diffDays <= 3;
-  const purchaseCount   = lead.purchaseCount || 0;
-  const regularSlotsFull = purchaseCount >= MAX_REGULAR_SLOTS;
-  const exclusiveBlocked = purchaseCount > 0;
+  const isSold         = lead.storeStatus === "sold";
+  const diffDays       = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86400000);
+  const isNew          = diffDays <= 3;
   const alreadyOwnedByMe = Boolean(lead._ownedByAdvisor);
+  const qualityLabel   = lead.computedQuality || lead.leadQuality || "";
 
   async function handleConfirm() {
-    const result = await onPurchase(lead.id, confirm);
-    if (result?.ok) setConfirm(null);
+    const result = await onPurchase(lead.id);
+    if (result?.ok) setConfirm(false);
   }
-
-  const qualityLabel = lead.computedQuality || lead.leadQuality || "";
 
   return (
     <article className={`bg-white rounded-2xl shadow-sm transition-all border ${
@@ -284,14 +232,16 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
             : "border-slate-100 hover:border-violet-200 hover:shadow-sm"
     }`}>
 
-      {/* Header: quality + tags / price */}
+      {/* Header: quality + type / price */}
       <div className="flex items-start justify-between gap-3 p-4 pb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-2">
             {qualityLabel && (
               <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border whitespace-nowrap ${
-                qualityLabel === "פרימיום" || qualityLabel === "חם מאוד" ? "bg-emerald-50 text-emerald-800 border-emerald-200" :
-                qualityLabel === "חם"       ? "bg-amber-50 text-amber-800 border-amber-200" :
+                qualityLabel === "פרימיום"  ? "bg-emerald-50 text-emerald-800 border-emerald-200" :
+                qualityLabel === "חם מאוד"  ? "bg-emerald-50 text-emerald-800 border-emerald-200" :
+                qualityLabel === "חם"        ? "bg-amber-50 text-amber-800 border-amber-200" :
+                qualityLabel === "בינוני"   ? "bg-sky-50 text-sky-700 border-sky-200" :
                 "bg-slate-50 text-slate-600 border-slate-200"
               }`}>{qualityLabel}</span>
             )}
@@ -302,8 +252,10 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
             )}
             {isSold && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-red-50 text-red-700 border-red-200">נמכר</span>}
             {(lead._purchased || alreadyOwnedByMe) && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-emerald-100 text-emerald-800 border-emerald-200">נרכש ✓</span>}
+            {isNew && !isSold && !lead._purchased && !alreadyOwnedByMe && (
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-emerald-100 text-emerald-800 border-emerald-200">חדש</span>
+            )}
           </div>
-          <MarketplaceTags lead={lead} />
         </div>
         <div className="text-start shrink-0">
           <p className="text-xl font-black text-slate-950 tabular-nums leading-none">{formatPrice(lead.storePrice)}</p>
@@ -355,11 +307,6 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
         {/* Pricing transparency */}
         <PricingBreakdown lead={lead} />
 
-        {/* Slot inventory */}
-        {!lead._purchased && !alreadyOwnedByMe && !isSold && !isPartnerAdvisor && (
-          <SlotBar purchaseCount={purchaseCount} />
-        )}
-
         {/* Locked contact */}
         {!lead._purchased && !alreadyOwnedByMe && !isSold && (
           <div className="rounded-xl bg-slate-50 border border-dashed border-slate-200 px-3 py-2.5 flex items-center gap-2">
@@ -385,40 +332,21 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
           </div>
         )}
 
-        {/* Purchase buttons */}
+        {/* Buy button — single action */}
         {!isSold && !lead._purchased && !alreadyOwnedByMe && !confirm && (
           isPartnerAdvisor ? (
-            <button onClick={() => setConfirm("partner_claim")} disabled={purchasing}
+            <button onClick={() => setConfirm(true)} disabled={purchasing}
               className="w-full text-sm font-black px-3 py-2.5 rounded-2xl bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-50 min-h-[46px]">
               קח לטיפול
             </button>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
-              {regularSlotsFull ? (
-                <div className="text-center px-3 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 min-h-[46px] flex flex-col items-center justify-center">
-                  <span className="text-[10px] font-bold text-slate-400 mb-0.5">ליד רגיל</span>
-                  <span className="text-xs font-black text-slate-400">אזל לרכישה רגילה</span>
-                </div>
-              ) : (
-                <button onClick={() => setConfirm("regular")} disabled={purchasing}
-                  className="text-sm font-black px-3 py-2.5 rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 transition-colors disabled:opacity-50 min-h-[46px]">
-                  <span className="block text-xs font-bold text-violet-500 mb-0.5">ליד רגיל</span>
-                  {formatPrice(lead.storePrice)}
-                </button>
-              )}
-              {exclusiveBlocked ? (
-                <div className="text-center px-3 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 min-h-[46px] flex flex-col items-center justify-center">
-                  <span className="text-[10px] font-bold text-slate-400 mb-0.5">בלעדי</span>
-                  <span className="text-[10px] font-black text-slate-400 leading-tight">בלעדיות לא זמינה לאחר רכישה רגילה</span>
-                </div>
-              ) : (
-                <button onClick={() => setConfirm("exclusive")} disabled={purchasing}
-                  className="text-sm font-black px-3 py-2.5 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[46px]">
-                  <span className="block text-xs font-bold text-violet-300 mb-0.5">בלעדי</span>
-                  {formatPrice(lead.exclusivePrice)}
-                </button>
-              )}
-            </div>
+            <button
+              onClick={() => setConfirm(true)}
+              disabled={purchasing}
+              className="w-full text-sm font-black px-3 py-2.5 rounded-2xl bg-gradient-to-b from-violet-600 to-violet-800 text-white hover:from-violet-500 hover:to-violet-700 transition-all disabled:opacity-50 shadow-[0_4px_20px_rgba(109,40,217,0.35)] min-h-[46px]"
+            >
+              קנה ליד · {formatPrice(lead.storePrice)}
+            </button>
           )
         )}
 
@@ -426,21 +354,19 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isPartnerAdvisor }) {
         {confirm && !lead._purchased && !alreadyOwnedByMe && (
           <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
             <p className="text-sm font-black text-violet-900 mb-1">
-              {confirm === "partner_claim" ? "אישור לקיחת ליד לטיפול" : `אישור רכישת ליד ${confirm === "exclusive" ? "בלעדי" : "רגיל"}`}
+              {isPartnerAdvisor ? "אישור לקיחת ליד לטיפול" : "אישור רכישת ליד"}
             </p>
             <p className="text-xs text-violet-700 mb-4 leading-relaxed">
-              {confirm === "partner_claim"
+              {isPartnerAdvisor
                 ? "הליד יוקצה לטיפולך ויוסר מהשוק ליועצים אחרים."
-                : confirm === "exclusive"
-                  ? "ליד בלעדי יימכר לך בלבד ויחסם לרכישה נוספת."
-                  : "לאחר רכישה תקבלו גישה לפרטי הקשר המלאים."}
+                : "לאחר הרכישה תקבלו גישה בלעדית לפרטי הקשר המלאים. הליד לא יהיה זמין ליועצים אחרים."}
             </p>
             <div className="flex gap-2">
               <button onClick={handleConfirm} disabled={purchasing}
                 className="flex-1 text-sm font-black px-4 py-2.5 rounded-full bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-70 min-h-[44px]">
-                {purchasing ? "מעבד..." : (confirm === "partner_claim" ? "אשר לקיחה" : "אשר רכישה")}
+                {purchasing ? "מעבד..." : (isPartnerAdvisor ? "אשר לקיחה" : "אשר רכישה")}
               </button>
-              <button onClick={() => setConfirm(null)} disabled={purchasing}
+              <button onClick={() => setConfirm(false)} disabled={purchasing}
                 className="text-sm font-bold px-4 py-2.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors min-h-[44px]">
                 ביטול
               </button>
@@ -479,38 +405,37 @@ function DepartmentSection({ dept, leads, onPurchase, purchasing, isPartnerAdvis
 }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
+
 const PRICE_RANGES = [
-  { label: "הכל", max: Infinity },
-  { label: "עד ₪50", max: 50 },
-  { label: "עד ₪100", max: 100 },
-  { label: "עד ₪200", max: 200 },
-  { label: "עד ₪300", max: 300 },
+  { label: "הכל",      max: Infinity },
+  { label: "עד ₪149",  max: 149 },
+  { label: "עד ₪249",  max: 249 },
+  { label: "עד ₪349",  max: 349 },
+  { label: "עד ₪499",  max: 499 },
 ];
 
 const AGE_RANGES = [
-  { label: "הכל", maxDays: Infinity },
-  { label: "היום", maxDays: 0 },
-  { label: "3 ימים", maxDays: 3 },
-  { label: "שבוע", maxDays: 7 },
-  { label: "חודש", maxDays: 30 },
+  { label: "הכל",      maxDays: Infinity },
+  { label: "היום",     maxDays: 0 },
+  { label: "3 ימים",   maxDays: 3 },
+  { label: "שבוע",     maxDays: 7 },
+  { label: "חודש",     maxDays: 30 },
 ];
 
 export default function AdvisorLeadsStore() {
-  const [leads, setLeads]               = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState("");
+  const [leads, setLeads]             = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState("");
   const [isPartnerAdvisor, setIsPartnerAdvisor] = useState(false);
-  const [purchasing, setPurchasing]     = useState(false);
-  const [successId, setSuccessId]       = useState(null);
-  const [successLead, setSuccessLead]   = useState(null);
-  const [successPurchaseType, setSuccessPurchaseType] = useState(null);
+  const [purchasing, setPurchasing]   = useState(false);
+  const [successId, setSuccessId]     = useState(null);
+  const [successLead, setSuccessLead] = useState(null);
   // Filters
   const [filterDept, setFilterDept]         = useState("all");
   const [filterQuality, setFilterQuality]   = useState("all");
   const [filterPriceMax, setFilterPriceMax] = useState(Infinity);
   const [filterCity, setFilterCity]         = useState("");
   const [filterMaxDays, setFilterMaxDays]   = useState(Infinity);
-  const [searchCity, setSearchCity]         = useState("");
 
   useEffect(() => { load(); }, []);
 
@@ -525,26 +450,23 @@ export default function AdvisorLeadsStore() {
     setLoading(false);
   }
 
-  async function purchase(leadId, purchaseType) {
+  async function purchase(leadId) {
     setPurchasing(true);
     setError("");
     try {
-      const endpoint = purchaseType === "partner_claim" ? "/api/advisor/partner-claim-lead" : "/api/advisor/purchase-lead";
-      const payload  = purchaseType === "partner_claim" ? { leadId } : { leadId, purchaseType };
-      const r = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const endpoint = isPartnerAdvisor ? "/api/advisor/partner-claim-lead" : "/api/advisor/purchase-lead";
+      const r = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId }),
+      });
       const j = await r.json();
       if (!r.ok) { setError(j.message || "הרכישה נכשלה. נסו שוב."); return { ok: false }; }
       const purchased = leads.find((l) => l.id === leadId) || null;
       setSuccessId(leadId);
       setSuccessLead(purchased);
-      setSuccessPurchaseType(purchaseType);
-      if (purchaseType === "partner_claim") {
-        setLeads((arr) => arr.filter((l) => l.id !== leadId));
-      } else if (purchaseType === "exclusive") {
-        setLeads((arr) => arr.map((l) => l.id === leadId ? { ...l, storeStatus: "sold", _purchased: true } : l));
-      } else {
-        setLeads((arr) => arr.map((l) => l.id === leadId ? { ...l, _purchased: true, purchaseCount: (l.purchaseCount || 0) + 1 } : l));
-      }
+      // Lead is now sold — remove it from the available list
+      setLeads((arr) => arr.map((l) => l.id === leadId ? { ...l, storeStatus: "sold", _purchased: true } : l));
       return { ok: true };
     } catch {
       setError("שגיאת רשת. נסו שוב.");
@@ -554,13 +476,11 @@ export default function AdvisorLeadsStore() {
     }
   }
 
-  // Available cities for filter dropdown
   const cities = useMemo(() => {
     const set = new Set(leads.map((l) => l.city).filter(Boolean));
     return ["הכל", ...Array.from(set).sort()];
   }, [leads]);
 
-  // Apply filters
   const filtered = useMemo(() => {
     return leads.filter((l) => {
       if (filterDept !== "all") {
@@ -578,13 +498,11 @@ export default function AdvisorLeadsStore() {
     });
   }, [leads, filterDept, filterQuality, filterPriceMax, filterCity, filterMaxDays]);
 
-  // Unique quality levels from actual leads
   const qualityLevels = useMemo(() => {
     const set = new Set(leads.map((l) => l.computedQuality || l.leadQuality).filter(Boolean));
     return ["all", ...Array.from(set)];
   }, [leads]);
 
-  // Group filtered leads by department
   const departments = useMemo(() => {
     return DEPARTMENTS.map((dept) => ({
       ...dept,
@@ -624,7 +542,7 @@ export default function AdvisorLeadsStore() {
               <span className="text-violet-700">מחיר שקוף, ניקוד מוסבר.</span>
             </h1>
             <p className="text-sm text-slate-500 font-bold max-w-lg">
-              כל ליד מקבל ציון FINZO ומחיר דינמי. לחצו "למה המחיר הזה?" על כל כרטיס לקבלת הפירוט המלא.
+              כל ליד הוא בלעדי — יועץ אחד בלבד רוכש אותו. לחצו &#34;למה המחיר הזה?&#34; לפירוט הניקוד המלא.
             </p>
           </div>
 
@@ -639,7 +557,7 @@ export default function AdvisorLeadsStore() {
               ))
             ) : (
               <>
-                <KpiTile label="לידים זמינים" value={leads.length} />
+                <KpiTile label="לידים זמינים" value={leads.filter((l) => l.storeStatus !== "sold").length} />
                 <KpiTile label="מחלקות פעילות" value={departments.length} delta={departments.length > 0 ? "מגוון גבוה" : undefined} deltaDir="up" />
                 <KpiTile label="לאחר סינון" value={filtered.length} />
               </>
@@ -657,56 +575,36 @@ export default function AdvisorLeadsStore() {
               )}
             </div>
             <div className="flex flex-wrap gap-2">
-              {/* Department filter */}
-              <select
-                value={filterDept}
-                onChange={(e) => setFilterDept(e.target.value)}
-                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400"
-              >
+              <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)}
+                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400">
                 <option value="all">כל המחלקות</option>
-                {DEPARTMENTS.map((d) => (
-                  <option key={d.key} value={d.key}>{d.label}</option>
-                ))}
+                {DEPARTMENTS.map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}
               </select>
 
-              {/* Quality filter */}
-              <select
-                value={filterQuality}
-                onChange={(e) => setFilterQuality(e.target.value)}
-                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400"
-              >
+              <select value={filterQuality} onChange={(e) => setFilterQuality(e.target.value)}
+                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400">
                 <option value="all">כל הרמות</option>
-                {qualityLevels.filter((q) => q !== "all").map((q) => (
-                  <option key={q} value={q}>{q}</option>
-                ))}
+                {qualityLevels.filter((q) => q !== "all").map((q) => <option key={q} value={q}>{q}</option>)}
               </select>
 
-              {/* Price range filter */}
               <select
                 value={filterPriceMax === Infinity ? "Infinity" : String(filterPriceMax)}
                 onChange={(e) => setFilterPriceMax(e.target.value === "Infinity" ? Infinity : Number(e.target.value))}
-                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400"
-              >
+                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400">
                 {PRICE_RANGES.map((p) => (
                   <option key={p.label} value={p.max === Infinity ? "Infinity" : String(p.max)}>{p.label}</option>
                 ))}
               </select>
 
-              {/* City filter */}
-              <select
-                value={filterCity || "הכל"}
-                onChange={(e) => setFilterCity(e.target.value === "הכל" ? "" : e.target.value)}
-                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400"
-              >
+              <select value={filterCity || "הכל"} onChange={(e) => setFilterCity(e.target.value === "הכל" ? "" : e.target.value)}
+                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400">
                 {cities.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
 
-              {/* Age filter */}
               <select
                 value={filterMaxDays === Infinity ? "Infinity" : String(filterMaxDays)}
                 onChange={(e) => setFilterMaxDays(e.target.value === "Infinity" ? Infinity : Number(e.target.value))}
-                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400"
-              >
+                className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400">
                 {AGE_RANGES.map((a) => (
                   <option key={a.label} value={a.maxDays === Infinity ? "Infinity" : String(a.maxDays)}>{a.label}</option>
                 ))}
@@ -724,20 +622,17 @@ export default function AdvisorLeadsStore() {
           {successId && (
             <PurchaseSuccessPanel
               lead={successLead}
-              purchaseType={successPurchaseType}
               leadId={successId}
-              onClose={() => { setSuccessId(null); setSuccessLead(null); setSuccessPurchaseType(null); }}
+              onClose={() => { setSuccessId(null); setSuccessLead(null); }}
             />
           )}
 
-          {/* Skeletons */}
           {loading && (
             <div className="grid gap-3 md:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           )}
 
-          {/* Empty state */}
           {!loading && filtered.length === 0 && (
             <EmptyState
               glyph="🏪"
@@ -746,7 +641,6 @@ export default function AdvisorLeadsStore() {
             />
           )}
 
-          {/* ─── Department sections ──────────────────────────────────────── */}
           {!loading && departments.map((dept) => (
             <DepartmentSection
               key={dept.key}

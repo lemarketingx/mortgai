@@ -1,8 +1,6 @@
 import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 
-const MAX_REGULAR_SLOTS = 3;
-
 function apiError(res, status, code, message, details = "") {
   return res.status(status).json({ error: code, message, ...(details ? { details } : {}) });
 }
@@ -13,10 +11,7 @@ export default async function handler(req, res) {
   const session = getAdvisorSession(req);
   if (!session) return apiError(res, 401, "ADVISOR_AUTH_REQUIRED", "Advisor session required");
 
-  const body = req.body || {};
-  const leadId = String(body.leadId || "").trim();
-  const purchaseType = body.purchaseType === "exclusive" ? "exclusive" : "regular";
-
+  const leadId = String((req.body || {}).leadId || "").trim();
   if (!leadId) return apiError(res, 400, "LEAD_ID_REQUIRED", "leadId is required");
 
   try {
@@ -24,48 +19,32 @@ export default async function handler(req, res) {
     const lead = storeLeads.find((l) => l.id === leadId);
 
     if (!lead) return apiError(res, 404, "LEAD_NOT_AVAILABLE", "Lead is not available in the store");
-
-    // Sold check (exclusive purchase already removed lead; race window covered below)
     if (lead.storeStatus === "sold") {
       return apiError(res, 409, "LEAD_ALREADY_SOLD", "הליד כבר נמכר ואינו זמין לרכישה.");
     }
 
-    const purchaseCount = lead.purchaseCount || 0;
-
-    // Block duplicate purchase by the same advisor for the same lead
+    // Block duplicate purchase by the same advisor
     const ownedIds = await readAdvisorPurchasedLeadIds(session.advisorId);
     if (ownedIds.has(leadId)) {
       return apiError(res, 409, "ALREADY_PURCHASED_BY_ADVISOR", "כבר רכשתם את הליד הזה. ניתן למצוא אותו באזור 'הלידים שלי'.");
     }
 
-    if (purchaseType === "exclusive") {
-      // Block exclusive if any regular purchases already exist.
-      // Note: concurrent requests can still race through this check before either commits;
-      // true prevention requires a DB-level unique constraint or transaction.
-      if (purchaseCount > 0) {
-        return apiError(res, 409, "LEAD_HAS_REGULAR_BUYERS", "הליד כבר נרכש כרכישה רגילה ולכן לא ניתן לרכוש אותו בבלעדיות.");
-      }
-    } else {
-      // Block regular purchase if all slots are taken.
-      if (purchaseCount >= MAX_REGULAR_SLOTS) {
-        return apiError(res, 409, "LEAD_SLOTS_FULL", "כל המקומות לרכישת הליד כבר התמלאו.");
-      }
-    }
-
-    const isExclusive = purchaseType === "exclusive";
-    const price = isExclusive ? (lead.exclusivePrice || 0) : (lead.storePrice || 0);
-
+    // Every purchase is exclusive — one advisor, lead marked sold immediately.
+    // DB-level unique constraint on lead_id provides final race protection.
     const purchase = await createLeadPurchase({
       leadId,
       advisorId: session.advisorId,
-      purchaseType,
-      price,
-      isExclusive,
+      purchaseType: "exclusive",
+      price: lead.storePrice || 0,
+      isExclusive: true,
     });
 
     return res.status(200).json({ ok: true, purchase });
   } catch (error) {
     if (error instanceof LeadStoreError) {
+      if (error.code === "LEAD_ALREADY_SOLD") {
+        return apiError(res, 409, "LEAD_ALREADY_SOLD", "הליד כבר נרכש על ידי יועץ אחר.");
+      }
       if (error.code === "TABLE_MISSING") {
         return apiError(res, 503, "TABLE_MISSING", "Lead store not configured — run SQL migration");
       }
