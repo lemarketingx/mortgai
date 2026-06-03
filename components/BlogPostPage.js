@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Head from "next/head";
 import { trackEvent } from "../lib/analytics";
-import { absoluteUrl, articleSchema, breadcrumbSchema, canonicalUrl, faqSchema, stringifyJsonLd } from "../lib/seo";
+import { OG_IMAGE, SITE_NAME, absoluteUrl, articleSchema, breadcrumbSchema, canonicalUrl, faqSchema, stringifyJsonLd } from "../lib/seo";
 
 const CATEGORY_CLASSES = {
   זכאות: "bg-emerald-100 text-emerald-700",
@@ -202,9 +202,18 @@ export default function BlogPostPage({ post, relatedPosts }) {
         <meta name="keywords" content={post.keywords.join(", ")} />
         <link rel="canonical" href={canonicalUrl(postPath)} />
         <meta property="og:type" content="article" />
+        <meta property="og:site_name" content={SITE_NAME} />
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.description} />
         <meta property="og:url" content={absoluteUrl(postPath)} />
+        <meta property="og:image" content={OG_IMAGE} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={`${post.h1} | Finzo`} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={post.title} />
+        <meta name="twitter:description" content={post.description} />
+        <meta name="twitter:image" content={OG_IMAGE} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
