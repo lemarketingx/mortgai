@@ -16,7 +16,7 @@ export const config = {
 };
 
 import { validateToken } from "../../../../lib/documentUploadTokens";
-import { LeadStoreError, readMyLeads } from "../../../../lib/leadsStore";
+import { LeadStoreError, readMyLeadsForClient } from "../../../../lib/leadsStore";
 import { createActivity, createDocument, readDocuments, updateDocument } from "../../../../lib/activitiesStore";
 import { buildDocumentChecklist, normalizeCaseType, normalizeDocumentType } from "../../../../lib/mortgageCase";
 import { uploadToStorage, validateFile } from "../../../../lib/documentStorage";
@@ -53,7 +53,7 @@ export default async function handler(req, res) {
   // 3. Verify the document type belongs to this case's checklist
   let lead;
   try {
-    const leads = await readMyLeads(advisorId);
+    const leads = await readMyLeadsForClient(advisorId);
     lead = leads.find((l) => l.id === leadId);
   } catch (err) {
     if (err instanceof LeadStoreError) return apiError(res, 503, err.code, err.message);

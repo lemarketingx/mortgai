@@ -5,7 +5,7 @@
  * for the client upload portal. No advisor-only data is exposed.
  */
 import { validateToken } from "../../../../../lib/documentUploadTokens";
-import { LeadStoreError, readMyLeads } from "../../../../../lib/leadsStore";
+import { LeadStoreError, readMyLeadsForClient } from "../../../../../lib/leadsStore";
 import { readDocuments } from "../../../../../lib/activitiesStore";
 import {
   CASE_TYPE_ICONS,
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
 
   let lead;
   try {
-    const leads = await readMyLeads(advisorId);
+    const leads = await readMyLeadsForClient(advisorId);
     lead = leads.find((l) => l.id === leadId);
   } catch (err) {
     if (err instanceof LeadStoreError) return apiError(res, 503, err.code, err.message);

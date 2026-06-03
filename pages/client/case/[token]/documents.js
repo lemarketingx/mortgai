@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -31,9 +31,52 @@ function formatDeadline(iso) {
   });
 }
 
+// ─── Skeletons ────────────────────────────────────────────────────────────────
+function CaseSummarySkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4 animate-pulse">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-slate-200 shrink-0" />
+        <div className="space-y-2 flex-1">
+          <div className="h-4 bg-slate-200 rounded w-2/3" />
+          <div className="h-3 bg-slate-100 rounded w-1/2" />
+        </div>
+      </div>
+      <div className="h-3 bg-slate-100 rounded w-1/3" />
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <div className="h-3 bg-slate-200 rounded w-28" />
+          <div className="h-3 bg-slate-200 rounded w-10" />
+        </div>
+        <div className="h-2.5 bg-slate-100 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+function DocCardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-slate-200 p-4 space-y-3 bg-white animate-pulse">
+      <div className="flex items-start gap-3">
+        <div className="w-6 h-6 rounded bg-slate-200 shrink-0 mt-0.5" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-slate-200 rounded w-3/4" />
+          <div className="h-3 bg-slate-100 rounded w-1/3" />
+        </div>
+      </div>
+      <div className="h-10 bg-slate-100 rounded-xl border-2 border-dashed border-slate-200" />
+    </div>
+  );
+}
+
 // ─── DocUploadCard ────────────────────────────────────────────────────────────
-function DocUploadCard({ doc, file, result, uploading, onFileSelect, onUpload, onClear }) {
-  const inputRef = useRef(null);
+// Each card manages its own file/uploading/result state so that one card
+// uploading does not trigger re-renders in sibling cards.
+const DocUploadCard = memo(function DocUploadCard({ doc, token, onSuccess }) {
+  const inputRef    = useRef(null);
+  const [file,      setFile]      = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [result,    setResult]    = useState(null);
 
   const bgClass = {
     missing:   "bg-slate-50   border-slate-200",
@@ -42,6 +85,58 @@ function DocUploadCard({ doc, file, result, uploading, onFileSelect, onUpload, o
   }[doc.status] || "bg-white border-slate-200";
 
   const icon = { missing: "📋", requested: "⏳", rejected: "❌" }[doc.status] || "📄";
+
+  async function handleUpload() {
+    if (!file) return;
+
+    const normalizedType = file.type === "image/jpg" ? "image/jpeg" : file.type;
+    if (!ALLOWED_TYPES.includes(normalizedType)) {
+      setResult({ ok: false, message: "סוג קובץ לא נתמך. יש להעלות PDF, JPG או PNG." });
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      setResult({ ok: false, message: "הקובץ גדול מדי. גודל מקסימלי: 10MB." });
+      return;
+    }
+
+    setUploading(true);
+    setResult(null);
+
+    try {
+      const fileData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = (e) => resolve(e.target.result.split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await fetch("/api/client/documents/upload", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          documentType: doc.document_type,
+          fileData,
+          fileName: file.name,
+          mimeType: normalizedType,
+          fileSize: file.size,
+        }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setResult({ ok: true, message: "הקובץ הועלה בהצלחה ✓" });
+        setFile(null);
+        onSuccess(doc.document_type, file.name);
+      } else {
+        setResult({ ok: false, message: data.message || "שגיאה בהעלאה. נא לנסות שוב." });
+      }
+    } catch {
+      setResult({ ok: false, message: "שגיאה בהעלאה. נא לנסות שוב." });
+    } finally {
+      setUploading(false);
+    }
+  }
 
   return (
     <div className={`rounded-2xl border p-4 space-y-3 ${bgClass}`}>
@@ -67,8 +162,8 @@ function DocUploadCard({ doc, file, result, uploading, onFileSelect, onUpload, o
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
-          e.target.value = "";  // allow re-selecting same file
-          if (f) onFileSelect(f);
+          e.target.value = "";
+          if (f) { setFile(f); setResult(null); }
         }}
       />
 
@@ -83,7 +178,7 @@ function DocUploadCard({ doc, file, result, uploading, onFileSelect, onUpload, o
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={onUpload}
+              onClick={handleUpload}
               disabled={uploading}
               className="flex-1 py-2.5 rounded-xl bg-violet-700 text-white text-xs font-black disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
@@ -96,7 +191,7 @@ function DocUploadCard({ doc, file, result, uploading, onFileSelect, onUpload, o
             </button>
             <button
               type="button"
-              onClick={onClear}
+              onClick={() => { setFile(null); setResult(null); }}
               disabled={uploading}
               className="px-3 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-black disabled:opacity-50"
             >
@@ -126,19 +221,16 @@ function DocUploadCard({ doc, file, result, uploading, onFileSelect, onUpload, o
       )}
     </div>
   );
-}
+});
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ClientDocumentPortal() {
   const router = useRouter();
   const { token } = router.query;
 
-  const [caseData,     setCaseData]     = useState(null);
-  const [loading,      setLoading]      = useState(true);
-  const [pageError,    setPageError]    = useState(null);   // {code, message}
-  const [selectedFiles, setSelectedFiles] = useState({});   // docType → File
-  const [uploading,    setUploading]    = useState({});     // docType → bool
-  const [uploadResults, setUploadResults] = useState({});   // docType → {ok, message}
+  const [caseData,  setCaseData]  = useState(null);
+  const [loading,   setLoading]   = useState(true);
+  const [pageError, setPageError] = useState(null);
 
   useEffect(() => {
     if (!token) return;
@@ -160,89 +252,59 @@ export default function ClientDocumentPortal() {
       });
   }, [token]);
 
-  async function handleUpload(documentType) {
-    const file = selectedFiles[documentType];
-    if (!file) return;
+  // Stable callback — functional setState so no deps needed
+  const handleUploadSuccess = useCallback((documentType, fileName) => {
+    setCaseData((prev) => {
+      if (!prev) return prev;
+      const updated = prev.documents.checklist.map((d) =>
+        d.document_type === documentType
+          ? { ...d, status: "received", received: true, missing: false, hasFile: true, fileName }
+          : d
+      );
+      const req   = updated.filter((d) => d.required !== false);
+      const recvd = req.filter((d) => d.received).length;
+      return {
+        ...prev,
+        documents: {
+          ...prev.documents,
+          checklist:         updated,
+          receivedCount:     recvd,
+          completionPercent: req.length > 0 ? Math.round((recvd / req.length) * 100) : 0,
+        },
+      };
+    });
+  }, []);
 
-    // Client-side pre-validation
-    const normalizedType = file.type === "image/jpg" ? "image/jpeg" : file.type;
-    if (!ALLOWED_TYPES.includes(normalizedType)) {
-      setUploadResults((p) => ({ ...p, [documentType]: { ok: false, message: "סוג קובץ לא נתמך. יש להעלות PDF, JPG או PNG." } }));
-      return;
-    }
-    if (file.size > MAX_SIZE) {
-      setUploadResults((p) => ({ ...p, [documentType]: { ok: false, message: "הקובץ גדול מדי. גודל מקסימלי: 10MB." } }));
-      return;
-    }
-
-    setUploading((p) => ({ ...p, [documentType]: true }));
-    setUploadResults((p) => ({ ...p, [documentType]: null }));
-
-    try {
-      // Read as base64 (transport only — never stored as base64)
-      const fileData = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload  = (e) => resolve(e.target.result.split(",")[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      const res = await fetch("/api/client/documents/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token,
-          documentType,
-          fileData,
-          fileName: file.name,
-          mimeType: normalizedType,
-          fileSize: file.size,
-        }),
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        setUploadResults((p) => ({ ...p, [documentType]: { ok: true, message: "הקובץ הועלה בהצלחה ✓" } }));
-        // Optimistically update the checklist in local state
-        setCaseData((prev) => {
-          if (!prev) return prev;
-          const updated = prev.documents.checklist.map((d) =>
-            d.document_type === documentType
-              ? { ...d, status: "received", received: true, missing: false, hasFile: true, fileName: file.name }
-              : d
-          );
-          const req   = updated.filter((d) => d.required !== false);
-          const recvd = req.filter((d) => d.received).length;
-          return {
-            ...prev,
-            documents: {
-              ...prev.documents,
-              checklist:         updated,
-              receivedCount:     recvd,
-              completionPercent: req.length > 0 ? Math.round((recvd / req.length) * 100) : 0,
-            },
-          };
-        });
-        setSelectedFiles((p) => { const n = { ...p }; delete n[documentType]; return n; });
-      } else {
-        setUploadResults((p) => ({ ...p, [documentType]: { ok: false, message: data.message || "שגיאה בהעלאה. נא לנסות שוב." } }));
-      }
-    } catch {
-      setUploadResults((p) => ({ ...p, [documentType]: { ok: false, message: "שגיאה בהעלאה. נא לנסות שוב." } }));
-    } finally {
-      setUploading((p) => ({ ...p, [documentType]: false }));
-    }
-  }
-
-  // ── Loading ──
+  // ── Loading skeleton ──
   if (loading) {
     return (
-      <main dir="rtl" className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center p-8">
-          <div className="w-10 h-10 rounded-full border-4 border-violet-200 border-t-violet-700 animate-spin mx-auto mb-4" />
-          <p className="text-sm font-bold text-slate-400">טוען...</p>
-        </div>
-      </main>
+      <>
+        <Head><title>העלאת מסמכים | FINZO</title><meta name="robots" content="noindex,nofollow" /></Head>
+        <main dir="rtl" className="min-h-screen bg-slate-50 pb-10">
+          <header className="bg-white border-b border-slate-100 shadow-sm py-4 px-4">
+            <div className="max-w-lg mx-auto flex items-center gap-3">
+              <span className="text-xl font-black text-violet-700">FINZO</span>
+              <span className="text-slate-300">|</span>
+              <span className="text-sm font-bold text-slate-500">העלאת מסמכים</span>
+            </div>
+          </header>
+          <div className="max-w-lg mx-auto px-4 pt-6 space-y-5">
+            <div className="animate-pulse space-y-1">
+              <div className="h-7 bg-slate-200 rounded w-40" />
+              <div className="h-4 bg-slate-100 rounded w-64 mt-2" />
+            </div>
+            <CaseSummarySkeleton />
+            <div>
+              <div className="h-4 bg-slate-200 rounded w-28 mb-3 animate-pulse" />
+              <div className="space-y-3">
+                <DocCardSkeleton />
+                <DocCardSkeleton />
+                <DocCardSkeleton />
+              </div>
+            </div>
+          </div>
+        </main>
+      </>
     );
   }
 
@@ -267,9 +329,9 @@ export default function ClientDocumentPortal() {
 
   const { case: caseInfo, documents, deadline } = caseData;
 
-  const uploadableDocs  = documents.checklist.filter((d) => d.required !== false && ["missing", "requested", "rejected"].includes(d.status));
-  const completedDocs   = documents.checklist.filter((d) => d.required !== false && ["received", "approved"].includes(d.status));
-  const allDone         = documents.completionPercent === 100 && documents.totalCount > 0;
+  const uploadableDocs = documents.checklist.filter((d) => d.required !== false && ["missing", "requested", "rejected"].includes(d.status));
+  const completedDocs  = documents.checklist.filter((d) => d.required !== false && ["received", "approved"].includes(d.status));
+  const allDone        = documents.completionPercent === 100 && documents.totalCount > 0;
 
   return (
     <>
@@ -353,12 +415,8 @@ export default function ClientDocumentPortal() {
                   <DocUploadCard
                     key={doc.document_type}
                     doc={doc}
-                    file={selectedFiles[doc.document_type] || null}
-                    result={uploadResults[doc.document_type] || null}
-                    uploading={Boolean(uploading[doc.document_type])}
-                    onFileSelect={(f) => setSelectedFiles((p) => ({ ...p, [doc.document_type]: f }))}
-                    onUpload={() => handleUpload(doc.document_type)}
-                    onClear={() => setSelectedFiles((p) => { const n = { ...p }; delete n[doc.document_type]; return n; })}
+                    token={token}
+                    onSuccess={handleUploadSuccess}
                   />
                 ))}
               </div>
