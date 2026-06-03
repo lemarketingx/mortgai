@@ -89,14 +89,15 @@ const DAY_MS = 864e5;
 
 function getToday() { return new Date(new Date().toDateString()); }
 
-function diffDays(d) {
+function diffDays(d, today) {
   if (!d) return null;
   const t = new Date(new Date(d).toDateString());
-  return Math.max(0, Math.floor((getToday().getTime() - t.getTime()) / DAY_MS));
+  const base = today || getToday();
+  return Math.max(0, Math.floor((base.getTime() - t.getTime()) / DAY_MS));
 }
 
-function isOverdue(d) {
-  return Boolean(d) && new Date(d) < getToday();
+function isOverdue(d, today) {
+  return Boolean(d) && new Date(d) < (today || getToday());
 }
 
 function isToday(d) {
@@ -122,8 +123,7 @@ function isActive(l) { return !isClosedPipelineStage(l.pipelineStage || l.leadSt
 
 // ─── Derives a list of leads that need immediate attention ────────────────────
 // All signals come from existing lead data fields — no invented data.
-function buildAttentionItems(active) {
-  const today = getToday(); // computed once for the whole loop
+function buildAttentionItems(active, today) {
   const items = [];
   const seen = new Set();
 
@@ -182,8 +182,7 @@ const STAGE_TASK_LABEL = {
 
 // ─── Derives today's task list from existing lead data ────────────────────────
 // Shows leads with scheduled actions today/overdue, and new uncontacted leads.
-function buildTodayTasks(active) {
-  const today = getToday();
+function buildTodayTasks(active, today) {
   const tasks = [];
   const usedIds = new Set();
 
@@ -303,12 +302,23 @@ function RecentUpdateRow({ lead }) {
   );
 }
 
+function ItemSkeleton() {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-slate-100">
+      <div className="h-2.5 w-2.5 rounded-full bg-slate-200 shrink-0 animate-pulse" />
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="h-3.5 w-28 bg-slate-200 rounded animate-pulse" />
+        <div className="h-3 w-20 bg-slate-100 rounded animate-pulse" />
+      </div>
+      <div className="h-5 w-16 bg-slate-100 rounded-full animate-pulse shrink-0" />
+    </div>
+  );
+}
+
 function SectionSkeleton({ rows = 3 }) {
   return (
-    <div className="p-4 space-y-2">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />
-      ))}
+    <div className="p-3 space-y-2">
+      {Array.from({ length: rows }).map((_, i) => <ItemSkeleton key={i} />)}
     </div>
   );
 }
@@ -352,6 +362,10 @@ export default function AdvisorDashboard() {
       .catch(() => setLoading(false));
   }, []);
 
+  // ── Stable today date — computed once per mount, not on every render ─────────
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const today = useMemo(() => getToday(), []);
+
   // ── Derived data — all useMemos, no calculations in render ──────────────────
   const active    = useMemo(() => leads.filter(isActive), [leads]);
   const newLeads  = useMemo(() => active.filter((l) => ["new_lead", "contacted"].includes(getStage(l))), [active]);
@@ -375,19 +389,21 @@ export default function AdvisorDashboard() {
     [pipelineGroups]
   );
 
-  const attentionItems = useMemo(() => buildAttentionItems(active), [active]);
-  const todayTasks     = useMemo(() => buildTodayTasks(active),     [active]);
+  // Pass stable today so diffDays/isOverdue don't re-create Date on every lead
+  const attentionItems = useMemo(() => buildAttentionItems(active, today), [active, today]);
+  const todayTasks     = useMemo(() => buildTodayTasks(active, today),     [active, today]);
 
-  const recentUpdates  = useMemo(() =>
-    [...leads]
+  const recentUpdates  = useMemo(() => {
+    // Pre-compute sort keys (timestamp strings) once — avoids Date objects inside the comparator
+    const withKey = leads
       .filter((l) => l.lastActivityAt || l.stageUpdatedAt || l.lastContactedAt)
-      .sort((a, b) => {
-        const da = a.lastActivityAt || a.stageUpdatedAt || a.lastContactedAt || a.createdAt || "";
-        const db = b.lastActivityAt || b.stageUpdatedAt || b.lastContactedAt || b.createdAt || "";
-        return new Date(db) - new Date(da);
-      })
-      .slice(0, 6),
-  [leads]);
+      .map((l) => ({
+        lead: l,
+        ts: l.lastActivityAt || l.stageUpdatedAt || l.lastContactedAt || l.createdAt || "",
+      }));
+    withKey.sort((a, b) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0));
+    return withKey.slice(0, 6).map((x) => x.lead);
+  }, [leads]);
 
   // ── Empty state — advisor has no leads yet ───────────────────────────────────
   if (!loading && leads.length === 0) {
@@ -569,9 +585,16 @@ export default function AdvisorDashboard() {
                 </div>
                 {loading
                   ? (
-                      <div className="p-4 space-y-2">
+                      <div className="px-3 py-2">
                         {Array.from({ length: 4 }).map((_, i) => (
-                          <div key={i} className="h-10 bg-slate-100 rounded-lg animate-pulse" />
+                          <div key={i} className="flex items-center gap-3 py-2.5 px-2">
+                            <div className="h-2 w-2 rounded-full bg-violet-200 shrink-0 animate-pulse" />
+                            <div className="flex-1 min-w-0 space-y-1.5">
+                              <div className="h-3.5 w-24 bg-slate-200 rounded animate-pulse" />
+                              <div className="h-3 w-16 bg-slate-100 rounded animate-pulse" />
+                            </div>
+                            <div className="h-3 w-10 bg-slate-100 rounded animate-pulse shrink-0" />
+                          </div>
                         ))}
                       </div>
                     )
@@ -607,8 +630,12 @@ export default function AdvisorDashboard() {
                 {loading
                   ? (
                       <div className="space-y-2.5">
-                        {Array.from({ length: 6 }).map((_, i) => (
-                          <div key={i} className="h-4 bg-slate-100 rounded animate-pulse" />
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <div key={i} className="flex items-center gap-3">
+                            <div className="h-3 w-24 bg-slate-100 rounded animate-pulse shrink-0" />
+                            <div className="flex-1 h-4 bg-slate-100 rounded-full animate-pulse" />
+                            <div className="h-3 w-4 bg-slate-100 rounded animate-pulse shrink-0" />
+                          </div>
                         ))}
                       </div>
                     )
@@ -623,9 +650,18 @@ export default function AdvisorDashboard() {
               </section>
 
               {/* סטטוס מהיר */}
-              {!loading && (
-                <section className="bg-white rounded-2xl border border-slate-100 p-5">
-                  <h2 className="text-sm font-black text-slate-950 mb-3">סטטוס מהיר</h2>
+              <section className="bg-white rounded-2xl border border-slate-100 p-5">
+                <h2 className="text-sm font-black text-slate-950 mb-3">סטטוס מהיר</h2>
+                {loading ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="bg-slate-50 rounded-xl px-3 py-3">
+                        <div className="h-3 w-14 bg-slate-200 rounded animate-pulse mb-1.5" />
+                        <div className="h-7 w-8 bg-slate-200 rounded animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       ["סה״כ לידים",  leads.length],
@@ -639,8 +675,8 @@ export default function AdvisorDashboard() {
                       </div>
                     ))}
                   </div>
-                </section>
-              )}
+                )}
+              </section>
 
               {/* פעולות מהירות */}
               <section className="bg-white rounded-2xl border border-slate-100 p-5">
