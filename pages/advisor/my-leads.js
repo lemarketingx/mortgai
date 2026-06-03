@@ -59,6 +59,7 @@ const STAGE_PROGRESS_COLOR = [
 const ACTIVE_PIPELINE_STAGES = PIPELINE_STAGES.filter((s) => s !== "closed_lost");
 
 const PREFS_KEY = "finzo_prefs_v1";
+const PAGE_SIZE = 20;
 
 // Pre-build Sets for O(1) stage membership lookup in kanban grouping
 const KANBAN_GROUPS = [
@@ -329,6 +330,7 @@ export default function AdvisorMyLeads() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const searchTimerRef = useRef(null);
   const [stageFilter, setStageFilter] = useState("all");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
     // Restore URL stage filter
@@ -350,6 +352,9 @@ export default function AdvisorMyLeads() {
 
   // Cleanup search debounce on unmount
   useEffect(() => () => clearTimeout(searchTimerRef.current), []);
+
+  // Reset visible window whenever filter, search, or sort changes
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [stageFilter, debouncedSearch, sortBy]);
 
   async function load() {
     setLoading(true);
@@ -511,10 +516,37 @@ export default function AdvisorMyLeads() {
           )}
 
           {loading && (
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4">
-                  <Skeleton variant="block" className="h-40" />
+            <div className="space-y-6">
+              {[5, 3].map((count, gi) => (
+                <div key={gi}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="h-3 w-3 rounded-full bg-slate-200 animate-pulse shrink-0" />
+                    <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
+                    <div className="h-4 w-6 bg-slate-100 rounded-full animate-pulse" />
+                    <div className="flex-1 h-px bg-slate-200" />
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {Array.from({ length: count }).map((_, i) => (
+                      <div key={i} className="bg-white border border-slate-100 rounded-xl p-4 shadow-sm space-y-3">
+                        <div className="flex gap-1.5">
+                          <div className="h-5 w-16 bg-slate-200 rounded-full animate-pulse" />
+                          <div className="h-5 w-10 bg-slate-100 rounded-full animate-pulse" />
+                        </div>
+                        <div className="h-5 w-32 bg-slate-200 rounded animate-pulse" />
+                        <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="h-10 bg-slate-50 rounded-lg animate-pulse" />
+                          <div className="h-10 bg-slate-50 rounded-lg animate-pulse" />
+                        </div>
+                        <div className="h-1.5 bg-slate-100 rounded-full animate-pulse" />
+                        <div className="grid grid-cols-3 gap-1.5">
+                          <div className="h-8 bg-slate-100 rounded-lg animate-pulse" />
+                          <div className="h-8 bg-slate-100 rounded-lg animate-pulse" />
+                          <div className="h-8 bg-violet-100 rounded-lg animate-pulse" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
@@ -528,13 +560,51 @@ export default function AdvisorMyLeads() {
             <EmptyState glyph="🔍" title="אין תוצאות" description="נסו לשנות את החיפוש או הסינון." />
           )}
 
-          {!loading && filtered.length > 0 && view === "kanban" && <KanbanView leads={filtered} />}
-          {!loading && filtered.length > 0 && view === "cards" && (
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((lead) => <MyLeadCard key={lead.id} lead={lead} />)}
-            </div>
+          {!loading && filtered.length > 0 && (
+            <p className="text-xs font-bold text-slate-400 mb-3 tabular-nums">
+              {view === "kanban"
+                ? `${filtered.length} לידים`
+                : `מציג ${Math.min(visibleCount, filtered.length)} מתוך ${filtered.length} לידים`}
+            </p>
           )}
-          {!loading && filtered.length > 0 && view === "list" && <LeadListView leads={filtered} />}
+
+          {!loading && filtered.length > 0 && view === "kanban" && <KanbanView leads={filtered} />}
+
+          {!loading && filtered.length > 0 && view === "cards" && (
+            <>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {filtered.slice(0, visibleCount).map((lead) => <MyLeadCard key={lead.id} lead={lead} />)}
+              </div>
+              {visibleCount < filtered.length && (
+                <div className="mt-5 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-slate-200 bg-white text-xs font-black text-slate-600 hover:text-violet-700 hover:border-violet-300 transition-colors shadow-sm"
+                  >
+                    טען עוד — {filtered.length - visibleCount} נותרים
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+
+          {!loading && filtered.length > 0 && view === "list" && (
+            <>
+              <LeadListView leads={filtered.slice(0, visibleCount)} />
+              {visibleCount < filtered.length && (
+                <div className="mt-5 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-slate-200 bg-white text-xs font-black text-slate-600 hover:text-violet-700 hover:border-violet-300 transition-colors shadow-sm"
+                  >
+                    טען עוד — {filtered.length - visibleCount} נותרים
+                  </button>
+                </div>
+              )}
+            </>
+          )}
 
         </div>
       </main>

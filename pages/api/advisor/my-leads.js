@@ -1,4 +1,4 @@
-import { LeadStoreError, readMyLeads, updateLead } from "../../../lib/leadsStore";
+import { LeadStoreError, readMyLeads, readMyLeadsForList, updateLead } from "../../../lib/leadsStore";
 import { createActivity } from "../../../lib/activitiesStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
@@ -15,13 +15,16 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
-      const leads = await readMyLeads(session.advisorId);
       const { leadId } = req.query;
       if (leadId) {
+        // Detail page: needs all fields — use full column set
+        const leads = await readMyLeads(session.advisorId);
         const lead = leads.find((l) => l.id === leadId);
         if (!lead) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
         return res.status(200).json({ lead });
       }
+      // List/kanban page: use reduced column set to cut payload size
+      const leads = await readMyLeadsForList(session.advisorId);
       return res.status(200).json({ leads });
     } catch (error) {
       if (error instanceof LeadStoreError) {
