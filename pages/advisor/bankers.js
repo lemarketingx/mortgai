@@ -1,17 +1,49 @@
 import Head from "next/head";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
 import { BANK_LIST } from "../../lib/bankerDirectory";
 
 const BANK_NAMES = BANK_LIST.map((b) => b.name);
+const PAGE_SIZE = 20;
 
 const EMPTY_FORM = {
   bank_name: "", branch_name: "", region: "", banker_name: "",
   phone: "", email: "", role_title: "", specialties: "", notes: "", is_active: true,
 };
 
-function BankerFormFields({ form, onChange }) {
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+function BankerCardSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 p-4 animate-pulse">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0 space-y-2.5">
+          <div className="flex items-center gap-2.5">
+            <div className="h-4 bg-slate-200 rounded w-32" />
+            <div className="h-3 bg-slate-100 rounded w-20" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-3 bg-violet-100 rounded w-20" />
+            <div className="h-3 bg-slate-100 rounded w-24" />
+            <div className="h-3 bg-slate-100 rounded w-16" />
+          </div>
+          <div className="flex gap-3">
+            <div className="h-5 bg-slate-100 rounded w-28" />
+            <div className="h-5 bg-slate-100 rounded w-40" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-1.5 shrink-0">
+          <div className="h-7 bg-slate-100 rounded-lg w-16" />
+          <div className="h-7 bg-slate-100 rounded-lg w-16" />
+          <div className="h-7 bg-slate-100 rounded-lg w-14" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── BankerFormFields ─────────────────────────────────────────────────────────
+// Memoized so that sibling form fields don't re-render on each keystroke.
+const BankerFormFields = memo(function BankerFormFields({ form, onChange }) {
   return (
     <div className="grid gap-3">
       <div className="grid grid-cols-2 gap-3">
@@ -118,25 +150,113 @@ function BankerFormFields({ form, onChange }) {
       </label>
     </div>
   );
-}
+});
 
+// ─── BankerCard ───────────────────────────────────────────────────────────────
+// Memoized so typing in the add/edit modal doesn't re-render the directory list.
+const BankerCard = memo(function BankerCard({ banker, onEdit, onToggleActive, onDelete, isDeleting }) {
+  return (
+    <div className={`bg-white rounded-2xl border p-4 transition-all ${banker.is_active ? "border-slate-100" : "border-slate-100 opacity-60"}`}>
+      <div className="flex items-start justify-between gap-3">
+        {/* Main info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className="text-sm font-black text-slate-950">{banker.banker_name}</span>
+            {banker.role_title && (
+              <span className="text-[11px] font-bold text-slate-400">{banker.role_title}</span>
+            )}
+            {!banker.is_active && (
+              <span className="text-[10px] font-black px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">לא פעיל</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap text-xs font-bold text-slate-500 mb-2">
+            <span className="font-black text-violet-700">{banker.bank_name}</span>
+            {banker.branch_name && <span>· סניף {banker.branch_name}</span>}
+            {banker.region && <span>· {banker.region}</span>}
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {banker.phone && (
+              <div className="flex items-center gap-1">
+                <a href={`tel:${banker.phone}`} className="font-bold text-slate-600 hover:text-violet-700">{banker.phone}</a>
+                <a href={`tel:${banker.phone}`} className="px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-700 font-black text-[10px]">☎</a>
+                <a href={`https://wa.me/${banker.phone.replace(/[^\d]/g, "").replace(/^0/, "972")}`} target="_blank" rel="noopener noreferrer" className="px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-black text-[10px]">💬</a>
+              </div>
+            )}
+            {banker.email && (
+              <div className="flex items-center gap-1">
+                <a href={`mailto:${banker.email}`} className="font-bold text-slate-600 hover:text-violet-700 truncate max-w-[180px]">{banker.email}</a>
+                <a href={`mailto:${banker.email}`} className="px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-700 font-black text-[10px]">✉</a>
+              </div>
+            )}
+          </div>
+          {banker.specialties && (
+            <p className="mt-1.5 text-[11px] font-bold text-slate-400">התמחות: {banker.specialties}</p>
+          )}
+          {banker.notes && (
+            <p className="mt-1 text-[11px] font-bold text-slate-400 line-clamp-2">{banker.notes}</p>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => onEdit(banker.id)}
+            className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-black hover:bg-slate-200 transition-colors"
+          >
+            ✏ ערוך
+          </button>
+          <button
+            type="button"
+            onClick={() => onToggleActive(banker.id)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors ${banker.is_active ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}`}
+          >
+            {banker.is_active ? "השבת" : "הפעל"}
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(banker.id)}
+            disabled={isDeleting}
+            className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-black hover:bg-rose-100 transition-colors disabled:opacity-50"
+          >
+            {isDeleting ? "..." : "מחק"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function BankersPage() {
-  const [bankers, setBankers]             = useState([]);
-  const [loading, setLoading]             = useState(true);
-  const [showAdd, setShowAdd]             = useState(false);
-  const [editingId, setEditingId]         = useState(null);
-  const [form, setForm]                   = useState(EMPTY_FORM);
-  const [saving, setSaving]               = useState(false);
-  const [msg, setMsg]                     = useState({ text: "", ok: true });
-  const [search, setSearch]               = useState("");
-  const [filterBank, setFilterBank]       = useState("");
-  const [showInactive, setShowInactive]   = useState(false);
-  const [deletingId, setDeletingId]       = useState(null);
+  const [bankers,      setBankers]      = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [showAdd,      setShowAdd]      = useState(false);
+  const [editingId,    setEditingId]    = useState(null);
+  const [form,         setForm]         = useState(EMPTY_FORM);
+  const [saving,       setSaving]       = useState(false);
+  const [msg,          setMsg]          = useState({ text: "", ok: true });
+  const [search,       setSearch]       = useState("");
+  const [filterBank,   setFilterBank]   = useState("");
+  const [showInactive, setShowInactive] = useState(false);
+  const [deletingId,   setDeletingId]   = useState(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Refs so stable callbacks can always read the latest values without re-creating
+  const bankersRef      = useRef([]);
+  const showInactiveRef = useRef(false);
+  useEffect(() => { bankersRef.current = bankers; }, [bankers]);
+  useEffect(() => { showInactiveRef.current = showInactive; }, [showInactive]);
 
   useEffect(() => {
     loadBankers();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showInactive]);
+
+  // Reset visible count whenever the filtered set changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [search, filterBank, showInactive]);
 
   async function loadBankers() {
     setLoading(true);
@@ -151,14 +271,16 @@ export default function BankersPage() {
     }
   }
 
-  function flash(text, ok = true) {
+  // Stable flash — only uses the stable setMsg setter
+  const flash = useCallback((text, ok = true) => {
     setMsg({ text, ok });
     setTimeout(() => setMsg({ text: "", ok: true }), 3000);
-  }
+  }, []);
 
-  function updateForm(key, value) {
+  // Stable form field updater — functional update, no external deps
+  const updateForm = useCallback((key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
-  }
+  }, []);
 
   function startAdd() {
     setForm(EMPTY_FORM);
@@ -166,7 +288,10 @@ export default function BankersPage() {
     setShowAdd(true);
   }
 
-  function startEdit(banker) {
+  // Stable: reads banker from ref so it doesn't need bankers in deps
+  const handleEdit = useCallback((bankerId) => {
+    const banker = bankersRef.current.find((b) => b.id === bankerId);
+    if (!banker) return;
     setForm({
       bank_name:   banker.bank_name   || "",
       branch_name: banker.branch_name || "",
@@ -179,19 +304,61 @@ export default function BankersPage() {
       notes:       banker.notes       || "",
       is_active:   banker.is_active !== false,
     });
-    setEditingId(banker.id);
+    setEditingId(bankerId);
     setShowAdd(true);
-  }
+  }, []);
+
+  // Stable: reads banker and showInactive from refs
+  const handleToggleActive = useCallback(async (bankerId) => {
+    const banker = bankersRef.current.find((b) => b.id === bankerId);
+    if (!banker) return;
+    const r = await fetch("/api/advisor/bankers", {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: bankerId, is_active: !banker.is_active }),
+    });
+    if (r.ok) {
+      const j = await r.json();
+      setBankers((prev) =>
+        prev.map((b) => b.id === bankerId ? j.banker : b)
+            .filter((b) => showInactiveRef.current || b.is_active)
+      );
+      flash(banker.is_active ? "בנקאי הושבת" : "בנקאי הופעל ✓");
+    }
+  }, [flash]);
+
+  // Stable: reads banker name from ref for confirm dialog
+  const handleDelete = useCallback(async (bankerId) => {
+    const banker = bankersRef.current.find((b) => b.id === bankerId);
+    if (!banker) return;
+    if (!window.confirm(`למחוק את ${banker.banker_name}? פעולה זו בלתי הפיכה.`)) return;
+    setDeletingId(bankerId);
+    try {
+      const r = await fetch("/api/advisor/bankers", {
+        method:  "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: bankerId }),
+      });
+      if (r.ok) {
+        setBankers((prev) => prev.filter((b) => b.id !== bankerId));
+        flash("בנקאי נמחק");
+      } else {
+        flash("מחיקה נכשלה", false);
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  }, [flash]);
 
   async function submitForm(e) {
     e.preventDefault();
-    if (!form.bank_name.trim()) { flash("יש לבחור בנק", false); return; }
+    if (!form.bank_name.trim())   { flash("יש לבחור בנק", false);      return; }
     if (!form.banker_name.trim()) { flash("יש להזין שם בנקאי", false); return; }
     setSaving(true);
     try {
       if (editingId) {
         const r = await fetch("/api/advisor/bankers", {
-          method: "PATCH",
+          method:  "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: editingId, ...form }),
         });
@@ -205,7 +372,7 @@ export default function BankersPage() {
         }
       } else {
         const r = await fetch("/api/advisor/bankers", {
-          method: "POST",
+          method:  "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
         });
@@ -223,41 +390,8 @@ export default function BankersPage() {
     }
   }
 
-  async function toggleActive(banker) {
-    const r = await fetch("/api/advisor/bankers", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: banker.id, is_active: !banker.is_active }),
-    });
-    if (r.ok) {
-      const j = await r.json();
-      setBankers((prev) => prev.map((b) => b.id === banker.id ? j.banker : b).filter((b) => showInactive || b.is_active));
-      flash(banker.is_active ? "בנקאי הושבת" : "בנקאי הופעל ✓");
-    }
-  }
-
-  async function confirmDelete(banker) {
-    if (!window.confirm(`למחוק את ${banker.banker_name}? פעולה זו בלתי הפיכה.`)) return;
-    setDeletingId(banker.id);
-    try {
-      const r = await fetch("/api/advisor/bankers", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: banker.id }),
-      });
-      if (r.ok) {
-        setBankers((prev) => prev.filter((b) => b.id !== banker.id));
-        flash("בנקאי נמחק");
-      } else {
-        flash("מחיקה נכשלה", false);
-      }
-    } finally {
-      setDeletingId(null);
-    }
-  }
-
-  // Filtered list
-  const filtered = bankers.filter((b) => {
+  // Memoized derived lists — recompute only when deps change
+  const filtered = useMemo(() => bankers.filter((b) => {
     if (filterBank && b.bank_name !== filterBank) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -270,9 +404,17 @@ export default function BankersPage() {
       );
     }
     return true;
-  });
+  }), [bankers, filterBank, search]);
 
-  const uniqueBanks = [...new Set(bankers.map((b) => b.bank_name).filter(Boolean))].sort();
+  const uniqueBanks = useMemo(
+    () => [...new Set(bankers.map((b) => b.bank_name).filter(Boolean))].sort(),
+    [bankers]
+  );
+
+  const visibleBankers = useMemo(
+    () => filtered.slice(0, visibleCount),
+    [filtered, visibleCount]
+  );
 
   return (
     <>
@@ -363,9 +505,7 @@ export default function BankersPage() {
         <div className="max-w-4xl mx-auto px-4">
           {loading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-2xl border border-slate-100 h-28 animate-pulse" />
-              ))}
+              {[1, 2, 3, 4].map((i) => <BankerCardSkeleton key={i} />)}
             </div>
           ) : filtered.length === 0 ? (
             <div className="bg-white rounded-2xl border border-slate-100 p-10 text-center">
@@ -386,81 +526,36 @@ export default function BankersPage() {
               )}
             </div>
           ) : (
-            <div className="grid gap-3">
-              {filtered.map((banker) => (
-                <div
-                  key={banker.id}
-                  className={`bg-white rounded-2xl border p-4 transition-all ${banker.is_active ? "border-slate-100" : "border-slate-100 opacity-60"}`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    {/* Main info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="text-sm font-black text-slate-950">{banker.banker_name}</span>
-                        {banker.role_title && (
-                          <span className="text-[11px] font-bold text-slate-400">{banker.role_title}</span>
-                        )}
-                        {!banker.is_active && (
-                          <span className="text-[10px] font-black px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">לא פעיל</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap text-xs font-bold text-slate-500 mb-2">
-                        <span className="font-black text-violet-700">{banker.bank_name}</span>
-                        {banker.branch_name && <span>· סניף {banker.branch_name}</span>}
-                        {banker.region && <span>· {banker.region}</span>}
-                      </div>
-                      <div className="flex flex-wrap gap-2 text-xs">
-                        {banker.phone && (
-                          <div className="flex items-center gap-1">
-                            <a href={`tel:${banker.phone}`} className="font-bold text-slate-600 hover:text-violet-700">{banker.phone}</a>
-                            <a href={`tel:${banker.phone}`} className="px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-700 font-black text-[10px]">☎</a>
-                            <a href={`https://wa.me/${banker.phone.replace(/[^\d]/g, "").replace(/^0/, "972")}`} target="_blank" rel="noopener noreferrer" className="px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-black text-[10px]">💬</a>
-                          </div>
-                        )}
-                        {banker.email && (
-                          <div className="flex items-center gap-1">
-                            <a href={`mailto:${banker.email}`} className="font-bold text-slate-600 hover:text-violet-700 truncate max-w-[180px]">{banker.email}</a>
-                            <a href={`mailto:${banker.email}`} className="px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-700 font-black text-[10px]">✉</a>
-                          </div>
-                        )}
-                      </div>
-                      {banker.specialties && (
-                        <p className="mt-1.5 text-[11px] font-bold text-slate-400">התמחות: {banker.specialties}</p>
-                      )}
-                      {banker.notes && (
-                        <p className="mt-1 text-[11px] font-bold text-slate-400 line-clamp-2">{banker.notes}</p>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex flex-col gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(banker)}
-                        className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-black hover:bg-slate-200 transition-colors"
-                      >
-                        ✏ ערוך
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => toggleActive(banker)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors ${banker.is_active ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}`}
-                      >
-                        {banker.is_active ? "השבת" : "הפעל"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => confirmDelete(banker)}
-                        disabled={deletingId === banker.id}
-                        className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-black hover:bg-rose-100 transition-colors disabled:opacity-50"
-                      >
-                        {deletingId === banker.id ? "..." : "מחק"}
-                      </button>
-                    </div>
-                  </div>
+            <>
+              {filtered.length > PAGE_SIZE && (
+                <p className="text-xs font-bold text-slate-400 mb-2 text-left">
+                  מציג {Math.min(visibleCount, filtered.length)} מתוך {filtered.length} בנקאים
+                </p>
+              )}
+              <div className="grid gap-3">
+                {visibleBankers.map((banker) => (
+                  <BankerCard
+                    key={banker.id}
+                    banker={banker}
+                    onEdit={handleEdit}
+                    onToggleActive={handleToggleActive}
+                    onDelete={handleDelete}
+                    isDeleting={deletingId === banker.id}
+                  />
+                ))}
+              </div>
+              {filtered.length > visibleCount && (
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                    className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    טען עוד ({filtered.length - visibleCount} נותרו)
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </main>
