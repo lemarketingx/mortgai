@@ -449,6 +449,8 @@ export default function LeadDetailPage() {
     return "docs";
   })();
   const [tab, setTab] = useState(initialTab);
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set([initialTab]));
+  const [bankersLoading, setBankersLoading] = useState(false);
   const [showWaTemplates, setShowWaTemplates] = useState(false);
   const [msg, setMsg] = useState({ text: "", ok: true });
 
@@ -469,6 +471,7 @@ export default function LeadDetailPage() {
   const [caseBankerNotes,      setCaseBankerNotes]      = useState({});   // caseBankerId → note string
 
   const debounceRef = useRef({});
+  const bankersInitRef = useRef(false);
 
   useEffect(() => {
     if (!id) return;
@@ -478,9 +481,7 @@ export default function LeadDetailPage() {
       fetch(`/api/advisor/documents?leadId=${id}`).then((r) => r.ok ? r.json() : { documents: [] }),
       fetch(`/api/advisor/document-upload-token?leadId=${id}`).then((r) => r.ok ? r.json() : { token: null, uploadUrl: null }),
       fetch(`/api/advisor/document-reminders?leadId=${id}`).then((r) => r.ok ? r.json() : { reminder: null }),
-      fetch("/api/advisor/bankers").then((r) => r.ok ? r.json() : { bankers: [] }),
-      fetch(`/api/advisor/case-bankers?leadId=${id}`).then((r) => r.ok ? r.json() : { caseBankers: [] }),
-    ]).then(([leadsData, actData, docsData, tokenData, reminderData, bankersData, caseBankersData]) => {
+    ]).then(([leadsData, actData, docsData, tokenData, reminderData]) => {
       const found = leadsData.lead || (leadsData.leads || []).find((l) => l.id === id);
       if (!found) { router.push("/advisor/my-leads"); return; }
       setLead(found);
@@ -499,11 +500,23 @@ export default function LeadDetailPage() {
           setReminderDeadline(reminderData.reminder.deadline_at.slice(0, 16));
         }
       }
-      setAdvisorBankers(Array.isArray(bankersData.bankers) ? bankersData.bankers : []);
-      setCaseBankers(Array.isArray(caseBankersData.caseBankers) ? caseBankersData.caseBankers : []);
       setLoading(false);
     }).catch(() => { setLoading(false); router.push("/advisor/my-leads"); });
   }, [id]);
+
+  // Lazy-load banker data only when the bank tab is first opened
+  useEffect(() => {
+    if (!id || !visitedTabs.has("bank") || bankersInitRef.current) return;
+    bankersInitRef.current = true;
+    setBankersLoading(true);
+    Promise.all([
+      fetch("/api/advisor/bankers").then((r) => r.ok ? r.json() : { bankers: [] }),
+      fetch(`/api/advisor/case-bankers?leadId=${id}`).then((r) => r.ok ? r.json() : { caseBankers: [] }),
+    ]).then(([bankersData, caseBankersData]) => {
+      setAdvisorBankers(Array.isArray(bankersData.bankers) ? bankersData.bankers : []);
+      setCaseBankers(Array.isArray(caseBankersData.caseBankers) ? caseBankersData.caseBankers : []);
+    }).catch(() => {}).finally(() => setBankersLoading(false));
+  }, [id, visitedTabs]);
 
   function showSaved() {
     setSavedIndicator(true);
@@ -547,6 +560,11 @@ export default function LeadDetailPage() {
     clearTimeout(debounceRef.current[key]);
     debounceRef.current[key] = setTimeout(() => patchLead(changes, activityTitle, activityType), delay);
   }
+
+  const handleTabChange = useCallback((newTab) => {
+    setVisitedTabs((prev) => { const s = new Set(prev); s.add(newTab); return s; });
+    setTab(newTab);
+  }, []);
 
   const advanceStage = useCallback(async () => {
     const si = getStageIndex(lead);
@@ -770,13 +788,13 @@ export default function LeadDetailPage() {
   );
   const score = Math.round(Number(lead?.approvalScore || lead?.estimatedApprovalResult) || 0);
   const si = lead ? getStageIndex(lead) : -1;
-  const overallProgress = lead ? Number(lead.overallProgressPercent ?? calculateOverallMortgageProgress(lead)) || 0 : 0;
-  const collateralProgress = lead ? Number(lead.collateralCompletionPercent ?? calculateCollateralProgress(lead)) || 0 : 0;
-  const appraisalPct = APPRAISAL_PROGRESS[lead?.appraisalStatus || "not_ordered"] || 0;
-  const lawyerDone = lead ? LEGAL_CHECKLIST.filter((item) => Boolean(lead[item.key])).length : 0;
-  const lawyerPct = lead ? Math.round((lawyerDone / LEGAL_CHECKLIST.length) * 100) : 0;
-  const fundsReleased = lead?.fundsReleaseStatus === "fully_released";
-  const fundsPct = fundsReleased ? 100 : lead?.fundsReleaseStatus === "partially_released" ? 50 : 0;
+  const { overallProgress, collateralProgress, appraisalPct, lawyerPct, fundsPct } = useMemo(() => ({
+    overallProgress:    lead ? Number(lead.overallProgressPercent ?? calculateOverallMortgageProgress(lead)) || 0 : 0,
+    collateralProgress: lead ? Number(lead.collateralCompletionPercent ?? calculateCollateralProgress(lead)) || 0 : 0,
+    appraisalPct:       APPRAISAL_PROGRESS[lead?.appraisalStatus || "not_ordered"] || 0,
+    lawyerPct:          lead ? Math.round((LEGAL_CHECKLIST.filter((item) => Boolean(lead[item.key])).length / LEGAL_CHECKLIST.length) * 100) : 0,
+    fundsPct:           lead?.fundsReleaseStatus === "fully_released" ? 100 : lead?.fundsReleaseStatus === "partially_released" ? 50 : 0,
+  }), [lead]);
 
   // Bank-tab derived values
   const bankTabDerived = useMemo(() => {
@@ -895,10 +913,68 @@ export default function LeadDetailPage() {
     return (
       <main dir="rtl" className="min-h-screen bg-slate-50">
         <AdvisorHeader />
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="h-8 w-48 bg-slate-200 rounded animate-pulse mb-4" />
-          <div className="grid lg:grid-cols-3 gap-4">
-            {[0, 1, 2].map((i) => <div key={i} className="bg-white rounded-2xl h-64 animate-pulse" />)}
+        {/* Sticky header skeleton */}
+        <div className="sticky top-14 z-30 bg-white border-b border-slate-100 shadow-sm">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+            <div className="h-4 w-10 bg-slate-200 rounded animate-pulse" />
+            <div className="h-6 w-48 bg-slate-200 rounded animate-pulse flex-1" />
+            <div className="h-5 w-20 bg-slate-200 rounded-full animate-pulse" />
+            <div className="h-5 w-16 bg-slate-200 rounded-full animate-pulse" />
+          </div>
+          <div className="max-w-6xl mx-auto px-4 pb-3 flex gap-2">
+            {[1, 2, 3].map((i) => <div key={i} className="h-8 w-20 bg-slate-200 rounded-lg animate-pulse" />)}
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto px-4 py-4 grid lg:grid-cols-[260px_1fr_220px] gap-4 items-start">
+          {/* Customer summary skeleton */}
+          <div className="space-y-3">
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-3">
+              <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex justify-between gap-2">
+                  <div className="h-3 w-12 bg-slate-100 rounded animate-pulse" />
+                  <div className="h-3 w-24 bg-slate-200 rounded animate-pulse" />
+                </div>
+              ))}
+              <div className="pt-3 border-t border-slate-100 space-y-2">
+                <div className="h-10 bg-slate-100 rounded-xl animate-pulse" />
+                <div className="h-10 bg-slate-100 rounded-xl animate-pulse" />
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl border border-slate-100 p-4">
+              <div className="h-9 bg-slate-100 rounded-xl animate-pulse" />
+            </div>
+          </div>
+          {/* Center skeleton */}
+          <div className="space-y-4">
+            <div className="bg-white rounded-2xl border border-slate-100 p-4 h-28 animate-pulse" />
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 h-44 animate-pulse" />
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+              <div className="flex border-b border-slate-100">
+                {DETAIL_TABS.map((t) => (
+                  <div key={t.key} className="px-4 py-3">
+                    <div className="h-3 w-10 bg-slate-200 rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+              <div className="p-4 space-y-3">
+                {[1, 2, 3, 4].map((i) => <div key={i} className="h-16 bg-slate-100 rounded-lg animate-pulse" />)}
+              </div>
+            </div>
+          </div>
+          {/* Progress widgets skeleton */}
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white rounded-xl border border-slate-100 px-4 py-3">
+                <div className="flex justify-between mb-1.5">
+                  <div className="h-3 w-14 bg-slate-200 rounded animate-pulse" />
+                  <div className="h-3 w-7 bg-slate-200 rounded animate-pulse" />
+                </div>
+                <div className="h-2 bg-slate-100 rounded-full">
+                  <div className="h-full w-1/3 bg-slate-200 rounded-full animate-pulse" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </main>
@@ -958,7 +1034,7 @@ export default function LeadDetailPage() {
                 ✉ שלח מייל
               </a>
             )}
-            <button type="button" onClick={() => setTab("docs")}
+            <button type="button" onClick={() => handleTabChange("docs")}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-black border border-violet-200">
               📎 קישור מסמכים
             </button>
@@ -989,7 +1065,7 @@ export default function LeadDetailPage() {
                     💬 וואטסאפ
                   </button>
                 )}
-                <button type="button" onClick={() => setTab("docs")}
+                <button type="button" onClick={() => handleTabChange("docs")}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-violet-200 bg-violet-50 text-violet-800 text-xs font-black hover:bg-violet-100 transition-colors">
                   📎 שלח קישור מסמכים
                 </button>
@@ -1153,7 +1229,7 @@ export default function LeadDetailPage() {
             <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
               <div className="flex overflow-x-auto border-b border-slate-100" style={{ scrollbarWidth: "none" }}>
                 {DETAIL_TABS.map((t) => (
-                  <button key={t.key} type="button" onClick={() => setTab(t.key)}
+                  <button key={t.key} type="button" onClick={() => handleTabChange(t.key)}
                     className={`flex-none px-4 py-3 text-xs font-black whitespace-nowrap transition-colors border-b-2 ${tab === t.key ? "border-violet-700 text-violet-700 bg-violet-50/50" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
                     {t.label}
                   </button>
@@ -1163,8 +1239,8 @@ export default function LeadDetailPage() {
               <div className="p-4">
 
                 {/* מסמכים */}
-                {tab === "docs" && (
-                  <div>
+                {visitedTabs.has("docs") && (
+                  <div style={{ display: tab === "docs" ? undefined : "none" }}>
 
                     {/* ── Upload link & reminder ── */}
                     <div className="mb-5 rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
@@ -1343,8 +1419,8 @@ export default function LeadDetailPage() {
                 )}
 
                 {/* בנק */}
-                {tab === "bank" && (
-                  <div className="space-y-4">
+                {visitedTabs.has("bank") && (
+                  <div style={{ display: tab === "bank" ? undefined : "none" }} className="space-y-4">
 
                     {/* ── Readiness indicator ── */}
                     <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${bankTabDerived.isReady ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"}`}>
@@ -1357,7 +1433,7 @@ export default function LeadDetailPage() {
                         )}
                       </div>
                       {!bankTabDerived.isReady && (
-                        <button type="button" onClick={() => setTab("docs")} className="shrink-0 text-[11px] font-black px-2.5 py-1.5 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors">
+                        <button type="button" onClick={() => handleTabChange("docs")} className="shrink-0 text-[11px] font-black px-2.5 py-1.5 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors">
                           📄 מסמכים
                         </button>
                       )}
@@ -1379,7 +1455,11 @@ export default function LeadDetailPage() {
                     {/* ── Selected bankers ── */}
                     <div>
                       <p className="text-xs font-black text-slate-700 mb-2">בנקאים שנבחרו לתיק</p>
-                      {caseBankers.length === 0 ? (
+                      {bankersLoading ? (
+                        <div className="space-y-2">
+                          {[1, 2].map((i) => <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />)}
+                        </div>
+                      ) : caseBankers.length === 0 ? (
                         <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-5 text-center">
                           <p className="text-xs font-bold text-slate-400">עדיין לא נבחרו בנקאים לתיק זה</p>
                         </div>
@@ -1483,7 +1563,9 @@ export default function LeadDetailPage() {
                     {/* ── Add banker from directory ── */}
                     <div className="border-t border-slate-100 pt-3">
                       <p className="text-xs font-black text-slate-500 mb-2">הוסף בנקאי מהספר שלי</p>
-                      {advisorBankers.length === 0 ? (
+                      {bankersLoading ? (
+                        <div className="h-10 bg-slate-100 rounded-xl animate-pulse" />
+                      ) : advisorBankers.length === 0 ? (
                         <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 p-4 text-center">
                           <p className="text-xs font-bold text-violet-600 mb-2">עדיין לא הוספת בנקאים לספר הבנקאים שלך</p>
                           <Link href="/advisor/bankers"
@@ -1526,8 +1608,8 @@ export default function LeadDetailPage() {
                 )}
 
                 {/* פעילות — ציר זמן (Phase 5) */}
-                {tab === "activity" && (
-                  <div>
+                {visitedTabs.has("activity") && (
+                  <div style={{ display: tab === "activity" ? undefined : "none" }}>
                     <p className="text-sm font-black text-slate-950 mb-4">ציר זמן — היסטוריית תיק</p>
                     {activities.length === 0 ? (
                       <div className="text-center py-10">
@@ -1563,8 +1645,8 @@ export default function LeadDetailPage() {
                 )}
 
                 {/* הערות */}
-                {tab === "notes" && (
-                  <div>
+                {visitedTabs.has("notes") && (
+                  <div style={{ display: tab === "notes" ? undefined : "none" }}>
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-sm font-black text-slate-950">הערות פנימיות</p>
                       {savedIndicator && <span className="text-xs font-black text-emerald-600">נשמר ✓</span>}
@@ -1582,8 +1664,8 @@ export default function LeadDetailPage() {
                 )}
 
                 {/* שמאות */}
-                {tab === "appraisal" && (
-                  <div>
+                {visitedTabs.has("appraisal") && (
+                  <div style={{ display: tab === "appraisal" ? undefined : "none" }}>
                     <p className="text-sm font-black text-slate-950 mb-3">שמאות</p>
                     <div className="grid gap-2">
                       <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" value={lead.appraisalStatus || "not_ordered"} onChange={(e) => patchLead({ appraisalStatus: e.target.value }, `שמאות: ${APPRAISAL_STATUS_LABELS[e.target.value]}`)}>
@@ -1601,8 +1683,8 @@ export default function LeadDetailPage() {
                 )}
 
                 {/* עו"ד */}
-                {tab === "legal" && (
-                  <div>
+                {visitedTabs.has("legal") && (
+                  <div style={{ display: tab === "legal" ? undefined : "none" }}>
                     <p className="text-sm font-black text-slate-950 mb-3">עורכי דין</p>
                     <div className="grid gap-2">
                       <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" placeholder='עו"ד קונה - שם' value={lead.buyerLawyerName || ""} onChange={(e) => setLead((p) => ({ ...p, buyerLawyerName: e.target.value }))} onBlur={(e) => patchLead({ buyerLawyerName: e.target.value })} />
@@ -1621,8 +1703,8 @@ export default function LeadDetailPage() {
                 )}
 
                 {/* חתימות */}
-                {tab === "signing" && (
-                  <div>
+                {visitedTabs.has("signing") && (
+                  <div style={{ display: tab === "signing" ? undefined : "none" }}>
                     <p className="text-sm font-black text-slate-950 mb-3">חתימות</p>
                     <div className="grid gap-2">
                       <div>
@@ -1639,8 +1721,8 @@ export default function LeadDetailPage() {
                 )}
 
                 {/* בטחונות */}
-                {tab === "collateral" && (
-                  <div>
+                {visitedTabs.has("collateral") && (
+                  <div style={{ display: tab === "collateral" ? undefined : "none" }}>
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-sm font-black text-slate-950">בטחונות</p>
                       <span className="text-xs font-black text-slate-500 tabular-nums">{collateralProgress}%</span>
