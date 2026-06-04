@@ -2,7 +2,7 @@ import { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { blogPosts } from "../../lib/blogPosts";
-import { breadcrumbSchema, canonicalUrl, stringifyJsonLd } from "../../lib/seo";
+import { OG_IMAGE_URL, breadcrumbSchema, canonicalUrl, stringifyJsonLd } from "../../lib/seo";
 import { trackEvent } from "../../lib/analytics";
 
 const CATEGORY_CLASSES = {
@@ -86,9 +86,17 @@ export default function BlogIndexPage() {
           content="מאמרים מקצועיים על משכנתאות בישראל: זכאות, הון עצמי, יחס החזר, מחזור משכנתא, ריביות ועוד. כל מה שצריך לדעת לפני שלוקחים משכנתא."
         />
         <link rel="canonical" href={canonicalUrl("/blog")} />
+        <meta property="og:type" content="website" />
         <meta property="og:title" content="בלוג משכנתאות | Finzo" />
         <meta property="og:description" content="מאמרים מקצועיים על משכנתאות בישראל." />
         <meta property="og:url" content={canonicalUrl("/blog")} />
+        <meta property="og:image" content={OG_IMAGE_URL} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="בלוג משכנתאות | Finzo" />
+        <meta name="twitter:description" content="מאמרים מקצועיים על משכנתאות בישראל." />
+        <meta name="twitter:image" content={OG_IMAGE_URL} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
