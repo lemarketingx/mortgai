@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Head from "next/head";
 import { trackEvent } from "../lib/analytics";
-import { absoluteUrl, articleSchema, breadcrumbSchema, canonicalUrl, faqSchema, stringifyJsonLd } from "../lib/seo";
+import { OG_IMAGE_URL, absoluteUrl, articleSchema, breadcrumbSchema, canonicalUrl, faqSchema, stringifyJsonLd } from "../lib/seo";
 
 const CATEGORY_CLASSES = {
   זכאות: "bg-emerald-100 text-emerald-700",
@@ -205,6 +205,13 @@ export default function BlogPostPage({ post, relatedPosts }) {
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.description} />
         <meta property="og:url" content={absoluteUrl(postPath)} />
+        <meta property="og:image" content={OG_IMAGE_URL} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={post.title} />
+        <meta name="twitter:description" content={post.description} />
+        <meta name="twitter:image" content={OG_IMAGE_URL} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
