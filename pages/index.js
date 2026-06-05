@@ -202,6 +202,7 @@ export default function Home() {
     landingPath: "",
   });
   const eventSentRef = useRef({ wizardStarted: false, wizardCompleted: false });
+  const leadManualRef = useRef({ propertyPrice: false, equityAmount: false, monthlyIncome: false });
   const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
@@ -240,9 +241,9 @@ export default function Home() {
   useEffect(() => {
     setLead((current) => ({
       ...current,
-      propertyPrice: current.propertyPrice || data.price || "",
-      equityAmount: current.equityAmount || data.equity || "",
-      monthlyIncome: current.monthlyIncome || data.income || "",
+      propertyPrice: leadManualRef.current.propertyPrice ? current.propertyPrice : (data.price || ""),
+      equityAmount: leadManualRef.current.equityAmount ? current.equityAmount : (data.equity || ""),
+      monthlyIncome: leadManualRef.current.monthlyIncome ? current.monthlyIncome : (data.income || ""),
     }));
   }, [data.price, data.equity, data.income]);
 
@@ -289,6 +290,7 @@ export default function Home() {
   }
 
   function updateLead(key, value) {
+    if (key in leadManualRef.current) leadManualRef.current[key] = true;
     setLead((current) => ({ ...current, [key]: value }));
     if (leadError) setLeadError("");
   }
