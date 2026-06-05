@@ -13,7 +13,7 @@ import BrandLogo from "./BrandLogo";
 const navLinks = [
   ["דף הבית", "#home"],
   ["בדיקת התאמה", "#eligibility-check"],
-  ["מחזור משכנתא", "#refinance"],
+  ["מחזור משכנתא", "/refinance-check"],
   ["איך זה עובד", "#how-it-works"],
   ["שאלות נפוצות", "#faq"],
   ["בלוג", "/blog"],

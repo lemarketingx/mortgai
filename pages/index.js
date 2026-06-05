@@ -238,6 +238,15 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    setLead((current) => ({
+      ...current,
+      propertyPrice: current.propertyPrice || data.price || "",
+      equityAmount: current.equityAmount || data.equity || "",
+      monthlyIncome: current.monthlyIncome || data.income || "",
+    }));
+  }, [data.price, data.equity, data.income]);
+
+  useEffect(() => {
     const section = document.getElementById("eligibility-check");
     if (!section || typeof IntersectionObserver === "undefined") return undefined;
     const observer = new IntersectionObserver(([entry]) => {
@@ -492,6 +501,12 @@ export default function Home() {
           recommendation={recommendation}
           trackEvent={trackEvent}
           eventSentRef={eventSentRef}
+          lead={lead}
+          updateLead={updateLead}
+          submitLead={submitLead}
+          leadLoading={leadLoading}
+          leadSent={leadSent}
+          leadError={leadError}
         />
         <ResultsSection analysis={analysis} ready={ready} />
         <TrustContentSection />
@@ -533,7 +548,7 @@ export default function Home() {
 /*  CALCULATOR SECTION                                                  */
 /* ------------------------------------------------------------------ */
 
-function CalculatorSection({ data, updateData, analysis, ready, recommendation, trackEvent, eventSentRef }) {
+function CalculatorSection({ data, updateData, analysis, ready, recommendation, trackEvent, eventSentRef, lead, updateLead, submitLead, leadLoading, leadSent, leadError }) {
   return (
     <section id="eligibility-check" className="bg-gradient-to-b from-slate-50 via-violet-50/40 to-white py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -544,7 +559,7 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation, 
         />
 
         <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
-          <MortgageForm data={data} updateData={updateData} analysis={analysis} ready={ready} recommendation={recommendation} trackEvent={trackEvent} eventSentRef={eventSentRef} />
+          <MortgageForm data={data} updateData={updateData} analysis={analysis} ready={ready} recommendation={recommendation} trackEvent={trackEvent} eventSentRef={eventSentRef} lead={lead} updateLead={updateLead} submitLead={submitLead} leadLoading={leadLoading} leadSent={leadSent} leadError={leadError} />
           <LiveResultPanel analysis={analysis} ready={ready} recommendation={recommendation} />
         </div>
       </div>
@@ -556,7 +571,7 @@ function CalculatorSection({ data, updateData, analysis, ready, recommendation, 
 /*  MORTGAGE FORM                                                       */
 /* ------------------------------------------------------------------ */
 
-function MortgageForm({ data, updateData, analysis, ready, recommendation, trackEvent, eventSentRef }) {
+function MortgageForm({ data, updateData, analysis, ready, recommendation, trackEvent, eventSentRef, lead, updateLead, submitLead, leadLoading, leadSent, leadError }) {
   const [step, setStep] = useState(0);
   const scrollYRef = useRef(0);
 
@@ -632,7 +647,22 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
         <ResultSummaryRow label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} warn={ready && analysis.mortgageOnlyRatio > 40} />
         <ResultSummaryRow label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
         <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-600">{ready ? recommendation : "השלימו נתונים לקבלת חיווי מלא."}</p>
-        <a href="#lead" className="block rounded-full bg-violet-700 px-5 py-3 text-center text-sm font-black text-white">רוצים להבין איך לשפר? דברו איתנו</a>
+        {leadSent ? (
+          <LeadSuccessState />
+        ) : (
+          <form onSubmit={submitLead} className="mt-1 space-y-3 rounded-2xl bg-white p-4">
+            <p className="text-sm font-black text-slate-700">רוצים לשפר את הסיכוי? נחזור אליכם</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <TextField label="שם מלא" value={lead.name} onChange={(v) => updateLead("name", v)} required />
+              <TextField label="טלפון" value={lead.phone} onChange={(v) => updateLead("phone", v)} placeholder="05X-XXXXXXX" inputMode="tel" required />
+            </div>
+            {leadError && <p role="alert" className="text-xs font-bold text-red-700">{leadError}</p>}
+            <button type="submit" disabled={leadLoading} className="w-full rounded-full bg-violet-700 py-3 text-sm font-black text-white disabled:opacity-70">
+              {leadLoading ? "שולח..." : "שלחו פרטים — נחזור אליכם"}
+            </button>
+            <p className="text-center text-xs font-bold text-slate-400">ללא עלות · ללא התחייבות</p>
+          </form>
+        )}
       </div>}
 
       <div className="mt-5 flex gap-3">
@@ -859,16 +889,40 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
             הפרטים שמסרתם עשויים להיות מועברים ליועץ משכנתאות עצמאי שיצור אתכם קשר.
           </p>
 
-          <button
-            type="submit"
-            disabled={leadLoading || leadSent}
-            className="mt-3 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה ✓" : "שלחו לבדיקה ראשונית"}
-          </button>
-          <p className="mt-3 text-center text-xs font-bold text-slate-500">
-            ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי
-          </p>
+          {leadSent ? (
+            <div className="mt-4 rounded-[28px] border border-emerald-200 bg-emerald-50 p-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-black text-emerald-800">הפנייה נשלחה בהצלחה</p>
+                  <p className="text-sm font-semibold text-emerald-700">יועץ יחזור אליכם בתוך יום עסקים.</p>
+                </div>
+              </div>
+              <p className="mt-4 text-sm font-black text-slate-700">בינתיים — קראו עוד:</p>
+              <div className="mt-2 flex flex-wrap gap-3">
+                <a href="/guides" className="inline-flex rounded-full border border-violet-200 bg-white px-4 py-2 text-sm font-black text-violet-700 shadow-sm hover:bg-violet-50">מדריכי משכנתא ←</a>
+                <a href="/blog" className="inline-flex rounded-full border border-violet-200 bg-white px-4 py-2 text-sm font-black text-violet-700 shadow-sm hover:bg-violet-50">בלוג משכנתאות ←</a>
+                <a href="/refinance-check" className="inline-flex rounded-full border border-violet-200 bg-white px-4 py-2 text-sm font-black text-violet-700 shadow-sm hover:bg-violet-50">בדיקת מחזור ←</a>
+              </div>
+            </div>
+          ) : (
+            <>
+              <button
+                type="submit"
+                disabled={leadLoading}
+                className="mt-3 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {leadLoading ? "שולח..." : "שלחו לבדיקה ראשונית"}
+              </button>
+              <p className="mt-3 text-center text-xs font-bold text-slate-500">
+                ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי
+              </p>
+            </>
+          )}
         </form>
       </div>
     </section>
@@ -1019,6 +1073,28 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
         </p>
       </div>
     </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  LEAD SUCCESS STATE                                                  */
+/* ------------------------------------------------------------------ */
+
+function LeadSuccessState() {
+  return (
+    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center">
+      <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100">
+        <svg viewBox="0 0 24 24" className="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+      <p className="mt-3 text-base font-black text-emerald-800">הפנייה נשלחה!</p>
+      <p className="mt-1 text-sm font-semibold text-emerald-700">יועץ יחזור אליכם בתוך יום עסקים.</p>
+      <div className="mt-4 flex flex-col gap-2">
+        <a href="/guides" className="text-sm font-black text-violet-700 hover:underline">קראו את מדריכי המשכנתא שלנו ←</a>
+        <a href="/blog" className="text-sm font-black text-violet-700 hover:underline">בלוג משכנתאות ←</a>
+      </div>
+    </div>
   );
 }
 
