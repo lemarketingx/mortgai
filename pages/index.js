@@ -364,7 +364,7 @@ export default function Home() {
   }
 
   async function submitLead(event) {
-    event.preventDefault();
+    if (event?.preventDefault) event.preventDefault();
     if (leadLoading || leadSent) return;
     trackEvent("lead_submit_started", {
       approvalEstimate: Math.round(analysis?.approval || 0),
@@ -652,18 +652,34 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
         {leadSent ? (
           <LeadSuccessState />
         ) : (
-          <form onSubmit={submitLead} className="mt-1 space-y-3 rounded-2xl bg-white p-4">
+          <div className="mt-1 space-y-3 rounded-2xl bg-white p-4">
             <p className="text-sm font-black text-slate-700">רוצים לשפר את הסיכוי? נחזור אליכם</p>
             <div className="grid gap-3 sm:grid-cols-2">
-              <TextField label="שם מלא" value={lead.name} onChange={(v) => updateLead("name", v)} required />
-              <TextField label="טלפון" value={lead.phone} onChange={(v) => updateLead("phone", v)} placeholder="05X-XXXXXXX" inputMode="tel" required />
+              <TextField label="שם מלא" value={lead.name} onChange={(v) => updateLead("name", v)} />
+              <TextField label="טלפון" value={lead.phone} onChange={(v) => updateLead("phone", v)} placeholder="05X-XXXXXXX" inputMode="tel" />
+              <TextField label="עיר" value={lead.city} onChange={(v) => updateLead("city", v)} />
+              <SelectField
+                label="סטטוס חוזה"
+                value={lead.contractStatus}
+                onChange={(v) => updateLead("contractStatus", v)}
+                options={[
+                  ["before", "לפני חוזה"],
+                  ["negotiation", "במו\"מ / טיוטות"],
+                  ["signed", "חוזה חתום"],
+                ]}
+              />
             </div>
             {leadError && <p role="alert" className="text-xs font-bold text-red-700">{leadError}</p>}
-            <button type="submit" disabled={leadLoading} className="w-full rounded-full bg-violet-700 py-3 text-sm font-black text-white disabled:opacity-70">
+            <button
+              type="button"
+              onClick={submitLead}
+              disabled={leadLoading}
+              className="w-full rounded-full bg-violet-700 py-3 text-sm font-black text-white disabled:opacity-70"
+            >
               {leadLoading ? "שולח..." : "שלחו פרטים — נחזור אליכם"}
             </button>
             <p className="text-center text-xs font-bold text-slate-400">ללא עלות · ללא התחייבות</p>
-          </form>
+          </div>
         )}
       </div>}
 
