@@ -3,8 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { KpiTile, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
-
-const FIXED_LEAD_PRICE = 249;
+import { FIXED_LEAD_PRICE } from "../../lib/config";
 
 const PURCHASE_STATUS_LABELS = {
   new_purchase: "רכישת דירה",

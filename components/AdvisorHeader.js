@@ -9,7 +9,8 @@ function getInitials(name, email) {
     if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     return parts[0].slice(0, 2).toUpperCase();
   }
-  if (email && email.trim()) return email.trim()[0].toUpperCase();
+  const trimmedEmail = email && email.trim();
+  if (trimmedEmail) return trimmedEmail[0].toUpperCase();
   return "P";
 }
 
@@ -41,7 +42,8 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
 
   const [initials, setInitials] = useState("P");
   const [bellOpen, setBellOpen] = useState(false);
-  const bellRef = useRef(null);
+  const desktopBellRef = useRef(null);
+  const mobileBellRef = useRef(null);
 
   // Load advisor profile from localStorage for initials
   useEffect(() => {
@@ -54,11 +56,13 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
     } catch {}
   }, []);
 
-  // Close bell dropdown on outside click
+  // Close bell dropdown on outside click (desktop + mobile bell live in different DOM nodes)
   useEffect(() => {
     if (!bellOpen) return;
     function onDown(e) {
-      if (bellRef.current && !bellRef.current.contains(e.target)) setBellOpen(false);
+      const inDesktop = desktopBellRef.current && desktopBellRef.current.contains(e.target);
+      const inMobile = mobileBellRef.current && mobileBellRef.current.contains(e.target);
+      if (!inDesktop && !inMobile) setBellOpen(false);
     }
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
@@ -71,6 +75,50 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
   }
 
   const bellCount = urgentItems.length;
+
+  function BellDropdown({ align = "center" }) {
+    const alignClass = align === "end"
+      ? "left-0"
+      : "left-1/2 -translate-x-1/2";
+    return (
+      <div className={`absolute top-full ${alignClass} mt-2 w-80 max-w-[88vw] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50`} dir="rtl">
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+          <span className="text-sm font-black text-slate-950">דורשים טיפול</span>
+          {bellCount > 0
+            ? <span className="text-xs font-black text-rose-600 bg-rose-50 rounded-full px-2 py-0.5">{bellCount} פעיל</span>
+            : <span className="text-xs font-bold text-slate-400">הכל תקין ✓</span>}
+        </div>
+        <div className="max-h-72 overflow-y-auto">
+          {urgentItems.length === 0 ? (
+            <div className="px-4 py-6 text-center text-sm font-bold text-slate-400">
+              אין פריטים דחופים כרגע
+            </div>
+          ) : (
+            urgentItems.slice(0, 8).map((item, i) => (
+              <Link
+                key={i}
+                href={item.href || `/advisor/lead/${item.lead?.id}`}
+                onClick={() => setBellOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0"
+              >
+                <span className={`h-2 w-2 rounded-full shrink-0 ${item.tag === "danger" ? "bg-rose-500" : item.tag === "warning" ? "bg-amber-400" : item.tag === "docs" ? "bg-amber-400" : "bg-sky-400"}`} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-black text-slate-900 truncate">{item.lead?.name || "—"}</p>
+                  <p className="text-xs font-bold text-slate-400">{item.reason}</p>
+                </div>
+                <span className="text-[11px] font-black text-slate-400 shrink-0">{item.detail}</span>
+              </Link>
+            ))
+          )}
+        </div>
+        <div className="px-4 py-2.5 border-t border-slate-100 text-center">
+          <Link href="/advisor/my-leads" onClick={() => setBellOpen(false)} className="text-xs font-black text-violet-600 hover:underline">
+            כל הלידים שלי →
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <header className="bg-slate-950/95 backdrop-blur-sm text-white sticky top-0 z-40 border-b border-white/[0.06]">
@@ -102,7 +150,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
           <div className="flex items-center gap-2.5 shrink-0">
 
             {/* Bell with badge */}
-            <div ref={bellRef} className="relative">
+            <div ref={desktopBellRef} className="relative">
               <button
                 onClick={() => setBellOpen((v) => !v)}
                 className="relative w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/[0.06] transition-colors"
@@ -116,44 +164,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
                 )}
               </button>
 
-              {bellOpen && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50" dir="rtl">
-                  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                    <span className="text-sm font-black text-slate-950">דורשים טיפול</span>
-                    {bellCount > 0
-                      ? <span className="text-xs font-black text-rose-600 bg-rose-50 rounded-full px-2 py-0.5">{bellCount} פעיל</span>
-                      : <span className="text-xs font-bold text-slate-400">הכל תקין ✓</span>}
-                  </div>
-                  <div className="max-h-72 overflow-y-auto">
-                    {urgentItems.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-sm font-bold text-slate-400">
-                        אין פריטים דחופים כרגע
-                      </div>
-                    ) : (
-                      urgentItems.slice(0, 8).map((item, i) => (
-                        <Link
-                          key={i}
-                          href={item.href || `/advisor/lead/${item.lead?.id}`}
-                          onClick={() => setBellOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0"
-                        >
-                          <span className={`h-2 w-2 rounded-full shrink-0 ${item.tag === "danger" ? "bg-rose-500" : item.tag === "warning" ? "bg-amber-400" : item.tag === "docs" ? "bg-amber-400" : "bg-sky-400"}`} />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-black text-slate-900 truncate">{item.lead?.name || "—"}</p>
-                            <p className="text-xs font-bold text-slate-400">{item.reason}</p>
-                          </div>
-                          <span className="text-[11px] font-black text-slate-400 shrink-0">{item.detail}</span>
-                        </Link>
-                      ))
-                    )}
-                  </div>
-                  <div className="px-4 py-2.5 border-t border-slate-100 text-center">
-                    <Link href="/advisor/my-leads" onClick={() => setBellOpen(false)} className="text-xs font-black text-violet-600 hover:underline">
-                      כל הלידים שלי →
-                    </Link>
-                  </div>
-                </div>
-              )}
+              {bellOpen && <BellDropdown align="center" />}
             </div>
 
             {/* Avatar → profile */}
@@ -184,7 +195,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
           </Link>
           <div className="flex items-center gap-2">
             {/* Mobile bell */}
-            <div ref={null} className="relative">
+            <div ref={mobileBellRef} className="relative">
               <button
                 onClick={() => setBellOpen((v) => !v)}
                 className="relative w-6 h-6 flex items-center justify-center rounded-lg text-slate-500"
@@ -197,6 +208,8 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
                   </span>
                 )}
               </button>
+
+              {bellOpen && <BellDropdown align="end" />}
             </div>
             <Link href="/advisor/profile" className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white select-none ${active === "/advisor/profile" ? "bg-violet-500" : "bg-violet-600"}`}>
               {initials}

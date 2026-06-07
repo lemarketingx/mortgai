@@ -48,7 +48,7 @@ export default function AdvisorRegister() {
     if (loading) return;
 
     if (form.fullName.trim().length < 2) { setError("יש להזין שם מלא (לפחות 2 תווים)."); return; }
-    if (form.phone.trim().length < 9) { setError("יש להזין מספר טלפון תקין."); return; }
+    if (form.phone.replace(/[^\d]/g, "").length < 9) { setError("יש להזין מספר טלפון תקין (ספרות בלבד)."); return; }
     if (!form.email.trim() || !form.email.includes("@")) { setError("יש להזין כתובת אימייל תקינה."); return; }
     if (form.password.length < 8) { setError("הסיסמה חייבת להכיל לפחות 8 תווים."); return; }
     if (!form.terms) { setError("יש לאשר את תנאי השימוש."); return; }

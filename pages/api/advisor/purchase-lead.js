@@ -1,7 +1,6 @@
 import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
-
-const FIXED_LEAD_PRICE = 249;
+import { FIXED_LEAD_PRICE } from "../../../lib/config";
 
 function apiError(res, status, code, message, details = "") {
   return res.status(status).json({ error: code, message, ...(details ? { details } : {}) });

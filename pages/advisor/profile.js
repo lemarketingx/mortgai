@@ -20,12 +20,13 @@ function loadProfile() {
 }
 
 function saveProfile(p) {
-  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch {}
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); return true; } catch { return false; }
 }
 
 export default function AdvisorProfile() {
   const [profile, setProfile] = useState({});
   const [savedFlash, setSavedFlash] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -46,9 +47,16 @@ export default function AdvisorProfile() {
   }
 
   function handleSave() {
-    saveProfile(profile);
-    setSavedFlash(true);
-    setTimeout(() => setSavedFlash(false), 2500);
+    const ok = saveProfile(profile);
+    if (ok) {
+      setSaveError(false);
+      setSavedFlash(true);
+      setTimeout(() => setSavedFlash(false), 2500);
+    } else {
+      setSavedFlash(false);
+      setSaveError(true);
+      setTimeout(() => setSaveError(false), 2500);
+    }
   }
 
   // Skeleton during SSR / hydration
@@ -85,6 +93,7 @@ export default function AdvisorProfile() {
             </Link>
             <h1 className="text-xl font-black text-slate-950 flex-1">פרופיל יועץ</h1>
             {savedFlash && <span className="text-xs font-black text-emerald-600">נשמר ✓</span>}
+            {saveError && <span className="text-xs font-black text-red-600">שמירה נכשלה — נסו שוב</span>}
           </div>
 
           {/* Privacy notice */}

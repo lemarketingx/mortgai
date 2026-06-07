@@ -1,6 +1,7 @@
 import { supabaseSignIn } from "../../../lib/supabaseAuth";
 import { LeadStoreError, readAdvisors } from "../../../lib/leadsStore";
 import { createAdvisorSessionCookie, clearAdvisorSessionCookie } from "../../../lib/advisorAuth";
+import { checkRateLimit, getClientIp, recordRateLimitHit } from "../../../lib/rateLimit";
 
 function apiError(res, status, code, message) {
   return res.status(status).json({ error: code, message });
@@ -14,17 +15,26 @@ export default async function handler(req, res) {
 
   if (req.method !== "POST") return apiError(res, 405, "METHOD_NOT_ALLOWED", "Method not allowed");
 
+  const ip = getClientIp(req);
+  const rateLimit = checkRateLimit(ip, { limit: 8, windowMs: 15 * 60 * 1000 });
+  if (!rateLimit.allowed) {
+    res.setHeader("Retry-After", String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)));
+    return apiError(res, 429, "TOO_MANY_REQUESTS", "יותר מדי ניסיונות התחברות. נסו שוב בעוד כמה דקות.");
+  }
+
   const body = typeof req.body === "object" ? req.body : {};
   const email = String(body.email || "").trim().toLowerCase();
   const password = String(body.password || "");
 
   if (!email || !password) {
+    recordRateLimitHit(ip);
     return apiError(res, 400, "MISSING_CREDENTIALS", "אימייל וסיסמה הם שדות חובה");
   }
 
   // Authenticate against Supabase Auth
   const { error: authError, user: authUser } = await supabaseSignIn(email, password);
   if (authError || !authUser?.id) {
+    recordRateLimitHit(ip);
     return apiError(res, 401, "INVALID_CREDENTIALS", "אימייל או סיסמה שגויים");
   }
 

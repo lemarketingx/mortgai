@@ -1,6 +1,7 @@
 import { createLead } from "../../lib/leadsStore";
 import { publicLeadSchema, validationErrorPayload } from "../../lib/validation";
 import { checkRateLimit, getClientIp, recordRateLimitHit } from "../../lib/rateLimit";
+import { notifyNewLead } from "../../lib/leadNotifications";
 
 function normalizeLeadFields(raw = {}) {
   const lead = { ...raw };
@@ -126,6 +127,13 @@ export default async function handler(req, res) {
       details: error?.details || "",
       stack: error?.stack || "",
       leadKeys: Object.keys(req.body?.lead || {}),
+    });
+  }
+
+  if (savedLead) {
+    // Fire-and-forget — never block or fail the lead submission on email delivery
+    notifyNewLead(savedLead).catch((error) => {
+      console.warn("[lead-api] new-lead notification failed", error?.message || error);
     });
   }
 

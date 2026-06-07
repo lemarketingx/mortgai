@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { supabaseAdminCreateUser } from "../../../lib/supabaseAuth";
 import { createAdvisor, readAdvisors } from "../../../lib/leadsStore";
 import { createAdvisorSessionCookie } from "../../../lib/advisorAuth";
+import { checkRateLimit, getClientIp, recordRateLimitHit } from "../../../lib/rateLimit";
 
 function err(res, status, code, message) {
   return res.status(status).json({ error: code, message });
@@ -9,6 +10,14 @@ function err(res, status, code, message) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return err(res, 405, "METHOD_NOT_ALLOWED", "Method not allowed");
+
+  const ip = getClientIp(req);
+  const rateLimit = checkRateLimit(ip, { limit: 6, windowMs: 60 * 60 * 1000 });
+  if (!rateLimit.allowed) {
+    res.setHeader("Retry-After", String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)));
+    return err(res, 429, "TOO_MANY_REQUESTS", "יותר מדי ניסיונות הרשמה. נסו שוב מאוחר יותר.");
+  }
+  recordRateLimitHit(ip);
 
   const body = req.body || {};
   const fullName = String(body.fullName || "").trim();

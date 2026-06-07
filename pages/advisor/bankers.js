@@ -1,6 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
 import { BANK_LIST } from "../../lib/bankerDirectory";
 
@@ -132,6 +132,7 @@ export default function BankersPage() {
   const [filterBank, setFilterBank]       = useState("");
   const [showInactive, setShowInactive]   = useState(false);
   const [deletingId, setDeletingId]       = useState(null);
+  const flashTimerRef = useRef(null);
 
   useEffect(() => {
     loadBankers();
@@ -152,8 +153,9 @@ export default function BankersPage() {
   }
 
   function flash(text, ok = true) {
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
     setMsg({ text, ok });
-    setTimeout(() => setMsg({ text: "", ok: true }), 3000);
+    flashTimerRef.current = setTimeout(() => setMsg({ text: "", ok: true }), 3000);
   }
 
   function updateForm(key, value) {
@@ -187,6 +189,7 @@ export default function BankersPage() {
     e.preventDefault();
     if (!form.bank_name.trim()) { flash("יש לבחור בנק", false); return; }
     if (!form.banker_name.trim()) { flash("יש להזין שם בנקאי", false); return; }
+    if (form.email.trim() && !form.email.includes("@")) { flash("כתובת אימייל לא תקינה", false); return; }
     setSaving(true);
     try {
       if (editingId) {
