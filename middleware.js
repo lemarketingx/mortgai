@@ -21,7 +21,9 @@ async function deriveToken(password) {
 }
 
 export async function middleware(request) {
-  const lockEnabled = process.env.SITE_LOCK_ENABLED === "true";
+  const lockEnabled =
+    process.env.SITE_LOCK_ENABLED === "true" ||
+    process.env.SITE_LOCK_ENABLE === "true";
   if (!lockEnabled) return NextResponse.next();
 
   const { pathname } = request.nextUrl;
