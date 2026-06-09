@@ -1,11 +1,20 @@
 import Head from "next/head";
 import Script from "next/script";
+import { useRouter } from "next/router";
 import ErrorBoundary from "../components/ErrorBoundary";
+import BetaBanner from "../components/BetaBanner";
 import "../styles/globals.css";
 
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
 
+const PRIVATE_PREFIXES = ["/advisor", "/admin", "/client"];
+
 export default function App({ Component, pageProps }) {
+  const router = useRouter();
+  const showBanner = !PRIVATE_PREFIXES.some((prefix) =>
+    router.pathname.startsWith(prefix)
+  );
+
   return (
     <ErrorBoundary>
       <Head>
@@ -43,6 +52,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         </>
       ) : null}
 
+      {showBanner && <BetaBanner />}
       <Component {...pageProps} />
     </ErrorBoundary>
   );
