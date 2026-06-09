@@ -1,6 +1,7 @@
 import Head from "next/head";
 import Script from "next/script";
 import { useRouter } from "next/router";
+import { Analytics } from "@vercel/analytics/next";
 import ErrorBoundary from "../components/ErrorBoundary";
 import BetaBanner from "../components/BetaBanner";
 import "../styles/globals.css";
@@ -54,6 +55,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
       {showBanner && <BetaBanner />}
       <Component {...pageProps} />
+      <Analytics />
     </ErrorBoundary>
   );
 }
