@@ -1,6 +1,7 @@
 import { createLead } from "../../lib/leadsStore";
 import { publicLeadSchema, validationErrorPayload } from "../../lib/validation";
 import { checkRateLimit, getClientIp, recordRateLimitHit } from "../../lib/rateLimit";
+import { sendLeadNotification } from "../../lib/email";
 
 function normalizeLeadFields(raw = {}) {
   const lead = { ...raw };
@@ -157,6 +158,11 @@ export default async function handler(req, res) {
       localOnly,
     });
   }
+
+  // Fire-and-forget email notification — never block or fail the response
+  sendLeadNotification(savedLead).catch((err) =>
+    console.error("[lead-api] email notification threw", err?.message || err)
+  );
 
   return res.status(200).json({ ok: true, success: true, lead: savedLead, localOnly });
 }
