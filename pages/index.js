@@ -706,7 +706,9 @@ function LiveResultPanel({ analysis, ready, recommendation }) {
       >
         רוצים לשפר את הסיכוי? דברו איתנו
       </a>
-      <p className="mt-3 text-center text-xs font-bold text-violet-100">אומדן ראשוני בלבד · לא אישור בנקאי · ללא התחייבות</p>
+      <p className="mt-3 text-center text-xs font-bold text-violet-200">
+        התוצאה היא אומדן ראשוני בלבד ואינה מהווה אישור בנקאי או ייעוץ פיננסי מחייב.
+      </p>
     </aside>
   );
 }
