@@ -41,12 +41,12 @@ const initialData = {
   price: "",
   equity: "",
   mortgageAmount: "",
-  annualRate: "",
-  indexation: "unlinked",
-  repaymentMethod: "spitzer",
   years: 30,
   propertyType: "single",
   credit: "clean",
+  hasExistingProperty: "no",
+  existingPropertyValue: "",
+  existingMortgageBalance: "",
 };
 
 const fallbackRates = {
@@ -82,14 +82,9 @@ const creditOptions = [
   ["negative", "BDI שלילי"],
 ];
 
-const indexationOptions = [
-  ["unlinked", "לא צמוד למדד"],
-  ["linked", "צמוד למדד"],
-];
-
-const repaymentOptions = [
-  ["spitzer", "לוח שפיצר - החזר קבוע"],
-  ["equalPrincipal", "קרן שווה - החזר יורד"],
+const ownershipOptions = [
+  ["no", "לא"],
+  ["yes", "כן"],
 ];
 
 function toNumeric(value) {
@@ -409,6 +404,9 @@ export default function Home() {
       requestedContactTime: lead.requestedContactTime || "",
       creditStatus: lead.creditStatus || "",
       notes: lead.notes?.trim() || "",
+      hasExistingProperty: data.hasExistingProperty || "no",
+      existingPropertyValue: toNumeric(data.existingPropertyValue) || 0,
+      existingMortgageBalance: toNumeric(data.existingMortgageBalance) || 0,
     };
     const { leadQuality, leadPriority, leadScore } = evaluateLeadProfile(leadPayload);
     leadPayload.leadQuality = leadQuality;
@@ -628,18 +626,38 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
 
       {step === 1 && <div className="grid gap-4 sm:grid-cols-2">
         <MoneyField label="הכנסה חודשית נטו" value={data.income} onChange={(value) => updateData("income", value)} />
-        <MoneyField label="הוצאות קבועות" value={data.expenses} onChange={(value) => updateData("expenses", value)} />
+        <MoneyField
+          label="התחייבויות חודשיות"
+          tooltip="הלוואות, מימון רכב, מזונות, כרטיסי אשראי בתשלומים או כל התחייבות חודשית קבועה."
+          value={data.expenses}
+          onChange={(value) => updateData("expenses", value)}
+        />
         <MoneyField label="הלוואות קיימות היום" value={data.loans} onChange={(value) => updateData("loans", value)} />
-        <MoneyField label="הלוואות שייסגרו עם הרכישה" value={data.loansToClose} onChange={(value) => updateData("loansToClose", value)} />
+        <MoneyField
+          label="הלוואות שייסגרו עם הרכישה"
+          tooltip="האם קיימות הלוואות שמתוכננות להיסגר במסגרת העסקה? לדוגמה: הלוואת רכב, הלוואה לכל מטרה, מינוס או התחייבויות אחרות שייסגרו מכספי המכירה או מהמשכנתא החדשה."
+          value={data.loansToClose}
+          onChange={(value) => updateData("loansToClose", value)}
+        />
         <MoneyField label="החזר דיור נוכחי" helper="שכירות או משכנתא שאתם משלמים היום" value={data.currentHousing} onChange={(value) => updateData("currentHousing", value)} className="sm:col-span-2" />
       </div>}
 
       {step === 2 && <div className="grid gap-4 sm:grid-cols-2">
         <NumberField label="תקופה בשנים" min="5" max="30" value={data.years} onChange={(value) => updateData("years", value)} />
-        <RateField label="ריבית שנתית משוערת" value={data.annualRate} onChange={(value) => updateData("annualRate", value)} />
         <SelectField label="סטטוס אשראי" value={data.credit} onChange={(value) => updateData("credit", value)} options={creditOptions} />
-        <SelectField label="סוג הצמדה" value={data.indexation} onChange={(value) => updateData("indexation", value)} options={indexationOptions} />
-        <SelectField label="שיטת החזר" value={data.repaymentMethod} onChange={(value) => updateData("repaymentMethod", value)} options={repaymentOptions} className="sm:col-span-2" />
+        <SelectField
+          label="האם בבעלותכם נכס כיום?"
+          value={data.hasExistingProperty}
+          onChange={(value) => updateData("hasExistingProperty", value)}
+          options={ownershipOptions}
+          className="sm:col-span-2"
+        />
+        {data.hasExistingProperty === "yes" && (
+          <>
+            <MoneyField label="שווי נכס קיים" value={data.existingPropertyValue} onChange={(value) => updateData("existingPropertyValue", value)} />
+            <MoneyField label="יתרת משכנתא קיימת" value={data.existingMortgageBalance} onChange={(value) => updateData("existingMortgageBalance", value)} />
+          </>
+        )}
       </div>}
 
       {step === 3 && <div className="space-y-3 rounded-2xl bg-slate-50 p-4">
@@ -1134,12 +1152,40 @@ function DetailRow({ label, value }) {
 /*  FORM FIELD COMPONENTS                                               */
 /* ------------------------------------------------------------------ */
 
-function MoneyField({ label, value, onChange, helper, className = "", contrastMode = "light" }) {
+function InfoTooltip({ text }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-flex align-middle">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        onBlur={() => setOpen(false)}
+        aria-label="מידע נוסף"
+        className="mr-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-200 text-[10px] font-black leading-none text-slate-600 hover:bg-violet-200 hover:text-violet-800"
+      >
+        i
+      </button>
+      {open && (
+        <span
+          role="tooltip"
+          className="absolute bottom-full right-0 z-10 mb-2 w-56 rounded-xl bg-slate-900 p-3 text-xs font-semibold leading-5 text-white shadow-xl"
+        >
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function MoneyField({ label, value, onChange, helper, tooltip, className = "", contrastMode = "light" }) {
   const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   const isDark = contrastMode === "dark";
   return (
     <label className={`block ${className}`}>
-      <span className={`text-sm font-black ${isDark ? "text-violet-50" : "text-slate-700"}`} id={`${fieldId}-label`}>{label}</span>
+      <span className={`text-sm font-black ${isDark ? "text-violet-50" : "text-slate-700"}`} id={`${fieldId}-label`}>
+        {label}
+        {tooltip && <InfoTooltip text={tooltip} />}
+      </span>
       <span className="relative mt-2 block">
         <input
           id={fieldId}
@@ -1197,26 +1243,6 @@ function NumberField({ label, value, onChange, min, max }) {
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
       />
-    </label>
-  );
-}
-
-function RateField({ label, value, onChange }) {
-  const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
-  return (
-    <label className="block">
-      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
-      <span className="relative mt-2 block">
-        <input
-          id={fieldId}
-          aria-labelledby={`${fieldId}-label`}
-          inputMode="decimal"
-          value={value}
-          onChange={(event) => onChange(cleanNumber(event.target.value, true))}
-          className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 sm:h-14"
-        />
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">%</span>
-      </span>
     </label>
   );
 }
