@@ -41,7 +41,7 @@ const initialData = {
   equity: "",
   mortgageAmount: "",
   years: 30,
-  propertyType: "single",
+  propertyType: "first_home",
   credit: "clean",
   hasExistingProperty: "no",
   existingPropertyValue: "",
@@ -71,10 +71,28 @@ const wizardSteps = [
 ];
 
 const propertyOptions = [
-  ["single", "דירה יחידה - לרוב עד כ-75% מימון"],
-  ["replacement", "משפרי דיור - לרוב עד כ-70% מימון"],
-  ["investment", "דירה להשקעה - לרוב עד כ-50% מימון"],
+  ["first_home", "רכישת דירה ראשונה / יחידה"],
+  ["upgrade", "שיפור דיור"],
+  ["investment", "דירה להשקעה"],
+  ["refinance", "מחזור משכנתא"],
+  ["any_purpose", "לכל מטרה"],
 ];
+
+const SCENARIO_TOOLTIP = [
+  "שיעור המימון המקסימלי (LTV) משתנה לפי סוג העסקה:",
+  "רכישת דירה ראשונה / יחידה - עד כ-75% מימון",
+  "שיפור דיור - עד כ-70% מימון",
+  "דירה להשקעה - עד כ-50% מימון",
+  "מחזור משכנתא ולכל מטרה - נדרש בדיקה פרטנית מול יועץ",
+];
+
+const PROPERTY_TYPE_TO_PURCHASE_STATUS = {
+  first_home: "first_apartment",
+  upgrade: "upgrader",
+  investment: "investment",
+  refinance: "refinance",
+  any_purpose: "general",
+};
 
 const creditOptions = [
   ["clean", "תקין"],
@@ -389,7 +407,11 @@ export default function Home() {
       phone,
       source: "homepage",
       mortgageAmount: cleanNumber(lead.mortgageAmount) || String(analysis.mortgage || ""),
-      purchaseStatus: lead.purchaseStatus || data.propertyType,
+      purchaseStatus: lead.purchaseStatus || PROPERTY_TYPE_TO_PURCHASE_STATUS[data.propertyType] || "general",
+      mortgageScenario: analysis.scenarioLabel || "",
+      scenarioMaxLtv: analysis.scenarioMaxLtv ?? "",
+      actualLtv: ready ? Math.round(analysis.ltv || 0) : 0,
+      requiredEquityGap: ready ? Math.round(analysis.missingEquity || 0) : 0,
       approval: Math.round(analysis.approval || 0),
       mainIssue: ready ? analysis.mainIssue : "טרם הוזנו נתונים מלאים",
       createdAt: new Date().toISOString(),
@@ -620,10 +642,32 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
       </div>
 
       {step === 0 && <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField label="סוג עסקה" value={data.propertyType} onChange={(value) => updateData("propertyType", value)} options={propertyOptions} />
+        <SelectField
+          label="סוג הבדיקה"
+          value={data.propertyType}
+          onChange={(value) => updateData("propertyType", value)}
+          options={propertyOptions}
+          tooltip={SCENARIO_TOOLTIP}
+          className="sm:col-span-2"
+        />
+        {data.propertyType === "investment" && (
+          <p className="sm:col-span-2 rounded-2xl bg-violet-50 p-3 text-sm font-bold text-violet-800">
+            ברכישת דירה להשקעה שיעור המימון המקסימלי בדרך כלל נמוך יותר ועומד עד 50% משווי הנכס.
+          </p>
+        )}
+        {(data.propertyType === "refinance" || data.propertyType === "any_purpose") && (
+          <p className="sm:col-span-2 rounded-2xl bg-amber-50 p-3 text-sm font-bold text-amber-800">
+            נדרש בדיקה פרטנית מול יועץ
+          </p>
+        )}
         <MoneyField label="מחיר הנכס" value={data.price} onChange={(value) => updateData("price", value)} />
         <MoneyField label="הון עצמי" value={data.equity} onChange={(value) => updateData("equity", value)} />
         <MoneyField label="סכום משכנתא" helper="אפשר להשאיר ריק — נחושב אוטומטית לפי מחיר פחות הון עצמי" value={data.mortgageAmount} onChange={(value) => updateData("mortgageAmount", value)} />
+        {ready && analysis.ltvLimitExceeded && (
+          <p className="sm:col-span-2 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">
+            סכום המשכנתא המבוקש גבוה משיעור המימון המקובל לסוג העסקה שבחרתם.
+          </p>
+        )}
       </div>}
 
       {step === 1 && <div className="grid gap-4 sm:grid-cols-2">
@@ -681,10 +725,16 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
 
       {step === 3 && <div className="space-y-3 rounded-2xl bg-slate-50 p-4">
         <p className="text-sm font-black text-slate-700">אומדן ראשוני — לא מחייב ולא אישור בנקאי</p>
+        <ResultSummaryRow label="סוג הבדיקה" value={analysis.scenarioLabel} />
         <ResultSummaryRow label="אומדן סיכוי אישור" value={ready ? `${Math.round(analysis.approval)}%` : "--"} highlight={ready && analysis.approval >= 65} />
         <ResultSummaryRow label="החזר חודשי משוער" value={displayMoney(analysis.monthly, ready)} />
         <ResultSummaryRow label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} warn={ready && analysis.mortgageOnlyRatio > 40} />
         <ResultSummaryRow label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
+        <ResultSummaryRow label="שיעור מימון מקסימלי לסוג העסקה" value={analysis.scenarioMaxLtv ? `${analysis.scenarioMaxLtv}%` : "נדרש בדיקה פרטנית מול יועץ"} />
+        <ResultSummaryRow label="שיעור מימון בפועל (LTV)" value={displayPercent(analysis.ltv, ready)} warn={ready && analysis.ltvLimitExceeded} />
+        {ready && analysis.missingEquity > 0 && (
+          <ResultSummaryRow label="פער בהון עצמי נדרש" value={formatILS(analysis.missingEquity)} warn />
+        )}
         <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-600">{ready ? recommendation : "השלימו נתונים לקבלת חיווי מלא."}</p>
         <a href="#lead" className="block rounded-full bg-violet-700 px-5 py-3 text-center text-sm font-black text-white">רוצים להבין איך לשפר? דברו איתנו</a>
       </div>}
@@ -1277,11 +1327,14 @@ function NumberField({ label, value, onChange, min, max }) {
   );
 }
 
-function SelectField({ label, value, onChange, options, className = "" }) {
+function SelectField({ label, value, onChange, options, className = "", tooltip }) {
   const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   return (
     <label className={`block ${className}`}>
-      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
+      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>
+        {label}
+        {tooltip && <InfoTooltip text={tooltip} />}
+      </span>
       <select
         id={fieldId}
         aria-labelledby={`${fieldId}-label`}
