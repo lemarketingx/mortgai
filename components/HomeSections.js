@@ -140,7 +140,7 @@ export function Header({ onCtaClick }) {
           aria-label="מעבר לבדיקת התאמה"
           className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800"
         >
-          בדיקת התאמה עכשיו
+          בדוק זכאות ראשונית
         </a>
       </div>
     </header>
@@ -199,17 +199,17 @@ export function Hero({ onCtaClick }) {
             <a
               href="#eligibility-check"
               onClick={() => onCtaClick?.("hero_primary")}
-              aria-label="בדיקת התאמה למשכנתא"
+              aria-label="בדיקת זכאות ראשונית למשכנתא"
               className="rounded-full bg-violet-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-violet-800"
             >
-              בדיקת התאמה עכשיו
+              קבל בדיקת משכנתא
             </a>
             <a
-              href="#refinance"
-              onClick={() => onCtaClick?.("hero_refinance")}
+              href="#lead"
+              onClick={() => onCtaClick?.("hero_talk")}
               className="rounded-full border border-violet-200 bg-violet-50 px-8 py-4 text-center text-base font-black text-violet-800 transition hover:bg-violet-100"
             >
-              בדיקת מחזור משכנתא
+              דברו איתי
             </a>
           </div>
           <p className="mt-5 text-sm font-bold text-slate-500">
@@ -287,7 +287,7 @@ export function ProblemSection() {
           href="#eligibility-check"
           className="mt-5 inline-block rounded-full bg-violet-700 px-8 py-3.5 font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.25)] transition hover:bg-violet-800"
         >
-          בדיקת התאמה עכשיו
+          בדוק זכאות ראשונית
         </a>
       </div>
     </section>

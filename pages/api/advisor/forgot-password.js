@@ -8,7 +8,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "INVALID_EMAIL", message: "יש להזין כתובת אימייל תקינה" });
   }
 
+  const appUrl = String(process.env.NEXT_PUBLIC_APP_URL || "").trim();
+  const redirectTo = appUrl ? `${appUrl}/advisor/reset-password` : undefined;
+
   // Supabase handles delivery; always return success to prevent email enumeration
-  await supabasePasswordReset(email);
+  await supabasePasswordReset(email, redirectTo);
   return res.status(200).json({ ok: true });
 }

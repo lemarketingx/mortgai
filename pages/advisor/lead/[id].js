@@ -962,6 +962,11 @@ export default function LeadDetailPage() {
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-black border border-violet-200">
               📎 קישור מסמכים
             </button>
+            {/* PDF report — coming soon */}
+            <button type="button" disabled title="הורדת דוח PDF — בקרוב"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-400 text-xs font-black border border-slate-200 cursor-not-allowed select-none">
+              📄 דוח PDF — בקרוב
+            </button>
           </div>
         </div>
 
