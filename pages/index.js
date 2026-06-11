@@ -35,18 +35,19 @@ const PROGRESS_BAR_STYLE = { willChange: "width" };
 const initialData = {
   income: "",
   expenses: "",
-  loans: "",
-  loansToClose: "",
+  householdExpenses: "",
   currentHousing: "",
   price: "",
   equity: "",
   mortgageAmount: "",
-  annualRate: "",
-  indexation: "unlinked",
-  repaymentMethod: "spitzer",
   years: 30,
-  propertyType: "single",
+  propertyType: "first_home",
   credit: "clean",
+  hasExistingProperty: "no",
+  existingPropertyValue: "",
+  existingMortgageBalance: "",
+  obligationsToClose: "no",
+  obligationsToCloseAmount: "",
 };
 
 const fallbackRates = {
@@ -70,10 +71,28 @@ const wizardSteps = [
 ];
 
 const propertyOptions = [
-  ["single", "דירה יחידה - לרוב עד כ-75% מימון"],
-  ["replacement", "משפרי דיור - לרוב עד כ-70% מימון"],
-  ["investment", "דירה להשקעה - לרוב עד כ-50% מימון"],
+  ["first_home", "רכישת דירה ראשונה / יחידה"],
+  ["upgrade", "שיפור דיור"],
+  ["investment", "דירה להשקעה"],
+  ["refinance", "מחזור משכנתא"],
+  ["any_purpose", "לכל מטרה"],
 ];
+
+const SCENARIO_TOOLTIP = [
+  "שיעור המימון המקסימלי (LTV) משתנה לפי סוג העסקה:",
+  "רכישת דירה ראשונה / יחידה - עד כ-75% מימון",
+  "שיפור דיור - עד כ-70% מימון",
+  "דירה להשקעה - עד כ-50% מימון",
+  "מחזור משכנתא ולכל מטרה - נדרש בדיקה פרטנית מול יועץ",
+];
+
+const PROPERTY_TYPE_TO_PURCHASE_STATUS = {
+  first_home: "first_apartment",
+  upgrade: "upgrader",
+  investment: "investment",
+  refinance: "refinance",
+  any_purpose: "general",
+};
 
 const creditOptions = [
   ["clean", "תקין"],
@@ -82,14 +101,9 @@ const creditOptions = [
   ["negative", "BDI שלילי"],
 ];
 
-const indexationOptions = [
-  ["unlinked", "לא צמוד למדד"],
-  ["linked", "צמוד למדד"],
-];
-
-const repaymentOptions = [
-  ["spitzer", "לוח שפיצר - החזר קבוע"],
-  ["equalPrincipal", "קרן שווה - החזר יורד"],
+const ownershipOptions = [
+  ["no", "לא"],
+  ["yes", "כן"],
 ];
 
 function toNumeric(value) {
@@ -333,7 +347,7 @@ export default function Home() {
       equityAmount: toNumeric(bottomLead.equityAmount) || toNumeric(data?.equity),
       mortgageAmount: cleanNumber(bottomLead.mortgageAmount) || "",
       monthlyIncome: toNumeric(bottomLead.monthlyIncome) || toNumeric(data?.income),
-      debtLevel: toNumeric(bottomLead.debtLevel) || toNumeric(data?.loans) || toNumeric(data?.expenses) || 0,
+      debtLevel: toNumeric(bottomLead.debtLevel) || toNumeric(data?.expenses) || 0,
       purchaseStatus: bottomLead.purchaseStatus || "",
       hasExistingMortgage: bottomLead.hasExistingMortgage || "",
       requestedContactTime: bottomLead.requestedContactTime || "",
@@ -393,7 +407,11 @@ export default function Home() {
       phone,
       source: "homepage",
       mortgageAmount: cleanNumber(lead.mortgageAmount) || String(analysis.mortgage || ""),
-      purchaseStatus: lead.purchaseStatus || data.propertyType,
+      purchaseStatus: lead.purchaseStatus || PROPERTY_TYPE_TO_PURCHASE_STATUS[data.propertyType] || "general",
+      mortgageScenario: analysis.scenarioLabel || "",
+      scenarioMaxLtv: analysis.scenarioMaxLtv ?? "",
+      actualLtv: ready ? Math.round(analysis.ltv || 0) : 0,
+      requiredEquityGap: ready ? Math.round(analysis.missingEquity || 0) : 0,
       approval: Math.round(analysis.approval || 0),
       mainIssue: ready ? analysis.mainIssue : "טרם הוזנו נתונים מלאים",
       createdAt: new Date().toISOString(),
@@ -402,13 +420,17 @@ export default function Home() {
       propertyPrice: toNumeric(lead.propertyPrice) || toNumeric(data?.price),
       equityAmount: toNumeric(lead.equityAmount) || toNumeric(data?.equity),
       monthlyIncome: toNumeric(lead.monthlyIncome) || toNumeric(data?.income),
-      debtLevel: toNumeric(lead.debtLevel) || toNumeric(data?.loans) || toNumeric(data?.expenses) || 0,
+      debtLevel: toNumeric(lead.debtLevel) || toNumeric(data?.expenses) || 0,
       employmentStatus: lead.employmentStatus || "",
       contractStatus: lead.contractStatus || "",
       hasExistingMortgage: lead.hasExistingMortgage || "",
       requestedContactTime: lead.requestedContactTime || "",
       creditStatus: lead.creditStatus || "",
       notes: lead.notes?.trim() || "",
+      hasExistingProperty: data.hasExistingProperty || "no",
+      existingPropertyValue: toNumeric(data.existingPropertyValue) || 0,
+      existingMortgageBalance: toNumeric(data.existingMortgageBalance) || 0,
+      householdExpenses: toNumeric(data.householdExpenses) || 0,
     };
     const { leadQuality, leadPriority, leadScore } = evaluateLeadProfile(leadPayload);
     leadPayload.leadQuality = leadQuality;
@@ -620,34 +642,99 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
       </div>
 
       {step === 0 && <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField label="סוג עסקה" value={data.propertyType} onChange={(value) => updateData("propertyType", value)} options={propertyOptions} />
+        <SelectField
+          label="סוג הבדיקה"
+          value={data.propertyType}
+          onChange={(value) => updateData("propertyType", value)}
+          options={propertyOptions}
+          tooltip={SCENARIO_TOOLTIP}
+          className="sm:col-span-2"
+        />
+        {data.propertyType === "investment" && (
+          <p className="sm:col-span-2 rounded-2xl bg-violet-50 p-3 text-sm font-bold text-violet-800">
+            ברכישת דירה להשקעה שיעור המימון המקסימלי בדרך כלל נמוך יותר ועומד עד 50% משווי הנכס.
+          </p>
+        )}
+        {(data.propertyType === "refinance" || data.propertyType === "any_purpose") && (
+          <p className="sm:col-span-2 rounded-2xl bg-amber-50 p-3 text-sm font-bold text-amber-800">
+            נדרש בדיקה פרטנית מול יועץ
+          </p>
+        )}
         <MoneyField label="מחיר הנכס" value={data.price} onChange={(value) => updateData("price", value)} />
         <MoneyField label="הון עצמי" value={data.equity} onChange={(value) => updateData("equity", value)} />
         <MoneyField label="סכום משכנתא" helper="אפשר להשאיר ריק — נחושב אוטומטית לפי מחיר פחות הון עצמי" value={data.mortgageAmount} onChange={(value) => updateData("mortgageAmount", value)} />
+        {ready && analysis.ltvLimitExceeded && (
+          <p className="sm:col-span-2 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">
+            סכום המשכנתא המבוקש גבוה משיעור המימון המקובל לסוג העסקה שבחרתם.
+          </p>
+        )}
       </div>}
 
       {step === 1 && <div className="grid gap-4 sm:grid-cols-2">
         <MoneyField label="הכנסה חודשית נטו" value={data.income} onChange={(value) => updateData("income", value)} />
-        <MoneyField label="הוצאות קבועות" value={data.expenses} onChange={(value) => updateData("expenses", value)} />
-        <MoneyField label="הלוואות קיימות היום" value={data.loans} onChange={(value) => updateData("loans", value)} />
-        <MoneyField label="הלוואות שייסגרו עם הרכישה" value={data.loansToClose} onChange={(value) => updateData("loansToClose", value)} />
-        <MoneyField label="החזר דיור נוכחי" helper="שכירות או משכנתא שאתם משלמים היום" value={data.currentHousing} onChange={(value) => updateData("currentHousing", value)} className="sm:col-span-2" />
+        <MoneyField
+          label="התחייבויות פיננסיות חודשיות"
+          tooltip={["יש להזין את סך ההחזרים החודשיים הקבועים כגון:", "הלוואת רכב", "הלוואה לכל מטרה", "מזונות", "החזרי אשראי קבועים", "התחייבויות חודשיות אחרות"]}
+          value={data.expenses}
+          onChange={(value) => updateData("expenses", value)}
+        />
+        <MoneyField
+          label="הוצאות משק בית חודשיות"
+          tooltip={["הוצאות שוטפות כגון:", "סופר", "חשמל ומים", "אינטרנט וטלפון", "גנים וחוגים", "הוצאות משק בית שוטפות"]}
+          value={data.householdExpenses}
+          onChange={(value) => updateData("householdExpenses", value)}
+        />
+        <MoneyField label="החזר דיור נוכחי" helper="שכירות או משכנתא שאתם משלמים היום" value={data.currentHousing} onChange={(value) => updateData("currentHousing", value)} />
+        {toNumeric(data.expenses) > 0 && (
+          <SelectField
+            label="האם חלק מההתחייבויות צפויות להיסגר במסגרת העסקה?"
+            value={data.obligationsToClose}
+            onChange={(value) => updateData("obligationsToClose", value)}
+            options={ownershipOptions}
+            className="sm:col-span-2"
+          />
+        )}
+        {toNumeric(data.expenses) > 0 && data.obligationsToClose === "yes" && (
+          <MoneyField
+            label="סכום התחייבויות שייסגרו"
+            helper="הסכום החודשי מתוך ההתחייבויות הקיימות שצפוי להיסגר במסגרת העסקה."
+            value={data.obligationsToCloseAmount}
+            onChange={(value) => updateData("obligationsToCloseAmount", value)}
+            className="sm:col-span-2"
+          />
+        )}
       </div>}
 
       {step === 2 && <div className="grid gap-4 sm:grid-cols-2">
         <NumberField label="תקופה בשנים" min="5" max="30" value={data.years} onChange={(value) => updateData("years", value)} />
-        <RateField label="ריבית שנתית משוערת" value={data.annualRate} onChange={(value) => updateData("annualRate", value)} />
         <SelectField label="סטטוס אשראי" value={data.credit} onChange={(value) => updateData("credit", value)} options={creditOptions} />
-        <SelectField label="סוג הצמדה" value={data.indexation} onChange={(value) => updateData("indexation", value)} options={indexationOptions} />
-        <SelectField label="שיטת החזר" value={data.repaymentMethod} onChange={(value) => updateData("repaymentMethod", value)} options={repaymentOptions} className="sm:col-span-2" />
+        <SelectField
+          label="האם בבעלותכם נכס כיום?"
+          value={data.hasExistingProperty}
+          onChange={(value) => updateData("hasExistingProperty", value)}
+          options={ownershipOptions}
+          className="sm:col-span-2"
+        />
+        {data.hasExistingProperty === "yes" && (
+          <>
+            <MoneyField label="שווי נכס קיים" value={data.existingPropertyValue} onChange={(value) => updateData("existingPropertyValue", value)} />
+            <MoneyField label="יתרת משכנתא קיימת" value={data.existingMortgageBalance} onChange={(value) => updateData("existingMortgageBalance", value)} />
+          </>
+        )}
       </div>}
 
       {step === 3 && <div className="space-y-3 rounded-2xl bg-slate-50 p-4">
         <p className="text-sm font-black text-slate-700">אומדן ראשוני — לא מחייב ולא אישור בנקאי</p>
+        <ResultSummaryRow label="סוג הבדיקה" value={analysis.scenarioLabel} />
         <ResultSummaryRow label="אומדן סיכוי אישור" value={ready ? `${Math.round(analysis.approval)}%` : "--"} highlight={ready && analysis.approval >= 65} />
         <ResultSummaryRow label="החזר חודשי משוער" value={displayMoney(analysis.monthly, ready)} />
         <ResultSummaryRow label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} warn={ready && analysis.mortgageOnlyRatio > 40} />
         <ResultSummaryRow label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
+        <ResultSummaryRow label="שיעור מימון מקסימלי לסוג העסקה" value={analysis.scenarioMaxLtv ? `${analysis.scenarioMaxLtv}%` : "נדרש בדיקה פרטנית מול יועץ"} />
+        <ResultSummaryRow label="שיעור מימון בפועל (LTV)" value={displayPercent(analysis.ltv, ready)} warn={ready && analysis.ltvLimitExceeded} />
+        {ready && analysis.missingEquity > 0 && (
+          <ResultSummaryRow label="פער בהון עצמי נדרש" value={formatILS(analysis.missingEquity)} warn />
+        )}
         <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-600">{ready ? recommendation : "השלימו נתונים לקבלת חיווי מלא."}</p>
         <a href="#lead" className="block rounded-full bg-violet-700 px-5 py-3 text-center text-sm font-black text-white">רוצים להבין איך לשפר? דברו איתנו</a>
       </div>}
@@ -706,7 +793,9 @@ function LiveResultPanel({ analysis, ready, recommendation }) {
       >
         רוצים לשפר את הסיכוי? דברו איתנו
       </a>
-      <p className="mt-3 text-center text-xs font-bold text-violet-100">אומדן ראשוני בלבד · לא אישור בנקאי · ללא התחייבות</p>
+      <p className="mt-3 text-center text-xs font-bold text-violet-200">
+        התוצאה היא אומדן ראשוני בלבד ואינה מהווה אישור בנקאי או ייעוץ פיננסי מחייב.
+      </p>
     </aside>
   );
 }
@@ -756,8 +845,8 @@ function ResultsSection({ analysis, ready }) {
           <DetailRow label="יחס שמרני אחרי הוצאות והלוואות" value={displayPercent(analysis.disposableRepaymentRatio, ready)} />
           <DetailRow label="סכום משכנתא" value={displayMoney(analysis.mortgage, ready)} />
           <DetailRow label="הכנסה נטו" value={displayMoney(analysis.income, ready)} />
-          <DetailRow label="הלוואות שיישארו אחרי העסקה" value={displayMoney(analysis.remainingLoansMonthly, ready)} />
-          <DetailRow label="חיסכון חודשי מסגירת הלוואות" value={displayMoney(analysis.loanClosureMonthlySaving, ready)} />
+          <DetailRow label="התחייבויות שיישארו אחרי העסקה" value={displayMoney(analysis.remainingExpenses, ready)} />
+          <DetailRow label="חיסכון חודשי מסגירת התחייבויות" value={displayMoney(analysis.obligationsToCloseMonthly, ready)} />
           <DetailRow label="תרחיש עליית ריבית" value={displayMoney(analysis.monthlyHigh, ready)} />
           <DetailRow label="הכנסה נדרשת לאומדן זה" value={displayMoney(analysis.requiredIncomeForMortgage, ready)} />
         </div>
@@ -1132,12 +1221,51 @@ function DetailRow({ label, value }) {
 /*  FORM FIELD COMPONENTS                                               */
 /* ------------------------------------------------------------------ */
 
-function MoneyField({ label, value, onChange, helper, className = "", contrastMode = "light" }) {
+function InfoTooltip({ text }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-flex align-middle">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        onBlur={() => setOpen(false)}
+        aria-label="מידע נוסף"
+        className="mr-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-200 text-[10px] font-black leading-none text-slate-600 hover:bg-violet-200 hover:text-violet-800"
+      >
+        i
+      </button>
+      {open && (
+        <span
+          role="tooltip"
+          className="absolute bottom-full right-0 z-10 mb-2 w-64 rounded-xl bg-slate-900 p-3 text-xs font-semibold leading-5 text-white shadow-xl"
+        >
+          {Array.isArray(text) ? (
+            <>
+              <span className="block">{text[0]}</span>
+              <ul className="mt-1 list-disc pr-4">
+                {text.slice(1).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            text
+          )}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function MoneyField({ label, value, onChange, helper, tooltip, className = "", contrastMode = "light" }) {
   const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   const isDark = contrastMode === "dark";
   return (
     <label className={`block ${className}`}>
-      <span className={`text-sm font-black ${isDark ? "text-violet-50" : "text-slate-700"}`} id={`${fieldId}-label`}>{label}</span>
+      <span className={`text-sm font-black ${isDark ? "text-violet-50" : "text-slate-700"}`} id={`${fieldId}-label`}>
+        {label}
+        {tooltip && <InfoTooltip text={tooltip} />}
+      </span>
       <span className="relative mt-2 block">
         <input
           id={fieldId}
@@ -1199,31 +1327,14 @@ function NumberField({ label, value, onChange, min, max }) {
   );
 }
 
-function RateField({ label, value, onChange }) {
-  const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
-  return (
-    <label className="block">
-      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
-      <span className="relative mt-2 block">
-        <input
-          id={fieldId}
-          aria-labelledby={`${fieldId}-label`}
-          inputMode="decimal"
-          value={value}
-          onChange={(event) => onChange(cleanNumber(event.target.value, true))}
-          className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 sm:h-14"
-        />
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">%</span>
-      </span>
-    </label>
-  );
-}
-
-function SelectField({ label, value, onChange, options, className = "" }) {
+function SelectField({ label, value, onChange, options, className = "", tooltip }) {
   const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   return (
     <label className={`block ${className}`}>
-      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>{label}</span>
+      <span className="text-sm font-black text-slate-700" id={`${fieldId}-label`}>
+        {label}
+        {tooltip && <InfoTooltip text={tooltip} />}
+      </span>
       <select
         id={fieldId}
         aria-labelledby={`${fieldId}-label`}

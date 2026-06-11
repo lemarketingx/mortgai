@@ -1,11 +1,14 @@
 import Head from "next/head";
 import Script from "next/script";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
+import { Analytics } from "@vercel/analytics/next";
 import ErrorBoundary from "../components/ErrorBoundary";
 import BetaBanner from "../components/BetaBanner";
 import "../styles/globals.css";
 
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
 const PRIVATE_PREFIXES = ["/advisor", "/admin", "/client"];
 
@@ -14,6 +17,18 @@ export default function App({ Component, pageProps }) {
   const showBanner = !PRIVATE_PREFIXES.some((prefix) =>
     router.pathname.startsWith(prefix)
   );
+
+  // GA4 page-view tracking on route changes
+  useEffect(() => {
+    if (!GA_ID) return;
+    function handleRouteChange(url) {
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("config", GA_ID, { page_path: url });
+      }
+    }
+    router.events.on("routeChangeComplete", handleRouteChange);
+    return () => router.events.off("routeChangeComplete", handleRouteChange);
+  }, [router.events]);
 
   return (
     <ErrorBoundary>
@@ -46,14 +61,27 @@ export default function App({ Component, pageProps }) {
             {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+'https://www.googletagmanager.com/gtag/js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','${GTM_ID}');`}
+          </Script>
+        </>
+      ) : null}
+
+      {GA_ID ? (
+        <>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+            strategy="afterInteractive"
+          />
+          <Script id="ga4-init" strategy="afterInteractive">
+            {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${GA_ID}');`}
           </Script>
         </>
       ) : null}
 
       {showBanner && <BetaBanner />}
       <Component {...pageProps} />
+      <Analytics />
     </ErrorBoundary>
   );
 }
