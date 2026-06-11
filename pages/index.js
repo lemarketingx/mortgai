@@ -36,7 +36,6 @@ const initialData = {
   income: "",
   expenses: "",
   loans: "",
-  loansToClose: "",
   currentHousing: "",
   price: "",
   equity: "",
@@ -635,12 +634,6 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
           onChange={(value) => updateData("expenses", value)}
         />
         <MoneyField label="הלוואות קיימות היום" value={data.loans} onChange={(value) => updateData("loans", value)} />
-        <MoneyField
-          label="הלוואות שייסגרו עם הרכישה"
-          tooltip="הלוואות שמתוכננות להיסגר במסגרת העסקה, כגון הלוואת רכב, הלוואה לכל מטרה, מינוס או התחייבויות אחרות שייסגרו מכספי המכירה או מהמשכנתא החדשה."
-          value={data.loansToClose}
-          onChange={(value) => updateData("loansToClose", value)}
-        />
         <MoneyField label="החזר דיור נוכחי" helper="שכירות או משכנתא שאתם משלמים היום" value={data.currentHousing} onChange={(value) => updateData("currentHousing", value)} className="sm:col-span-2" />
         {toNumeric(data.expenses) > 0 && (
           <SelectField
@@ -654,6 +647,7 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
         {toNumeric(data.expenses) > 0 && data.obligationsToClose === "yes" && (
           <MoneyField
             label="סכום התחייבויות שייסגרו"
+            helper="הסכום החודשי מתוך ההתחייבויות הקיימות שצפוי להיסגר במסגרת העסקה."
             value={data.obligationsToCloseAmount}
             onChange={(value) => updateData("obligationsToCloseAmount", value)}
             className="sm:col-span-2"
