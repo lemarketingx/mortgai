@@ -24,6 +24,7 @@ export async function middleware(request) {
   const lockEnabled =
     process.env.SITE_LOCK_ENABLED === "true" ||
     process.env.SITE_LOCK_ENABLE === "true";
+  console.log("[site-lock] lockEnabled:", lockEnabled);
   if (!lockEnabled) return NextResponse.next();
 
   const { pathname } = request.nextUrl;
@@ -33,12 +34,15 @@ export async function middleware(request) {
   }
 
   const password = process.env.SITE_LOCK_PASSWORD;
+  console.log("[site-lock] passwordEnvExists:", !!password);
   if (!password) return NextResponse.next();
 
   const expected = await deriveToken(password);
   const cookie = request.cookies.get(COOKIE_NAME)?.value;
+  const cookieValid = cookie === expected;
+  console.log("[site-lock] cookieValid:", cookieValid);
 
-  if (cookie === expected) return NextResponse.next();
+  if (cookieValid) return NextResponse.next();
 
   const lockUrl = new URL("/unlock", request.url);
   const dest = pathname + (request.nextUrl.search || "");

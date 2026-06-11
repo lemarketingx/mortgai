@@ -19,18 +19,31 @@ function safeNext(value) {
 export default function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const lockEnabled = process.env.SITE_LOCK_ENABLED === "true";
+  const lockEnabled =
+    process.env.SITE_LOCK_ENABLED === "true" ||
+    process.env.SITE_LOCK_ENABLE === "true";
   const sitePassword = process.env.SITE_LOCK_PASSWORD;
   const next = safeNext(req.body?.next);
 
-  // Lock not configured — let them through
-  if (!lockEnabled || !sitePassword) {
+  console.log("[unlock] lockEnabled:", lockEnabled, "passwordEnvExists:", !!sitePassword);
+
+  // Lock disabled — let them through
+  if (!lockEnabled) {
     return res.redirect(302, next);
   }
 
-  const submitted = String(req.body?.password || "");
+  // Lock enabled but no password configured server-side — surface a clear error
+  if (!sitePassword) {
+    const errorUrl = `/unlock?error=2${next !== "/" ? `&next=${encodeURIComponent(next)}` : ""}`;
+    return res.redirect(302, errorUrl);
+  }
 
-  if (!submitted || submitted !== sitePassword) {
+  const submitted = String(req.body?.password || "");
+  const passwordMatch = !!submitted && submitted === sitePassword;
+
+  console.log("[unlock] passwordMatch:", passwordMatch);
+
+  if (!passwordMatch) {
     const errorUrl = `/unlock?error=1${next !== "/" ? `&next=${encodeURIComponent(next)}` : ""}`;
     return res.redirect(302, errorUrl);
   }
@@ -42,5 +55,6 @@ export default function handler(req, res) {
     "Set-Cookie",
     `${COOKIE_NAME}=${token}; Path=/; Max-Age=${MAX_AGE}; HttpOnly; SameSite=Lax${secure}`
   );
+  console.log("[unlock] cookieSet: true");
   return res.redirect(302, next);
 }

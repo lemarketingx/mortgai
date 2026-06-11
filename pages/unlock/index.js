@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 export default function UnlockPage() {
   const { query } = useRouter();
   const hasError = query.error === "1";
+  const isMisconfigured = query.error === "2";
   const next = query.next || "/";
 
   return (
@@ -69,6 +70,12 @@ export default function UnlockPage() {
             {hasError && (
               <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-bold text-red-700">
                 סיסמה שגויה
+              </div>
+            )}
+
+            {isMisconfigured && (
+              <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-bold text-red-700">
+                שגיאת הגדרות שרת — לא ניתן לאמת סיסמה כעת
               </div>
             )}
 
