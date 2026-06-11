@@ -37,7 +37,6 @@ const initialData = {
   expenses: "",
   householdExpenses: "",
   hasOverdraft: "no",
-  loans: "",
   currentHousing: "",
   price: "",
   equity: "",
@@ -331,7 +330,7 @@ export default function Home() {
       equityAmount: toNumeric(bottomLead.equityAmount) || toNumeric(data?.equity),
       mortgageAmount: cleanNumber(bottomLead.mortgageAmount) || "",
       monthlyIncome: toNumeric(bottomLead.monthlyIncome) || toNumeric(data?.income),
-      debtLevel: toNumeric(bottomLead.debtLevel) || toNumeric(data?.loans) || toNumeric(data?.expenses) || 0,
+      debtLevel: toNumeric(bottomLead.debtLevel) || toNumeric(data?.expenses) || 0,
       purchaseStatus: bottomLead.purchaseStatus || "",
       hasExistingMortgage: bottomLead.hasExistingMortgage || "",
       requestedContactTime: bottomLead.requestedContactTime || "",
@@ -400,7 +399,7 @@ export default function Home() {
       propertyPrice: toNumeric(lead.propertyPrice) || toNumeric(data?.price),
       equityAmount: toNumeric(lead.equityAmount) || toNumeric(data?.equity),
       monthlyIncome: toNumeric(lead.monthlyIncome) || toNumeric(data?.income),
-      debtLevel: toNumeric(lead.debtLevel) || toNumeric(data?.loans) || toNumeric(data?.expenses) || 0,
+      debtLevel: toNumeric(lead.debtLevel) || toNumeric(data?.expenses) || 0,
       employmentStatus: lead.employmentStatus || "",
       contractStatus: lead.contractStatus || "",
       hasExistingMortgage: lead.hasExistingMortgage || "",
@@ -633,18 +632,16 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
         <MoneyField label="הכנסה חודשית נטו" value={data.income} onChange={(value) => updateData("income", value)} />
         <MoneyField
           label="התחייבויות פיננסיות חודשיות"
-          helper="הלוואות, מימון רכב, מזונות והתחייבויות חודשיות אחרות."
-          helperList={["הלוואת רכב", "הלוואה לכל מטרה", "מזונות", "החזרי אשראי קבועים"]}
+          tooltip={["יש להזין את סך ההחזרים החודשיים הקבועים כגון:", "הלוואת רכב", "הלוואה לכל מטרה", "מזונות", "החזרי אשראי קבועים", "התחייבויות חודשיות אחרות"]}
           value={data.expenses}
           onChange={(value) => updateData("expenses", value)}
         />
         <MoneyField
           label="הוצאות משק בית חודשיות"
-          helper="סופר, כרטיסי אשראי, חשמל, מים, אינטרנט, גנים, חוגים והוצאות שוטפות של משק הבית."
+          tooltip={["הוצאות שוטפות כגון:", "סופר", "חשמל ומים", "אינטרנט וטלפון", "גנים וחוגים", "הוצאות משק בית שוטפות"]}
           value={data.householdExpenses}
           onChange={(value) => updateData("householdExpenses", value)}
         />
-        <MoneyField label="הלוואות קיימות היום" value={data.loans} onChange={(value) => updateData("loans", value)} />
         <MoneyField label="החזר דיור נוכחי" helper="שכירות או משכנתא שאתם משלמים היום" value={data.currentHousing} onChange={(value) => updateData("currentHousing", value)} />
         <SelectField
           label="האם יש לכם מינוס קבוע בחשבון?"
@@ -807,8 +804,8 @@ function ResultsSection({ analysis, ready }) {
           <DetailRow label="יחס שמרני אחרי הוצאות והלוואות" value={displayPercent(analysis.disposableRepaymentRatio, ready)} />
           <DetailRow label="סכום משכנתא" value={displayMoney(analysis.mortgage, ready)} />
           <DetailRow label="הכנסה נטו" value={displayMoney(analysis.income, ready)} />
-          <DetailRow label="הלוואות שיישארו אחרי העסקה" value={displayMoney(analysis.remainingLoansMonthly, ready)} />
-          <DetailRow label="חיסכון חודשי מסגירת הלוואות" value={displayMoney(analysis.loanClosureMonthlySaving, ready)} />
+          <DetailRow label="התחייבויות שיישארו אחרי העסקה" value={displayMoney(analysis.remainingExpenses, ready)} />
+          <DetailRow label="חיסכון חודשי מסגירת התחייבויות" value={displayMoney(analysis.obligationsToCloseMonthly, ready)} />
           <DetailRow label="תרחיש עליית ריבית" value={displayMoney(analysis.monthlyHigh, ready)} />
           <DetailRow label="הכנסה נדרשת לאומדן זה" value={displayMoney(analysis.requiredIncomeForMortgage, ready)} />
         </div>
@@ -1199,16 +1196,27 @@ function InfoTooltip({ text }) {
       {open && (
         <span
           role="tooltip"
-          className="absolute bottom-full right-0 z-10 mb-2 w-56 rounded-xl bg-slate-900 p-3 text-xs font-semibold leading-5 text-white shadow-xl"
+          className="absolute bottom-full right-0 z-10 mb-2 w-64 rounded-xl bg-slate-900 p-3 text-xs font-semibold leading-5 text-white shadow-xl"
         >
-          {text}
+          {Array.isArray(text) ? (
+            <>
+              <span className="block">{text[0]}</span>
+              <ul className="mt-1 list-disc pr-4">
+                {text.slice(1).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            text
+          )}
         </span>
       )}
     </span>
   );
 }
 
-function MoneyField({ label, value, onChange, helper, helperList, tooltip, className = "", contrastMode = "light" }) {
+function MoneyField({ label, value, onChange, helper, tooltip, className = "", contrastMode = "light" }) {
   const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   const isDark = contrastMode === "dark";
   return (
@@ -1231,13 +1239,6 @@ function MoneyField({ label, value, onChange, helper, helperList, tooltip, class
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">₪</span>
       </span>
       {helper && <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{helper}</span>}
-      {helperList && (
-        <ul className="mt-1 list-disc pr-4 text-xs font-semibold leading-5 text-slate-500">
-          {helperList.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      )}
     </label>
   );
 }
