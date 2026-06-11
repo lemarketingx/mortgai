@@ -47,6 +47,8 @@ const initialData = {
   hasExistingProperty: "no",
   existingPropertyValue: "",
   existingMortgageBalance: "",
+  obligationsToClose: "no",
+  obligationsToCloseAmount: "",
 };
 
 const fallbackRates = {
@@ -627,19 +629,36 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
       {step === 1 && <div className="grid gap-4 sm:grid-cols-2">
         <MoneyField label="הכנסה חודשית נטו" value={data.income} onChange={(value) => updateData("income", value)} />
         <MoneyField
-          label="התחייבויות חודשיות"
-          tooltip="הלוואות, מימון רכב, מזונות, כרטיסי אשראי בתשלומים או כל התחייבות חודשית קבועה."
+          label="התחייבויות חודשיות קיימות"
+          helper="סך ההחזרים החודשיים שאתם משלמים כיום עבור הלוואות, מימון רכב, מזונות והתחייבויות דומות."
           value={data.expenses}
           onChange={(value) => updateData("expenses", value)}
         />
         <MoneyField label="הלוואות קיימות היום" value={data.loans} onChange={(value) => updateData("loans", value)} />
         <MoneyField
           label="הלוואות שייסגרו עם הרכישה"
-          tooltip="האם קיימות הלוואות שמתוכננות להיסגר במסגרת העסקה? לדוגמה: הלוואת רכב, הלוואה לכל מטרה, מינוס או התחייבויות אחרות שייסגרו מכספי המכירה או מהמשכנתא החדשה."
+          tooltip="הלוואות שמתוכננות להיסגר במסגרת העסקה, כגון הלוואת רכב, הלוואה לכל מטרה, מינוס או התחייבויות אחרות שייסגרו מכספי המכירה או מהמשכנתא החדשה."
           value={data.loansToClose}
           onChange={(value) => updateData("loansToClose", value)}
         />
         <MoneyField label="החזר דיור נוכחי" helper="שכירות או משכנתא שאתם משלמים היום" value={data.currentHousing} onChange={(value) => updateData("currentHousing", value)} className="sm:col-span-2" />
+        {toNumeric(data.expenses) > 0 && (
+          <SelectField
+            label="האם חלק מההתחייבויות צפויות להיסגר במסגרת העסקה?"
+            value={data.obligationsToClose}
+            onChange={(value) => updateData("obligationsToClose", value)}
+            options={ownershipOptions}
+            className="sm:col-span-2"
+          />
+        )}
+        {toNumeric(data.expenses) > 0 && data.obligationsToClose === "yes" && (
+          <MoneyField
+            label="סכום התחייבויות שייסגרו"
+            value={data.obligationsToCloseAmount}
+            onChange={(value) => updateData("obligationsToCloseAmount", value)}
+            className="sm:col-span-2"
+          />
+        )}
       </div>}
 
       {step === 2 && <div className="grid gap-4 sm:grid-cols-2">
