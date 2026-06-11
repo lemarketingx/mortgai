@@ -36,7 +36,6 @@ const initialData = {
   income: "",
   expenses: "",
   householdExpenses: "",
-  hasOverdraft: "no",
   currentHousing: "",
   price: "",
   equity: "",
@@ -410,7 +409,6 @@ export default function Home() {
       existingPropertyValue: toNumeric(data.existingPropertyValue) || 0,
       existingMortgageBalance: toNumeric(data.existingMortgageBalance) || 0,
       householdExpenses: toNumeric(data.householdExpenses) || 0,
-      hasOverdraft: data.hasOverdraft || "no",
     };
     const { leadQuality, leadPriority, leadScore } = evaluateLeadProfile(leadPayload);
     leadPayload.leadQuality = leadQuality;
@@ -643,13 +641,6 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
           onChange={(value) => updateData("householdExpenses", value)}
         />
         <MoneyField label="החזר דיור נוכחי" helper="שכירות או משכנתא שאתם משלמים היום" value={data.currentHousing} onChange={(value) => updateData("currentHousing", value)} />
-        <SelectField
-          label="האם יש לכם מינוס קבוע בחשבון?"
-          value={data.hasOverdraft}
-          onChange={(value) => updateData("hasOverdraft", value)}
-          options={ownershipOptions}
-          className="sm:col-span-2"
-        />
         {toNumeric(data.expenses) > 0 && (
           <SelectField
             label="האם חלק מההתחייבויות צפויות להיסגר במסגרת העסקה?"
