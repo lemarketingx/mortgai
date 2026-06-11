@@ -35,6 +35,8 @@ const PROGRESS_BAR_STYLE = { willChange: "width" };
 const initialData = {
   income: "",
   expenses: "",
+  householdExpenses: "",
+  hasOverdraft: "no",
   loans: "",
   currentHousing: "",
   price: "",
@@ -408,6 +410,8 @@ export default function Home() {
       hasExistingProperty: data.hasExistingProperty || "no",
       existingPropertyValue: toNumeric(data.existingPropertyValue) || 0,
       existingMortgageBalance: toNumeric(data.existingMortgageBalance) || 0,
+      householdExpenses: toNumeric(data.householdExpenses) || 0,
+      hasOverdraft: data.hasOverdraft || "no",
     };
     const { leadQuality, leadPriority, leadScore } = evaluateLeadProfile(leadPayload);
     leadPayload.leadQuality = leadQuality;
@@ -628,13 +632,27 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
       {step === 1 && <div className="grid gap-4 sm:grid-cols-2">
         <MoneyField label="הכנסה חודשית נטו" value={data.income} onChange={(value) => updateData("income", value)} />
         <MoneyField
-          label="התחייבויות חודשיות קיימות"
-          helper="סך ההחזרים החודשיים שאתם משלמים כיום עבור הלוואות, מימון רכב, מזונות והתחייבויות דומות."
+          label="התחייבויות פיננסיות חודשיות"
+          helper="הלוואות, מימון רכב, מזונות והתחייבויות חודשיות אחרות."
+          helperList={["הלוואת רכב", "הלוואה לכל מטרה", "מזונות", "החזרי אשראי קבועים"]}
           value={data.expenses}
           onChange={(value) => updateData("expenses", value)}
         />
+        <MoneyField
+          label="הוצאות משק בית חודשיות"
+          helper="סופר, כרטיסי אשראי, חשמל, מים, אינטרנט, גנים, חוגים והוצאות שוטפות של משק הבית."
+          value={data.householdExpenses}
+          onChange={(value) => updateData("householdExpenses", value)}
+        />
         <MoneyField label="הלוואות קיימות היום" value={data.loans} onChange={(value) => updateData("loans", value)} />
-        <MoneyField label="החזר דיור נוכחי" helper="שכירות או משכנתא שאתם משלמים היום" value={data.currentHousing} onChange={(value) => updateData("currentHousing", value)} className="sm:col-span-2" />
+        <MoneyField label="החזר דיור נוכחי" helper="שכירות או משכנתא שאתם משלמים היום" value={data.currentHousing} onChange={(value) => updateData("currentHousing", value)} />
+        <SelectField
+          label="האם יש לכם מינוס קבוע בחשבון?"
+          value={data.hasOverdraft}
+          onChange={(value) => updateData("hasOverdraft", value)}
+          options={ownershipOptions}
+          className="sm:col-span-2"
+        />
         {toNumeric(data.expenses) > 0 && (
           <SelectField
             label="האם חלק מההתחייבויות צפויות להיסגר במסגרת העסקה?"
@@ -1190,7 +1208,7 @@ function InfoTooltip({ text }) {
   );
 }
 
-function MoneyField({ label, value, onChange, helper, tooltip, className = "", contrastMode = "light" }) {
+function MoneyField({ label, value, onChange, helper, helperList, tooltip, className = "", contrastMode = "light" }) {
   const fieldId = useMemo(() => `field-${label.replace(/\s+/g, "-")}`, [label]);
   const isDark = contrastMode === "dark";
   return (
@@ -1213,6 +1231,13 @@ function MoneyField({ label, value, onChange, helper, tooltip, className = "", c
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">₪</span>
       </span>
       {helper && <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{helper}</span>}
+      {helperList && (
+        <ul className="mt-1 list-disc pr-4 text-xs font-semibold leading-5 text-slate-500">
+          {helperList.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      )}
     </label>
   );
 }
