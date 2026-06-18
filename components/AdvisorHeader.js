@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "../pages/_app";
 
 const PROFILE_KEY = "finzo_advisor_profile_v1";
 
@@ -22,6 +23,21 @@ function BellIcon() {
   );
 }
 
+function SunIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  );
+}
+function MoonIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
 export default function AdvisorHeader({ active, urgentItems = [] }) {
   const links = [
     { href: "/advisor",          label: "לוח בקרה" },
@@ -39,6 +55,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
     { href: "/advisor/settings", label: "הגדרות" },
   ];
 
+  const { dark, toggle: toggleTheme } = useTheme();
   const [initials, setInitials] = useState("P");
   const [bellOpen, setBellOpen] = useState(false);
   const bellRef = useRef(null);
@@ -73,7 +90,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
   const bellCount = urgentItems.length;
 
   return (
-    <header className="bg-slate-950/95 backdrop-blur-sm text-white sticky top-0 z-40 border-b border-white/[0.06]">
+    <header className="bg-slate-950/95 dark:bg-slate-950 backdrop-blur-sm text-white sticky top-0 z-40 border-b border-white/[0.06]">
       <div className="max-w-[92rem] mx-auto px-4 lg:px-6">
 
         {/* ── Desktop bar ──────────────────────────────────────────── */}
@@ -100,6 +117,16 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
           </nav>
 
           <div className="flex items-center gap-2.5 shrink-0">
+
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/[0.06] transition-colors"
+              aria-label={dark ? "מצב בהיר" : "מצב כהה"}
+              title={dark ? "מצב בהיר" : "מצב כהה"}
+            >
+              {dark ? <SunIcon /> : <MoonIcon />}
+            </button>
 
             {/* Bell with badge */}
             <div ref={bellRef} className="relative">
@@ -183,6 +210,10 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
             <span className="text-[10px] font-black text-violet-400 bg-violet-400/10 border border-violet-400/20 px-1.5 py-0.5 rounded-full tracking-widest">PRO</span>
           </Link>
           <div className="flex items-center gap-2">
+            {/* Mobile theme toggle */}
+            <button onClick={toggleTheme} className="w-6 h-6 flex items-center justify-center rounded-lg text-slate-500" aria-label={dark ? "מצב בהיר" : "מצב כהה"}>
+              {dark ? <SunIcon /> : <MoonIcon />}
+            </button>
             {/* Mobile bell */}
             <div ref={null} className="relative">
               <button

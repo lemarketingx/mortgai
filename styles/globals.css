@@ -91,6 +91,26 @@
   --z-toast:   300;
 }
 
+/* Dark-mode overrides */
+.dark {
+  --c-ink:        #E8ECF4;
+  --c-ink-2:      #C5CDE0;
+  --c-ink-3:      #9AAAC8;
+  --c-mute:       #6B7FA0;
+  --c-paper:      #0F1729;
+  --c-surface:    #1A2340;
+  --c-cream:      #1E2A4A;
+  --c-cream-2:    #253458;
+  --c-line:       #253458;
+  --c-line-2:     #2E3F6A;
+  --c-cobalt:     #4D7AFF;
+  --c-cobalt-d:   #3A5FE6;
+  --c-cobalt-l:   #1E2A4A;
+  --c-success:    #2ED885;
+  --c-warning:    #F0BD55;
+  --c-danger:     #EF6363;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -112,6 +132,12 @@
       linear-gradient(145deg, #f8f9ff 0%, #eff4ff 42%, #f7fbfa 100%);
     font-family: "Assistant", "Heebo", "Rubik", Arial, sans-serif;
     padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .dark body,
+  html.dark body {
+    color: #E8ECF4;
+    background: linear-gradient(145deg, #0B1120 0%, #0F1729 42%, #111D35 100%);
   }
 
   button,

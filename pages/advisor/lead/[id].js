@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatILS } from "../../../lib/format";
 import AdvisorHeader from "../../../components/AdvisorHeader";
+import { useTheme } from "../../_app";
 import {
   PIPELINE_STAGES,
   getPipelineProgress,
@@ -82,6 +83,19 @@ const DETAIL_TABS = [
   { key: "collateral",label: "בטחונות" },
 ];
 
+const ACTION_PANEL_ITEMS = [
+  { key: "call",       icon: "☎",  label: "התקשר" },
+  { key: "whatsapp",   icon: "💬", label: "WhatsApp" },
+  { key: "reminder",   icon: "⏰", label: "תזכורת" },
+  { key: "stage",      icon: "🔄", label: "שינוי שלב" },
+  { key: "docs",       icon: "📎", label: "קישור מסמכים" },
+  { key: "banker",     icon: "🏦", label: "שיוך בנקאי" },
+  { key: "pdf",        icon: "📄", label: "יצוא PDF" },
+  { key: "notes",      icon: "📝", label: "הערה" },
+  { key: "task",       icon: "✅", label: "משימה" },
+  { key: "email",      icon: "✉",  label: "שלח מייל" },
+];
+
 // Bank tab: status display maps (module-level — never recreated)
 const CASE_BANK_STATUS_LABEL = {
   selected:             "נבחר",
@@ -153,9 +167,9 @@ const StageStepper = memo(function StageStepper({ lead, onAdvance, onSetStage })
   }, [si]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-4">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 mb-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-black text-slate-800">מהלך הטיפול במשכנתא</h3>
+        <h3 className="text-sm font-black text-slate-800 dark:text-slate-200">מהלך הטיפול במשכנתא</h3>
         <span className="text-xs font-black text-slate-400">{si >= 0 ? `${si + 1}/${ACTIVE_PIPELINE_STAGES.length}` : "—"}</span>
       </div>
       <div ref={scrollRef} className="flex gap-1.5 overflow-x-auto pb-2 mb-3" style={{ scrollbarWidth: "none" }}>
@@ -194,12 +208,12 @@ const StageStepper = memo(function StageStepper({ lead, onAdvance, onSetStage })
 const ProgressWidget = memo(function ProgressWidget({ label, pct, color = "bg-emerald-500" }) {
   const p = Math.max(0, Math.min(100, Number(pct) || 0));
   return (
-    <div className="bg-white rounded-xl border border-slate-100 px-4 py-3">
-      <div className="flex justify-between text-xs font-black text-slate-500 mb-1.5">
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 px-4 py-3">
+      <div className="flex justify-between text-xs font-black text-slate-500 dark:text-slate-400 mb-1.5">
         <span>{label}</span>
         <span className="tabular-nums">{p}%</span>
       </div>
-      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
         <div className={`h-full rounded-full transition-all duration-500 ${color}`} style={{ width: `${p}%` }} />
       </div>
     </div>
@@ -371,14 +385,14 @@ function BankGuideSection() {
   const [expanded, setExpanded] = useState(null);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-5 py-4 text-right hover:bg-slate-50/60 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 text-right hover:bg-slate-50/60 dark:hover:bg-slate-700/60 transition-colors"
       >
         <div>
-          <h2 className="text-sm font-black text-slate-950">הפקת דוח יתרות לסילוק</h2>
+          <h2 className="text-sm font-black text-slate-950 dark:text-white">הפקת דוח יתרות לסילוק</h2>
           <p className="text-[11px] font-bold text-slate-400 mt-0.5">מדריכים לפי בנק — לחץ כדי להרחיב</p>
         </div>
         <span className="text-slate-400 font-black text-lg shrink-0 mr-2">{open ? "▲" : "▼"}</span>
@@ -451,6 +465,10 @@ export default function LeadDetailPage() {
   const [tab, setTab] = useState(initialTab);
   const [showWaTemplates, setShowWaTemplates] = useState(false);
   const [msg, setMsg] = useState({ text: "", ok: true });
+  const [activeAction, setActiveAction] = useState(null);
+  const [taskText, setTaskText] = useState("");
+  const [tasks, setTasks] = useState([]);
+  const { dark } = useTheme();
 
   // Upload-link & reminder state
   const [uploadToken,      setUploadToken]      = useState(null);   // {token: record, uploadUrl: string}
@@ -893,12 +911,12 @@ export default function LeadDetailPage() {
 
   if (loading) {
     return (
-      <main dir="rtl" className="min-h-screen bg-slate-50">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-[#0B1120]">
         <AdvisorHeader />
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="h-8 w-48 bg-slate-200 rounded animate-pulse mb-4" />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-4" />
           <div className="grid lg:grid-cols-3 gap-4">
-            {[0, 1, 2].map((i) => <div key={i} className="bg-white rounded-2xl h-64 animate-pulse" />)}
+            {[0, 1, 2].map((i) => <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl h-64 animate-pulse" />)}
           </div>
         </div>
       </main>
@@ -906,95 +924,77 @@ export default function LeadDetailPage() {
   }
   if (!lead) return null;
 
+  function handleActionClick(key) {
+    if (key === "call") {
+      if (lead.phone) {
+        window.location.href = `tel:${lead.phone}`;
+        pushActivity("בוצעה שיחה", "call_logged");
+        touchLead({ lastContactedAt: new Date().toISOString() });
+      }
+      return;
+    }
+    if (key === "email") {
+      const email = lead.advisorEmail || lead.email;
+      if (email) {
+        window.location.href = `mailto:${email}`;
+        pushActivity("נשלח מייל", "email_opened");
+        touchLead({ lastContactedAt: new Date().toISOString() });
+      }
+      return;
+    }
+    setActiveAction((prev) => prev === key ? null : key);
+  }
+
   return (
     <>
       <Head><title>{lead.name || "ליד"} | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
-      <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-[#0B1120] pb-24 lg:pb-0">
         <AdvisorHeader active="/advisor/my-leads" />
 
         {/* ── Sticky header ── */}
-        <div className="sticky top-14 z-30 bg-white border-b border-slate-100 shadow-sm">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
-            <Link href="/advisor/my-leads" className="text-xs font-black text-slate-400 hover:text-slate-700 shrink-0">← חזרה</Link>
-            <h1 className="text-lg font-black text-slate-950 truncate flex-1">{lead.name || "—"}</h1>
-            {lead.phone && <a href={`tel:${lead.phone}`} className="text-sm font-black text-violet-600 shrink-0">{lead.phone}</a>}
-            {/* Case Type badge — Phase 1 */}
+        <div className="sticky top-14 z-30 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
+            <Link href="/advisor/my-leads" className="text-xs font-black text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 shrink-0">← חזרה</Link>
+            <h1 className="text-lg font-black text-slate-950 dark:text-white truncate flex-1">{lead.name || "—"}</h1>
+            {lead.phone && <a href={`tel:${lead.phone}`} className="text-sm font-black text-violet-600 dark:text-violet-400 shrink-0">{lead.phone}</a>}
             {caseType && (
-              <span className="text-xs font-black px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200 shrink-0">
+              <span className="text-xs font-black px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-700 shrink-0">
                 {CASE_TYPE_ICONS[caseType]} {caseType}
               </span>
             )}
-            <span className="text-xs font-black px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 shrink-0">{getPipelineStageLabel(getStage(lead))}</span>
-            <span className="text-xs font-black px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">{overallProgress}%</span>
+            <span className="text-xs font-black px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700 shrink-0">{getPipelineStageLabel(getStage(lead))}</span>
+            <span className="text-xs font-black px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700 shrink-0">{overallProgress}%</span>
             {score > 0 && <span className={`text-sm font-black tabular-nums shrink-0 ${score >= 70 ? "text-emerald-600" : score >= 40 ? "text-amber-500" : "text-slate-400"}`}>{score}/100</span>}
-            {missingDocs > 0 && <span className="text-xs font-black px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 shrink-0">חסרים {missingDocs}</span>}
+            {missingDocs > 0 && <span className="text-xs font-black px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700 shrink-0">חסרים {missingDocs}</span>}
             {saving && <span className="text-xs text-slate-400 font-bold shrink-0">שומר...</span>}
             {savedIndicator && !saving && <span className="text-xs text-emerald-600 font-black shrink-0">נשמר ✓</span>}
-          </div>
-
-          {/* Action bar */}
-          <div className="max-w-6xl mx-auto px-4 pb-3 flex gap-2 flex-wrap">
-            {lead.phone && (
-              <a href={`tel:${lead.phone}`}
-                onClick={() => { pushActivity("בוצעה שיחה", "call_logged"); touchLead({ lastContactedAt: new Date().toISOString() }); }}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-black border border-violet-200">
-                ☎ התקשר
-              </a>
-            )}
-            {lead.phone && (
-              <button type="button" onClick={() => openWa()} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-black border border-emerald-200">
-                💬 וואטסאפ
-              </button>
-            )}
-            {lead.phone && (
-              <button type="button" onClick={() => setShowWaTemplates(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-black border border-emerald-200">
-                תבניות WA ▾
-              </button>
-            )}
-            {(lead.advisorEmail || lead.email) && (
-              <a href={`mailto:${lead.advisorEmail || lead.email}`}
-                onClick={() => { pushActivity("נשלח מייל", "email_opened"); touchLead({ lastContactedAt: new Date().toISOString() }); }}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-black border border-sky-200">
-                ✉ שלח מייל
-              </a>
-            )}
-            <button type="button" onClick={() => setTab("docs")}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-black border border-violet-200">
-              📎 קישור מסמכים
-            </button>
-            {/* PDF report — coming soon */}
-            <button type="button" disabled title="הורדת דוח PDF — בקרוב"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-400 text-xs font-black border border-slate-200 cursor-not-allowed select-none">
-              📄 דוח PDF — בקרוב
-            </button>
           </div>
         </div>
 
         {isNewPurchase && (
-          <div className="max-w-6xl mx-auto mt-3 px-4">
-            <div className="rounded-2xl bg-gradient-to-l from-emerald-50 to-white border border-emerald-300 px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <div className="max-w-7xl mx-auto mt-3 px-4">
+            <div className="rounded-2xl bg-gradient-to-l from-emerald-50 to-white dark:from-emerald-900/30 dark:to-slate-800 border border-emerald-300 dark:border-emerald-700 px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
               <div className="flex items-start gap-3">
                 <span className="text-2xl shrink-0">✓</span>
                 <div>
-                  <p className="text-sm font-black text-emerald-800">זה הליד שרכשת עכשיו — אפשר להתחיל טיפול</p>
-                  <p className="text-xs font-bold text-emerald-600 mt-0.5">פרטי הקשר גלויים, כל הכלים זמינים</p>
+                  <p className="text-sm font-black text-emerald-800 dark:text-emerald-300">זה הליד שרכשת עכשיו — אפשר להתחיל טיפול</p>
+                  <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">פרטי הקשר גלויים, כל הכלים זמינים</p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2 shrink-0">
                 {lead.phone && (
-                  <a href={`tel:${lead.phone}`}
-                    onClick={() => { pushActivity("בוצעה שיחה", "call_logged"); touchLead({ lastContactedAt: new Date().toISOString() }); }}
+                  <button type="button" onClick={() => handleActionClick("call")}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-700 text-white text-xs font-black hover:bg-violet-800 transition-colors">
                     ☎ התקשר עכשיו
-                  </a>
+                  </button>
                 )}
                 {lead.phone && (
-                  <button type="button" onClick={() => openWa()}
+                  <button type="button" onClick={() => handleActionClick("whatsapp")}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black hover:bg-emerald-700 transition-colors">
                     💬 וואטסאפ
                   </button>
                 )}
-                <button type="button" onClick={() => setTab("docs")}
+                <button type="button" onClick={() => handleActionClick("docs")}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-violet-200 bg-violet-50 text-violet-800 text-xs font-black hover:bg-violet-100 transition-colors">
                   📎 שלח קישור מסמכים
                 </button>
@@ -1004,87 +1004,93 @@ export default function LeadDetailPage() {
         )}
 
         {msg.text && (
-          <div className={`max-w-6xl mx-auto mt-3 px-4 py-2 rounded-xl text-sm font-bold ${msg.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+          <div className={`max-w-7xl mx-auto mt-3 px-4 py-2 rounded-xl text-sm font-bold ${msg.ok ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300" : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300"}`}>
             {msg.text}
           </div>
         )}
 
-        {/* ── 3-column layout ── */}
-        <div className="max-w-6xl mx-auto px-4 py-4 grid lg:grid-cols-[260px_1fr_220px] gap-4 items-start">
-
-          {/* RIGHT: Sticky customer summary */}
-          <div className="lg:sticky lg:top-36 space-y-3">
-            <div className="bg-white rounded-2xl border border-slate-100 p-5">
-              <h2 className="text-sm font-black text-slate-950 mb-3">פרטי לקוח</h2>
-              <div className="space-y-2 text-sm">
-                {[
-                  ["שם",        lead.name],
-                  ["טלפון",     lead.phone],
-                  ["מייל",      lead.email || lead.advisorEmail],
-                  ["עיר",       lead.city || lead.propertyCity],
-                  ["משכנתא",   lead.mortgageAmount ? formatILS(lead.mortgageAmount) : null],
-                  ["מחיר נכס", lead.propertyPrice ? formatILS(lead.propertyPrice) : null],
-                  ["הון עצמי", lead.equityAmount ? formatILS(lead.equityAmount) : null],
-                  ["סוג תיק", PURCHASE_STATUS_LABELS[lead.purchaseStatus] || lead.purchaseStatus || null],
-                ].filter(([, v]) => v).map(([label, value]) => (
-                  <div key={label} className="flex justify-between gap-2">
-                    <span className="text-slate-400 font-black text-xs shrink-0">{label}</span>
-                    <span className="font-black text-slate-800 text-xs truncate text-left">{value}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
-                <div className="rounded-lg bg-violet-50 border border-violet-200 px-3 py-2">
-                  <p className="text-[11px] font-black text-violet-500 mb-0.5">שלב נוכחי</p>
-                  <p className="text-sm font-black text-violet-900">{getPipelineStageLabel(getStage(lead))}</p>
-                </div>
-                <div>
-                  <label className="block text-xs font-black text-slate-400 mb-1">פעולה הבאה</label>
-                  <input type="text" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
-                    placeholder="מה הפעולה הבאה?"
-                    value={nextActionText}
-                    onChange={(e) => {
-                      setNextActionText(e.target.value);
-                      debouncedPatch("nextAction", { nextAction: e.target.value }, e.target.value ? `פעולה הבאה: ${e.target.value}` : undefined, "reminder_set");
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-black text-slate-400 mb-1">תאריך מעקב</label>
-                  <input type="date"
-                    className={`w-full border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 ${isOverdue(nextActionDate) ? "border-rose-300 bg-rose-50/30" : "border-slate-200"}`}
-                    value={nextActionDate}
-                    onChange={(e) => {
-                      setNextActionDate(e.target.value);
-                      debouncedPatch("nextActionDate", { nextActionAt: e.target.value }, undefined, "reminder_set");
-                    }}
-                  />
-                </div>
-              </div>
-              {/* Contact buttons */}
-              <div className="mt-3 grid grid-cols-1 gap-1.5">
-                {lead.phone && <a href={`tel:${lead.phone}`} className="text-center text-xs font-black rounded-lg py-2.5 bg-violet-700 text-white">☎ התקשר</a>}
-                {lead.phone && <button type="button" onClick={() => openWa()} className="text-center text-xs font-black rounded-lg py-2.5 bg-emerald-600 text-white">💬 וואטסאפ</button>}
-                {(lead.advisorEmail || lead.email) && <a href={`mailto:${lead.advisorEmail || lead.email}`} className="text-center text-xs font-black rounded-lg py-2.5 bg-sky-50 text-sky-700 border border-sky-200">✉ שלח מייל</a>}
-              </div>
-            </div>
-
-            {/* Stage select */}
-            <div className="bg-white rounded-2xl border border-slate-100 p-4">
-              <label className="block text-xs font-black text-slate-400 mb-1.5">שנה שלב</label>
-              <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300" value={getStage(lead)} onChange={(e) => setStage(e.target.value)}>
-                <optgroup label="Pipeline פעיל">
-                  {ACTIVE_PIPELINE_STAGES.map((s) => <option key={s} value={s}>{getPipelineStageLabel(s)}</option>)}
-                </optgroup>
-                <optgroup label="יצא מהתהליך">
-                  <option value="closed_lost">{getPipelineStageLabel("closed_lost")}</option>
-                </optgroup>
-              </select>
-            </div>
+        {/* ── Mobile action bar (horizontal) ── */}
+        <div className="lg:hidden max-w-7xl mx-auto px-4 mt-3">
+          <div className="flex gap-1.5 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+            {ACTION_PANEL_ITEMS.map((item) => (
+              <button key={item.key} type="button" onClick={() => handleActionClick(item.key)}
+                className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition-all border ${
+                  activeAction === item.key
+                    ? "bg-violet-700 text-white border-violet-700 shadow-md"
+                    : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-violet-300"
+                }`}>
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* CENTER: Pipeline progress */}
-          <div className="space-y-4 min-w-0">
+        {/* ── Main layout: center workspace + right action panel ── */}
+        <div className="max-w-7xl mx-auto px-4 py-4 grid lg:grid-cols-[1fr_72px] gap-4 items-start">
+
+          {/* CENTER: Action Workspace */}
+          <div className="space-y-4 min-w-0 order-2 lg:order-1">
+
+            {/* Customer summary + progress - always visible */}
+            <div className="grid md:grid-cols-[1fr_280px] gap-4">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+                <h2 className="text-sm font-black text-slate-950 dark:text-white mb-3">פרטי לקוח</h2>
+                <div className="space-y-2 text-sm">
+                  {[
+                    ["שם",        lead.name],
+                    ["טלפון",     lead.phone],
+                    ["מייל",      lead.email || lead.advisorEmail],
+                    ["עיר",       lead.city || lead.propertyCity],
+                    ["משכנתא",   lead.mortgageAmount ? formatILS(lead.mortgageAmount) : null],
+                    ["מחיר נכס", lead.propertyPrice ? formatILS(lead.propertyPrice) : null],
+                    ["הון עצמי", lead.equityAmount ? formatILS(lead.equityAmount) : null],
+                    ["סוג תיק", PURCHASE_STATUS_LABELS[lead.purchaseStatus] || lead.purchaseStatus || null],
+                  ].filter(([, v]) => v).map(([label, value]) => (
+                    <div key={label} className="flex justify-between gap-2">
+                      <span className="text-slate-400 dark:text-slate-500 font-black text-xs shrink-0">{label}</span>
+                      <span className="font-black text-slate-800 dark:text-slate-200 text-xs truncate text-left">{value}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700 space-y-2">
+                  <div className="rounded-lg bg-violet-50 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-700 px-3 py-2">
+                    <p className="text-[11px] font-black text-violet-500 dark:text-violet-400 mb-0.5">שלב נוכחי</p>
+                    <p className="text-sm font-black text-violet-900 dark:text-violet-200">{getPipelineStageLabel(getStage(lead))}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">פעולה הבאה</label>
+                    <input type="text" className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                      placeholder="מה הפעולה הבאה?"
+                      value={nextActionText}
+                      onChange={(e) => {
+                        setNextActionText(e.target.value);
+                        debouncedPatch("nextAction", { nextAction: e.target.value }, e.target.value ? `פעולה הבאה: ${e.target.value}` : undefined, "reminder_set");
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">תאריך מעקב</label>
+                    <input type="date"
+                      className={`w-full border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-700 dark:text-white ${isOverdue(nextActionDate) ? "border-rose-300 bg-rose-50/30 dark:border-rose-600 dark:bg-rose-900/20" : "border-slate-200 dark:border-slate-600"}`}
+                      value={nextActionDate}
+                      onChange={(e) => {
+                        setNextActionDate(e.target.value);
+                        debouncedPatch("nextActionDate", { nextActionAt: e.target.value }, undefined, "reminder_set");
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <ProgressWidget label="מסמכים" pct={computedDocumentSummary.completionPercent} color="bg-violet-500" />
+                <ProgressWidget label="שמאות" pct={appraisalPct} color="bg-sky-500" />
+                <ProgressWidget label='עו"ד' pct={lawyerPct} color="bg-teal-500" />
+                <ProgressWidget label="בטחונות" pct={collateralProgress} color="bg-amber-500" />
+                <ProgressWidget label="שחרור כספים" pct={fundsPct} color="bg-green-500" />
+                <ProgressWidget label="התקדמות כוללת" pct={overallProgress} color="bg-emerald-600" />
+              </div>
+            </div>
             <StageStepper lead={lead} onAdvance={advanceStage} onSetStage={setStage} />
 
             {/* Attention Flags (Phase 6) */}
@@ -1103,9 +1109,206 @@ export default function LeadDetailPage() {
               </div>
             )}
 
+            {/* ── Action Workspace ── */}
+            {activeAction && (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border-2 border-violet-200 dark:border-violet-700 p-5 animate-slide-up">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-black text-slate-950 dark:text-white flex items-center gap-2">
+                    <span>{ACTION_PANEL_ITEMS.find((a) => a.key === activeAction)?.icon}</span>
+                    <span>{ACTION_PANEL_ITEMS.find((a) => a.key === activeAction)?.label}</span>
+                  </h2>
+                  <button type="button" onClick={() => setActiveAction(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-black text-lg">×</button>
+                </div>
+
+                {/* WhatsApp */}
+                {activeAction === "whatsapp" && (
+                  <div className="space-y-3">
+                    <button type="button" onClick={() => openWa()} className="w-full rounded-xl bg-emerald-600 text-white py-3 text-sm font-black hover:bg-emerald-700 transition-colors">
+                      💬 פתח שיחת WhatsApp
+                    </button>
+                    <button type="button" onClick={() => setShowWaTemplates(true)} className="w-full rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700 py-3 text-sm font-black">
+                      תבניות WhatsApp
+                    </button>
+                    {missingDocs > 0 && (
+                      <button type="button" onClick={sendMissingDocsWa} className="w-full rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700 py-3 text-sm font-black">
+                        📄 שלח בקשת מסמכים חסרים
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Reminder */}
+                {activeAction === "reminder" && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">פעולה הבאה</label>
+                      <input type="text" className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                        placeholder="מה הפעולה הבאה?" value={nextActionText}
+                        onChange={(e) => { setNextActionText(e.target.value); debouncedPatch("nextAction", { nextAction: e.target.value }, e.target.value ? `פעולה הבאה: ${e.target.value}` : undefined, "reminder_set"); }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">תאריך מעקב</label>
+                      <input type="date"
+                        className={`w-full border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-700 dark:text-white ${isOverdue(nextActionDate) ? "border-rose-300 bg-rose-50/30" : "border-slate-200 dark:border-slate-600"}`}
+                        value={nextActionDate}
+                        onChange={(e) => { setNextActionDate(e.target.value); debouncedPatch("nextActionDate", { nextActionAt: e.target.value }, undefined, "reminder_set"); }}
+                      />
+                    </div>
+                    {uploadToken && (
+                      <div className="border-t border-slate-100 dark:border-slate-700 pt-3">
+                        <p className="text-xs font-black text-slate-600 dark:text-slate-400 mb-2">זמן יעד להעלאה</p>
+                        <div className="flex gap-1.5 flex-wrap mb-2">
+                          {[24, 48, 72].map((h) => (
+                            <button key={h} type="button" onClick={() => setReminderHours(h)}
+                              className="px-2.5 py-1.5 rounded-lg text-[11px] font-black bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-violet-100 dark:hover:bg-violet-900/30 hover:text-violet-700 transition-colors">
+                              {h} שעות
+                            </button>
+                          ))}
+                        </div>
+                        {reminderStatusLabel && (
+                          <div className="rounded-lg bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-700 px-3 py-2">
+                            <p className="text-xs font-black text-sky-700 dark:text-sky-300">{reminderStatusLabel}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Stage change */}
+                {activeAction === "stage" && (
+                  <div className="space-y-3">
+                    <select className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300" value={getStage(lead)} onChange={(e) => setStage(e.target.value)}>
+                      <optgroup label="Pipeline פעיל">
+                        {ACTIVE_PIPELINE_STAGES.map((s) => <option key={s} value={s}>{getPipelineStageLabel(s)}</option>)}
+                      </optgroup>
+                      <optgroup label="יצא מהתהליך">
+                        <option value="closed_lost">{getPipelineStageLabel("closed_lost")}</option>
+                      </optgroup>
+                    </select>
+                    {si >= 0 && si < ACTIVE_PIPELINE_STAGES.length - 1 && (
+                      <button type="button" onClick={advanceStage}
+                        className={`w-full text-sm font-black px-4 py-3 rounded-xl text-white transition-colors ${STAGE_COLORS[si + 1] || "bg-violet-500"} hover:opacity-90`}>
+                        הבא: {getPipelineStageLabel(ACTIVE_PIPELINE_STAGES[si + 1])} ←
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Documents link */}
+                {activeAction === "docs" && (
+                  <div className="space-y-3">
+                    {uploadToken ? (
+                      <>
+                        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 truncate flex-1 font-mono" style={{ direction: "ltr" }}>{uploadToken.url}</span>
+                          <button type="button" onClick={copyUploadLink} className="shrink-0 text-[11px] font-black px-2.5 py-1 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">{linkCopied ? "הועתק ✓" : "העתק"}</button>
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          {lead?.phone && <button type="button" onClick={openWaWithUploadLink} className="flex-1 rounded-xl bg-emerald-600 text-white py-2.5 text-xs font-black">💬 שלח ב-WA</button>}
+                          <button type="button" onClick={generateUploadToken} disabled={tokenLoading} className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 py-2.5 text-xs font-black disabled:opacity-50">{tokenLoading ? "יוצר..." : "🔄 חדש קישור"}</button>
+                          <button type="button" onClick={revokeUploadToken} className="flex-1 rounded-xl bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-700 py-2.5 text-xs font-black">בטל קישור</button>
+                        </div>
+                        <p className="text-[10px] text-slate-400">תוקף: {uploadToken.record?.expires_at ? new Date(uploadToken.record.expires_at).toLocaleDateString("he-IL") : "—"}</p>
+                      </>
+                    ) : (
+                      <button type="button" onClick={generateUploadToken} disabled={tokenLoading} className="w-full rounded-xl bg-violet-700 text-white py-3 text-sm font-black disabled:opacity-50">
+                        {tokenLoading ? "יוצר קישור..." : "✨ צור קישור להעלאה"}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Banker assignment */}
+                {activeAction === "banker" && (
+                  <div className="space-y-3">
+                    {advisorBankers.length === 0 ? (
+                      <div className="text-center py-4">
+                        <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-2">עדיין לא הוספת בנקאים</p>
+                        <Link href="/advisor/bankers" className="inline-block px-3 py-1.5 rounded-lg bg-violet-700 text-white text-xs font-black">עבור לספר בנקאים ←</Link>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex gap-2">
+                          <select className="flex-1 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl px-3 py-2 text-sm font-bold outline-none" value={selectedBankerId} onChange={(e) => setSelectedBankerId(e.target.value)}>
+                            <option value="">בחר בנקאי מהספר...</option>
+                            {bankTabDerived.availableBankers.map((b) => <option key={b.id} value={b.id}>{b.banker_name} · {b.bank_name}</option>)}
+                          </select>
+                          <button type="button" disabled={!selectedBankerId || addingBanker} onClick={addBankerToCase} className="shrink-0 px-4 py-2 rounded-xl bg-violet-700 text-white text-xs font-black disabled:opacity-50">{addingBanker ? "מוסיף..." : "+ הוסף"}</button>
+                        </div>
+                        {caseBankers.length > 0 && (
+                          <div className="space-y-2 border-t border-slate-100 dark:border-slate-700 pt-3">
+                            <p className="text-xs font-black text-slate-500 dark:text-slate-400">בנקאים בתיק ({caseBankers.length})</p>
+                            {caseBankers.map((cb) => (
+                              <div key={cb.id} className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-700 px-3 py-2">
+                                <div className="min-w-0">
+                                  <span className="text-xs font-black text-slate-800 dark:text-slate-200">{cb.banker_name_snapshot}</span>
+                                  <span className="text-[10px] text-violet-600 dark:text-violet-400 mr-2">{cb.bank_name_snapshot}</span>
+                                </div>
+                                <button type="button" onClick={() => removeBankerFromCase(cb.id)} className="text-[10px] font-black text-slate-400 hover:text-rose-600">✕</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* PDF export */}
+                {activeAction === "pdf" && (
+                  <div className="text-center py-8">
+                    <span className="text-4xl mb-3 block">📄</span>
+                    <p className="text-sm font-black text-slate-500 dark:text-slate-400">יצוא PDF — בקרוב</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">הפיצ׳ר בפיתוח ויהיה זמין בקרוב</p>
+                  </div>
+                )}
+
+                {/* Notes */}
+                {activeAction === "notes" && (
+                  <div>
+                    <textarea
+                      className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl px-3 py-2.5 text-sm resize-y min-h-[160px] outline-none focus:ring-2 focus:ring-violet-300"
+                      value={notes}
+                      onChange={(e) => {
+                        setNotes(e.target.value);
+                        debouncedPatch("notes", { internalNotes: e.target.value, lastContactedAt: new Date().toISOString() }, "הערה עודכנה", "note_added", 500);
+                      }}
+                      placeholder="הערות, תיאום שיחה, עדכון סטטוס, חסרים..."
+                    />
+                  </div>
+                )}
+
+                {/* Task */}
+                {activeAction === "task" && (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input type="text" className="flex-1 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+                        placeholder="תיאור המשימה..." value={taskText} onChange={(e) => setTaskText(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter" && taskText.trim()) { setTasks((p) => [...p, { text: taskText, done: false, id: Date.now() }]); pushActivity(`משימה: ${taskText}`, "note_added"); setTaskText(""); } }}
+                      />
+                      <button type="button" onClick={() => { if (taskText.trim()) { setTasks((p) => [...p, { text: taskText, done: false, id: Date.now() }]); pushActivity(`משימה: ${taskText}`, "note_added"); setTaskText(""); } }}
+                        className="shrink-0 px-4 py-2 rounded-xl bg-violet-700 text-white text-xs font-black">+ הוסף</button>
+                    </div>
+                    {tasks.length > 0 && (
+                      <div className="space-y-1.5">
+                        {tasks.map((t) => (
+                          <label key={t.id} className="flex items-center gap-2 rounded-lg bg-slate-50 dark:bg-slate-700 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+                            <input type="checkbox" checked={t.done} onChange={() => setTasks((p) => p.map((x) => x.id === t.id ? { ...x, done: !x.done } : x))} />
+                            <span className={t.done ? "line-through text-slate-400" : ""}>{t.text}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Deal details */}
-            <div className="bg-white rounded-2xl border border-slate-100 p-5">
-              <h2 className="text-sm font-black text-slate-950 mb-3">פרטי העסקה</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+              <h2 className="text-sm font-black text-slate-950 dark:text-white mb-3">פרטי העסקה</h2>
 
               {/* Case Type — Phase 1: prominent selector */}
               <div className="mb-3">
@@ -1119,7 +1322,7 @@ export default function LeadDetailPage() {
                       className={`rounded-xl px-3 py-2 text-xs font-black text-right transition-all border ${
                         caseType === ct
                           ? "bg-violet-700 text-white border-violet-700 shadow-sm"
-                          : "bg-slate-50 text-slate-600 border-slate-200 hover:border-violet-300 hover:text-violet-700"
+                          : "bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-violet-300 hover:text-violet-700"
                       }`}
                     >
                       {CASE_TYPE_ICONS[ct]} {ct}
@@ -1130,8 +1333,8 @@ export default function LeadDetailPage() {
 
               <div className="grid gap-2">
                 <div>
-                  <label className="block text-xs font-black text-slate-400 mb-1">בנק</label>
-                  <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none" value={lead.bankName || ""} onChange={(e) => patchLead({ bankName: e.target.value }, e.target.value ? `בנק: ${e.target.value}` : "")}>
+                  <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">בנק</label>
+                  <select className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl px-3 py-2 text-sm font-bold outline-none" value={lead.bankName || ""} onChange={(e) => patchLead({ bankName: e.target.value }, e.target.value ? `בנק: ${e.target.value}` : "")}>
                     <option value="">בחר בנק...</option>
                     {BANKS.map((b) => <option key={b}>{b}</option>)}
                   </select>
@@ -1146,20 +1349,20 @@ export default function LeadDetailPage() {
                   ["הכנסה",     lead.monthlyIncome ? formatILS(lead.monthlyIncome) : null],
                   ["ציון",      score > 0 ? `${score}/100` : null],
                 ].filter(([, v]) => v).map(([label, value]) => (
-                  <div key={label} className="rounded-xl bg-slate-50 p-2.5">
-                    <p className="text-slate-400 font-black mb-0.5">{label}</p>
-                    <p className="font-black text-slate-800">{value}</p>
+                  <div key={label} className="rounded-xl bg-slate-50 dark:bg-slate-700 p-2.5">
+                    <p className="text-slate-400 dark:text-slate-500 font-black mb-0.5">{label}</p>
+                    <p className="font-black text-slate-800 dark:text-slate-200">{value}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* ── Tabs ── */}
-            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-              <div className="flex overflow-x-auto border-b border-slate-100" style={{ scrollbarWidth: "none" }}>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+              <div className="flex overflow-x-auto border-b border-slate-100 dark:border-slate-700" style={{ scrollbarWidth: "none" }}>
                 {DETAIL_TABS.map((t) => (
                   <button key={t.key} type="button" onClick={() => setTab(t.key)}
-                    className={`flex-none px-4 py-3 text-xs font-black whitespace-nowrap transition-colors border-b-2 ${tab === t.key ? "border-violet-700 text-violet-700 bg-violet-50/50" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
+                    className={`flex-none px-4 py-3 text-xs font-black whitespace-nowrap transition-colors border-b-2 ${tab === t.key ? "border-violet-700 text-violet-700 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/20" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"}`}>
                     {t.label}
                   </button>
                 ))}
@@ -1172,9 +1375,9 @@ export default function LeadDetailPage() {
                   <div>
 
                     {/* ── Upload link & reminder ── */}
-                    <div className="mb-5 rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
-                      <h3 className="text-xs font-black text-slate-700 mb-0.5">קישור להעלאת מסמכים</h3>
-                      <p className="text-[11px] font-bold text-slate-400 mb-3">שלח ללקוח קישור מאובטח להעלאה עצמאית</p>
+                    <div className="mb-5 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/40 p-4">
+                      <h3 className="text-xs font-black text-slate-700 dark:text-slate-300 mb-0.5">קישור להעלאת מסמכים</h3>
+                      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-3">שלח ללקוח קישור מאובטח להעלאה עצמאית</p>
                       {uploadToken ? (
                         <>
                           <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 mb-3">
@@ -1533,7 +1736,7 @@ export default function LeadDetailPage() {
                 {/* פעילות — ציר זמן (Phase 5) */}
                 {tab === "activity" && (
                   <div>
-                    <p className="text-sm font-black text-slate-950 mb-4">ציר זמן — היסטוריית תיק</p>
+                    <p className="text-sm font-black text-slate-950 dark:text-white mb-4">ציר זמן — היסטוריית תיק</p>
                     {activities.length === 0 ? (
                       <div className="text-center py-10">
                         <p className="text-2xl mb-2">📅</p>
@@ -1549,13 +1752,13 @@ export default function LeadDetailPage() {
                             <div key={`${act.created_at}-${idx}`} className="relative flex gap-4 pb-4">
                               {/* Timeline dot */}
                               <div className="relative z-10 shrink-0">
-                                <div className="w-10 h-10 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center text-base shadow-sm">
+                                <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 flex items-center justify-center text-base shadow-sm">
                                   {ACTIVITY_ICONS[act.activity_type] || "•"}
                                 </div>
                               </div>
                               {/* Content */}
-                              <div className="flex-1 bg-white rounded-xl border border-slate-100 px-3 py-2.5 min-w-0">
-                                <p className="text-sm font-black text-slate-800">{act.title}</p>
+                              <div className="flex-1 bg-white dark:bg-slate-700 rounded-xl border border-slate-100 dark:border-slate-600 px-3 py-2.5 min-w-0">
+                                <p className="text-sm font-black text-slate-800 dark:text-slate-200">{act.title}</p>
                                 {act.body && <p className="text-xs text-slate-500 mt-0.5">{act.body}</p>}
                                 <p className="text-[11px] text-slate-400 mt-1">{formatDT(act.created_at)}</p>
                               </div>
@@ -1571,11 +1774,11 @@ export default function LeadDetailPage() {
                 {tab === "notes" && (
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-black text-slate-950">הערות פנימיות</p>
+                      <p className="text-sm font-black text-slate-950 dark:text-white">הערות פנימיות</p>
                       {savedIndicator && <span className="text-xs font-black text-emerald-600">נשמר ✓</span>}
                     </div>
                     <textarea
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white resize-y min-h-[160px] outline-none focus:ring-2 focus:ring-violet-300"
+                      className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-slate-700 dark:text-white resize-y min-h-[160px] outline-none focus:ring-2 focus:ring-violet-300"
                       value={notes}
                       onChange={(e) => {
                         setNotes(e.target.value);
@@ -1589,7 +1792,7 @@ export default function LeadDetailPage() {
                 {/* שמאות */}
                 {tab === "appraisal" && (
                   <div>
-                    <p className="text-sm font-black text-slate-950 mb-3">שמאות</p>
+                    <p className="text-sm font-black text-slate-950 dark:text-white mb-3">שמאות</p>
                     <div className="grid gap-2">
                       <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" value={lead.appraisalStatus || "not_ordered"} onChange={(e) => patchLead({ appraisalStatus: e.target.value }, `שמאות: ${APPRAISAL_STATUS_LABELS[e.target.value]}`)}>
                         {APPRAISAL_STATUSES.map((s) => <option key={s} value={s}>{APPRAISAL_STATUS_LABELS[s]}</option>)}
@@ -1608,7 +1811,7 @@ export default function LeadDetailPage() {
                 {/* עו"ד */}
                 {tab === "legal" && (
                   <div>
-                    <p className="text-sm font-black text-slate-950 mb-3">עורכי דין</p>
+                    <p className="text-sm font-black text-slate-950 dark:text-white mb-3">עורכי דין</p>
                     <div className="grid gap-2">
                       <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" placeholder='עו"ד קונה - שם' value={lead.buyerLawyerName || ""} onChange={(e) => setLead((p) => ({ ...p, buyerLawyerName: e.target.value }))} onBlur={(e) => patchLead({ buyerLawyerName: e.target.value })} />
                       <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" placeholder='עו"ד קונה - טלפון' value={lead.buyerLawyerPhone || ""} onChange={(e) => setLead((p) => ({ ...p, buyerLawyerPhone: e.target.value }))} onBlur={(e) => patchLead({ buyerLawyerPhone: e.target.value })} />
@@ -1628,7 +1831,7 @@ export default function LeadDetailPage() {
                 {/* חתימות */}
                 {tab === "signing" && (
                   <div>
-                    <p className="text-sm font-black text-slate-950 mb-3">חתימות</p>
+                    <p className="text-sm font-black text-slate-950 dark:text-white mb-3">חתימות</p>
                     <div className="grid gap-2">
                       <div>
                         <label className="block text-xs font-black text-slate-400 mb-1">תאריך חתימה</label>
@@ -1647,7 +1850,7 @@ export default function LeadDetailPage() {
                 {tab === "collateral" && (
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-black text-slate-950">בטחונות</p>
+                      <p className="text-sm font-black text-slate-950 dark:text-white">בטחונות</p>
                       <span className="text-xs font-black text-slate-500 tabular-nums">{collateralProgress}%</span>
                     </div>
                     <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
@@ -1675,26 +1878,31 @@ export default function LeadDetailPage() {
 
             {/* Bank Guide Section (Phase 8) — refinance cases only */}
             {isRefinance && <BankGuideSection />}
+
           </div>
 
-          {/* LEFT: Progress widgets */}
-          <div className="space-y-2">
-            <ProgressWidget label="מסמכים" pct={computedDocumentSummary.completionPercent} color="bg-violet-500" />
-            <ProgressWidget label="שמאות" pct={appraisalPct} color="bg-sky-500" />
-            <ProgressWidget label='עו"ד' pct={lawyerPct} color="bg-teal-500" />
-            <ProgressWidget label="בטחונות" pct={collateralProgress} color="bg-amber-500" />
-            <ProgressWidget label="שחרור כספים" pct={fundsPct} color="bg-green-500" />
-            <ProgressWidget label="התקדמות כוללת" pct={overallProgress} color="bg-emerald-600" />
+          {/* RIGHT: Fixed Action Panel (desktop only) */}
+          <div className="hidden lg:block order-2 lg:sticky lg:top-36">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-2 space-y-1">
+              {ACTION_PANEL_ITEMS.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => handleActionClick(item.key)}
+                  title={item.label}
+                  className={`w-full flex flex-col items-center gap-0.5 px-1 py-2.5 rounded-xl transition-all text-center ${
+                    activeAction === item.key
+                      ? "bg-violet-700 text-white shadow-md"
+                      : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <span className="text-base">{item.icon}</span>
+                  <span className="text-[9px] font-black leading-tight">{item.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-        </div>
-
-        {/* Mobile bottom bar */}
-        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
-          {lead.phone && <a href={`tel:${lead.phone}`} className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">☎ התקשר</a>}
-          {lead.phone && <button type="button" onClick={() => openWa()} className="flex-1 text-center text-xs font-black text-emerald-700 bg-emerald-50 rounded-xl py-2.5">💬 WA</button>}
-          {si >= 0 && si < ACTIVE_PIPELINE_STAGES.length - 1 && <button type="button" onClick={advanceStage} className="flex-1 text-center text-xs font-black text-white bg-violet-700 rounded-xl py-2.5">הבא ←</button>}
-          <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">← חזרה</Link>
         </div>
       </main>
 

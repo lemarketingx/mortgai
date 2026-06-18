@@ -1,11 +1,48 @@
 import Head from "next/head";
 import Script from "next/script";
-import { useEffect } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { Analytics } from "@vercel/analytics/next";
 import ErrorBoundary from "../components/ErrorBoundary";
 import BetaBanner from "../components/BetaBanner";
 import "../styles/globals.css";
+
+const THEME_KEY = "finzo_theme_mode";
+const ThemeContext = createContext({ dark: false, toggle: () => {} });
+export function useTheme() { return useContext(ThemeContext); }
+
+function ThemeProvider({ children }) {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(THEME_KEY);
+      if (stored === "dark") {
+        setDark(true);
+        document.documentElement.classList.add("dark");
+      }
+    } catch {}
+  }, []);
+
+  const toggle = useCallback(() => {
+    setDark((prev) => {
+      const next = !prev;
+      try { localStorage.setItem(THEME_KEY, next ? "dark" : "light"); } catch {}
+      if (next) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      return next;
+    });
+  }, []);
+
+  return (
+    <ThemeContext.Provider value={{ dark, toggle }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
 
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
@@ -80,7 +117,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       ) : null}
 
       {showBanner && <BetaBanner />}
-      <Component {...pageProps} />
+      <ThemeProvider>
+        <Component {...pageProps} />
+      </ThemeProvider>
       <Analytics />
     </ErrorBoundary>
   );
