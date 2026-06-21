@@ -3,6 +3,9 @@ import { getAdvisorSession } from "../../../lib/advisorAuth";
 
 const FIXED_LEAD_PRICE = 249;
 
+const inFlightPurchases = globalThis.__mortgai2InFlightPurchases || new Set();
+globalThis.__mortgai2InFlightPurchases = inFlightPurchases;
+
 function apiError(res, status, code, message, details = "") {
   return res.status(status).json({ error: code, message, ...(details ? { details } : {}) });
 }
@@ -17,6 +20,12 @@ export default async function handler(req, res) {
   const leadId = String(body.leadId || "").trim();
 
   if (!leadId) return apiError(res, 400, "LEAD_ID_REQUIRED", "leadId is required");
+
+  const lockKey = `${session.advisorId}:${leadId}`;
+  if (inFlightPurchases.has(lockKey)) {
+    return apiError(res, 409, "PURCHASE_IN_PROGRESS", "הרכישה כבר בתהליך. אנא המתן.");
+  }
+  inFlightPurchases.add(lockKey);
 
   try {
     const storeLeads = await readStoreLeads();
@@ -44,8 +53,10 @@ export default async function handler(req, res) {
       isExclusive: false,
     });
 
+    inFlightPurchases.delete(lockKey);
     return res.status(200).json({ ok: true, purchase });
   } catch (error) {
+    inFlightPurchases.delete(lockKey);
     if (error instanceof LeadStoreError) {
       if (error.code === "TABLE_MISSING") {
         return apiError(res, 503, "TABLE_MISSING", "Lead store not configured — run SQL migration");

@@ -1,10 +1,12 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { KpiTile, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import { calculateLeadPrice, getPriceLabel } from "../../lib/leadPricing";
 
 const FIXED_LEAD_PRICE = 249;
+const FAVORITES_KEY = "finzo_lead_favorites";
 
 const PURCHASE_STATUS_LABELS = {
   new_purchase: "רכישת דירה",
@@ -223,7 +225,7 @@ function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
   );
 }
 
-function LeadStoreCard({ lead, onPurchase, purchasing }) {
+function LeadStoreCard({ lead, onPurchase, purchasing, isFavorite, onToggleFavorite }) {
   const [confirm, setConfirm] = useState(false);
   const isSold = lead.storeStatus === "sold";
   const alreadyOwnedByMe = Boolean(lead._ownedByAdvisor);
@@ -264,9 +266,14 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
           </div>
           <MarketplaceTags lead={lead} />
         </div>
-        <div className="text-start shrink-0">
-          <p className="text-xl font-black text-slate-950 dark:text-slate-100 tabular-nums leading-none">{formatPrice(lead.storePrice)}</p>
-          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">לליד</p>
+        <div className="flex items-start gap-2 shrink-0">
+          <button onClick={() => onToggleFavorite?.(lead.id)} className={`text-lg leading-none mt-0.5 transition-colors ${isFavorite ? "text-amber-500" : "text-slate-300 dark:text-slate-600 hover:text-amber-400"}`} aria-label={isFavorite ? "הסר ממועדפים" : "הוסף למועדפים"}>
+            {isFavorite ? "★" : "☆"}
+          </button>
+          <div className="text-start">
+            <p className="text-xl font-black text-slate-950 dark:text-slate-100 tabular-nums leading-none">{formatPrice(lead.storePrice)}</p>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">לליד</p>
+          </div>
         </div>
       </div>
 
@@ -298,6 +305,8 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
         </div>
 
         <FinzoScoreExplanation lead={lead} score={score} />
+
+        {!lead._purchased && !alreadyOwnedByMe && !isSold && <AnonymousSnapshot lead={lead} />}
 
         {!lead._purchased && !alreadyOwnedByMe && !isSold && (
           <div className="rounded-xl bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-200 dark:border-slate-800 px-3 py-2.5">
@@ -345,7 +354,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
   );
 }
 
-function DepartmentSection({ dept, leads, onPurchase, purchasing }) {
+function DepartmentSection({ dept, leads, onPurchase, purchasing, favorites, onToggleFavorite }) {
   const [collapsed, setCollapsed] = useState(false);
   if (!leads.length) return null;
   return (
@@ -360,11 +369,33 @@ function DepartmentSection({ dept, leads, onPurchase, purchasing }) {
       {!collapsed && (
         <div className="grid gap-3 md:grid-cols-2">
           {leads.map((lead) => (
-            <LeadStoreCard key={lead.id} lead={lead} onPurchase={onPurchase} purchasing={purchasing} />
+            <LeadStoreCard key={lead.id} lead={lead} onPurchase={onPurchase} purchasing={purchasing} isFavorite={favorites?.has(lead.id)} onToggleFavorite={onToggleFavorite} />
           ))}
         </div>
       )}
     </section>
+  );
+}
+
+function AnonymousSnapshot({ lead }) {
+  const equity = Number(lead.equityAmount || lead.equity || 0);
+  const price = Number(lead.propertyPrice || lead.propertyValue || 0);
+  const equityPct = price > 0 ? Math.round((equity / price) * 100) : null;
+  const mortgage = Number(lead.mortgageAmount || 0);
+  const ltvPct = price > 0 ? Math.round((mortgage / price) * 100) : null;
+
+  return (
+    <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-3 space-y-2">
+      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">תצוגה מקדימה אנונימית</p>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        {lead.employmentStatus && <InfoBox label="סוג הכנסה" value={lead.employmentStatus === "שכיר" ? "שכיר" : "עצמאי"} />}
+        {equityPct !== null && <InfoBox label="הון עצמי" value={`${equityPct}%`} />}
+        {ltvPct !== null && <InfoBox label="אחוז מימון" value={`${ltvPct}%`} />}
+        {lead.creditComplexity && <InfoBox label="מורכבות" value={lead.creditComplexity} />}
+        {lead.contractStatus && <InfoBox label="חוזה" value={lead.contractStatus === "חוזה חתום" ? "כן" : "לא"} />}
+        {lead.timeframe && <InfoBox label="זמן לביצוע" value={lead.timeframe} />}
+      </div>
+    </div>
   );
 }
 
@@ -381,6 +412,24 @@ export default function AdvisorLeadsStore() {
   const [filterPriceMax, setFilterPriceMax] = useState(Infinity);
   const [filterCity, setFilterCity] = useState("");
   const [filterMaxDays, setFilterMaxDays] = useState(Infinity);
+  const [favorites, setFavorites] = useState(new Set());
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(FAVORITES_KEY);
+      if (saved) setFavorites(new Set(JSON.parse(saved)));
+    } catch {}
+  }, []);
+
+  const toggleFavorite = useCallback((leadId) => {
+    setFavorites(prev => {
+      const next = new Set(prev);
+      if (next.has(leadId)) next.delete(leadId); else next.add(leadId);
+      try { localStorage.setItem(FAVORITES_KEY, JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }, []);
 
   useEffect(() => { load(); }, []);
 
@@ -445,9 +494,10 @@ export default function AdvisorLeadsStore() {
       if (filterPriceMax !== Infinity && (lead.storePrice || 0) > filterPriceMax) return false;
       if (filterCity && filterCity !== "הכל" && lead.city !== filterCity) return false;
       if (filterMaxDays !== Infinity && ageInDays(lead.createdAt) > filterMaxDays) return false;
+      if (showFavoritesOnly && !favorites.has(lead.id)) return false;
       return true;
     });
-  }, [leads, filterDept, filterQuality, filterPriceMax, filterCity, filterMaxDays]);
+  }, [leads, filterDept, filterQuality, filterPriceMax, filterCity, filterMaxDays, showFavoritesOnly, favorites]);
 
   const qualityLevels = useMemo(() => {
     const unique = new Set(leads.map((lead) => lead.computedQuality || lead.leadQuality).filter(Boolean));
@@ -461,7 +511,7 @@ export default function AdvisorLeadsStore() {
     })).filter((dept) => dept.leads.length > 0);
   }, [filtered]);
 
-  const hasFilters = filterDept !== "all" || filterQuality !== "all" || filterPriceMax !== Infinity || (filterCity && filterCity !== "הכל") || filterMaxDays !== Infinity;
+  const hasFilters = filterDept !== "all" || filterQuality !== "all" || filterPriceMax !== Infinity || (filterCity && filterCity !== "הכל") || filterMaxDays !== Infinity || showFavoritesOnly;
 
   function clearFilters() {
     setFilterDept("all");
@@ -469,6 +519,7 @@ export default function AdvisorLeadsStore() {
     setFilterPriceMax(Infinity);
     setFilterCity("");
     setFilterMaxDays(Infinity);
+    setShowFavoritesOnly(false);
   }
 
   return (
@@ -530,6 +581,10 @@ export default function AdvisorLeadsStore() {
               <select value={filterMaxDays === Infinity ? "Infinity" : String(filterMaxDays)} onChange={(e) => setFilterMaxDays(e.target.value === "Infinity" ? Infinity : Number(e.target.value))} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400">
                 {AGE_RANGES.map((range) => <option key={range.label} value={range.maxDays === Infinity ? "Infinity" : String(range.maxDays)}>{range.label}</option>)}
               </select>
+              <button onClick={() => setShowFavoritesOnly(v => !v)}
+                className={`text-xs font-black border rounded-xl px-3 py-1.5 transition-colors ${showFavoritesOnly ? "bg-violet-100 dark:bg-violet-900/30 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-300" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"}`}>
+                {showFavoritesOnly ? "מועדפים בלבד" : "מועדפים"} ({favorites.size})
+              </button>
             </div>
           </div>
 
@@ -564,7 +619,7 @@ export default function AdvisorLeadsStore() {
           )}
 
           {!loading && departments.map((dept) => (
-            <DepartmentSection key={dept.key} dept={dept} leads={dept.leads} onPurchase={purchase} purchasing={purchasing} />
+            <DepartmentSection key={dept.key} dept={dept} leads={dept.leads} onPurchase={purchase} purchasing={purchasing} favorites={favorites} onToggleFavorite={toggleFavorite} />
           ))}
         </div>
       </main>

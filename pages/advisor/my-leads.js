@@ -11,6 +11,7 @@ import {
   normalizePipelineStage,
 } from "../../lib/pipeline";
 import { calculateOverallMortgageProgress } from "../../lib/mortgageCase";
+import { leadsToCSV, downloadCSV, leadsToExcelXML, downloadExcel } from "../../lib/exportData";
 
 const PURCHASE_STATUS_LABELS = {
   new_purchase:       "רכישת דירה",
@@ -490,6 +491,12 @@ export default function AdvisorMyLeads() {
               <option value="amount">סכום</option>
               <option value="status">שלב</option>
             </select>
+            <div className="flex rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shrink-0">
+              <button onClick={() => { const csv = leadsToCSV(sorted); downloadCSV(csv, `finzo-leads-${new Date().toISOString().slice(0,10)}.csv`); }}
+                className="px-3 py-2 text-xs font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">CSV</button>
+              <button onClick={() => { const xml = leadsToExcelXML(sorted); downloadExcel(xml, `finzo-leads-${new Date().toISOString().slice(0,10)}.xls`); }}
+                className="px-3 py-2 text-xs font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors border-r border-slate-200 dark:border-slate-800">Excel</button>
+            </div>
           </div>
 
           {/* Status tabs */}

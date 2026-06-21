@@ -318,11 +318,35 @@ function KpiCard({ label, value }) {
   );
 }
 
+// ─── Date range presets ──────────────────────────────────────────────────────
+const DATE_PRESETS = [
+  { key: "all", label: "הכל" },
+  { key: "7d", label: "7 ימים", days: 7 },
+  { key: "30d", label: "חודש", days: 30 },
+  { key: "90d", label: "רבעון", days: 90 },
+  { key: "ytd", label: "מתחילת השנה" },
+];
+
+function filterByDateRange(items, key, dateField = "createdAt") {
+  if (key === "all") return items;
+  const now = Date.now();
+  if (key === "ytd") {
+    const yearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
+    return items.filter(l => new Date(l[dateField] || l.created_at || 0).getTime() >= yearStart);
+  }
+  const preset = DATE_PRESETS.find(p => p.key === key);
+  if (!preset?.days) return items;
+  const cutoff = now - preset.days * DAY_MS;
+  return items.filter(l => new Date(l[dateField] || l.created_at || 0).getTime() >= cutoff);
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AdvisorDashboard() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [advisorName, setAdvisorName] = useState("");
+  const [dateRange, setDateRange] = useState("all");
+  const [bankFilter, setBankFilter] = useState("all");
 
   // Read display name from localStorage — safe, runs only after hydration
   useEffect(() => {
@@ -348,13 +372,24 @@ export default function AdvisorDashboard() {
   }, []);
 
   // ── Derived data — all useMemos, no calculations in render ──────────────────
-  const active    = useMemo(() => leads.filter(isActive), [leads]);
+  const allBanks = useMemo(() => {
+    const set = new Set(leads.map(l => l.bankName).filter(Boolean));
+    return ["all", ...Array.from(set).sort()];
+  }, [leads]);
+
+  const filteredLeads = useMemo(() => {
+    let result = filterByDateRange(leads, dateRange);
+    if (bankFilter !== "all") result = result.filter(l => l.bankName === bankFilter);
+    return result;
+  }, [leads, dateRange, bankFilter]);
+
+  const active    = useMemo(() => filteredLeads.filter(isActive), [filteredLeads]);
   const newLeads  = useMemo(() => active.filter((l) => ["new_lead", "contacted"].includes(getStage(l))), [active]);
   const inProgress = useMemo(() => active.filter((l) => !["new_lead", "contacted"].includes(getStage(l))), [active]);
   const waitingDocs = useMemo(() =>
     active.filter((l) => ["documents_requested", "waiting_documents"].includes(getStage(l))),
   [active]);
-  const completed = useMemo(() => leads.filter((l) => getStage(l) === "closed_won"), [leads]);
+  const completed = useMemo(() => filteredLeads.filter((l) => getStage(l) === "closed_won"), [filteredLeads]);
 
   const pipelineGroups = useMemo(() => {
     const counts = Object.fromEntries(PIPELINE_GROUPS.map((g) => [g.key, 0]));
@@ -426,6 +461,31 @@ export default function AdvisorDashboard() {
     const entries = Object.entries(counts);
     return entries.length > 0 ? entries.sort((a, b) => b[1] - a[1])[0][0] : "—";
   }, [leads]);
+  const sourceAnalytics = useMemo(() => {
+    const map = {};
+    for (const l of filteredLeads) {
+      const src = l.source || l.leadSource || "אחר";
+      if (!map[src]) map[src] = { total: 0, closed: 0 };
+      map[src].total++;
+      if (getStage(l) === "closed_won") map[src].closed++;
+    }
+    return Object.entries(map)
+      .map(([source, d]) => ({ source, total: d.total, closed: d.closed, conversionRate: d.total > 0 ? Math.round((d.closed / d.total) * 100) : 0 }))
+      .sort((a, b) => b.total - a.total);
+  }, [filteredLeads]);
+
+  const funnelData = useMemo(() => {
+    const stages = ["new_lead", "documents_requested", "eligibility_review", "submitted_to_bank", "principle_approval", "signed", "closed_won"];
+    const labels = ["ליד חדש", "מסמכים", "בדיקת זכאות", "הגשה לבנק", "אישור עקרוני", "חתימה", "הושלם"];
+    return stages.map((stage, i) => {
+      const count = filteredLeads.filter(l => {
+        const idx = stages.indexOf(getStage(l));
+        return idx >= i;
+      }).length;
+      return { stage, label: labels[i], count };
+    });
+  }, [filteredLeads]);
+
   const noContactLeads = useMemo(() => active.filter(l => {
     const days = diffDays(l.lastContactedAt || l.createdAt);
     return days !== null && days >= 7;
@@ -515,6 +575,23 @@ export default function AdvisorDashboard() {
                 ⚙
               </Link>
             </div>
+          </div>
+
+          {/* ── Date & Bank Filters ─────────────────────────────────────── */}
+          <div className="flex flex-wrap items-center gap-2">
+            {DATE_PRESETS.map(p => (
+              <button key={p.key} onClick={() => setDateRange(p.key)}
+                className={`text-xs font-black px-3 py-1.5 rounded-lg border transition-colors ${dateRange === p.key ? "bg-violet-100 dark:bg-violet-900/30 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-300" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"}`}>
+                {p.label}
+              </button>
+            ))}
+            {allBanks.length > 1 && (
+              <select value={bankFilter} onChange={e => setBankFilter(e.target.value)}
+                className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400 mr-auto">
+                <option value="all">כל הבנקים</option>
+                {allBanks.filter(b => b !== "all").map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            )}
           </div>
 
           {/* ── KPI Cards — 2 rows of 4 ──────────────────────────────────── */}
@@ -670,6 +747,63 @@ export default function AdvisorDashboard() {
                   </div>
                 </section>
               )}
+              {/* Funnel Analytics */}
+              {!loading && funnelData.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <div className="mb-4">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">משפך המרה</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">כמה לידים עברו כל שלב</p>
+                  </div>
+                  <div className="space-y-2">
+                    {funnelData.map((item, i) => {
+                      const maxCount = funnelData[0]?.count || 1;
+                      const pct = Math.max(6, (item.count / maxCount) * 100);
+                      return (
+                        <div key={item.stage} className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-24 shrink-0 text-right truncate">{item.label}</span>
+                          <div className="flex-1 h-5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-violet-500 dark:bg-violet-600 transition-all duration-500" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-xs font-black tabular-nums text-slate-700 dark:text-slate-300 w-6 text-left shrink-0">{item.count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {/* Source Analytics */}
+              {!loading && sourceAnalytics.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">לידים לפי מקור</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">ביצועים לפי מקור הליד</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-slate-800">
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">מקור</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">לידים</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">סגירות</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">% המרה</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sourceAnalytics.map(row => (
+                          <tr key={row.source} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="px-4 py-2.5 font-black text-slate-900 dark:text-slate-100">{row.source}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.total}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.closed}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-600 dark:text-slate-400">{row.conversionRate}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+
               {/* סגירות לפי בנק */}
               {!loading && bankClosings.length > 0 && (
                 <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">

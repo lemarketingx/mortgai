@@ -81,6 +81,8 @@ const DETAIL_TABS = [
   { key: "legal",     label: 'עו"ד' },
   { key: "signing",   label: "חתימות" },
   { key: "collateral",label: "בטחונות" },
+  { key: "audit",     label: "היסטוריה" },
+  { key: "tasks",     label: "משימות" },
 ];
 
 const ACTION_PANEL_ITEMS = [
@@ -474,7 +476,7 @@ export default function LeadDetailPage() {
   const initialTab = (() => {
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search).get("tab");
-      const valid = ["docs", "bank", "activity", "notes", "appraisal", "legal", "signing", "collateral"];
+      const valid = ["docs", "bank", "activity", "notes", "appraisal", "legal", "signing", "collateral", "audit", "tasks"];
       if (p && valid.includes(p)) return p;
     }
     return "docs";
@@ -1928,6 +1930,48 @@ export default function LeadDetailPage() {
                           <select className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-violet-500/30" value={lead.fundsReleaseStatus || "not_released"} onChange={(e) => patchLead({ fundsReleaseStatus: e.target.value }, `שחרור כספים: ${FUNDS_RELEASE_STATUS_LABELS[e.target.value]}`)}>
                             {FUNDS_RELEASE_STATUSES.map((s) => <option key={s} value={s}>{FUNDS_RELEASE_STATUS_LABELS[s]}</option>)}
                           </select>
+                        </div>
+                      </div>
+                    )}
+
+                    {tab === "audit" && (
+                      <div>
+                        <div className="mb-4">
+                          <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">היסטוריית שינויים</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">מי שינה מה ומתי — מעקב מלא על כל פעולה בתיק</p>
+                        </div>
+                        {activities.length > 0 ? (
+                          <div className="space-y-2">
+                            {activities.map((a, i) => (
+                              <div key={a.id || i} className="flex items-start gap-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-3 py-2.5">
+                                <span className="text-sm shrink-0 mt-0.5">{ACTIVITY_ICONS[a.type] || "📋"}</span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{a.description || a.type}</p>
+                                  {a.metadata && <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{typeof a.metadata === "string" ? a.metadata : JSON.stringify(a.metadata)}</p>}
+                                </div>
+                                <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">
+                                  {a.timestamp || a.createdAt ? new Date(a.timestamp || a.createdAt).toLocaleDateString("he-IL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-sm text-slate-400 dark:text-slate-500">אין פעילות מתועדת עדיין</div>
+                        )}
+                      </div>
+                    )}
+
+                    {tab === "tasks" && (
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">משימות</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">ניהול משימות ומעקב לפי תאריכים</p>
+                          </div>
+                        </div>
+                        <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-6 text-center">
+                          <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">מנוע משימות</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500">משימות מרובות לליד, תאריכי יעד, עדיפויות — דורש חיבור לבקאנד</p>
                         </div>
                       </div>
                     )}

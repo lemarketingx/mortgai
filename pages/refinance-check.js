@@ -1,5 +1,6 @@
 import Head from "next/head";
 import { useMemo, useRef, useState } from "react";
+import { useTheme } from "./_app";
 import { cleanNumber, displayNumber, formatILS, formatPct, toNumber } from "../lib/format";
 import { monthlyPayment } from "../lib/mortgage";
 import {
@@ -364,7 +365,7 @@ export default function RefinanceCheck() {
   }
 
   return (
-    <main dir="rtl" className="min-h-screen bg-white pb-24 text-slate-950 md:pb-0">
+    <main dir="rtl" className="min-h-screen bg-white dark:bg-slate-900 pb-24 text-slate-950 dark:text-slate-100 md:pb-0">
       <Head>
         <title>{REFINANCE_SEO.title}</title>
         <meta name="description" content={REFINANCE_SEO.description} />
@@ -399,7 +400,7 @@ export default function RefinanceCheck() {
       <Header />
       <Hero />
 
-      <section id="calculator" className="bg-gradient-to-b from-white via-violet-50/35 to-white py-20">
+      <section id="calculator" className="bg-gradient-to-b from-white via-violet-50/35 to-white dark:from-slate-900 dark:via-violet-950/20 dark:to-slate-900 py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <SectionHeader
             eyebrow="בדיקת מחזור"
@@ -440,7 +441,7 @@ export default function RefinanceCheck() {
         />
       </section>
 
-      <section id="comparison" className="bg-slate-50 py-20">
+      <section id="comparison" className="bg-slate-50 dark:bg-slate-950 py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <SectionHeader
             eyebrow="לפני ואחרי"
@@ -490,7 +491,7 @@ export default function RefinanceCheck() {
         </div>
       </section>
 
-      <section id="faq" className="bg-slate-50 py-20">
+      <section id="faq" className="bg-slate-50 dark:bg-slate-950 py-20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6">
           <SectionHeader eyebrow="שאלות נפוצות" title="מה חשוב לדעת לפני מחזור?" text="הבדיקה כאן היא כלי ראשוני, לא הצעה בנקאית ולא ייעוץ מחייב." />
           <div className="mt-10 grid gap-4 md:grid-cols-2">
@@ -509,13 +510,13 @@ export default function RefinanceCheck() {
 
 function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-slate-200/70 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <a href="/" className="flex items-center gap-2.5">
-          <span className="text-lg font-black text-slate-950">FINZO</span>
-          <span className="text-[11px] font-black text-violet-700 bg-violet-100 border border-violet-200 px-2 py-0.5 rounded-full">בדיקת מחזור משכנתא</span>
+          <span className="text-lg font-black text-slate-950 dark:text-white">FINZO</span>
+          <span className="text-[11px] font-black text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-950 border border-violet-200 dark:border-slate-800 px-2 py-0.5 rounded-full">בדיקת מחזור משכנתא</span>
         </a>
-        <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 text-sm font-bold text-slate-600 lg:flex">
+        <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 text-sm font-bold text-slate-600 dark:text-slate-400 lg:flex">
           {navLinks.map(([label, href]) => (
             <a key={href} href={href} className="transition hover:text-violet-700">{label}</a>
           ))}
@@ -534,22 +535,22 @@ function Hero() {
       <div className="absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,0.18),transparent_45%)]" />
       <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-2">
         <div className="mx-auto max-w-2xl text-center lg:text-right">
-          <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-black text-violet-800">מחזור משכנתא</span>
-          <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+          <span className="inline-flex rounded-full border border-violet-200 dark:border-slate-800 bg-violet-50 dark:bg-violet-950 px-4 py-2 text-sm font-black text-violet-800 dark:text-violet-300">מחזור משכנתא</span>
+          <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-slate-950 dark:text-white sm:text-5xl lg:text-6xl">
             בדיקת כדאיות למחזור משכנתא
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-lg font-semibold leading-8 text-slate-600 lg:mx-0">
+          <p className="mx-auto mt-6 max-w-xl text-lg font-semibold leading-8 text-slate-600 dark:text-slate-400 lg:mx-0">
             הזינו כמה נתונים בסיסיים וקבלו אומדן חיסכון חודשי, חיסכון ריבית, נקודת איזון והאם כדאי להתקדם לבדיקה מקצועית ראשונית.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
             <a href="#calculator" className="rounded-full bg-violet-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-violet-800">
               בדקו מחזור עכשיו
             </a>
-            <a href="/" className="rounded-full border border-violet-200 bg-white px-8 py-4 text-center text-base font-black text-violet-800 shadow-sm transition hover:border-violet-300 hover:bg-violet-50">
+            <a href="/" className="rounded-full border border-violet-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-4 text-center text-base font-black text-violet-800 dark:text-violet-300 shadow-sm transition hover:border-violet-300 hover:bg-violet-50">
               מחשבון רכישה
             </a>
           </div>
-          <p className="mt-5 text-sm font-bold text-slate-500">סימולציה ראשונית בלבד, לא אישור בנקאי או ייעוץ משכנתאות רשמי.</p>
+          <p className="mt-5 text-sm font-bold text-slate-500 dark:text-slate-400">סימולציה ראשונית בלבד, לא אישור בנקאי או ייעוץ משכנתאות רשמי.</p>
         </div>
         <Illustration />
       </div>
@@ -561,9 +562,9 @@ function Illustration() {
   return (
     <div className="relative mx-auto w-full max-w-lg">
       <div className="absolute -inset-6 rounded-[56px] bg-violet-200/30 blur-3xl" />
-      <div className="relative rounded-[44px] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-violet-50 p-8 shadow-[0_28px_80px_rgba(15,23,42,0.12)]">
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6">
-          <p className="text-sm font-black text-slate-500">אומדן מחזור</p>
+      <div className="relative rounded-[44px] border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-white via-slate-50 to-violet-50 dark:from-slate-900 dark:via-slate-800 dark:to-violet-950 p-8 shadow-[0_28px_80px_rgba(15,23,42,0.12)]">
+        <div className="rounded-[32px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+          <p className="text-sm font-black text-slate-500 dark:text-slate-400">אומדן מחזור</p>
           <div className="mt-5 space-y-4">
             <Line label="החזר נוכחי" width="92%" />
             <Line label="החזר חדש" width="68%" purple />
@@ -582,8 +583,8 @@ function Illustration() {
 function Line({ label, width, purple = false }) {
   return (
     <div>
-      <div className="flex justify-between text-sm font-black text-slate-500"><span>{label}</span><span>{width}</span></div>
-      <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full ${purple ? "bg-violet-600" : "bg-slate-300"}`} style={{ width }} /></div>
+      <div className="flex justify-between text-sm font-black text-slate-500 dark:text-slate-400"><span>{label}</span><span>{width}</span></div>
+      <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className={`h-full rounded-full ${purple ? "bg-violet-600" : "bg-slate-300"}`} style={{ width }} /></div>
     </div>
   );
 }
@@ -591,9 +592,9 @@ function Line({ label, width, purple = false }) {
 function SectionHeader({ eyebrow, title, text }) {
   return (
     <div className="mx-auto max-w-3xl text-center">
-      <span className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">{eyebrow}</span>
-      <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950 sm:text-4xl">{title}</h2>
-      <p className="mt-4 text-lg leading-8 text-slate-600">{text}</p>
+      <span className="inline-flex rounded-full bg-violet-50 dark:bg-violet-950 px-4 py-2 text-sm font-black text-violet-700 dark:text-violet-300">{eyebrow}</span>
+      <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950 dark:text-white sm:text-4xl">{title}</h2>
+      <p className="mt-4 text-lg leading-8 text-slate-600 dark:text-slate-400">{text}</p>
     </div>
   );
 }
@@ -605,16 +606,16 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
   return (
     <div className="flex flex-col gap-4">
       {/* PDF Upload area */}
-      <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <p className="text-sm font-black text-slate-700">העלאת דוח משכנתא PDF <span className="font-semibold text-slate-400">(אופציונלי)</span></p>
-        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">המערכת תנסה לחלץ יתרה, החזר, ריבית ותקופה. תמיד תוצג אפשרות לאשר לפני השימוש.</p>
+      <div className="rounded-[28px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm sm:p-6">
+        <p className="text-sm font-black text-slate-700 dark:text-slate-300">העלאת דוח משכנתא PDF <span className="font-semibold text-slate-400 dark:text-slate-500">(אופציונלי)</span></p>
+        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">המערכת תנסה לחלץ יתרה, החזר, ריבית ותקופה. תמיד תוצג אפשרות לאשר לפני השימוש.</p>
 
         {pdfState.status === "idle" || pdfState.status === "done" ? (
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-violet-300 bg-violet-50 px-4 py-4 text-sm font-black text-violet-800 transition hover:bg-violet-100 disabled:opacity-50"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-950 px-4 py-4 text-sm font-black text-violet-800 dark:text-violet-300 transition hover:bg-violet-100 disabled:opacity-50"
           >
             <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {pdfConfirmed ? "העלה דוח אחר" : "לחצו להעלאת PDF"}
@@ -630,7 +631,7 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
         />
 
         {pdfState.status === "loading" && (
-          <div className="mt-3 rounded-2xl bg-violet-50 px-4 py-4 text-center text-sm font-black text-violet-800 animate-pulse">
+          <div className="mt-3 rounded-2xl bg-violet-50 dark:bg-violet-950 px-4 py-4 text-center text-sm font-black text-violet-800 dark:text-violet-300 animate-pulse">
             מעבד את ה-PDF...
           </div>
         )}
@@ -665,13 +666,13 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
         )}
 
         {pdfState.status === "done" && (
-          <div className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+          <div className="mt-3 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-sm font-bold text-emerald-800 dark:text-emerald-300">
             הנתונים מה-PDF מולאו בטופס. בדקו ועדכנו לפי הצורך.
           </div>
         )}
       </div>
 
-      <form className="rounded-[34px] border border-slate-200 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-7">
+      <form className="rounded-[34px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-7">
         <div className="grid gap-4 sm:grid-cols-2">
           <MoneyField label="יתרת משכנתא לסילוק" value={data.balance} onChange={(value) => update("balance", value)} helper="הסכום שנשאר להחזיר לפי הדוח או האפליקציה." />
           <MoneyField label="החזר חודשי נוכחי" value={data.currentPayment} onChange={(value) => update("currentPayment", value)} helper="אם ריק, נחושב לפי יתרה, ריבית ותקופה." />
@@ -729,27 +730,27 @@ const CONTACT_TIME_OPTIONS = [
 
 function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, leadError, successRef, consent, setConsent }) {
   return (
-    <section id="lead" className="mt-10 grid items-stretch gap-6 rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] lg:grid-cols-2">
+    <section id="lead" className="mt-10 grid items-stretch gap-6 rounded-[34px] border border-violet-100 dark:border-slate-800 bg-gradient-to-br from-violet-50 to-white dark:from-slate-900 dark:to-slate-900 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] lg:grid-cols-2">
       <div>
-        <span className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-black text-violet-800 shadow-sm">בדיקה ראשונית</span>
-        <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950">קבלו בדיקת מחזור ראשונית</h2>
-        <p className="mt-4 leading-8 text-slate-600">
+        <span className="inline-flex rounded-full bg-white dark:bg-slate-800 px-4 py-2 text-sm font-black text-violet-800 dark:text-violet-300 shadow-sm">בדיקה ראשונית</span>
+        <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950 dark:text-white">קבלו בדיקת מחזור ראשונית</h2>
+        <p className="mt-4 leading-8 text-slate-600 dark:text-slate-400">
           מלאו את פרטי המשכנתא הקיימת ונציג כיוון ראשוני. אם יש פוטנציאל, ניתן יהיה להמשיך לבדיקה מקצועית.
         </p>
-        <ul className="mt-5 space-y-3 font-bold text-slate-700">
+        <ul className="mt-5 space-y-3 font-bold text-slate-700 dark:text-slate-300">
           <li>• בדיקת הנתונים מול מצב המשכנתא הקיים</li>
           <li>• זיהוי נקודות חיסכון אפשריות</li>
           <li>• בדיקת נקודת איזון ועלויות מחזור</li>
           <li>• בחינת תמהיל חלופי מול ריביות בפועל</li>
         </ul>
-        <p className="mt-6 text-xs font-bold text-slate-400">אומדן ראשוני בלבד, לא אישור בנקאי ולא ייעוץ אישי.</p>
+        <p className="mt-6 text-xs font-bold text-slate-400 dark:text-slate-500">אומדן ראשוני בלבד, לא אישור בנקאי ולא ייעוץ אישי.</p>
       </div>
 
-      <form onSubmit={submitLead} aria-busy={leadLoading ? "true" : "false"} className="rounded-[28px] bg-white p-5 shadow-sm">
+      <form onSubmit={submitLead} aria-busy={leadLoading ? "true" : "false"} className="rounded-[28px] bg-white dark:bg-slate-900 p-5 shadow-sm">
         {/* Classification chip — read-only, confirms lead type to user */}
-        <div className="mb-4 flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
+        <div className="mb-4 flex items-center gap-2 rounded-2xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 px-4 py-3">
           <span className="text-[11px] font-black text-blue-500 uppercase tracking-wider">סוג הבדיקה</span>
-          <span className="text-sm font-black text-blue-900">🔄 מחזור משכנתא</span>
+          <span className="text-sm font-black text-blue-900 dark:text-blue-200">🔄 מחזור משכנתא</span>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField label="שם מלא" value={lead.name} onChange={(value) => setLead({ ...lead, name: value })} autoComplete="name" />
@@ -772,11 +773,11 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
           />
           <div className="sm:col-span-2">
             <label className="block">
-              <span className="text-sm font-black text-slate-700">מתי נוח לדבר?</span>
+              <span className="text-sm font-black text-slate-700 dark:text-slate-300">מתי נוח לדבר?</span>
               <select
                 value={lead.requestedContactTime}
                 onChange={(e) => setLead({ ...lead, requestedContactTime: e.target.value })}
-                className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+                className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-base font-bold text-slate-950 dark:text-white outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"
               >
                 {CONTACT_TIME_OPTIONS.map(({ value, label }) => (
                   <option key={value} value={value}>{label}</option>
@@ -813,25 +814,25 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
 
 function MetricCard({ label, value, note }) {
   return (
-    <article className="flex h-full flex-col justify-between rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+    <article className="flex h-full flex-col justify-between rounded-[28px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
       <div>
-        <p className="text-sm font-black text-slate-500">{label}</p>
-        <p className="number-display mt-3 text-3xl font-black text-slate-950">{value}</p>
+        <p className="text-sm font-black text-slate-500 dark:text-slate-400">{label}</p>
+        <p className="number-display mt-3 text-3xl font-black text-slate-950 dark:text-white">{value}</p>
       </div>
-      <p className="mt-4 leading-7 text-slate-600">{note}</p>
+      <p className="mt-4 leading-7 text-slate-600 dark:text-slate-400">{note}</p>
     </article>
   );
 }
 
 function ComparisonColumn({ title, rows, highlighted = false }) {
   return (
-    <article className={`rounded-[30px] border p-6 shadow-sm ${highlighted ? "border-violet-200 bg-violet-50/70" : "border-slate-200 bg-white"}`}>
-      <h3 className="text-2xl font-black text-slate-950">{title}</h3>
+    <article className={`rounded-[30px] border p-6 shadow-sm ${highlighted ? "border-violet-200 dark:border-violet-800 bg-violet-50/70 dark:bg-violet-950/40" : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"}`}>
+      <h3 className="text-2xl font-black text-slate-950 dark:text-white">{title}</h3>
       <div className="mt-5 grid gap-3">
         {rows.map(([label, value]) => (
-          <div key={label} className="flex items-center justify-between gap-4 rounded-2xl bg-white px-4 py-3">
-            <span className="font-bold text-slate-600">{label}</span>
-            <strong className="number-display text-lg font-black text-slate-950">{value}</strong>
+          <div key={label} className="flex items-center justify-between gap-4 rounded-2xl bg-white dark:bg-slate-900 px-4 py-3">
+            <span className="font-bold text-slate-600 dark:text-slate-400">{label}</span>
+            <strong className="number-display text-lg font-black text-slate-950 dark:text-white">{value}</strong>
           </div>
         ))}
       </div>
@@ -842,20 +843,20 @@ function ComparisonColumn({ title, rows, highlighted = false }) {
 function ScenarioCard({ scenario, active }) {
   const positive = scenario.monthlyChange > 0;
   return (
-    <article className="flex h-full flex-col justify-between rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+    <article className="flex h-full flex-col justify-between rounded-[28px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
       <div>
-        <h3 className="text-xl font-black text-slate-950">{scenario.title}</h3>
-        <p className="mt-2 leading-7 text-slate-600">{scenario.note}</p>
-        <div className="mt-5 rounded-2xl bg-slate-50 p-4">
-          <p className="text-sm font-black text-slate-500">החזר בתרחיש</p>
-          <p className="number-display mt-1 text-2xl font-black text-slate-950">{active ? formatILS(scenario.payment) : "--"}</p>
+        <h3 className="text-xl font-black text-slate-950 dark:text-white">{scenario.title}</h3>
+        <p className="mt-2 leading-7 text-slate-600 dark:text-slate-400">{scenario.note}</p>
+        <div className="mt-5 rounded-2xl bg-slate-50 dark:bg-slate-950 p-4">
+          <p className="text-sm font-black text-slate-500 dark:text-slate-400">החזר בתרחיש</p>
+          <p className="number-display mt-1 text-2xl font-black text-slate-950 dark:text-white">{active ? formatILS(scenario.payment) : "--"}</p>
           <p className={`mt-2 text-sm font-black ${positive ? "text-emerald-700" : "text-amber-700"}`}>
             שינוי חודשי: {active ? formatILS(scenario.monthlyChange) : "--"}
           </p>
-          <p className="mt-2 text-sm font-bold text-slate-600">סך ריבית משוער: {active ? formatILS(scenario.totalInterest) : "--"}</p>
+          <p className="mt-2 text-sm font-bold text-slate-600 dark:text-slate-400">סך ריבית משוער: {active ? formatILS(scenario.totalInterest) : "--"}</p>
         </div>
       </div>
-      <p className="mt-4 rounded-2xl bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">
+      <p className="mt-4 rounded-2xl bg-violet-50 dark:bg-violet-950 px-4 py-3 text-sm font-bold text-violet-900 dark:text-violet-300">
         {active ? `${formatPct(scenario.rate)} ל-${scenario.years} שנים · ${scenario.riskExplanation}` : "ממתין לנתונים"}
       </p>
     </article>
@@ -864,18 +865,18 @@ function ScenarioCard({ scenario, active }) {
 
 function InfoCard({ title, text }) {
   return (
-    <article className="flex h-full flex-col justify-between rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-      <h3 className="text-xl font-black text-slate-950">{title}</h3>
-      <p className="mt-3 leading-7 text-slate-600">{text}</p>
+    <article className="flex h-full flex-col justify-between rounded-[28px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+      <h3 className="text-xl font-black text-slate-950 dark:text-white">{title}</h3>
+      <p className="mt-3 leading-7 text-slate-600 dark:text-slate-400">{text}</p>
     </article>
   );
 }
 
 function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-white py-10">
-      <div className="mx-auto max-w-6xl px-4 text-sm font-semibold leading-7 text-slate-500 sm:px-6">
-        <p className="font-black text-slate-900">FINZO · בדיקת מחזור משכנתא</p>
+    <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-10">
+      <div className="mx-auto max-w-6xl px-4 text-sm font-semibold leading-7 text-slate-500 dark:text-slate-400 sm:px-6">
+        <p className="font-black text-slate-900 dark:text-slate-100">FINZO · בדיקת מחזור משכנתא</p>
         <p>אומדן ראשוני בלבד, לא אישור בנקאי ולא ייעוץ אישי. יש לוודא נתונים מול בנק או יועץ משכנתאות מורשה.</p>
       </div>
     </footer>
@@ -885,24 +886,24 @@ function Footer() {
 function MoneyField({ label, value, onChange, helper }) {
   return (
     <label className="block">
-      <span className="text-sm font-black text-slate-700">{label}</span>
+      <span className="text-sm font-black text-slate-700 dark:text-slate-300">{label}</span>
       <span className="relative mt-2 block">
         <input
           inputMode="numeric"
           value={displayNumber(value)}
           onChange={(event) => onChange(cleanNumber(event.target.value))}
-          className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+          className="h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 pl-10 text-base font-black text-slate-950 dark:text-white outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"
         />
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">₪</span>
+        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400 dark:text-slate-500">₪</span>
       </span>
-      {helper && <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{helper}</span>}
+      {helper && <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">{helper}</span>}
     </label>
   );
 }
 
 function MobileStickyCta() {
   return (
-    <div className="mobile-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 bg-white/95 px-4 pt-3 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
+    <div className="mobile-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 pt-3 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
       <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
         <a
           href="#calculator"
@@ -912,7 +913,7 @@ function MobileStickyCta() {
         </a>
         <a
           href="#lead"
-          className="rounded-full border border-violet-200 bg-violet-50 px-4 py-3 text-center text-sm font-black text-violet-800"
+          className="rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 px-4 py-3 text-center text-sm font-black text-violet-800 dark:text-violet-300"
         >
           חזרה מיועץ
         </a>
@@ -924,13 +925,13 @@ function MobileStickyCta() {
 function TextField({ label, value, onChange, placeholder = "", autoComplete }) {
   return (
     <label className="block">
-      <span className="text-sm font-black text-slate-700">{label}</span>
+      <span className="text-sm font-black text-slate-700 dark:text-slate-300">{label}</span>
       <input
         value={value}
         placeholder={placeholder}
         autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-base font-bold text-slate-950 dark:text-white outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"
       />
     </label>
   );
@@ -939,14 +940,14 @@ function TextField({ label, value, onChange, placeholder = "", autoComplete }) {
 function NumberField({ label, value, onChange }) {
   return (
     <label className="block">
-      <span className="text-sm font-black text-slate-700">{label}</span>
+      <span className="text-sm font-black text-slate-700 dark:text-slate-300">{label}</span>
       <input
         type="number"
         min="1"
         max="30"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-base font-black text-slate-950 dark:text-white outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"
       />
     </label>
   );
@@ -955,15 +956,15 @@ function NumberField({ label, value, onChange }) {
 function RateField({ label, value, onChange }) {
   return (
     <label className="block">
-      <span className="text-sm font-black text-slate-700">{label}</span>
+      <span className="text-sm font-black text-slate-700 dark:text-slate-300">{label}</span>
       <span className="relative mt-2 block">
         <input
           inputMode="decimal"
           value={String(value || "").replace(/[^\d.]/g, "")}
           onChange={(event) => onChange(cleanNumber(event.target.value, true))}
-          className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pl-10 text-base font-black text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+          className="h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 pl-10 text-base font-black text-slate-950 dark:text-white outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"
         />
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">%</span>
+        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400 dark:text-slate-500">%</span>
       </span>
     </label>
   );
