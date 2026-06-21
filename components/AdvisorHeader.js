@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const PROFILE_KEY = "finzo_advisor_profile_v1";
 
@@ -20,6 +20,36 @@ function BellIcon() {
       <path d="M13.73 21a2 2 0 0 1-3.46 0" />
     </svg>
   );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+const TYPE_META = {
+  lead_purchase:     { dot: "bg-emerald-500", label: "רכישת ליד" },
+  overdue_task:      { dot: "bg-rose-500",    label: "משימה באיחור" },
+  missing_documents: { dot: "bg-amber-400",   label: "מסמכים חסרים" },
+  bank_status:       { dot: "bg-blue-500",    label: "עדכון בנק" },
+  reminder_due:      { dot: "bg-sky-400",     label: "תזכורת" },
+  stage_change:      { dot: "bg-violet-500",  label: "שינוי שלב" },
+  system:            { dot: "bg-slate-400",   label: "מערכת" },
+};
+
+function formatTimeAgo(dateStr) {
+  if (!dateStr) return "";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "עכשיו";
+  if (mins < 60) return `לפני ${mins} דק׳`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `לפני ${hours} שע׳`;
+  const days = Math.floor(hours / 24);
+  return `לפני ${days} ימים`;
 }
 
 export default function AdvisorHeader({ active, urgentItems = [] }) {
@@ -43,7 +73,10 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
   const [bellOpen, setBellOpen] = useState(false);
   const bellRef = useRef(null);
 
-  // Load advisor profile from localStorage for initials
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifLoaded, setNotifLoaded] = useState(false);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(PROFILE_KEY);
@@ -54,7 +87,24 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
     } catch {}
   }, []);
 
-  // Close bell dropdown on outside click
+  const fetchNotifications = useCallback(() => {
+    fetch("/api/advisor/notifications")
+      .then((r) => r.ok ? r.json() : { notifications: [] })
+      .then((j) => {
+        const items = j.notifications || [];
+        setNotifications(items);
+        setUnreadCount(items.filter((n) => !n.isRead).length);
+        setNotifLoaded(true);
+      })
+      .catch(() => setNotifLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
   useEffect(() => {
     if (!bellOpen) return;
     function onDown(e) {
@@ -70,7 +120,46 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
     });
   }
 
-  const bellCount = urgentItems.length;
+  function handleMarkRead(e, notifId) {
+    e.preventDefault();
+    e.stopPropagation();
+    fetch("/api/advisor/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "mark_read", notificationId: notifId }),
+    }).then(() => {
+      setNotifications((prev) => prev.map((n) => n.id === notifId ? { ...n, isRead: true, readAt: new Date().toISOString() } : n));
+      setUnreadCount((c) => Math.max(0, c - 1));
+    }).catch(() => {});
+  }
+
+  function handleMarkAllRead() {
+    fetch("/api/advisor/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "mark_all_read" }),
+    }).then(() => {
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true, readAt: new Date().toISOString() })));
+      setUnreadCount(0);
+    }).catch(() => {});
+  }
+
+  const displayItems = notifications.length > 0
+    ? notifications.slice(0, 20)
+    : urgentItems.slice(0, 8).map((item, i) => ({
+        id: `urgent-${i}`,
+        type: item.tag === "danger" ? "overdue_task" : item.tag === "docs" ? "missing_documents" : "system",
+        title: item.lead?.name || "—",
+        message: item.reason || "",
+        entityType: "lead",
+        entityId: item.lead?.id,
+        isRead: false,
+        createdAt: null,
+        priority: item.tag === "danger" ? "high" : "normal",
+        _isComputed: true,
+      }));
+
+  const bellCount = notifications.length > 0 ? unreadCount : urgentItems.length;
 
   return (
     <header className="bg-slate-950/95 backdrop-blur-sm text-white sticky top-0 z-40 border-b border-white/[0.06]">
@@ -119,32 +208,62 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
               {bellOpen && (
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50" dir="rtl">
                   <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                    <span className="text-sm font-black text-slate-950">דורשים טיפול</span>
-                    {bellCount > 0
-                      ? <span className="text-xs font-black text-rose-600 bg-rose-50 rounded-full px-2 py-0.5">{bellCount} פעיל</span>
-                      : <span className="text-xs font-bold text-slate-400">הכל תקין ✓</span>}
+                    <span className="text-sm font-black text-slate-950">התראות</span>
+                    <div className="flex items-center gap-2">
+                      {bellCount > 0 && (
+                        <>
+                          <span className="text-xs font-black text-rose-600 bg-rose-50 rounded-full px-2 py-0.5">{bellCount}</span>
+                          <button
+                            onClick={handleMarkAllRead}
+                            className="text-[11px] font-black text-violet-600 hover:text-violet-800 transition-colors"
+                          >
+                            סמן הכל כנקרא
+                          </button>
+                        </>
+                      )}
+                      {bellCount === 0 && <span className="text-xs font-bold text-slate-400">הכל נקרא ✓</span>}
+                    </div>
                   </div>
-                  <div className="max-h-72 overflow-y-auto">
-                    {urgentItems.length === 0 ? (
+                  <div className="max-h-80 overflow-y-auto">
+                    {displayItems.length === 0 ? (
                       <div className="px-4 py-6 text-center text-sm font-bold text-slate-400">
-                        אין פריטים דחופים כרגע
+                        אין התראות חדשות
                       </div>
                     ) : (
-                      urgentItems.slice(0, 8).map((item, i) => (
-                        <Link
-                          key={i}
-                          href={item.href || `/advisor/lead/${item.lead?.id}`}
-                          onClick={() => setBellOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0"
-                        >
-                          <span className={`h-2 w-2 rounded-full shrink-0 ${item.tag === "danger" ? "bg-rose-500" : item.tag === "warning" ? "bg-amber-400" : item.tag === "docs" ? "bg-amber-400" : "bg-sky-400"}`} />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-black text-slate-900 truncate">{item.lead?.name || "—"}</p>
-                            <p className="text-xs font-bold text-slate-400">{item.reason}</p>
+                      displayItems.map((item) => {
+                        const meta = TYPE_META[item.type] || TYPE_META.system;
+                        const href = item.entityType === "lead" && item.entityId
+                          ? `/advisor/lead/${item.entityId}`
+                          : "/advisor/my-leads";
+                        return (
+                          <div key={item.id} className={`flex items-start gap-3 px-4 py-3 border-b border-slate-50 last:border-0 transition-colors ${item.isRead ? "bg-white" : "bg-violet-50/30"}`}>
+                            <Link
+                              href={href}
+                              onClick={() => setBellOpen(false)}
+                              className="flex items-start gap-3 min-w-0 flex-1"
+                            >
+                              <span className={`h-2 w-2 rounded-full shrink-0 mt-1.5 ${meta.dot}`} />
+                              <div className="min-w-0 flex-1">
+                                <p className={`text-sm truncate ${item.isRead ? "font-bold text-slate-600" : "font-black text-slate-900"}`}>{item.title}</p>
+                                <p className="text-xs font-bold text-slate-400 truncate">{item.message}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[10px] font-bold text-slate-300">{meta.label}</span>
+                                  {item.createdAt && <span className="text-[10px] font-bold text-slate-300">{formatTimeAgo(item.createdAt)}</span>}
+                                </div>
+                              </div>
+                            </Link>
+                            {!item.isRead && !item._isComputed && (
+                              <button
+                                onClick={(e) => handleMarkRead(e, item.id)}
+                                className="shrink-0 mt-1 w-5 h-5 flex items-center justify-center rounded-full text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                title="סמן כנקרא"
+                              >
+                                <CheckIcon />
+                              </button>
+                            )}
                           </div>
-                          <span className="text-[11px] font-black text-slate-400 shrink-0">{item.detail}</span>
-                        </Link>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                   <div className="px-4 py-2.5 border-t border-slate-100 text-center">
@@ -184,7 +303,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
           </Link>
           <div className="flex items-center gap-2">
             {/* Mobile bell */}
-            <div ref={null} className="relative">
+            <div className="relative">
               <button
                 onClick={() => setBellOpen((v) => !v)}
                 className="relative w-6 h-6 flex items-center justify-center rounded-lg text-slate-500"

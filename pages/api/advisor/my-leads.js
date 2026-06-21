@@ -4,6 +4,80 @@ import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
 import { getPipelineStageLabel, normalizePipelineStage } from "../../../lib/pipeline";
 import { calculateCollateralProgress, calculateOverallMortgageProgress } from "../../../lib/mortgageCase";
+import { createNotification } from "../../../lib/notificationsStore";
+
+const DAY_MS = 864e5;
+const notifThrottle = new Map();
+
+function shouldThrottle(key, intervalMs = 6 * 3600 * 1000) {
+  const now = Date.now();
+  const last = notifThrottle.get(key) || 0;
+  if (now - last < intervalMs) return true;
+  notifThrottle.set(key, now);
+  if (notifThrottle.size > 2000) {
+    const oldest = [...notifThrottle.entries()].sort((a, b) => a[1] - b[1]).slice(0, 500);
+    for (const [k] of oldest) notifThrottle.delete(k);
+  }
+  return false;
+}
+
+function generateBackgroundNotifications(advisorId, leads) {
+  const today = new Date(new Date().toDateString());
+  for (const lead of leads) {
+    const stage = normalizePipelineStage(lead.pipelineStage || lead.leadStatus);
+    if (["closed_won", "closed_lost"].includes(stage)) continue;
+
+    if (lead.nextActionAt && new Date(lead.nextActionAt) < today) {
+      const key = `overdue:${advisorId}:${lead.id}`;
+      if (!shouldThrottle(key)) {
+        createNotification({
+          advisorId,
+          type: "overdue_task",
+          title: `משימה באיחור: ${lead.name || "ליד"}`,
+          message: lead.nextAction || "פעולה שהוגדרה לא בוצעה בזמן",
+          entityType: "lead",
+          entityId: lead.id,
+          priority: "high",
+        }).catch(() => {});
+      }
+    }
+
+    const missingDocs = Number(lead.missingDocumentsCount || 0);
+    if (missingDocs > 0 && ["documents_requested", "waiting_documents"].includes(stage)) {
+      const key = `docs:${advisorId}:${lead.id}`;
+      if (!shouldThrottle(key)) {
+        createNotification({
+          advisorId,
+          type: "missing_documents",
+          title: `מסמכים חסרים: ${lead.name || "ליד"}`,
+          message: `${missingDocs} מסמכים חסרים`,
+          entityType: "lead",
+          entityId: lead.id,
+          priority: "normal",
+        }).catch(() => {});
+      }
+    }
+
+    if (lead.followUpDate) {
+      const followUp = new Date(lead.followUpDate);
+      const isToday = followUp.toDateString() === today.toDateString();
+      if (isToday) {
+        const key = `reminder:${advisorId}:${lead.id}:${lead.followUpDate}`;
+        if (!shouldThrottle(key, 12 * 3600 * 1000)) {
+          createNotification({
+            advisorId,
+            type: "reminder_due",
+            title: `תזכורת להיום: ${lead.name || "ליד"}`,
+            message: lead.nextAction || "מעקב מתוכנן",
+            entityType: "lead",
+            entityId: lead.id,
+            priority: "normal",
+          }).catch(() => {});
+        }
+      }
+    }
+  }
+}
 
 function apiError(res, status, code, message) {
   return res.status(status).json({ error: code, message });
@@ -22,6 +96,9 @@ export default async function handler(req, res) {
         if (!lead) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
         return res.status(200).json({ lead });
       }
+
+      generateBackgroundNotifications(session.advisorId, leads);
+
       return res.status(200).json({ leads });
     } catch (error) {
       if (error instanceof LeadStoreError) {
@@ -101,6 +178,17 @@ export default async function handler(req, res) {
           activityType: "status_changed",
           title: `שלב עודכן: "${getPipelineStageLabel(prevStage)}" ← "${getPipelineStageLabel(newStage)}"`,
           metadata: { from: prevStage, to: newStage },
+        }).catch(() => {});
+
+        const isBankStage = ["submitted_to_bank", "principle_approval", "bank_negotiation", "selected_track"].includes(newStage);
+        createNotification({
+          advisorId: session.advisorId,
+          type: isBankStage ? "bank_status" : "stage_change",
+          title: `${lead.name || "ליד"}: ${getPipelineStageLabel(newStage)}`,
+          message: `שלב עודכן מ-"${getPipelineStageLabel(prevStage)}" ל-"${getPipelineStageLabel(newStage)}"`,
+          entityType: "lead",
+          entityId: id,
+          priority: isBankStage ? "high" : "normal",
         }).catch(() => {});
       }
       if (changes.internalNotes !== undefined && changes.internalNotes !== lead.internalNotes) {

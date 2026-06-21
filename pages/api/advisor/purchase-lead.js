@@ -1,5 +1,6 @@
 import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
+import { createNotification } from "../../../lib/notificationsStore";
 
 const FIXED_LEAD_PRICE = 249;
 
@@ -43,6 +44,16 @@ export default async function handler(req, res) {
       price,
       isExclusive: false,
     });
+
+    createNotification({
+      advisorId: session.advisorId,
+      type: "lead_purchase",
+      title: `ליד חדש נרכש: ${lead.name || "ללא שם"}`,
+      message: `הליד ${lead.name || ""} מ-${lead.city || "לא ידוע"} נוסף לתיקים שלך`,
+      entityType: "lead",
+      entityId: leadId,
+      priority: "high",
+    }).catch(() => {});
 
     return res.status(200).json({ ok: true, purchase });
   } catch (error) {
