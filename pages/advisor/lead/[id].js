@@ -519,7 +519,8 @@ export default function LeadDetailPage() {
       fetch(`/api/advisor/document-reminders?leadId=${id}`).then((r) => r.ok ? r.json() : { reminder: null }),
       fetch("/api/advisor/bankers").then((r) => r.ok ? r.json() : { bankers: [] }),
       fetch(`/api/advisor/case-bankers?leadId=${id}`).then((r) => r.ok ? r.json() : { caseBankers: [] }),
-    ]).then(([leadsData, actData, docsData, tokenData, reminderData, bankersData, caseBankersData]) => {
+      fetch(`/api/advisor/tasks?leadId=${id}`).then((r) => r.ok ? r.json() : { tasks: [] }),
+    ]).then(([leadsData, actData, docsData, tokenData, reminderData, bankersData, caseBankersData, tasksData]) => {
       const found = leadsData.lead || (leadsData.leads || []).find((l) => l.id === id);
       if (!found) { router.push("/advisor/my-leads"); return; }
       setLead(found);
@@ -540,6 +541,8 @@ export default function LeadDetailPage() {
       }
       setAdvisorBankers(Array.isArray(bankersData.bankers) ? bankersData.bankers : []);
       setCaseBankers(Array.isArray(caseBankersData.caseBankers) ? caseBankersData.caseBankers : []);
+      const loadedTasks = Array.isArray(tasksData.tasks) ? tasksData.tasks : [];
+      setTasks(loadedTasks.map(t => ({ id: t.id, text: t.title, done: t.completed || t.status === "completed", priority: t.priority, dueDate: t.dueDate })));
       setLoading(false);
     }).catch(() => { setLoading(false); router.push("/advisor/my-leads"); });
   }, [id]);
@@ -552,6 +555,38 @@ export default function LeadDetailPage() {
   function pushActivity(title, activityType = "note_added") {
     setActivities((prev) => [{ title, created_at: new Date().toISOString(), activity_type: activityType }, ...prev]);
     fetch("/api/advisor/activities", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: id, activityType, title }) }).catch(() => {});
+  }
+
+  function loadTasks() {
+    if (!id) return;
+    fetch(`/api/advisor/tasks?leadId=${encodeURIComponent(id)}`).then(r => r.ok ? r.json() : null).then(data => {
+      if (data?.tasks) setTasks(data.tasks.map(t => ({ id: t.id, text: t.title, done: t.completed || t.status === "completed", priority: t.priority, dueDate: t.dueDate })));
+    }).catch(() => {});
+  }
+
+  function addTaskToApi(text) {
+    const temp = { text, done: false, id: `temp_${Date.now()}` };
+    setTasks(p => [...p, temp]);
+    pushActivity(`משימה: ${text}`, "note_added");
+    setTaskText("");
+    fetch("/api/advisor/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: id, title: text }) })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.task) setTasks(p => p.map(t => t.id === temp.id ? { id: data.task.id, text: data.task.title, done: false, priority: data.task.priority, dueDate: data.task.dueDate } : t)); })
+      .catch(() => {});
+  }
+
+  function toggleTaskDone(task) {
+    setTasks(p => p.map(x => x.id === task.id ? { ...x, done: !x.done } : x));
+    if (!task.done) {
+      fetch("/api/advisor/tasks", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ taskId: task.id, action: "complete" }) }).catch(() => {});
+    } else {
+      fetch("/api/advisor/tasks", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ taskId: task.id, status: "pending" }) }).catch(() => {});
+    }
+  }
+
+  function deleteTaskApi(taskId) {
+    setTasks(p => p.filter(t => t.id !== taskId));
+    fetch(`/api/advisor/tasks?taskId=${encodeURIComponent(taskId)}`, { method: "DELETE" }).catch(() => {});
   }
 
   function touchLead(changes) {
@@ -1416,16 +1451,16 @@ export default function LeadDetailPage() {
                     <div className="flex gap-2">
                       <input type="text" className="flex-1 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-violet-500/30"
                         placeholder="תיאור המשימה..." value={taskText} onChange={(e) => setTaskText(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter" && taskText.trim()) { setTasks((p) => [...p, { text: taskText, done: false, id: Date.now() }]); pushActivity(`משימה: ${taskText}`, "note_added"); setTaskText(""); } }}
+                        onKeyDown={(e) => { if (e.key === "Enter" && taskText.trim()) { addTaskToApi(taskText); } }}
                       />
-                      <button type="button" onClick={() => { if (taskText.trim()) { setTasks((p) => [...p, { text: taskText, done: false, id: Date.now() }]); pushActivity(`משימה: ${taskText}`, "note_added"); setTaskText(""); } }}
+                      <button type="button" onClick={() => { if (taskText.trim()) { addTaskToApi(taskText); } }}
                         className="shrink-0 px-4 py-2 rounded-lg bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 transition-colors">הוסף</button>
                     </div>
                     {tasks.length > 0 && (
                       <div className="space-y-1.5">
                         {tasks.map((t) => (
                           <label key={t.id} className="flex items-center gap-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-3 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                            <input type="checkbox" checked={t.done} onChange={() => setTasks((p) => p.map((x) => x.id === t.id ? { ...x, done: !x.done } : x))} className="accent-violet-600" />
+                            <input type="checkbox" checked={t.done} onChange={() => toggleTaskDone(t)} className="accent-violet-600" />
                             <span className={t.done ? "line-through text-slate-400 dark:text-slate-500" : ""}>{t.text}</span>
                           </label>
                         ))}
@@ -1968,11 +2003,33 @@ export default function LeadDetailPage() {
                             <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">משימות</p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">ניהול משימות ומעקב לפי תאריכים</p>
                           </div>
+                          <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">{tasks.filter(t => t.done).length}/{tasks.length} הושלמו</span>
                         </div>
-                        <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-6 text-center">
-                          <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">מנוע משימות</p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">משימות מרובות לליד, תאריכי יעד, עדיפויות — דורש חיבור לבקאנד</p>
+                        <div className="flex gap-2 mb-4">
+                          <input type="text" className="flex-1 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-violet-500/30"
+                            placeholder="הוסף משימה חדשה..." value={taskText} onChange={(e) => setTaskText(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter" && taskText.trim()) addTaskToApi(taskText); }} />
+                          <button type="button" onClick={() => { if (taskText.trim()) addTaskToApi(taskText); }}
+                            className="shrink-0 px-4 py-2 rounded-lg bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 transition-colors">הוסף</button>
                         </div>
+                        {tasks.length > 0 ? (
+                          <div className="space-y-1.5">
+                            {tasks.map(t => (
+                              <div key={t.id} className="flex items-center gap-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-3 py-2.5 group">
+                                <input type="checkbox" checked={t.done} onChange={() => toggleTaskDone(t)} className="accent-violet-600" />
+                                <span className={`flex-1 text-xs font-medium ${t.done ? "line-through text-slate-400 dark:text-slate-500" : "text-slate-700 dark:text-slate-300"}`}>{t.text}</span>
+                                {t.priority && t.priority !== "medium" && (
+                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.priority === "high" ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"}`}>
+                                    {t.priority === "high" ? "דחוף" : "נמוך"}
+                                  </span>
+                                )}
+                                <button type="button" onClick={() => deleteTaskApi(t.id)} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all text-xs" title="מחק">✕</button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-sm text-slate-400 dark:text-slate-500">אין משימות עדיין</div>
+                        )}
                       </div>
                     )}
 

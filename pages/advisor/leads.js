@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { KpiTile, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
-import { calculateLeadPrice, getPriceLabel } from "../../lib/leadPricing";
+import { calculateLeadPriceSync as calculateLeadPrice, getPriceLabel } from "../../lib/leadPricing";
 
 const FIXED_LEAD_PRICE = 249;
 const FAVORITES_KEY = "finzo_lead_favorites";
@@ -420,13 +420,28 @@ export default function AdvisorLeadsStore() {
       const saved = localStorage.getItem(FAVORITES_KEY);
       if (saved) setFavorites(new Set(JSON.parse(saved)));
     } catch {}
+    fetch("/api/advisor/favorites").then(r => r.ok ? r.json() : null).then(data => {
+      if (data?.favorites?.length) {
+        setFavorites(prev => {
+          const merged = new Set([...prev, ...data.favorites]);
+          try { localStorage.setItem(FAVORITES_KEY, JSON.stringify([...merged])); } catch {}
+          return merged;
+        });
+      }
+    }).catch(() => {});
   }, []);
 
   const toggleFavorite = useCallback((leadId) => {
     setFavorites(prev => {
       const next = new Set(prev);
-      if (next.has(leadId)) next.delete(leadId); else next.add(leadId);
+      const adding = !next.has(leadId);
+      if (adding) next.add(leadId); else next.delete(leadId);
       try { localStorage.setItem(FAVORITES_KEY, JSON.stringify([...next])); } catch {}
+      if (adding) {
+        fetch("/api/advisor/favorites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId }) }).catch(() => {});
+      } else {
+        fetch(`/api/advisor/favorites?leadId=${encodeURIComponent(leadId)}`, { method: "DELETE" }).catch(() => {});
+      }
       return next;
     });
   }, []);
