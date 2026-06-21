@@ -129,8 +129,8 @@ export default function AdvisorRegister() {
             />
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-black text-slate-700">
-                  סיסמה<span className="text-red-500 mr-1">*</span>
+                <label className="text-sm font-black text-slate-700 dark:text-slate-300">
+                  סיסמה<span className="text-red-500 dark:text-red-400 mr-1">*</span>
                 </label>
               </div>
               <div className="relative">
@@ -140,18 +140,18 @@ export default function AdvisorRegister() {
                   onChange={(e) => update("password", e.target.value)}
                   placeholder="לפחות 8 תווים"
                   autoComplete="new-password"
-                  className="w-full border border-slate-200 bg-slate-50 rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 h-12 pl-16"
+                  className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 rounded-2xl px-4 py-3 text-base text-slate-950 dark:text-slate-100 outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-violet-100 h-12 pl-16"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                   tabIndex={-1}
                 >
                   {showPassword ? "הסתר" : "הצג"}
                 </button>
               </div>
-              <p className="text-xs text-slate-400 mt-1 font-bold">לפחות 8 תווים</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 font-bold">לפחות 8 תווים</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -170,11 +170,11 @@ export default function AdvisorRegister() {
             </div>
 
             <div>
-              <label className="block text-sm font-black text-slate-700 mb-1.5">סוג פעילות</label>
+              <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-1.5">סוג פעילות</label>
               <select
                 value={form.advisorType}
                 onChange={(e) => update("advisorType", e.target.value)}
-                className="w-full border border-slate-200 bg-slate-50 rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 h-12"
+                className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 rounded-2xl px-4 py-3 text-base text-slate-950 dark:text-slate-100 outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-violet-100 h-12"
               >
                 {ADVISOR_TYPES.map((o) => <option key={o} value={o}>{o || "בחרו..."}</option>)}
               </select>
@@ -187,15 +187,15 @@ export default function AdvisorRegister() {
                 onChange={(e) => update("terms", e.target.checked)}
                 className="mt-1 w-4 h-4 accent-violet-600 shrink-0"
               />
-              <span className="text-sm text-slate-600 font-bold leading-6">
+              <span className="text-sm text-slate-600 dark:text-slate-400 font-bold leading-6">
                 קראתי ואני מסכים/ה ל
-                <a href="/advisor/terms" target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:underline">תנאי השימוש של FINZO PRO</a>
-                <span className="text-red-500 mr-1">*</span>
+                <a href="/advisor/terms" target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 hover:underline">תנאי השימוש של FINZO PRO</a>
+                <span className="text-red-500 dark:text-red-400 mr-1">*</span>
               </span>
             </label>
 
             {error && (
-              <p role="alert" className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-bold text-red-700">
+              <p role="alert" className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 px-4 py-3 text-sm font-bold text-red-700 dark:text-red-400">
                 {error}
               </p>
             )}
@@ -208,9 +208,9 @@ export default function AdvisorRegister() {
               {loading ? "יוצר חשבון..." : "פתיחת חשבון ב־FINZO PRO ←"}
             </button>
 
-            <p className="text-center text-xs text-slate-400">
+            <p className="text-center text-xs text-slate-400 dark:text-slate-500">
               כבר יש לכם חשבון?{" "}
-              <Link href="/advisor/login" className="text-violet-600 hover:underline font-bold">
+              <Link href="/advisor/login" className="text-violet-600 dark:text-violet-400 hover:underline font-bold">
                 כניסה לפורטל
               </Link>
             </p>
