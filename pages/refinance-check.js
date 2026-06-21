@@ -644,10 +644,10 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
         )}
 
         {pdfState.status === "confirm" && pdfState.fields && (
-          <div className="mt-3 rounded-2xl border border-violet-200 bg-violet-50 p-4">
-            <p className="text-sm font-black text-violet-900">{pdfState.message}</p>
-            <p className="mt-1 text-xs font-semibold text-violet-700">בדקו את הנתונים לפני אישור — ערכים שגויים ישפיעו על התוצאה.</p>
-            <ul className="mt-3 space-y-1 text-sm font-bold text-slate-800">
+          <div className="mt-3 rounded-2xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 p-4">
+            <p className="text-sm font-black text-violet-900 dark:text-violet-200">{pdfState.message}</p>
+            <p className="mt-1 text-xs font-semibold text-violet-700 dark:text-violet-300">בדקו את הנתונים לפני אישור — ערכים שגויים ישפיעו על התוצאה.</p>
+            <ul className="mt-3 space-y-1 text-sm font-bold text-slate-800 dark:text-slate-200">
               {pdfState.fields.balance != null && <li>יתרה לסילוק: <span className="text-violet-900">{formatILS(pdfState.fields.balance)}</span></li>}
               {pdfState.fields.currentPayment != null && <li>החזר חודשי: <span className="text-violet-900">{formatILS(pdfState.fields.currentPayment)}</span></li>}
               {pdfState.fields.remainingYears != null && <li>שנים שנותרו: <span className="text-violet-900">{pdfState.fields.remainingYears}</span></li>}
@@ -658,7 +658,7 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
               <button type="button" onClick={onPdfApply} className="flex-1 rounded-full bg-violet-700 px-4 py-2 text-sm font-black text-white transition hover:bg-violet-800">
                 אשר ומלא אוטומטית
               </button>
-              <button type="button" onClick={() => onPdfCancel()} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50">
+              <button type="button" onClick={() => onPdfCancel()} className="rounded-full border border-slate-200 dark:border-slate-800 px-4 py-2 text-sm font-black text-slate-700 dark:text-slate-300 transition hover:bg-slate-50">
                 ביטול
               </button>
             </div>
@@ -786,8 +786,8 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
             </label>
           </div>
         </div>
-        {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{leadError}</p>}
-        {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-800">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
+        {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm font-bold text-red-700 dark:text-red-300">{leadError}</p>}
+        {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-4 text-center text-sm font-black text-emerald-800 dark:text-emerald-300">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
         <label className="mt-4 flex items-start gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -795,18 +795,18 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
             onChange={(e) => setConsent(e.target.checked)}
             className="mt-0.5 w-4 h-4 accent-violet-600 shrink-0"
           />
-          <span className="text-xs font-bold text-slate-600 leading-5">
+          <span className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-5">
             אני מסכים/ה לשיתוף הפרטים עם יועצי משכנתאות מורשים לצורך קבלת ייעוץ.{" "}
             <a href="/privacy" className="text-violet-600 hover:underline">מדיניות פרטיות</a>
           </span>
         </label>
-        <p className="mt-1 text-xs text-slate-400 font-semibold">
+        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500 font-semibold">
           הפרטים שמסרתם עשויים להיות מועברים ליועץ משכנתאות עצמאי שיצור אתכם קשר.
         </p>
         <button type="submit" disabled={leadLoading || leadSent} className="mt-4 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70">
           {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "שלחו לבדיקה ראשונית"}
         </button>
-        <p className="mt-3 text-center text-xs font-bold text-slate-400">ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי</p>
+        <p className="mt-3 text-center text-xs font-bold text-slate-400 dark:text-slate-500">ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי</p>
       </form>
     </section>
   );
