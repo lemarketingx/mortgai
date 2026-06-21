@@ -482,19 +482,19 @@ export default function AdvisorLeadsStore() {
         <AdvisorHeader active="/advisor/leads" />
         <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5">
           <div className="mb-5">
-            <p className="text-[10px] font-black text-violet-600 tracking-[0.15em] uppercase mb-2">FINZO MARKETPLACE · שוק לידים</p>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-950 leading-tight mb-1.5">
+            <p className="text-[10px] font-black text-violet-600 dark:text-violet-400 tracking-[0.15em] uppercase mb-2">FINZO MARKETPLACE · שוק לידים</p>
+            <h1 className="text-2xl md:text-3xl font-black text-slate-950 dark:text-slate-100 leading-tight mb-1.5">
               לידים מסווגים לפי מחלקות<br />
-              <span className="text-violet-700">מחיר ברור, ניקוד מוסבר.</span>
+              <span className="text-violet-700 dark:text-violet-300">מחיר ברור, ניקוד מוסבר.</span>
             </h1>
-            <p className="text-sm text-slate-500 font-bold max-w-lg">
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-bold max-w-lg">
               כל ליד מקבל ציון FINZO והסבר איכות קצר. פרטי הקשר נפתחים לאחר רכישה.
             </p>
           </div>
 
           <div className="grid grid-cols-3 gap-2.5 mb-5">
             {loading ? Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2.5">
+              <div key={index} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-2.5">
                 <Skeleton variant="line" className="w-20" />
                 <Skeleton variant="line" className="w-10 h-8" />
               </div>
@@ -507,36 +507,36 @@ export default function AdvisorLeadsStore() {
             )}
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 mb-5 space-y-3">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 mb-5 space-y-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-black text-slate-700">סינון לידים</p>
-              {hasFilters && <button onClick={clearFilters} className="text-[10px] font-black text-violet-600 hover:text-violet-800 transition-colors">נקה סינון ×</button>}
+              <p className="text-xs font-black text-slate-700 dark:text-slate-300">סינון לידים</p>
+              {hasFilters && <button onClick={clearFilters} className="text-[10px] font-black text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 transition-colors">נקה סינון ×</button>}
             </div>
             <div className="flex flex-wrap gap-2">
-              <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)} className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400">
+              <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400">
                 <option value="all">כל המחלקות</option>
                 {DEPARTMENTS.map((dept) => <option key={dept.key} value={dept.key}>{dept.label}</option>)}
               </select>
-              <select value={filterQuality} onChange={(e) => setFilterQuality(e.target.value)} className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400">
+              <select value={filterQuality} onChange={(e) => setFilterQuality(e.target.value)} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400">
                 <option value="all">כל הרמות</option>
                 {qualityLevels.filter((quality) => quality !== "all").map((quality) => <option key={quality} value={quality}>{quality}</option>)}
               </select>
-              <select value={filterPriceMax === Infinity ? "Infinity" : String(filterPriceMax)} onChange={(e) => setFilterPriceMax(e.target.value === "Infinity" ? Infinity : Number(e.target.value))} className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400">
+              <select value={filterPriceMax === Infinity ? "Infinity" : String(filterPriceMax)} onChange={(e) => setFilterPriceMax(e.target.value === "Infinity" ? Infinity : Number(e.target.value))} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400">
                 {PRICE_RANGES.map((range) => <option key={range.label} value={range.max === Infinity ? "Infinity" : String(range.max)}>{range.label}</option>)}
               </select>
-              <select value={filterCity || "הכל"} onChange={(e) => setFilterCity(e.target.value === "הכל" ? "" : e.target.value)} className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400">
+              <select value={filterCity || "הכל"} onChange={(e) => setFilterCity(e.target.value === "הכל" ? "" : e.target.value)} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400">
                 {cities.map((city) => <option key={city} value={city}>{city}</option>)}
               </select>
-              <select value={filterMaxDays === Infinity ? "Infinity" : String(filterMaxDays)} onChange={(e) => setFilterMaxDays(e.target.value === "Infinity" ? Infinity : Number(e.target.value))} className="text-xs font-bold border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:border-violet-400">
+              <select value={filterMaxDays === Infinity ? "Infinity" : String(filterMaxDays)} onChange={(e) => setFilterMaxDays(e.target.value === "Infinity" ? Infinity : Number(e.target.value))} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400">
                 {AGE_RANGES.map((range) => <option key={range.label} value={range.maxDays === Infinity ? "Infinity" : String(range.maxDays)}>{range.label}</option>)}
               </select>
             </div>
           </div>
 
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold flex items-center justify-between gap-3">
+            <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 font-bold flex items-center justify-between gap-3">
               <span>{error}</span>
-              <button onClick={() => setError("")} className="text-red-400 hover:text-red-600 font-black text-lg leading-none">×</button>
+              <button onClick={() => setError("")} className="text-red-400 dark:text-red-500 hover:text-red-600 dark:hover:text-red-400 font-black text-lg leading-none">×</button>
             </div>
           )}
 

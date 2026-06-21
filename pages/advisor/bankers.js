@@ -381,7 +381,7 @@ export default function BankersPage() {
               ) : (
                 <>
                   <p className="text-2xl mb-2">🔍</p>
-                  <p className="text-sm font-black text-slate-500">אין תוצאות לחיפוש זה</p>
+                  <p className="text-sm font-black text-slate-500 dark:text-slate-400">אין תוצאות לחיפוש זה</p>
                 </>
               )}
             </div>
@@ -390,45 +390,45 @@ export default function BankersPage() {
               {filtered.map((banker) => (
                 <div
                   key={banker.id}
-                  className={`bg-white rounded-2xl border p-4 transition-all ${banker.is_active ? "border-slate-100" : "border-slate-100 opacity-60"}`}
+                  className={`bg-white dark:bg-slate-900 rounded-2xl border p-4 transition-all ${banker.is_active ? "border-slate-100 dark:border-slate-800" : "border-slate-100 dark:border-slate-800 opacity-60"}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     {/* Main info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="text-sm font-black text-slate-950">{banker.banker_name}</span>
+                        <span className="text-sm font-black text-slate-950 dark:text-slate-100">{banker.banker_name}</span>
                         {banker.role_title && (
-                          <span className="text-[11px] font-bold text-slate-400">{banker.role_title}</span>
+                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">{banker.role_title}</span>
                         )}
                         {!banker.is_active && (
-                          <span className="text-[10px] font-black px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">לא פעיל</span>
+                          <span className="text-[10px] font-black px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full">לא פעיל</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 flex-wrap text-xs font-bold text-slate-500 mb-2">
-                        <span className="font-black text-violet-700">{banker.bank_name}</span>
+                      <div className="flex items-center gap-2 flex-wrap text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">
+                        <span className="font-black text-violet-700 dark:text-violet-300">{banker.bank_name}</span>
                         {banker.branch_name && <span>· סניף {banker.branch_name}</span>}
                         {banker.region && <span>· {banker.region}</span>}
                       </div>
                       <div className="flex flex-wrap gap-2 text-xs">
                         {banker.phone && (
                           <div className="flex items-center gap-1">
-                            <a href={`tel:${banker.phone}`} className="font-bold text-slate-600 hover:text-violet-700">{banker.phone}</a>
-                            <a href={`tel:${banker.phone}`} className="px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-700 font-black text-[10px]">☎</a>
-                            <a href={`https://wa.me/${banker.phone.replace(/[^\d]/g, "").replace(/^0/, "972")}`} target="_blank" rel="noopener noreferrer" className="px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-black text-[10px]">💬</a>
+                            <a href={`tel:${banker.phone}`} className="font-bold text-slate-600 dark:text-slate-400 hover:text-violet-700 dark:hover:text-violet-300">{banker.phone}</a>
+                            <a href={`tel:${banker.phone}`} className="px-1.5 py-0.5 rounded-md bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 font-black text-[10px]">☎</a>
+                            <a href={`https://wa.me/${banker.phone.replace(/[^\d]/g, "").replace(/^0/, "972")}`} target="_blank" rel="noopener noreferrer" className="px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 font-black text-[10px]">💬</a>
                           </div>
                         )}
                         {banker.email && (
                           <div className="flex items-center gap-1">
-                            <a href={`mailto:${banker.email}`} className="font-bold text-slate-600 hover:text-violet-700 truncate max-w-[180px]">{banker.email}</a>
-                            <a href={`mailto:${banker.email}`} className="px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-700 font-black text-[10px]">✉</a>
+                            <a href={`mailto:${banker.email}`} className="font-bold text-slate-600 dark:text-slate-400 hover:text-violet-700 dark:hover:text-violet-300 truncate max-w-[180px]">{banker.email}</a>
+                            <a href={`mailto:${banker.email}`} className="px-1.5 py-0.5 rounded-md bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 font-black text-[10px]">✉</a>
                           </div>
                         )}
                       </div>
                       {banker.specialties && (
-                        <p className="mt-1.5 text-[11px] font-bold text-slate-400">התמחות: {banker.specialties}</p>
+                        <p className="mt-1.5 text-[11px] font-bold text-slate-400 dark:text-slate-500">התמחות: {banker.specialties}</p>
                       )}
                       {banker.notes && (
-                        <p className="mt-1 text-[11px] font-bold text-slate-400 line-clamp-2">{banker.notes}</p>
+                        <p className="mt-1 text-[11px] font-bold text-slate-400 dark:text-slate-500 line-clamp-2">{banker.notes}</p>
                       )}
                     </div>
 
@@ -437,14 +437,14 @@ export default function BankersPage() {
                       <button
                         type="button"
                         onClick={() => startEdit(banker)}
-                        className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-black hover:bg-slate-200 transition-colors"
+                        className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                       >
                         ✏ ערוך
                       </button>
                       <button
                         type="button"
                         onClick={() => toggleActive(banker)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors ${banker.is_active ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors ${banker.is_active ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-800" : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-800"}`}
                       >
                         {banker.is_active ? "השבת" : "הפעל"}
                       </button>
@@ -452,7 +452,7 @@ export default function BankersPage() {
                         type="button"
                         onClick={() => confirmDelete(banker)}
                         disabled={deletingId === banker.id}
-                        className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-black hover:bg-rose-100 transition-colors disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 text-xs font-black hover:bg-rose-100 dark:hover:bg-rose-800 transition-colors disabled:opacity-50"
                       >
                         {deletingId === banker.id ? "..." : "מחק"}
                       </button>

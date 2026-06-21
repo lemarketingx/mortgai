@@ -8,9 +8,9 @@ const ADVISOR_TYPES = ["", "יועץ עצמאי", "משרד יועצים", "אח
 function Field({ label, value, onChange, placeholder = "", type = "text", required = false, hint = "" }) {
   return (
     <div>
-      <label className="block text-sm font-black text-slate-700 mb-1.5">
+      <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-1.5">
         {label}
-        {required && <span className="text-red-500 mr-1">*</span>}
+        {required && <span className="text-red-500 dark:text-red-400 mr-1">*</span>}
       </label>
       <input
         type={type}
@@ -19,9 +19,9 @@ function Field({ label, value, onChange, placeholder = "", type = "text", requir
         required={required}
         onChange={(e) => onChange(e.target.value)}
         autoComplete={type === "email" ? "email" : type === "password" ? "new-password" : "off"}
-        className="w-full border border-slate-200 bg-slate-50 rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 h-12"
+        className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 rounded-2xl px-4 py-3 text-base text-slate-950 dark:text-slate-100 outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-violet-100 h-12"
       />
-      {hint && <p className="text-xs text-slate-400 mt-1 font-bold">{hint}</p>}
+      {hint && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 font-bold">{hint}</p>}
     </div>
   );
 }
@@ -81,7 +81,7 @@ export default function AdvisorRegister() {
         <meta name="robots" content="noindex,nofollow" />
       </Head>
 
-      <main dir="rtl" className="min-h-screen bg-slate-50">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <header className="bg-slate-950 text-white px-4 py-5">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
             <Link href="/advisors" className="flex items-center gap-2.5">
@@ -96,13 +96,13 @@ export default function AdvisorRegister() {
 
         <div className="max-w-xl mx-auto px-4 py-12">
           <div className="mb-8">
-            <h1 className="text-3xl font-black text-slate-950">פתיחת חשבון ב־FINZO PRO</h1>
-            <p className="mt-2 text-slate-500 text-sm leading-6">
+            <h1 className="text-3xl font-black text-slate-950 dark:text-slate-100">פתיחת חשבון ב־FINZO PRO</h1>
+            <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm leading-6">
               גישה מיידית לחנות לידים, ניהול לקוחות ופורטל יועצים.
             </p>
           </div>
 
-          <form onSubmit={submit} className="space-y-4 bg-white border border-slate-200 rounded-3xl p-7 shadow-sm">
+          <form onSubmit={submit} className="space-y-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-7 shadow-sm">
 
             <Field
               label="שם מלא"

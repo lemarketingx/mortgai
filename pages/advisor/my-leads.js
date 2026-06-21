@@ -446,7 +446,7 @@ export default function AdvisorMyLeads() {
   return (
     <>
       <Head><title>הלידים שלי | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
-      <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
         <AdvisorHeader active="/advisor/my-leads" />
         <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4">
 
@@ -454,7 +454,7 @@ export default function AdvisorMyLeads() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
             {loading
               ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2">
+                  <div key={i} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-2">
                     <Skeleton variant="line" className="w-20" /><Skeleton variant="line" className="w-10 h-8" />
                   </div>
                 ))
@@ -474,16 +474,16 @@ export default function AdvisorMyLeads() {
               onChange={handleSearchChange}
               placeholder="חיפוש שם / טלפון / עיר / שלב..."
               autoComplete="off" autoCorrect="off" spellCheck="false" dir="rtl"
-              className="flex-1 min-w-[200px] max-w-sm border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 bg-white"
+              className="flex-1 min-w-[200px] max-w-sm border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
-            <div className="flex rounded-xl border border-slate-200 overflow-hidden bg-white shrink-0">
+            <div className="flex rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shrink-0">
               {[{ k: "kanban", l: "קנבן" }, { k: "cards", l: "כרטיסים" }, { k: "list", l: "רשימה" }].map(({ k, l }) => (
                 <button key={k} onClick={() => setViewAndSave(k)}
-                  className={`px-4 py-2 text-xs font-black transition-colors ${view === k ? "bg-violet-700 text-white" : "text-slate-500 hover:text-slate-800"}`}>{l}</button>
+                  className={`px-4 py-2 text-xs font-black transition-colors ${view === k ? "bg-violet-700 text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"}`}>{l}</button>
               ))}
             </div>
             <select value={sortBy} onChange={(e) => setSortAndSave(e.target.value)}
-              className="border border-slate-200 rounded-xl px-3 py-2 text-xs font-black bg-white outline-none focus:ring-2 focus:ring-violet-300 shrink-0 text-slate-600">
+              className="border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-black bg-white dark:bg-slate-900 outline-none focus:ring-2 focus:ring-violet-300 shrink-0 text-slate-600 dark:text-slate-400">
               <option value="purchased">נרכש לאחרונה</option>
               <option value="priority">עדיפות</option>
               <option value="newest">חדש</option>
@@ -496,24 +496,24 @@ export default function AdvisorMyLeads() {
           <div className="flex gap-1.5 flex-wrap mb-4">
             {statusTabs.map(({ key, label, count }) => (
               <button key={key} onClick={() => setStageFilter(key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold whitespace-nowrap rounded-full transition-colors ${stageFilter === key ? "bg-violet-700 text-white" : "bg-white border border-slate-200 text-slate-500 hover:text-slate-800"}`}>
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold whitespace-nowrap rounded-full transition-colors ${stageFilter === key ? "bg-violet-700 text-white" : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"}`}>
                 {label}
-                <span className={`tabular-nums text-[11px] px-1.5 py-0.5 rounded-full font-black ${stageFilter === key ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>{count}</span>
+                <span className={`tabular-nums text-[11px] px-1.5 py-0.5 rounded-full font-black ${stageFilter === key ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"}`}>{count}</span>
               </button>
             ))}
           </div>
 
           {error && (
-            <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-bold flex justify-between">
+            <div className="mb-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 font-bold flex justify-between">
               <span>{error}</span>
-              <button onClick={() => setError("")} className="text-red-400 font-black">×</button>
+              <button onClick={() => setError("")} className="text-red-400 dark:text-red-500 font-black">×</button>
             </div>
           )}
 
           {loading && (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4">
+                <div key={i} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4">
                   <Skeleton variant="block" className="h-40" />
                 </div>
               ))}
@@ -540,10 +540,10 @@ export default function AdvisorMyLeads() {
       </main>
 
       {/* Mobile bottom nav */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
-        <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">ראשי</Link>
-        <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50  rounded-xl py-2.5">הלידים שלי</Link>
-        <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
+        <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">ראשי</Link>
+        <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/20 rounded-xl py-2.5">הלידים שלי</Link>
+        <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">שוק</Link>
       </div>
     </>
   );

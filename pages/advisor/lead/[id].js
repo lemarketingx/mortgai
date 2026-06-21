@@ -1431,6 +1431,64 @@ export default function LeadDetailPage() {
                     )}
                   </div>
                 )}
+
+                {/* Call */}
+                {activeAction === "call" && (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="w-16 h-16 mx-auto rounded-full bg-violet-50 dark:bg-violet-900/20 border-2 border-violet-200 dark:border-violet-800 flex items-center justify-center mb-3">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-600 dark:text-violet-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                      </div>
+                      <p className="text-lg font-bold text-slate-900 dark:text-slate-100 tabular-nums">{lead.phone || "—"}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{lead.name}</p>
+                    </div>
+                    <a href={`tel:${lead.phone}`} className="block w-full rounded-lg bg-violet-600 hover:bg-violet-700 text-white py-3 text-sm font-semibold text-center transition-colors">
+                      התקשר עכשיו
+                    </a>
+                    <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">סיכום שיחה</label>
+                      <textarea className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm resize-y min-h-[80px] outline-none focus:ring-2 focus:ring-violet-500/30"
+                        placeholder="רשום תקציר השיחה..." />
+                      <button type="button" onClick={() => { pushActivity("שיחה טלפונית", "call_made"); patchLead({ lastContactedAt: new Date().toISOString() }); }}
+                        className="mt-2 w-full rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 py-2 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        שמור ורשום פעילות
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Email */}
+                {activeAction === "email" && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">נמען</label>
+                      <input type="email" className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-500/30"
+                        value={lead.email || lead.advisorEmail || ""} readOnly />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">נושא</label>
+                      <input type="text" className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-500/30"
+                        placeholder="נושא ההודעה..." />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">תבנית</label>
+                      <div className="flex gap-1.5 flex-wrap mb-2">
+                        {["עדכון סטטוס", "בקשת מסמכים", "סיכום פגישה"].map(t => (
+                          <button key={t} type="button" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600 transition-colors">{t}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">תוכן</label>
+                      <textarea className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-3 text-sm resize-y min-h-[150px] outline-none focus:ring-2 focus:ring-violet-500/30"
+                        placeholder="כתוב את תוכן המייל..." />
+                    </div>
+                    <button type="button" onClick={() => { pushActivity("נשלח מייל", "email_sent"); }}
+                      className="w-full rounded-lg bg-violet-600 hover:bg-violet-700 text-white py-3 text-sm font-semibold transition-colors">
+                      שלח מייל
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               /* ── Default Center Content ── */
