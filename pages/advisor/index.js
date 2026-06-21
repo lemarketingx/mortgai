@@ -347,6 +347,9 @@ export default function AdvisorDashboard() {
   const [advisorName, setAdvisorName] = useState("");
   const [dateRange, setDateRange] = useState("all");
   const [bankFilter, setBankFilter] = useState("all");
+  const [commissionStats, setCommissionStats] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Read display name from localStorage — safe, runs only after hydration
   useEffect(() => {
@@ -369,6 +372,8 @@ export default function AdvisorDashboard() {
       })
       .then((j) => { if (j) { setLeads(j.leads || []); setLoading(false); } })
       .catch(() => setLoading(false));
+    fetch("/api/advisor/commissions?stats=true").then(r => r.ok ? r.json() : null).then(d => { if (d?.stats) setCommissionStats(d.stats); }).catch(() => {});
+    fetch("/api/advisor/notifications?limit=5").then(r => r.ok ? r.json() : null).then(d => { if (d) { setNotifications(d.notifications || []); setUnreadCount(d.unreadCount || 0); } }).catch(() => {});
   }, []);
 
   // ── Derived data — all useMemos, no calculations in render ──────────────────
@@ -549,7 +554,9 @@ export default function AdvisorDashboard() {
     <>
       <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
       <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
-        <AdvisorHeader active="/advisor" urgentItems={attentionItems} />
+        <AdvisorHeader active="/advisor" urgentItems={attentionItems} notificationCount={unreadCount} notifications={notifications} onMarkAllRead={() => {
+          fetch("/api/advisor/notifications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "readAll" }) }).then(() => { setUnreadCount(0); setNotifications(n => n.map(x => ({ ...x, readAt: new Date().toISOString() }))); }).catch(() => {});
+        }} />
 
         <div className="max-w-6xl mx-auto px-4 lg:px-6 py-5 space-y-5">
 
@@ -804,6 +811,165 @@ export default function AdvisorDashboard() {
                 </section>
               )}
 
+              {/* ROI Dashboard */}
+              {!loading && leads.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <div className="mb-4">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">ROI — החזר על השקעה</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">ביצועים כלליים של רכישת לידים</p>
+                  </div>
+                  {(() => {
+                    const totalLeads = filteredLeads.length;
+                    const closedWon = completed.length;
+                    const totalRevenue = commissionStats?.totalRevenue || 0;
+                    const avgDealSize = closedWon > 0 ? Math.round(completed.reduce((s, l) => s + (Number(l.mortgageAmount) || 0), 0) / closedWon) : 0;
+                    const avgCommission = closedWon > 0 ? Math.round(totalRevenue / closedWon) : 0;
+                    const cac = closedWon > 0 ? Math.round((totalLeads * 150) / closedWon) : 0;
+                    const revenuePerLead = totalLeads > 0 ? Math.round(totalRevenue / totalLeads) : 0;
+                    const roi = cac > 0 ? Math.round(((revenuePerLead - cac) / cac) * 100) : 0;
+                    const bankConversion = (() => {
+                      const submitted = filteredLeads.filter(l => {
+                        const s = getStage(l);
+                        return ["submitted_to_bank", "principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released", "closed_won"].includes(s);
+                      }).length;
+                      const approved = filteredLeads.filter(l => {
+                        const s = getStage(l);
+                        return ["principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released", "closed_won"].includes(s);
+                      }).length;
+                      return submitted > 0 ? Math.round((approved / submitted) * 100) : 0;
+                    })();
+                    return (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">ROI%</p>
+                          <p className={`text-xl font-black tabular-nums ${roi >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>{roi}%</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">CAC (עלות רכישת לקוח)</p>
+                          <p className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">{formatILS(cac)}</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">הכנסה לליד</p>
+                          <p className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">{formatILS(revenuePerLead)}</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">ממוצע עסקה</p>
+                          <p className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">{formatILS(avgDealSize)}</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">ממוצע עמלה</p>
+                          <p className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">{formatILS(avgCommission)}</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">אחוז אישור בנק</p>
+                          <p className="text-xl font-black tabular-nums text-violet-600 dark:text-violet-400">{bankConversion}%</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </section>
+              )}
+
+              {/* Pipeline Forecasting */}
+              {!loading && active.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <div className="mb-4">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">תחזית Pipeline</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">הערכות סגירה על בסיס שלב נוכחי</p>
+                  </div>
+                  {(() => {
+                    const STAGE_WEIGHTS = { new_lead: 0.05, contacted: 0.1, documents_requested: 0.15, waiting_documents: 0.2, documents_received: 0.25, eligibility_review: 0.35, appraisal_ordered: 0.45, appraisal_completed: 0.55, lawyer_review: 0.6, submitted_to_bank: 0.65, principle_approval: 0.75, bank_negotiation: 0.8, selected_track: 0.85, signing_scheduled: 0.9, signed: 0.95, collateral_completion: 0.97, funds_released: 0.99 };
+                    const now = new Date();
+                    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    const expectedClose = active.filter(l => {
+                      const nextDate = l.nextActionAt || l.followUpDate;
+                      return nextDate && new Date(nextDate) <= monthEnd;
+                    });
+                    let weightedPipeline = 0;
+                    let estimatedRevenue = 0;
+                    for (const l of active) {
+                      const w = STAGE_WEIGHTS[getStage(l)] || 0.1;
+                      const amount = Number(l.mortgageAmount) || 0;
+                      weightedPipeline += amount * w;
+                      estimatedRevenue += amount * w * 0.005;
+                    }
+                    const estimatedCommissions = estimatedRevenue * 0.8;
+                    return (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-100 dark:border-violet-800">
+                            <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400">צפי סגירה החודש</p>
+                            <p className="text-2xl font-black tabular-nums text-violet-700 dark:text-violet-300">{expectedClose.length}</p>
+                          </div>
+                          <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Pipeline משוקלל</p>
+                            <p className="text-2xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{formatILS(Math.round(weightedPipeline))}</p>
+                          </div>
+                          <div className="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl border border-sky-100 dark:border-sky-800">
+                            <p className="text-[10px] font-bold text-sky-600 dark:text-sky-400">הכנסה צפויה</p>
+                            <p className="text-2xl font-black tabular-nums text-sky-700 dark:text-sky-300">{formatILS(Math.round(estimatedRevenue))}</p>
+                          </div>
+                          <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
+                            <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">עמלות צפויות</p>
+                            <p className="text-2xl font-black tabular-nums text-amber-700 dark:text-amber-300">{formatILS(Math.round(estimatedCommissions))}</p>
+                          </div>
+                        </div>
+                        {expectedClose.length > 0 && (
+                          <div>
+                            <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 mb-2">צפי סגירה החודש:</p>
+                            <div className="space-y-1.5">
+                              {expectedClose.slice(0, 5).map(l => (
+                                <Link key={l.id} href={`/advisor/lead/${l.id}`} className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800/60 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                  <span className="text-xs font-black text-slate-900 dark:text-slate-100 truncate">{l.name || "—"}</span>
+                                  <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 tabular-nums shrink-0 mr-2">{formatILS(Number(l.mortgageAmount) || 0)}</span>
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </section>
+              )}
+
+              {/* Commission Dashboard */}
+              {!loading && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">עמלות — דשבורד</h2>
+                      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">מעקב הכנסות ועמלות</p>
+                    </div>
+                  </div>
+                  {commissionStats ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                        <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">הכנסות שולמו</p>
+                        <p className="text-xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{formatILS(commissionStats.totalRevenue || 0)}</p>
+                      </div>
+                      <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
+                        <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">עמלות ממתינות</p>
+                        <p className="text-xl font-black tabular-nums text-amber-700 dark:text-amber-300">{formatILS(commissionStats.pendingRevenue || 0)}</p>
+                      </div>
+                      <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-100 dark:border-violet-800">
+                        <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400">הכנסות החודש</p>
+                        <p className="text-xl font-black tabular-nums text-violet-700 dark:text-violet-300">{formatILS(commissionStats.monthlyRevenue || 0)}</p>
+                      </div>
+                      <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">סה״כ עסקאות עמלה</p>
+                        <p className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">{commissionStats.count || 0}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <p className="text-sm font-bold text-slate-400 dark:text-slate-500">אין נתוני עמלות עדיין</p>
+                      <p className="text-[11px] font-bold text-slate-300 dark:text-slate-600 mt-1">עמלות יתעדכנו אוטומטית עם סגירת עסקאות</p>
+                    </div>
+                  )}
+                </section>
+              )}
+
               {/* סגירות לפי בנק */}
               {!loading && bankClosings.length > 0 && (
                 <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
@@ -955,6 +1121,11 @@ export default function AdvisorDashboard() {
                     className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <span className="shrink-0">📋</span>
                     <span>כל הלידים שלי</span>
+                  </Link>
+                  <Link href="/advisor/calendar"
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    <span className="shrink-0">📅</span>
+                    <span>יומן ולוח שנה</span>
                   </Link>
                   <Link href="/"
                     className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">

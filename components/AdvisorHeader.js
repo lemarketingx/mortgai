@@ -38,11 +38,12 @@ function MoonIcon() {
   );
 }
 
-export default function AdvisorHeader({ active, urgentItems = [] }) {
+export default function AdvisorHeader({ active, urgentItems = [], notificationCount = 0, notifications = [], onMarkAllRead }) {
   const links = [
     { href: "/advisor",          label: "לוח בקרה" },
     { href: "/advisor/leads",    label: "שוק לידים" },
     { href: "/advisor/my-leads", label: "הלידים שלי" },
+    { href: "/advisor/calendar",  label: "יומן" },
     { href: "/advisor/bankers",  label: "בנקאים" },
     { href: "/advisor/settings", label: "הגדרות" },
   ];
@@ -51,8 +52,8 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
     { href: "/advisor",          label: "ראשי" },
     { href: "/advisor/my-leads", label: "הלידים שלי" },
     { href: "/advisor/leads",    label: "שוק" },
+    { href: "/advisor/calendar", label: "יומן" },
     { href: "/advisor/bankers",  label: "בנקאים" },
-    { href: "/advisor/settings", label: "הגדרות" },
   ];
 
   const { dark, toggle: toggleTheme } = useTheme();
@@ -87,7 +88,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
     });
   }
 
-  const bellCount = urgentItems.length;
+  const bellCount = notificationCount > 0 ? notificationCount : urgentItems.length;
 
   return (
     <header className="bg-slate-950/95 dark:bg-slate-950 backdrop-blur-sm text-white sticky top-0 z-40 border-b border-white/[0.06]">
@@ -144,38 +145,59 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
               </button>
 
               {bellOpen && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50" dir="rtl">
-                  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                    <span className="text-sm font-black text-slate-950">דורשים טיפול</span>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-50" dir="rtl">
+                  <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <span className="text-sm font-black text-slate-950 dark:text-slate-50">התראות</span>
                     {bellCount > 0
-                      ? <span className="text-xs font-black text-rose-600 bg-rose-50 rounded-full px-2 py-0.5">{bellCount} פעיל</span>
-                      : <span className="text-xs font-bold text-slate-400">הכל תקין ✓</span>}
+                      ? <div className="flex items-center gap-2">
+                          {onMarkAllRead && <button onClick={() => { onMarkAllRead(); }} className="text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:underline">סמן הכל כנקרא</button>}
+                          <span className="text-xs font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 rounded-full px-2 py-0.5">{bellCount}</span>
+                        </div>
+                      : <span className="text-xs font-bold text-slate-400 dark:text-slate-500">הכל תקין</span>}
                   </div>
                   <div className="max-h-72 overflow-y-auto">
-                    {urgentItems.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-sm font-bold text-slate-400">
-                        אין פריטים דחופים כרגע
-                      </div>
-                    ) : (
+                    {notifications.length > 0 ? (
+                      notifications.slice(0, 8).map((n, i) => {
+                        const typeColor = { new_lead: "bg-violet-500", overdue_task: "bg-rose-500", missing_doc: "bg-amber-400", bank_approval: "bg-emerald-500", today_reminder: "bg-sky-400" };
+                        return (
+                          <Link
+                            key={n.id || i}
+                            href={n.leadId ? `/advisor/lead/${n.leadId}` : "/advisor/my-leads"}
+                            onClick={() => setBellOpen(false)}
+                            className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-50 dark:border-slate-800 last:border-0 ${!n.readAt ? "bg-violet-50/30 dark:bg-violet-900/10" : ""}`}
+                          >
+                            <span className={`h-2 w-2 rounded-full shrink-0 ${typeColor[n.type] || "bg-slate-400"}`} />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-black text-slate-900 dark:text-slate-100 truncate">{n.title || "התראה"}</p>
+                              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 truncate">{n.message || ""}</p>
+                            </div>
+                          </Link>
+                        );
+                      })
+                    ) : urgentItems.length > 0 ? (
                       urgentItems.slice(0, 8).map((item, i) => (
                         <Link
                           key={i}
                           href={item.href || `/advisor/lead/${item.lead?.id}`}
                           onClick={() => setBellOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0"
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-50 dark:border-slate-800 last:border-0"
                         >
                           <span className={`h-2 w-2 rounded-full shrink-0 ${item.tag === "danger" ? "bg-rose-500" : item.tag === "warning" ? "bg-amber-400" : item.tag === "docs" ? "bg-amber-400" : "bg-sky-400"}`} />
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-black text-slate-900 truncate">{item.lead?.name || "—"}</p>
-                            <p className="text-xs font-bold text-slate-400">{item.reason}</p>
+                            <p className="text-sm font-black text-slate-900 dark:text-slate-100 truncate">{item.lead?.name || "—"}</p>
+                            <p className="text-xs font-bold text-slate-400 dark:text-slate-500">{item.reason}</p>
                           </div>
-                          <span className="text-[11px] font-black text-slate-400 shrink-0">{item.detail}</span>
+                          <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 shrink-0">{item.detail}</span>
                         </Link>
                       ))
+                    ) : (
+                      <div className="px-4 py-6 text-center text-sm font-bold text-slate-400 dark:text-slate-500">
+                        אין התראות חדשות
+                      </div>
                     )}
                   </div>
-                  <div className="px-4 py-2.5 border-t border-slate-100 text-center">
-                    <Link href="/advisor/my-leads" onClick={() => setBellOpen(false)} className="text-xs font-black text-violet-600 hover:underline">
+                  <div className="px-4 py-2.5 border-t border-slate-100 dark:border-slate-800 text-center">
+                    <Link href="/advisor/my-leads" onClick={() => setBellOpen(false)} className="text-xs font-black text-violet-600 dark:text-violet-400 hover:underline">
                       כל הלידים שלי →
                     </Link>
                   </div>
