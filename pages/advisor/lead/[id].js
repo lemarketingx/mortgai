@@ -485,6 +485,8 @@ export default function LeadDetailPage() {
   const [activeAction, setActiveAction] = useState(null);
   const [taskText, setTaskText] = useState("");
   const [tasks, setTasks] = useState([]);
+  const [waMessage, setWaMessage] = useState("");
+  const [reminderPriority, setReminderPriority] = useState("normal");
   const { dark } = useTheme();
 
   // Upload-link & reminder state
@@ -1077,15 +1079,44 @@ export default function LeadDetailPage() {
 
                 {/* WhatsApp */}
                 {activeAction === "whatsapp" && (
-                  <div className="space-y-3">
-                    <button type="button" onClick={() => openWa()} className="w-full rounded-lg bg-violet-600 hover:bg-violet-700 text-white py-3 text-sm font-semibold transition-colors">
-                      פתח שיחת WhatsApp
-                    </button>
-                    <button type="button" onClick={() => setShowWaTemplates(true)} className="w-full rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 py-3 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                      תבניות WhatsApp
-                    </button>
+                  <div className="space-y-4">
+                    {/* Template selector */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">תבניות מוכנות</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { id: "intro", label: "פתיחת קשר ראשוני", text: `שלום ${lead.name || ""},\nשמי ${lead.assignedAdvisor || "יועץ"} מ-FINZO.\nפנית אלינו בנושא משכנתא ואשמח לעזור לך.\nמתי נוח לך לשיחה קצרה?` },
+                          { id: "docs", label: "בקשת מסמכים", text: `שלום ${lead.name || ""},\nכדי להתקדם בתיק המשכנתא שלך, אשמח לקבל את המסמכים הבאים:\n- תלושי שכר 3 חודשים אחרונים\n- דפי חשבון בנק\n- צילום תעודת זהות\n\nאפשר לשלוח כאן בוואטסאפ.` },
+                          { id: "reminder", label: "תזכורת ללקוח", text: `שלום ${lead.name || ""},\nתזכורת ידידותית — עדיין ממתינים למסמכים שביקשנו.\nיש משהו שאני יכול לעזור בו?` },
+                          { id: "status", label: "עדכון סטטוס", text: `שלום ${lead.name || ""},\nרציתי לעדכן אותך לגבי התקדמות תיק המשכנתא שלך.\nהתיק נמצא בשלב: ${getPipelineStageLabel(getStage(lead))}.\nאשמח לענות על כל שאלה.` },
+                        ].map((tpl) => (
+                          <button key={tpl.id} type="button" onClick={() => setWaMessage(tpl.text)}
+                            className={`text-right rounded-lg px-3 py-2.5 text-xs font-semibold transition-all border ${waMessage === tpl.text ? "bg-violet-600 text-white border-violet-600" : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600"}`}>
+                            {tpl.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Message preview */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">תצוגה מקדימה</label>
+                      <textarea className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-3 text-sm resize-y min-h-[120px] outline-none focus:ring-2 focus:ring-violet-500/30"
+                        value={waMessage || ""} onChange={(e) => setWaMessage(e.target.value)}
+                        placeholder="בחר תבנית או כתוב הודעה חופשית..." />
+                    </div>
+                    {/* Send buttons */}
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => { const text = encodeURIComponent(waMessage || ""); window.open(`https://wa.me/${(lead.phone||"").replace(/\D/g,"")}?text=${text}`, "_blank"); pushActivity("נשלחה הודעת WhatsApp", "whatsapp_sent"); }}
+                        className="flex-1 rounded-lg bg-violet-600 hover:bg-violet-700 text-white py-3 text-sm font-semibold transition-colors" disabled={!waMessage}>
+                        שלח ב-WhatsApp
+                      </button>
+                      <button type="button" onClick={() => openWa()}
+                        className="shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        פתח שיחה
+                      </button>
+                    </div>
                     {missingDocs > 0 && (
-                      <button type="button" onClick={sendMissingDocsWa} className="w-full rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 py-3 text-sm font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
+                      <button type="button" onClick={sendMissingDocsWa} className="w-full rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 py-2.5 text-xs font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
                         שלח בקשת מסמכים חסרים ({missingDocs})
                       </button>
                     )}
@@ -1102,14 +1133,46 @@ export default function LeadDetailPage() {
                         onChange={(e) => { setNextActionText(e.target.value); debouncedPatch("nextAction", { nextAction: e.target.value }, e.target.value ? `פעולה הבאה: ${e.target.value}` : undefined, "reminder_set"); }}
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">תאריך מעקב</label>
-                      <input type="date"
-                        className={`w-full border rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 ${isOverdue(nextActionDate) ? "border-rose-300 dark:border-rose-700" : "border-slate-200 dark:border-slate-700"}`}
-                        value={nextActionDate}
-                        onChange={(e) => { setNextActionDate(e.target.value); debouncedPatch("nextActionDate", { nextActionAt: e.target.value }, undefined, "reminder_set"); }}
-                      />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">תאריך מעקב</label>
+                        <input type="date"
+                          className={`w-full border rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 ${isOverdue(nextActionDate) ? "border-rose-300 dark:border-rose-700" : "border-slate-200 dark:border-slate-700"}`}
+                          value={nextActionDate}
+                          onChange={(e) => { setNextActionDate(e.target.value); debouncedPatch("nextActionDate", { nextActionAt: e.target.value }, undefined, "reminder_set"); }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">שעה</label>
+                        <input type="time"
+                          className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                          placeholder="--:--"
+                        />
+                      </div>
                     </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">עדיפות</label>
+                      <div className="flex gap-1.5">
+                        {[{ key: "normal", label: "רגיל", color: "slate" }, { key: "high", label: "גבוה", color: "amber" }, { key: "urgent", label: "דחוף", color: "red" }].map((p) => (
+                          <button key={p.key} type="button" onClick={() => setReminderPriority(p.key)}
+                            className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-all border ${reminderPriority === p.key
+                              ? p.key === "urgent" ? "bg-red-600 text-white border-red-600" : p.key === "high" ? "bg-amber-500 text-white border-amber-500" : "bg-violet-600 text-white border-violet-600"
+                              : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600"
+                            }`}>
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">הערה פנימית</label>
+                      <textarea className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm resize-y min-h-[60px] outline-none focus:ring-2 focus:ring-violet-500/30"
+                        placeholder="הערה לתזכורת..." />
+                    </div>
+                    <button type="button" onClick={() => { debouncedPatch("nextAction", { nextAction: nextActionText, nextActionAt: nextActionDate }, nextActionText ? `תזכורת: ${nextActionText}` : "תזכורת נשמרה", "reminder_set"); }}
+                      className="w-full rounded-lg bg-violet-600 hover:bg-violet-700 text-white py-3 text-sm font-semibold transition-colors">
+                      שמור תזכורת
+                    </button>
                     {uploadToken && (
                       <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
                         <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">זמן יעד להעלאה</p>
@@ -1134,6 +1197,10 @@ export default function LeadDetailPage() {
                 {/* Stage change */}
                 {activeAction === "stage" && (
                   <div className="space-y-4">
+                    <div className="rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 p-3 mb-4">
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">שלב נוכחי</p>
+                      <p className="text-sm font-bold text-violet-700 dark:text-violet-300">{getPipelineStageLabel(getStage(lead))}</p>
+                    </div>
                     <StageStepper lead={lead} onAdvance={advanceStage} onSetStage={setStage} />
                     <div>
                       <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">בחר שלב</label>
@@ -1146,12 +1213,18 @@ export default function LeadDetailPage() {
                         </optgroup>
                       </select>
                     </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">סיבה/הערה לשינוי</label>
+                      <input type="text" className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-500/30"
+                        placeholder="למה משנים שלב?" />
+                    </div>
                     {si >= 0 && si < ACTIVE_PIPELINE_STAGES.length - 1 && (
                       <button type="button" onClick={advanceStage}
                         className="w-full text-sm font-semibold px-4 py-3 rounded-lg text-white bg-violet-600 hover:bg-violet-700 transition-colors">
                         הבא: {getPipelineStageLabel(ACTIVE_PIPELINE_STAGES[si + 1])}
                       </button>
                     )}
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2">* שינוי שלב נרשם אוטומטית בפעילות התיק</p>
                   </div>
                 )}
 
@@ -1176,6 +1249,25 @@ export default function LeadDetailPage() {
                         {tokenLoading ? "יוצר קישור..." : "צור קישור להעלאה"}
                       </button>
                     )}
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <span className="text-slate-500 dark:text-slate-400">השלמת מסמכים</span>
+                        <span className="text-violet-600 dark:text-violet-400">{computedDocumentSummary.completionPercent}%</span>
+                      </div>
+                      <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-full bg-violet-600 rounded-full transition-all" style={{ width: `${computedDocumentSummary.completionPercent}%` }} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-2.5 text-center">
+                          <p className="text-lg font-bold text-red-700 dark:text-red-300 tabular-nums">{computedDocumentSummary.statusCounts.missing}</p>
+                          <p className="text-[10px] font-semibold text-red-600 dark:text-red-400">חסרים</p>
+                        </div>
+                        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-2.5 text-center">
+                          <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300 tabular-nums">{computedDocumentSummary.statusCounts.approved + computedDocumentSummary.statusCounts.received}</p>
+                          <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">התקבלו</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -1212,20 +1304,75 @@ export default function LeadDetailPage() {
                         )}
                       </>
                     )}
+                    <div className="border-t border-slate-100 dark:border-slate-800 pt-3 mt-3">
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">סטטוס שליחה לבנק</label>
+                      <select className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-violet-500/30"
+                        value={bankSubmissionStatus} onChange={(e) => { setBankSubmissionStatus(e.target.value); patchLead({ bankSubmissionStatus: e.target.value }, `סטטוס בנק: ${e.target.value}`, "status_changed"); }}>
+                        <option value="not_submitted">טרם הוגש</option>
+                        <option value="submitted">הוגש</option>
+                        <option value="approved">אושר</option>
+                        <option value="rejected">נדחה</option>
+                        <option value="negotiation">במשא ומתן</option>
+                      </select>
+                    </div>
+                    <div className="mt-2">
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500">שליחה אחרונה: {lead.bankSubmittedAt ? new Date(lead.bankSubmittedAt).toLocaleDateString("he-IL") : "טרם"}</p>
+                    </div>
                   </div>
                 )}
 
                 {/* PDF export */}
                 {activeAction === "pdf" && (
-                  <div className="text-center py-10">
-                    <p className="text-sm font-semibold text-slate-400 dark:text-slate-500">יצוא PDF — בקרוב</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">הפיצ׳ר בפיתוח</p>
+                  <div className="space-y-4">
+                    <div className="rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 space-y-3">
+                      <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300">סיכום תיק</h3>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        {[
+                          ["לקוח", lead.name || "—"],
+                          ["שלב", getPipelineStageLabel(getStage(lead))],
+                          ["סוג תיק", lead.mortgageType || "—"],
+                          ["בנק", lead.bankName || "טרם נבחר"],
+                          ["סכום משכנתא", lead.mortgageAmount ? formatILS(lead.mortgageAmount) : "—"],
+                          ["הון עצמי", lead.equity ? formatILS(lead.equity) : "—"],
+                          ["מסמכים", `${computedDocumentSummary.receivedCount}/${computedDocumentSummary.totalCount}`],
+                          ["התקדמות", `${overallProgress}%`],
+                        ].map(([label, value]) => (
+                          <div key={label} className="flex justify-between gap-1">
+                            <span className="text-slate-400 dark:text-slate-500 font-medium">{label}</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 text-left">{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {caseBankers.length > 0 && (
+                      <div className="rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+                        <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">בנקאים בתיק</h3>
+                        {caseBankers.map(cb => (
+                          <p key={cb.id} className="text-xs text-slate-600 dark:text-slate-400">{cb.banker_name_snapshot} · {cb.bank_name_snapshot}</p>
+                        ))}
+                      </div>
+                    )}
+                    <button type="button" disabled className="w-full rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 py-3 text-sm font-semibold cursor-not-allowed">
+                      יצוא PDF — בקרוב
+                    </button>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center">הפיצ׳ר בפיתוח — הסיכום למעלה מראה את מצב התיק הנוכחי</p>
                   </div>
                 )}
 
                 {/* Notes */}
                 {activeAction === "notes" && (
                   <div>
+                    <div className="mb-3">
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">סוג הערה</label>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {["כללי", "לקוח", "בנק", "מסמכים", "פנימי"].map(type => (
+                          <button key={type} type="button"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600 transition-colors">
+                            {type}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <textarea
                       className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-3 text-sm resize-y min-h-[200px] outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
                       value={notes}
@@ -1235,12 +1382,35 @@ export default function LeadDetailPage() {
                       }}
                       placeholder="הערות, תיאום שיחה, עדכון סטטוס..."
                     />
+                    {activities.length > 0 && (
+                      <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3">
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">פעילות אחרונה</p>
+                        <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                          {activities.slice(0, 5).map((act, i) => (
+                            <div key={i} className="rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-3 py-2">
+                              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{act.title}</p>
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500">{new Date(act.created_at).toLocaleDateString("he-IL")} · {new Date(act.created_at).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* Task */}
                 {activeAction === "task" && (
                   <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-2.5 text-center">
+                        <p className="text-lg font-bold text-amber-700 dark:text-amber-300 tabular-nums">{tasks.filter(t => !t.done).length}</p>
+                        <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">פתוחות</p>
+                      </div>
+                      <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-2.5 text-center">
+                        <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300 tabular-nums">{tasks.filter(t => t.done).length}</p>
+                        <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">הושלמו</p>
+                      </div>
+                    </div>
                     <div className="flex gap-2">
                       <input type="text" className="flex-1 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-violet-500/30"
                         placeholder="תיאור המשימה..." value={taskText} onChange={(e) => setTaskText(e.target.value)}

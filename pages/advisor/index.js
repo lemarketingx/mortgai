@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import { formatILS } from "../../lib/format";
 import {
   getPipelineStageLabel,
   isClosedPipelineStage,
@@ -77,11 +78,11 @@ const STAGE_TO_GROUP = new Map(
 
 // ─── Attention item tag styles ────────────────────────────────────────────────
 const TAG_META = {
-  danger:  { tag: "bg-rose-100 text-rose-700 border-rose-200",   dot: "bg-rose-500" },
-  warning: { tag: "bg-amber-100 text-amber-800 border-amber-200", dot: "bg-amber-500" },
-  docs:    { tag: "bg-amber-50 text-amber-600 border-amber-100",  dot: "bg-amber-400" },
-  stale:   { tag: "bg-sky-50 text-sky-700 border-sky-200",        dot: "bg-sky-400" },
-  low:     { tag: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" },
+  danger:  { tag: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800",   dot: "bg-rose-500" },
+  warning: { tag: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800", dot: "bg-amber-500" },
+  docs:    { tag: "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",  dot: "bg-amber-400" },
+  stale:   { tag: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800",        dot: "bg-sky-400" },
+  low:     { tag: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700", dot: "bg-slate-400" },
 };
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -223,12 +224,12 @@ function AttentionItem({ item }) {
   return (
     <Link
       href={attentionHref(item)}
-      className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50/80 transition-colors rounded-xl border border-slate-100"
+      className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800/60 hover:bg-slate-50/80 dark:hover:bg-slate-800 transition-colors rounded-xl border border-slate-100 dark:border-slate-700"
     >
       <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${meta.dot}`} />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-black text-slate-900 truncate">{item.lead.name || "—"}</p>
-        <p className="text-xs font-bold text-slate-400 truncate">
+        <p className="text-sm font-black text-slate-900 dark:text-slate-100 truncate">{item.lead.name || "—"}</p>
+        <p className="text-xs font-bold text-slate-400 dark:text-slate-500 truncate">
           {nextAction ? nextAction : getPipelineStageLabel(getStage(item.lead))}
         </p>
       </div>
@@ -237,7 +238,7 @@ function AttentionItem({ item }) {
           {item.reason}
         </span>
         {item.detail && (
-          <p className="text-[11px] text-slate-400 mt-0.5 text-left">{item.detail}</p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 text-left">{item.detail}</p>
         )}
       </div>
     </Link>
@@ -248,19 +249,21 @@ function TodayTaskItem({ item }) {
   return (
     <Link
       href={item.overdue ? `/advisor/lead/${item.lead.id}?tab=activity` : `/advisor/lead/${item.lead.id}`}
-      className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors rounded-xl border ${
-        item.overdue ? "border-rose-200 bg-rose-50/30" : "border-slate-100 bg-white"
+      className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors rounded-xl border ${
+        item.overdue
+          ? "border-rose-200 dark:border-rose-800 bg-rose-50/30 dark:bg-rose-900/20"
+          : "border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/60"
       }`}
     >
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-black text-slate-900 truncate">{item.lead.name || "—"}</p>
-        <p className="text-xs font-bold text-violet-600 truncate">{item.task}</p>
+        <p className="text-sm font-black text-slate-900 dark:text-slate-100 truncate">{item.lead.name || "—"}</p>
+        <p className="text-xs font-bold text-violet-600 dark:text-violet-400 truncate">{item.task}</p>
       </div>
       <div className="shrink-0 text-left flex flex-col items-end gap-0.5">
-        <span className="text-[11px] font-bold text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
+        <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full">
           {getPipelineStageLabel(getStage(item.lead))}
         </span>
-        <span className={`text-[11px] font-bold ${item.overdue ? "text-rose-600" : "text-slate-400"}`}>
+        <span className={`text-[11px] font-bold ${item.overdue ? "text-rose-600 dark:text-rose-400" : "text-slate-400 dark:text-slate-500"}`}>
           {item.overdue ? "⚠ באיחור" : "פתח תיק →"}
         </span>
       </div>
@@ -274,31 +277,14 @@ function PipelineGroupRow({ group, count, max }) {
       href={`/advisor/my-leads?stage=${encodeURIComponent(group.linkStage)}`}
       className="flex items-center gap-3 group"
     >
-      <span className="text-xs font-bold text-slate-500 w-28 shrink-0 truncate text-right">{group.label}</span>
-      <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden">
+      <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-28 shrink-0 truncate text-right">{group.label}</span>
+      <div className="flex-1 h-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${group.color} opacity-80 group-hover:opacity-100`}
           style={{ width: count > 0 ? `${Math.max(8, (count / max) * 100)}%` : "0%" }}
         />
       </div>
-      <span className="text-xs font-black tabular-nums text-slate-700 w-5 text-left shrink-0">{count}</span>
-    </Link>
-  );
-}
-
-function RecentUpdateRow({ lead }) {
-  const date = lead.lastActivityAt || lead.stageUpdatedAt || lead.lastContactedAt || lead.createdAt;
-  return (
-    <Link
-      href={`/advisor/lead/${lead.id}`}
-      className="flex items-center gap-3 py-2.5 px-2 hover:bg-slate-50 transition-colors rounded-lg"
-    >
-      <span className="h-2 w-2 rounded-full shrink-0 bg-violet-400" />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-black text-slate-800 truncate">{lead.name || "—"}</p>
-        <p className="text-xs font-bold text-slate-400 truncate">{getPipelineStageLabel(getStage(lead))}</p>
-      </div>
-      <span className="text-[11px] font-bold text-slate-400 shrink-0">{formatRelative(date)}</span>
+      <span className="text-xs font-black tabular-nums text-slate-700 dark:text-slate-300 w-5 text-left shrink-0">{count}</span>
     </Link>
   );
 }
@@ -307,7 +293,7 @@ function SectionSkeleton({ rows = 3 }) {
   return (
     <div className="p-4 space-y-2">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />
+        <div key={i} className="h-14 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
       ))}
     </div>
   );
@@ -317,8 +303,17 @@ function EmptySection({ icon, title, sub }) {
   return (
     <div className="px-5 py-8 text-center">
       <p className="text-2xl mb-2">{icon}</p>
-      <p className="text-sm font-black text-slate-700">{title}</p>
-      {sub && <p className="text-xs font-bold text-slate-400 mt-1">{sub}</p>}
+      <p className="text-sm font-black text-slate-700 dark:text-slate-300">{title}</p>
+      {sub && <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-1">{sub}</p>}
+    </div>
+  );
+}
+
+function KpiCard({ label, value }) {
+  return (
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">{label}</p>
+      <p className="text-2xl font-black tabular-nums text-slate-900 dark:text-slate-100">{value}</p>
     </div>
   );
 }
@@ -389,118 +384,287 @@ export default function AdvisorDashboard() {
       .slice(0, 6),
   [leads]);
 
+  // ── New derived data for enhanced dashboard ─────────────────────────────────
+  const closedLost = useMemo(() => leads.filter(l => getStage(l) === "closed_lost"), [leads]);
+  const conversionRate = useMemo(() => {
+    const total = completed.length + closedLost.length;
+    return total > 0 ? Math.round((completed.length / total) * 100) : 0;
+  }, [completed, closedLost]);
+  const totalMortgageAmount = useMemo(() => leads.reduce((sum, l) => sum + (Number(l.mortgageAmount) || 0), 0), [leads]);
+  const avgPropertyValue = useMemo(() => {
+    const vals = leads.filter(l => l.propertyValue > 0).map(l => Number(l.propertyValue));
+    return vals.length > 0 ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+  }, [leads]);
+  const avgEquity = useMemo(() => {
+    const vals = leads.filter(l => l.equity > 0).map(l => Number(l.equity));
+    return vals.length > 0 ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+  }, [leads]);
+  const topBank = useMemo(() => {
+    const counts = {};
+    for (const l of completed) { if (l.bankName) counts[l.bankName] = (counts[l.bankName] || 0) + 1; }
+    const entries = Object.entries(counts);
+    return entries.length > 0 ? entries.sort((a, b) => b[1] - a[1])[0][0] : "—";
+  }, [completed]);
+  const topSource = useMemo(() => {
+    const counts = {};
+    for (const l of leads) { const s = l.source || l.leadSource || "אחר"; counts[s] = (counts[s] || 0) + 1; }
+    const entries = Object.entries(counts);
+    return entries.length > 0 ? entries.sort((a, b) => b[1] - a[1])[0][0] : "—";
+  }, [leads]);
+  const noContactLeads = useMemo(() => active.filter(l => {
+    const days = diffDays(l.lastContactedAt || l.createdAt);
+    return days !== null && days >= 7;
+  }), [active]);
+  const urgentCases = useMemo(() => {
+    return [...active].sort((a, b) => {
+      const scoreA = (a.nextActionAt && isOverdue(a.nextActionAt) ? 100 : 0) + (Number(a.missingDocumentsCount) || 0) * 10 + (diffDays(a.lastContactedAt || a.createdAt) || 0);
+      const scoreB = (b.nextActionAt && isOverdue(b.nextActionAt) ? 100 : 0) + (Number(b.missingDocumentsCount) || 0) * 10 + (diffDays(b.lastContactedAt || b.createdAt) || 0);
+      return scoreB - scoreA;
+    }).slice(0, 10);
+  }, [active]);
+  const monthlyLeadCounts = useMemo(() => {
+    const months = {};
+    for (const l of leads) {
+      const d = new Date(l.createdAt || l.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      months[key] = (months[key] || 0) + 1;
+    }
+    return Object.entries(months).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
+  }, [leads]);
+
   // ── Empty state — advisor has no leads yet ───────────────────────────────────
   if (!loading && leads.length === 0) {
     return (
       <>
         <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
-        <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
+        <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
           <AdvisorHeader active="/advisor" urgentItems={[]} />
           <div className="max-w-6xl mx-auto px-4 py-16 flex flex-col items-center text-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-violet-100 flex items-center justify-center text-3xl">📋</div>
-            <h2 className="text-xl font-black text-slate-950">עדיין אין לך לידים פעילים</h2>
-            <p className="text-sm font-bold text-slate-500 max-w-sm leading-relaxed">
+            <div className="w-16 h-16 rounded-2xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-3xl">📋</div>
+            <h2 className="text-xl font-black text-slate-950 dark:text-slate-50">עדיין אין לך לידים פעילים</h2>
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
               כאן יוצגו הלידים שנרכשו מ-FINZO ושויכו אליך. עבור לשוק הלידים כדי לרכוש את הליד הראשון שלך.
             </p>
             <Link
               href="/advisor/leads"
-              className="mt-2 inline-block rounded-2xl bg-violet-700 text-white font-black py-3 px-8 text-sm hover:bg-violet-800 transition-colors"
+              className="mt-2 inline-block rounded-2xl bg-violet-700 dark:bg-violet-600 text-white font-black py-3 px-8 text-sm hover:bg-violet-800 dark:hover:bg-violet-700 transition-colors"
             >
               עבור לשוק הלידים ←
             </Link>
-            <p className="text-xs font-bold text-slate-400">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
               לא ניתן ליצור לידים ידנית. כל הלידים מגיעים דרך FINZO.
             </p>
           </div>
 
           {/* Mobile bottom nav */}
-          <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
-            <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">ראשי</Link>
-            <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">הלידים שלי</Link>
-            <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
+          <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
+            <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 rounded-xl py-2.5">ראשי</Link>
+            <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
+            <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">שוק</Link>
           </div>
         </main>
       </>
     );
   }
 
+  const monthlyMax = Math.max(...monthlyLeadCounts.map(([, c]) => c), 1);
+
   // ── Full dashboard ────────────────────────────────────────────────────────────
   return (
     <>
       <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
-      <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
         <AdvisorHeader active="/advisor" urgentItems={attentionItems} />
 
         <div className="max-w-6xl mx-auto px-4 lg:px-6 py-5 space-y-5">
 
           {/* ── Welcome / context banner ──────────────────────────────────── */}
-          <div className="flex items-start justify-between gap-3 rounded-2xl bg-gradient-to-l from-violet-50 to-white border border-violet-100 px-5 py-4">
+          <div className="flex items-start justify-between gap-3 rounded-2xl bg-gradient-to-l from-violet-50 dark:from-violet-950/40 to-white dark:to-slate-900 border border-violet-100 dark:border-violet-900/50 px-5 py-4">
             <div className="min-w-0">
-              <h1 className="text-base font-black text-slate-950 mb-0.5">
-                {advisorName ? `שלום, ${advisorName} 👋` : "שלום, ברוך הבא למרכז העבודה"}
+              <h1 className="text-base font-black text-slate-950 dark:text-slate-50 mb-0.5">
+                {advisorName ? `שלום, ${advisorName}` : "שלום, ברוך הבא למרכז העבודה"}
               </h1>
-              <p className="text-xs font-bold text-slate-500 leading-relaxed">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed">
                 {!loading && attentionItems.length > 0
-                  ? <span className="text-rose-600">{attentionItems.length} לידים דורשים טיפול — בדקו את רשימת הדחוף למטה.</span>
+                  ? <span className="text-rose-600 dark:text-rose-400">{attentionItems.length} לידים דורשים טיפול — בדקו את רשימת הדחוף למטה.</span>
                   : "כל התיקים תקינים. עברו לשוק הלידים לרכוש לידים חדשים."}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Link href="/advisor/leads"
-                className="text-xs font-bold text-violet-700 hover:text-violet-900 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-lg transition-colors hidden sm:block">
+                className="text-xs font-bold text-violet-700 dark:text-violet-400 hover:text-violet-900 dark:hover:text-violet-300 px-3 py-1.5 bg-violet-50 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-800 rounded-lg transition-colors hidden sm:block">
                 שוק לידים →
               </Link>
               <Link href="/advisor/settings"
-                className="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-1.5 bg-white border border-slate-200 rounded-lg transition-colors hidden sm:block">
+                className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors hidden sm:block">
                 ⚙
               </Link>
             </div>
           </div>
 
-          {/* ── Summary KPIs — only real counts from lead data ────────────── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {loading
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2 animate-pulse">
-                    <div className="h-3 w-20 bg-slate-200 rounded" />
-                    <div className="h-8 w-10 bg-slate-200 rounded" />
-                  </div>
-                ))
-              : [
-                  { label: "לידים חדשים",     value: newLeads.length,   color: "text-violet-700" },
-                  { label: "לידים בטיפול",     value: inProgress.length, color: "text-sky-700" },
-                  { label: "ממתינים למסמכים", value: waitingDocs.length, color: "text-amber-700" },
-                  { label: "תיקים שהושלמו",   value: completed.length,  color: "text-emerald-700" },
-                ].map(({ label, value, color }) => (
-                  <div key={label} className="bg-white border border-slate-100 rounded-2xl p-4">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-                    <p className={`text-3xl font-black tabular-nums leading-none ${color}`}>{value}</p>
-                  </div>
-                ))
-            }
-          </div>
+          {/* ── KPI Cards — 2 rows of 4 ──────────────────────────────────── */}
+          {loading ? (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-2 animate-pulse">
+                  <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
+                  <div className="h-8 w-10 bg-slate-200 dark:bg-slate-700 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <KpiCard label="לידים פעילים" value={active.length} />
+              <KpiCard label="לידים חדשים" value={newLeads.length} />
+              <KpiCard label="בטיפול" value={inProgress.length} />
+              <KpiCard label="הושלמו" value={completed.length} />
+              <KpiCard label="אחוז המרה" value={`${conversionRate}%`} />
+              <KpiCard label='סה"כ משכנתאות' value={formatILS(totalMortgageAmount)} />
+              <KpiCard label="ממוצע שווי נכס" value={formatILS(avgPropertyValue)} />
+              <KpiCard label="ממוצע הון עצמי" value={formatILS(avgEquity)} />
+            </div>
+          )}
 
           {/* ── Main 2-column grid ────────────────────────────────────────── */}
           <div className="grid lg:grid-cols-[1fr_340px] gap-4 items-start">
 
-            {/* ─ Left column ─────────────────────────────────────────────── */}
+            {/* ─ Left column (main) ─────────────────────────────────────── */}
+            <div className="space-y-4">
+
+              {/* מהלך הטיפול — Pipeline */}
+              <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                <div className="mb-4">
+                  <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">מהלך הטיפול — Pipeline</h2>
+                  <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                    לחץ על שלב כדי לסנן את הרשימה
+                  </p>
+                </div>
+                {loading
+                  ? (
+                      <div className="space-y-2.5">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <div key={i} className="h-4 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                        ))}
+                      </div>
+                    )
+                  : (
+                      <div className="space-y-2.5">
+                        {pipelineGroups.map((g) => (
+                          <PipelineGroupRow key={g.key} group={g} count={g.count} max={pipelineMax} />
+                        ))}
+                      </div>
+                    )
+                }
+              </section>
+
+              {/* לידים לפי חודש — Monthly bar chart */}
+              {!loading && monthlyLeadCounts.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <div className="mb-4">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">לידים לפי חודש</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                      6 חודשים אחרונים
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    {monthlyLeadCounts.map(([month, count]) => (
+                      <div key={month} className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-16 shrink-0 text-right tabular-nums">{month}</span>
+                        <div className="flex-1 h-5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-violet-500 dark:bg-violet-600 transition-all duration-500"
+                            style={{ width: `${Math.max(6, (count / monthlyMax) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-black tabular-nums text-slate-700 dark:text-slate-300 w-5 text-left shrink-0">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 10 התיקים הדחופים ביותר */}
+              {!loading && urgentCases.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">10 התיקים הדחופים ביותר</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                      מדורגים לפי דחיפות: איחור, מסמכים חסרים, זמן ללא קשר
+                    </p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-slate-800">
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">שם</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">שלב</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">ימים ללא קשר</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">מסמכים חסרים</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">פעולה הבאה</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {urgentCases.map((lead) => {
+                          const daysSince = diffDays(lead.lastContactedAt || lead.createdAt);
+                          const missingDocs = Number(lead.missingDocumentsCount) || 0;
+                          const overdue = lead.nextActionAt && isOverdue(lead.nextActionAt);
+                          return (
+                            <tr key={lead.id} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                              <td className="px-4 py-2.5">
+                                <Link href={`/advisor/lead/${lead.id}`} className="font-black text-slate-900 dark:text-slate-100 hover:text-violet-700 dark:hover:text-violet-400 transition-colors">
+                                  {lead.name || "—"}
+                                </Link>
+                              </td>
+                              <td className="px-4 py-2.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+                                {getPipelineStageLabel(getStage(lead))}
+                              </td>
+                              <td className="px-4 py-2.5">
+                                <span className={`text-xs font-black tabular-nums ${daysSince !== null && daysSince >= 7 ? "text-rose-600 dark:text-rose-400" : "text-slate-600 dark:text-slate-400"}`}>
+                                  {daysSince !== null ? daysSince : "—"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2.5">
+                                <span className={`text-xs font-black tabular-nums ${missingDocs > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-400 dark:text-slate-500"}`}>
+                                  {missingDocs}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2.5">
+                                {overdue ? (
+                                  <span className="text-[11px] font-black text-rose-600 dark:text-rose-400">באיחור</span>
+                                ) : lead.nextAction ? (
+                                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate max-w-[120px] inline-block">{lead.nextAction}</span>
+                                ) : (
+                                  <span className="text-[11px] text-slate-300 dark:text-slate-600">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+            </div>
+
+            {/* ─ Right column (sidebar) ─────────────────────────────────── */}
             <div className="space-y-4">
 
               {/* דורש טיפול */}
-              <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
+              <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-black text-slate-950">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">
                       דורש טיפול
                       {!loading && attentionItems.length > 0 && (
-                        <span className="mr-2 text-[11px] font-black text-rose-600 bg-rose-50 rounded-full px-2 py-0.5 align-middle">{attentionItems.length}</span>
+                        <span className="mr-2 text-[11px] font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 rounded-full px-2 py-0.5 align-middle">{attentionItems.length}</span>
                       )}
                     </h2>
-                    <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
                       לידים עם פעולות באיחור, מסמכים חסרים או ללא מעקב
                     </p>
                   </div>
-                  <Link href="/advisor/my-leads" className="text-xs font-black text-violet-600 hover:underline shrink-0">
+                  <Link href="/advisor/my-leads" className="text-xs font-black text-violet-600 dark:text-violet-400 hover:underline shrink-0">
                     כל הלידים →
                   </Link>
                 </div>
@@ -525,16 +689,16 @@ export default function AdvisorDashboard() {
               </section>
 
               {/* המשימות שלי להיום */}
-              <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
+              <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-black text-slate-950">המשימות שלי להיום</h2>
-                    <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">המשימות שלי להיום</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
                       פעולות מוגדרות להיום ולידים חדשים הממתינים לקשר ראשון
                     </p>
                   </div>
                   {!loading && (
-                    <span className="text-[11px] font-black text-slate-400 bg-slate-100 rounded-full px-2 py-0.5 tabular-nums shrink-0">
+                    <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-0.5 tabular-nums shrink-0">
                       {todayTasks.length}
                     </span>
                   )}
@@ -559,83 +723,20 @@ export default function AdvisorDashboard() {
                 }
               </section>
 
-              {/* עדכוני תיקים אחרונים */}
-              <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-50">
-                  <h2 className="text-sm font-black text-slate-950">עדכוני תיקים אחרונים</h2>
-                  <p className="text-[11px] font-bold text-slate-400 mt-0.5">
-                    לידים שעודכנו לאחרונה — לפי תאריך פעילות
-                  </p>
-                </div>
-                {loading
-                  ? (
-                      <div className="p-4 space-y-2">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                          <div key={i} className="h-10 bg-slate-100 rounded-lg animate-pulse" />
-                        ))}
-                      </div>
-                    )
-                  : recentUpdates.length > 0
-                    ? (
-                        <div className="px-3 py-2 divide-y divide-slate-50">
-                          {recentUpdates.map((l) => (
-                            <RecentUpdateRow key={l.id} lead={l} />
-                          ))}
-                        </div>
-                      )
-                    : (
-                        <EmptySection
-                          icon="📅"
-                          title="פעילות אחרונה תופיע כאן לאחר עדכונים בתיקים"
-                        />
-                      )
-                }
-              </section>
-            </div>
-
-            {/* ─ Right column ────────────────────────────────────────────── */}
-            <div className="space-y-4">
-
-              {/* מהלך הטיפול — Pipeline grouped overview */}
-              <section className="bg-white rounded-2xl border border-slate-100 p-5">
-                <div className="mb-4">
-                  <h2 className="text-sm font-black text-slate-950">מהלך הטיפול — Pipeline</h2>
-                  <p className="text-[11px] font-bold text-slate-400 mt-0.5">
-                    לחץ על שלב כדי לסנן את הרשימה
-                  </p>
-                </div>
-                {loading
-                  ? (
-                      <div className="space-y-2.5">
-                        {Array.from({ length: 6 }).map((_, i) => (
-                          <div key={i} className="h-4 bg-slate-100 rounded animate-pulse" />
-                        ))}
-                      </div>
-                    )
-                  : (
-                      <div className="space-y-2.5">
-                        {pipelineGroups.map((g) => (
-                          <PipelineGroupRow key={g.key} group={g} count={g.count} max={pipelineMax} />
-                        ))}
-                      </div>
-                    )
-                }
-              </section>
-
               {/* סטטוס מהיר */}
               {!loading && (
-                <section className="bg-white rounded-2xl border border-slate-100 p-5">
-                  <h2 className="text-sm font-black text-slate-950 mb-3">סטטוס מהיר</h2>
-                  <div className="grid grid-cols-2 gap-2">
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <h2 className="text-sm font-black text-slate-950 dark:text-slate-50 mb-3">סטטוס מהיר</h2>
+                  <div className="space-y-3">
                     {[
-                      ["סה״כ לידים",  leads.length],
-                      ["פעיל",         active.length],
-                      ["הושלמו",       completed.length],
-                      ["ממתין מסמכים", waitingDocs.length],
-                    ].map(([label, value]) => (
-                      <div key={label} className="bg-slate-50 rounded-xl px-3 py-3">
-                        <p className="text-[11px] font-black text-slate-400 mb-0.5">{label}</p>
-                        <p className="text-2xl font-black text-slate-900 tabular-nums">{value}</p>
+                      { label: "בנק מוביל", value: topBank },
+                      { label: "מקור מוביל", value: topSource },
+                      { label: "ללא קשר 7+ ימים", value: noContactLeads.length },
+                      { label: "ממתין מסמכים", value: waitingDocs.length },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{label}</span>
+                        <span className="text-sm font-black text-slate-900 dark:text-slate-100 tabular-nums">{value}</span>
                       </div>
                     ))}
                   </div>
@@ -643,31 +744,31 @@ export default function AdvisorDashboard() {
               )}
 
               {/* פעולות מהירות */}
-              <section className="bg-white rounded-2xl border border-slate-100 p-5">
-                <h2 className="text-sm font-black text-slate-950 mb-3">פעולות מהירות</h2>
+              <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                <h2 className="text-sm font-black text-slate-950 dark:text-slate-50 mb-3">פעולות מהירות</h2>
                 <div className="space-y-2">
                   <Link href="/advisor/leads"
-                    className="flex items-center gap-3 rounded-xl bg-violet-700 text-white px-4 py-3 text-sm font-black hover:bg-violet-800 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-violet-700 dark:bg-violet-600 text-white px-4 py-3 text-sm font-black hover:bg-violet-800 dark:hover:bg-violet-700 transition-colors">
                     <span className="shrink-0">🏪</span>
                     <span>שוק הלידים של FINZO</span>
                   </Link>
                   <Link href="/advisor/my-leads"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 text-sm font-black hover:bg-slate-100 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <span className="shrink-0">📋</span>
                     <span>כל הלידים שלי</span>
                   </Link>
                   <Link href="/"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 text-sm font-black hover:bg-slate-100 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <span className="shrink-0">🧮</span>
                     <span>מחשבון זכאות</span>
                   </Link>
                   <Link href="/refinance-check"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 text-sm font-black hover:bg-slate-100 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <span className="shrink-0">🔄</span>
                     <span>מחשבון מחזור</span>
                   </Link>
                 </div>
-                <p className="text-[10px] font-bold text-slate-300 mt-3 text-center">
+                <p className="text-[10px] font-bold text-slate-300 dark:text-slate-600 mt-3 text-center">
                   * לא ניתן ליצור לידים ידנית — כל הלידים מגיעים דרך FINZO
                 </p>
               </section>
@@ -677,10 +778,10 @@ export default function AdvisorDashboard() {
         </div>
 
         {/* Mobile bottom nav */}
-        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
-          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">ראשי</Link>
-          <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">הלידים שלי</Link>
-          <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
+          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 rounded-xl py-2.5">ראשי</Link>
+          <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
+          <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">שוק</Link>
         </div>
       </main>
     </>

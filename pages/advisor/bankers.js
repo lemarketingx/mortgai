@@ -16,9 +16,9 @@ function BankerFormFields({ form, onChange }) {
     <div className="grid gap-3">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-black text-slate-400 mb-1">בנק *</label>
+          <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">בנק *</label>
           <select
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
             value={form.bank_name}
             onChange={(e) => onChange("bank_name", e.target.value)}
           >
@@ -27,9 +27,9 @@ function BankerFormFields({ form, onChange }) {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-black text-slate-400 mb-1">סניף</label>
+          <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">סניף</label>
           <input
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="שם/מספר סניף"
             value={form.branch_name}
             onChange={(e) => onChange("branch_name", e.target.value)}
@@ -38,18 +38,18 @@ function BankerFormFields({ form, onChange }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-black text-slate-400 mb-1">שם בנקאי/ת *</label>
+          <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">שם בנקאי/ת *</label>
           <input
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="שם מלא"
             value={form.banker_name}
             onChange={(e) => onChange("banker_name", e.target.value)}
           />
         </div>
         <div>
-          <label className="block text-xs font-black text-slate-400 mb-1">תפקיד</label>
+          <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">תפקיד</label>
           <input
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="יועץ משכנתאות, מנהל סניף..."
             value={form.role_title}
             onChange={(e) => onChange("role_title", e.target.value)}
@@ -58,9 +58,9 @@ function BankerFormFields({ form, onChange }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-black text-slate-400 mb-1">טלפון</label>
+          <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">טלפון</label>
           <input
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="050-000-0000"
             type="tel"
             value={form.phone}
@@ -68,9 +68,9 @@ function BankerFormFields({ form, onChange }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-black text-slate-400 mb-1">מייל</label>
+          <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">מייל</label>
           <input
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="banker@bank.co.il"
             type="email"
             value={form.email}
@@ -80,18 +80,18 @@ function BankerFormFields({ form, onChange }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-black text-slate-400 mb-1">אזור</label>
+          <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">אזור</label>
           <input
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="תל אביב, ירושלים, חיפה..."
             value={form.region}
             onChange={(e) => onChange("region", e.target.value)}
           />
         </div>
         <div>
-          <label className="block text-xs font-black text-slate-400 mb-1">התמחות</label>
+          <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">התמחות</label>
           <input
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="משכנתאות גדולות, מחיר למשתכן..."
             value={form.specialties}
             onChange={(e) => onChange("specialties", e.target.value)}
@@ -99,9 +99,9 @@ function BankerFormFields({ form, onChange }) {
         </div>
       </div>
       <div>
-        <label className="block text-xs font-black text-slate-400 mb-1">הערות</label>
+        <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">הערות</label>
         <textarea
-          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold min-h-[64px] resize-y outline-none focus:ring-2 focus:ring-violet-300"
+          className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm font-bold min-h-[64px] resize-y outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
           placeholder="שעות פעילות, העדפות, מידע נוסף..."
           value={form.notes}
           onChange={(e) => onChange("notes", e.target.value)}
@@ -114,7 +114,7 @@ function BankerFormFields({ form, onChange }) {
           checked={form.is_active}
           onChange={(e) => onChange("is_active", e.target.checked)}
         />
-        <span className="text-sm font-black text-slate-700">פעיל</span>
+        <span className="text-sm font-black text-slate-700 dark:text-slate-300">פעיל</span>
       </label>
     </div>
   );
@@ -277,15 +277,15 @@ export default function BankersPage() {
   return (
     <>
       <Head><title>ספר בנקאים | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
-      <main dir="rtl" className="min-h-screen bg-slate-50 pb-16">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-16">
         <AdvisorHeader active="/advisor/bankers" />
 
         {/* Page header */}
         <div className="max-w-4xl mx-auto px-4 pt-6 pb-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <h1 className="text-xl font-black text-slate-950">ספר בנקאים</h1>
-              <p className="text-xs font-bold text-slate-400 mt-0.5">אנשי הקשר שלך בבנקים השונים</p>
+              <h1 className="text-xl font-black text-slate-950 dark:text-slate-100">ספר בנקאים</h1>
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-0.5">אנשי הקשר שלך בבנקים השונים</p>
             </div>
             <button
               type="button"
@@ -297,7 +297,7 @@ export default function BankersPage() {
           </div>
 
           {msg.text && (
-            <div className={`mt-3 px-4 py-2.5 rounded-xl text-sm font-bold ${msg.ok ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+            <div className={`mt-3 px-4 py-2.5 rounded-xl text-sm font-bold ${msg.ok ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"}`}>
               {msg.text}
             </div>
           )}
@@ -305,23 +305,23 @@ export default function BankersPage() {
 
         {/* Search & filters */}
         <div className="max-w-4xl mx-auto px-4 mb-4">
-          <div className="bg-white rounded-2xl border border-slate-100 p-3 flex flex-wrap gap-2 items-center">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-3 flex flex-wrap gap-2 items-center">
             <input
               type="text"
-              className="flex-1 min-w-[160px] border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+              className="flex-1 min-w-[160px] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
               placeholder="🔍 חיפוש בנקאי..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             <select
-              className="border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300"
+              className="border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
               value={filterBank}
               onChange={(e) => setFilterBank(e.target.value)}
             >
               <option value="">כל הבנקים</option>
               {uniqueBanks.map((b) => <option key={b}>{b}</option>)}
             </select>
-            <label className="flex items-center gap-1.5 text-xs font-black text-slate-500 cursor-pointer">
+            <label className="flex items-center gap-1.5 text-xs font-black text-slate-500 dark:text-slate-400 cursor-pointer">
               <input type="checkbox" className="accent-violet-700" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
               כולל לא פעילים
             </label>
@@ -332,15 +332,15 @@ export default function BankersPage() {
         {showAdd && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowAdd(false)}>
             <div
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
               dir="rtl"
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                <h2 className="text-sm font-black text-slate-950">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+                <h2 className="text-sm font-black text-slate-950 dark:text-slate-100">
                   {editingId ? "עריכת בנקאי" : "הוספת בנקאי חדש"}
                 </h2>
-                <button type="button" onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-700 font-black text-xl leading-none">×</button>
+                <button type="button" onClick={() => setShowAdd(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-black text-xl leading-none">×</button>
               </div>
               <form onSubmit={submitForm} className="p-5">
                 <BankerFormFields form={form} onChange={updateForm} />
@@ -350,7 +350,7 @@ export default function BankersPage() {
                     {saving ? "שומר..." : editingId ? "שמור שינויים" : "הוסף בנקאי"}
                   </button>
                   <button type="button" onClick={() => setShowAdd(false)}
-                    className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-black hover:bg-slate-200 transition-colors">
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                     ביטול
                   </button>
                 </div>
@@ -364,16 +364,16 @@ export default function BankersPage() {
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-2xl border border-slate-100 h-28 animate-pulse" />
+                <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 h-28 animate-pulse" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-100 p-10 text-center">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-10 text-center">
               {bankers.length === 0 ? (
                 <>
                   <p className="text-3xl mb-3">🏦</p>
-                  <p className="text-sm font-black text-slate-700 mb-1">ספר הבנקאים ריק</p>
-                  <p className="text-xs font-bold text-slate-400 mb-4">הוסף בנקאים ותוכל לבחור אותם בתוך תיקי לקוח</p>
+                  <p className="text-sm font-black text-slate-700 dark:text-slate-300 mb-1">ספר הבנקאים ריק</p>
+                  <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-4">הוסף בנקאים ותוכל לבחור אותם בתוך תיקי לקוח</p>
                   <button type="button" onClick={startAdd} className="px-4 py-2.5 rounded-xl bg-violet-700 text-white text-sm font-black">
                     + הוסף בנקאי ראשון
                   </button>

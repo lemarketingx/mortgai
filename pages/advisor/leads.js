@@ -77,9 +77,9 @@ function formatPercent(value) {
 
 function ScoreBar({ score }) {
   const pct = Math.min(100, Math.max(0, Number(score) || 0));
-  const color = pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-slate-300";
+  const color = pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-slate-300 dark:bg-slate-600";
   return (
-    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+    <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
       <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
     </div>
   );
@@ -89,10 +89,10 @@ function AgeBadge({ createdAt }) {
   const days = ageInDays(createdAt);
   const label = days === 0 ? "היום" : `לפני ${days} ימים`;
   const cls = days <= 3
-    ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+    ? "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800"
     : days <= 14
-      ? "text-amber-700 bg-amber-50 border-amber-200"
-      : "text-slate-500 bg-slate-100 border-slate-200";
+      ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
+      : "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-800";
   return <span className={`text-[10px] font-black border rounded-full px-2 py-0.5 ${cls}`}>{label}</span>;
 }
 
@@ -100,16 +100,16 @@ function MarketplaceTags({ lead }) {
   if (ageInDays(lead.createdAt) > 3) return null;
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
-      <span className="text-[10px] font-black border rounded-full px-2 py-0.5 bg-emerald-100 text-emerald-800 border-emerald-200">חדש</span>
+      <span className="text-[10px] font-black border rounded-full px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">חדש</span>
     </div>
   );
 }
 
 function InfoBox({ label, value }) {
   return (
-    <div className="rounded-lg bg-slate-50 px-2 py-2 text-center">
-      <p className="text-[9px] font-black text-slate-400 mb-0.5">{label}</p>
-      <p className="text-xs font-black text-slate-800">{value || "—"}</p>
+    <div className="rounded-lg bg-slate-50 dark:bg-slate-800 px-2 py-2 text-center">
+      <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 mb-0.5">{label}</p>
+      <p className="text-xs font-black text-slate-800 dark:text-slate-200">{value || "—"}</p>
     </div>
   );
 }
@@ -131,14 +131,14 @@ function FinzoScoreExplanation({ lead, score }) {
   });
 
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden bg-white">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 hover:bg-slate-100 transition-colors text-right"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-right"
       >
-        <span className="text-[10px] font-black text-slate-500">הסבר ציון FINZO ↕</span>
-        <span className="text-[10px] font-black text-violet-700">{score}/100</span>
+        <span className="text-[10px] font-black text-slate-500 dark:text-slate-400">הסבר ציון FINZO ↕</span>
+        <span className="text-[10px] font-black text-violet-700 dark:text-violet-300">{score}/100</span>
       </button>
       {open && (
         <div className="px-3 py-3 space-y-3">
@@ -148,18 +148,18 @@ function FinzoScoreExplanation({ lead, score }) {
             <InfoBox label="יחס הון עצמי" value={formatPercent(equityRatio)} />
             <InfoBox label="יחס החזר" value={formatPercent(repaymentRatio)} />
           </div>
-          <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 flex items-center justify-between gap-2">
-            <span className="text-[10px] font-black text-slate-400">גיל הליד</span>
-            <span className="text-xs font-black text-slate-700">{days === 0 ? "היום" : `לפני ${days} ימים`}</span>
+          <div className="rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-3 py-2 flex items-center justify-between gap-2">
+            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500">גיל הליד</span>
+            <span className="text-xs font-black text-slate-700 dark:text-slate-300">{days === 0 ? "היום" : `לפני ${days} ימים`}</span>
           </div>
           {filteredBullets.length > 0 && (
-            <div className="border-t border-slate-100 pt-2 space-y-1">
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-2 space-y-1">
               {filteredBullets.map((bullet, index) => (
-                <p key={index} className="text-[11px] font-bold text-slate-600 leading-relaxed">{bullet}</p>
+                <p key={index} className="text-[11px] font-bold text-slate-600 dark:text-slate-400 leading-relaxed">{bullet}</p>
               ))}
             </div>
           )}
-          <p className="text-[9px] text-slate-400 font-bold border-t border-slate-100 pt-2 leading-relaxed">
+          <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold border-t border-slate-100 dark:border-slate-800 pt-2 leading-relaxed">
             ההסבר מתייחס לאיכות הליד בלבד. מחיר הליד מוצג בנפרד ואינו מחושב כאן.
           </p>
         </div>
@@ -170,7 +170,7 @@ function FinzoScoreExplanation({ lead, score }) {
 
 function CardSkeleton() {
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl p-3.5 space-y-2.5">
+    <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-3.5 space-y-2.5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <Skeleton variant="line" className="w-20 h-5 rounded-full" />
@@ -196,7 +196,7 @@ function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
   const now = new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="mb-6 rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 to-white shadow-md overflow-hidden">
+    <div className="mb-6 rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 dark:from-emerald-900/20 to-white dark:to-slate-900 shadow-md overflow-hidden">
       <div className="flex items-center justify-between gap-3 bg-emerald-600 px-4 py-3">
         <span className="text-sm font-black text-white">הליד נרכש בהצלחה ונוסף ל'הלקוחות שלי'</span>
         <button onClick={onClose} className="text-emerald-200 hover:text-white font-black text-lg leading-none shrink-0">×</button>
@@ -212,10 +212,10 @@ function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
         <Link href={`/advisor/lead/${leadId}?newPurchase=1`} className="px-4 py-2.5 rounded-full bg-violet-700 text-white text-sm font-black hover:bg-violet-800 transition-colors">
           פתח את הליד עכשיו ←
         </Link>
-        <Link href="/advisor/my-leads" className="px-4 py-2.5 rounded-full border border-violet-200 bg-violet-50 text-violet-800 text-sm font-black hover:bg-violet-100 transition-colors">
+        <Link href="/advisor/my-leads" className="px-4 py-2.5 rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 text-violet-800 dark:text-violet-300 text-sm font-black hover:bg-violet-100 transition-colors">
           עבור ללידים שלי
         </Link>
-        <button onClick={onClose} className="px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-black hover:bg-slate-50 transition-colors">
+        <button onClick={onClose} className="px-4 py-2.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-sm font-black hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
           המשך לקנות לידים
         </button>
       </div>
@@ -237,47 +237,47 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
   }
 
   return (
-    <article className={`bg-white rounded-2xl shadow-sm transition-all border ${
+    <article className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm transition-all border ${
       lead._purchased || alreadyOwnedByMe
-        ? "border-emerald-200 bg-emerald-50/30"
+        ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-900/10"
         : isSold
-          ? "border-slate-100 opacity-60"
+          ? "border-slate-100 dark:border-slate-800 opacity-60"
           : isNew
-            ? "border-emerald-200 ring-1 ring-emerald-300/40 shadow-md hover:shadow-lg"
-            : "border-slate-100 hover:border-violet-200 hover:shadow-sm"
+            ? "border-emerald-200 dark:border-emerald-800 ring-1 ring-emerald-300/40 shadow-md hover:shadow-lg"
+            : "border-slate-100 dark:border-slate-800 hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-sm"
     }`}>
       <div className="flex items-start justify-between gap-3 p-4 pb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-2">
             {qualityLabel && (
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-800 border-emerald-200 whitespace-nowrap">
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 whitespace-nowrap">
                 {qualityLabel}
               </span>
             )}
             {lead.purchaseStatus && PURCHASE_STATUS_LABELS[lead.purchaseStatus] && (
-              <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full border bg-violet-50 text-violet-700 border-violet-200 whitespace-nowrap">
+              <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full border bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800 whitespace-nowrap">
                 {PURCHASE_STATUS_LABELS[lead.purchaseStatus]}
               </span>
             )}
-            {isSold && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-red-50 text-red-700 border-red-200">נמכר</span>}
-            {(lead._purchased || alreadyOwnedByMe) && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-emerald-100 text-emerald-800 border-emerald-200">נרכש ✓</span>}
+            {isSold && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800">נמכר</span>}
+            {(lead._purchased || alreadyOwnedByMe) && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">נרכש ✓</span>}
           </div>
           <MarketplaceTags lead={lead} />
         </div>
         <div className="text-start shrink-0">
-          <p className="text-xl font-black text-slate-950 tabular-nums leading-none">{formatPrice(lead.storePrice)}</p>
-          <p className="text-[10px] font-bold text-slate-400 mt-0.5">לליד</p>
+          <p className="text-xl font-black text-slate-950 dark:text-slate-100 tabular-nums leading-none">{formatPrice(lead.storePrice)}</p>
+          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">לליד</p>
         </div>
       </div>
 
       <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
-        {lead.city && <span className="text-xs font-bold text-slate-500">📍 {lead.city}</span>}
+        {lead.city && <span className="text-xs font-bold text-slate-500 dark:text-slate-400">📍 {lead.city}</span>}
         {lead.createdAt && <AgeBadge createdAt={lead.createdAt} />}
       </div>
 
       {lead.mainIssue && (
         <div className="px-4 pb-3">
-          <p className="text-sm font-black text-slate-900 leading-snug">{lead.mainIssue}</p>
+          <p className="text-sm font-black text-slate-900 dark:text-slate-100 leading-snug">{lead.mainIssue}</p>
         </div>
       )}
 
@@ -290,9 +290,9 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
         )}
 
         <div>
-          <div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5">
+          <div className="flex justify-between text-xs font-bold text-slate-400 dark:text-slate-500 mb-1.5">
             <span>FINZO Score</span>
-            <span className="tabular-nums font-black text-slate-700">{score}/100</span>
+            <span className="tabular-nums font-black text-slate-700 dark:text-slate-300">{score}/100</span>
           </div>
           <ScoreBar score={score} />
         </div>
@@ -300,15 +300,15 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
         <FinzoScoreExplanation lead={lead} score={score} />
 
         {!lead._purchased && !alreadyOwnedByMe && !isSold && (
-          <div className="rounded-xl bg-slate-50 border border-dashed border-slate-200 px-3 py-2.5">
-            <p className="text-xs font-bold text-slate-500">שם וטלפון נחשפים לאחר רכישה</p>
+          <div className="rounded-xl bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-200 dark:border-slate-800 px-3 py-2.5">
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">שם וטלפון נחשפים לאחר רכישה</p>
           </div>
         )}
 
         {(lead._purchased || alreadyOwnedByMe) && (
-          <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center justify-between gap-3">
-            <p className="text-sm font-black text-emerald-700">הליד כבר נרכש על ידך</p>
-            <Link href={`/advisor/lead/${lead.id}`} className="text-xs font-black text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 rounded-full px-3 py-1.5 transition-colors shrink-0">
+          <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-3 flex items-center justify-between gap-3">
+            <p className="text-sm font-black text-emerald-700 dark:text-emerald-300">הליד כבר נרכש על ידך</p>
+            <Link href={`/advisor/lead/${lead.id}`} className="text-xs font-black text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/20 hover:bg-emerald-200 border border-emerald-300 dark:border-emerald-800 rounded-full px-3 py-1.5 transition-colors shrink-0">
               פתח בלידים שלי ←
             </Link>
           </div>
@@ -325,16 +325,16 @@ function LeadStoreCard({ lead, onPurchase, purchasing }) {
         )}
 
         {confirm && !lead._purchased && !alreadyOwnedByMe && (
-          <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
-            <p className="text-sm font-black text-violet-900 mb-1">אישור רכישת ליד</p>
-            <p className="text-xs text-violet-700 mb-4 leading-relaxed">
+          <div className="rounded-2xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 px-4 py-4">
+            <p className="text-sm font-black text-violet-900 dark:text-violet-200 mb-1">אישור רכישת ליד</p>
+            <p className="text-xs text-violet-700 dark:text-violet-300 mb-4 leading-relaxed">
               לאחר הרכישה תקבלו גישה לפרטי הקשר המלאים של הלקוח.
             </p>
             <div className="flex gap-2">
               <button onClick={handleConfirm} disabled={purchasing} className="flex-1 text-sm font-black px-4 py-2.5 rounded-full bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-70 min-h-[44px]">
                 {purchasing ? "מעבד..." : "אשר רכישה"}
               </button>
-              <button onClick={() => setConfirm(false)} disabled={purchasing} className="text-sm font-bold px-4 py-2.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors min-h-[44px]">
+              <button onClick={() => setConfirm(false)} disabled={purchasing} className="text-sm font-bold px-4 py-2.5 rounded-full border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors min-h-[44px]">
                 ביטול
               </button>
             </div>
@@ -352,10 +352,10 @@ function DepartmentSection({ dept, leads, onPurchase, purchasing }) {
     <section className="mb-6">
       <button onClick={() => setCollapsed((value) => !value)} className="w-full flex items-center justify-between gap-3 mb-3 group">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-black text-slate-800 group-hover:text-violet-700 transition-colors">{dept.label}</h2>
-          <span className="text-xs font-black text-slate-400 bg-slate-100 rounded-full px-2 py-0.5 tabular-nums">{leads.length}</span>
+          <h2 className="text-base font-black text-slate-800 dark:text-slate-200 group-hover:text-violet-700 dark:group-hover:text-violet-300 transition-colors">{dept.label}</h2>
+          <span className="text-xs font-black text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-0.5 tabular-nums">{leads.length}</span>
         </div>
-        <span className="text-slate-400 font-black text-sm">{collapsed ? "▼" : "▲"}</span>
+        <span className="text-slate-400 dark:text-slate-500 font-black text-sm">{collapsed ? "▼" : "▲"}</span>
       </button>
       {!collapsed && (
         <div className="grid gap-3 md:grid-cols-2">
@@ -478,7 +478,7 @@ export default function AdvisorLeadsStore() {
         <meta name="robots" content="noindex,nofollow" />
       </Head>
 
-      <main dir="rtl" className="min-h-screen bg-slate-50">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <AdvisorHeader active="/advisor/leads" />
         <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5">
           <div className="mb-5">

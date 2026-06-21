@@ -45,12 +45,12 @@ export default function AdvisorForgotPassword() {
             </Link>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-2xl p-8">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8">
             {sent ? (
               <div className="text-center py-4">
                 <div className="text-5xl mb-4">📧</div>
-                <h1 className="text-xl font-black text-slate-950 mb-3">בדקו את תיבת הדוא״ל שלכם</h1>
-                <p className="text-slate-500 text-sm leading-6">
+                <h1 className="text-xl font-black text-slate-950 dark:text-slate-100 mb-3">בדקו את תיבת הדוא״ל שלכם</h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm leading-6">
                   אם האימייל קיים במערכת, נשלח קישור לאיפוס סיסמה.
                 </p>
                 <Link href="/advisor/login" className="mt-8 inline-block text-sm font-bold text-violet-600 hover:underline">
