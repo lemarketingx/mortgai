@@ -20,9 +20,11 @@ export default async function handler(req, res) {
       if (leadId) {
         const lead = leads.find((l) => l.id === leadId);
         if (!lead) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
-        return res.status(200).json({ lead });
+        const { source: _s, leadSource: _ls, ...safeFields } = lead;
+        return res.status(200).json({ lead: safeFields });
       }
-      return res.status(200).json({ leads });
+      const sanitized = leads.map(({ source, leadSource, ...rest }) => rest);
+      return res.status(200).json({ leads: sanitized });
     } catch (error) {
       if (error instanceof LeadStoreError) {
         const status = error.code === "SUPABASE_ENV_MISSING" ? 503 : 502;
@@ -113,7 +115,8 @@ export default async function handler(req, res) {
       const patch = Object.fromEntries(Object.entries(allowed).filter(([, v]) => v !== undefined));
       const updated = await updateLead(id, patch);
       if (!updated) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
-      return res.status(200).json({ lead: updated });
+      const { source: _src, leadSource: _lSrc, ...safeUpdated } = updated || {};
+      return res.status(200).json({ lead: safeUpdated });
     } catch (error) {
       if (error instanceof LeadStoreError) {
         const status = error.code === "SUPABASE_ENV_MISSING" ? 503 : 502;

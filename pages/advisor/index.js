@@ -460,23 +460,62 @@ export default function AdvisorDashboard() {
       .map(([bank, d]) => ({ bank, count: d.count, totalMortgage: d.totalMortgage, pct: Math.round((d.count / total) * 100) }))
       .sort((a, b) => b.count - a.count);
   }, [completed]);
-  const topSource = useMemo(() => {
-    const counts = {};
-    for (const l of leads) { const s = l.source || l.leadSource || "אחר"; counts[s] = (counts[s] || 0) + 1; }
-    const entries = Object.entries(counts);
-    return entries.length > 0 ? entries.sort((a, b) => b[1] - a[1])[0][0] : "—";
-  }, [leads]);
-  const sourceAnalytics = useMemo(() => {
+  const caseTypeAnalytics = useMemo(() => {
+    const CASE_TYPE_MAP = {
+      "רכישת דירה יד 2": "דירה ראשונה",
+      "רכישת דירה מקבלן": "מחיר למשתכן",
+      "מחזור משכנתא": "מחזור",
+      "בנייה עצמית": "בניה עצמית",
+      "רכישת מגרש": "השקעה",
+      "שיעבוד נכס קיים": "השקעה",
+      "דירה ראשונה": "דירה ראשונה",
+      "משפרי דיור": "משפרי דיור",
+      "מחזור": "מחזור",
+      "השקעה": "השקעה",
+      "מחיר למשתכן": "מחיר למשתכן",
+      "בניה עצמית": "בניה עצמית",
+    };
     const map = {};
     for (const l of filteredLeads) {
-      const src = l.source || l.leadSource || "אחר";
-      if (!map[src]) map[src] = { total: 0, closed: 0 };
-      map[src].total++;
-      if (getStage(l) === "closed_won") map[src].closed++;
+      const raw = l.mortgageType || "";
+      const group = CASE_TYPE_MAP[raw] || (raw ? raw : "לא צוין");
+      if (!map[group]) map[group] = { total: 0, closed: 0 };
+      map[group].total++;
+      if (getStage(l) === "closed_won") map[group].closed++;
     }
     return Object.entries(map)
-      .map(([source, d]) => ({ source, total: d.total, closed: d.closed, conversionRate: d.total > 0 ? Math.round((d.closed / d.total) * 100) : 0 }))
+      .map(([type, d]) => ({ type, total: d.total, closed: d.closed, conversionRate: d.total > 0 ? Math.round((d.closed / d.total) * 100) : 0 }))
       .sort((a, b) => b.total - a.total);
+  }, [filteredLeads]);
+
+  const heatLevelAnalytics = useMemo(() => {
+    const groups = { hot: { label: "Hot", count: 0 }, warm: { label: "Warm", count: 0 }, cold: { label: "Cold", count: 0 } };
+    for (const l of filteredLeads) {
+      const score = Number(l.heatScore) || 0;
+      if (score >= 70) groups.hot.count++;
+      else if (score >= 40) groups.warm.count++;
+      else groups.cold.count++;
+    }
+    return [groups.hot, groups.warm, groups.cold];
+  }, [filteredLeads]);
+
+  const bankPerformance = useMemo(() => {
+    const SUBMITTED_STAGES = new Set(["submitted_to_bank", "principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released", "closed_won"]);
+    const APPROVED_STAGES = new Set(["principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released", "closed_won"]);
+    const CLOSED_STAGES = new Set(["closed_won"]);
+    const map = {};
+    for (const l of filteredLeads) {
+      const bank = l.bankName;
+      if (!bank) continue;
+      const stage = getStage(l);
+      if (!map[bank]) map[bank] = { submitted: 0, approved: 0, closed: 0 };
+      if (SUBMITTED_STAGES.has(stage)) map[bank].submitted++;
+      if (APPROVED_STAGES.has(stage)) map[bank].approved++;
+      if (CLOSED_STAGES.has(stage)) map[bank].closed++;
+    }
+    return Object.entries(map)
+      .map(([bank, d]) => ({ bank, ...d, conversionRate: d.submitted > 0 ? Math.round((d.closed / d.submitted) * 100) : 0 }))
+      .sort((a, b) => b.submitted - a.submitted);
   }, [filteredLeads]);
 
   const funnelData = useMemo(() => {
@@ -779,30 +818,98 @@ export default function AdvisorDashboard() {
                 </section>
               )}
 
-              {/* Source Analytics */}
-              {!loading && sourceAnalytics.length > 0 && (
+              {/* רכישות לפי סוג תיק */}
+              {!loading && caseTypeAnalytics.length > 0 && (
                 <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                   <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">לידים לפי מקור</h2>
-                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">ביצועים לפי מקור הליד</p>
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">רכישות לפי סוג תיק</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">התפלגות לידים לפי סוג משכנתא</p>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-slate-100 dark:border-slate-800">
-                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">מקור</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">סוג תיק</th>
                           <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">לידים</th>
                           <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">סגירות</th>
                           <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">% המרה</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {sourceAnalytics.map(row => (
-                          <tr key={row.source} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                            <td className="px-4 py-2.5 font-black text-slate-900 dark:text-slate-100">{row.source}</td>
+                        {caseTypeAnalytics.map(row => (
+                          <tr key={row.type} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="px-4 py-2.5 font-black text-slate-900 dark:text-slate-100">{row.type}</td>
                             <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.total}</td>
                             <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.closed}</td>
                             <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-600 dark:text-slate-400">{row.conversionRate}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+
+              {/* לידים לפי רמת חום */}
+              {!loading && filteredLeads.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <div className="mb-4">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">לידים לפי רמת חום</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">התפלגות לפי heat score</p>
+                  </div>
+                  <div className="space-y-3">
+                    {heatLevelAnalytics.map(({ label, count }) => {
+                      const total = filteredLeads.length || 1;
+                      const pct = Math.round((count / total) * 100);
+                      const color = label === "Hot" ? "bg-rose-500" : label === "Warm" ? "bg-amber-500" : "bg-sky-500";
+                      const textColor = label === "Hot" ? "text-rose-600 dark:text-rose-400" : label === "Warm" ? "text-amber-600 dark:text-amber-400" : "text-sky-600 dark:text-sky-400";
+                      return (
+                        <div key={label} className="flex items-center gap-3">
+                          <span className={`text-xs font-black w-12 shrink-0 text-right ${textColor}`}>{label}</span>
+                          <div className="flex-1 h-5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${Math.max(4, pct)}%` }} />
+                          </div>
+                          <span className="text-xs font-black tabular-nums text-slate-700 dark:text-slate-300 w-14 text-left shrink-0">{count} ({pct}%)</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {/* ביצועים לפי בנק */}
+              {!loading && bankPerformance.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">ביצועים לפי בנק</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">הגשות, אישורים, סגירות ואחוז המרה</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-slate-800">
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">בנק</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">הוגש</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">אושר</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">נסגר</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">% המרה</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bankPerformance.map(row => (
+                          <tr key={row.bank} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="px-4 py-2.5 font-black text-slate-900 dark:text-slate-100">{row.bank}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.submitted}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.approved}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-emerald-600 dark:text-emerald-400">{row.closed}</td>
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center gap-2">
+                                <div className="w-12 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                  <div className="h-full rounded-full bg-violet-500" style={{ width: `${row.conversionRate}%` }} />
+                                </div>
+                                <span className="text-xs font-black tabular-nums text-slate-600 dark:text-slate-400">{row.conversionRate}%</span>
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -1095,9 +1202,9 @@ export default function AdvisorDashboard() {
                   <div className="space-y-3">
                     {[
                       { label: "בנק מוביל", value: topBank.name || "—" },
-                      { label: "מקור מוביל", value: topSource },
                       { label: "ללא קשר 7+ ימים", value: noContactLeads.length },
                       { label: "ממתין מסמכים", value: waitingDocs.length },
+                      { label: "לידים חמים", value: heatLevelAnalytics[0].count },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex items-center justify-between">
                         <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{label}</span>
