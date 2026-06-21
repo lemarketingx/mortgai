@@ -20,23 +20,23 @@ export function KpiTile({ label, value, unit, delta, deltaDir = "up", variant = 
         "rounded-finzo-lg p-4 border",
         isDark
           ? "bg-finzo-ink text-white border-finzo-ink"
-          : "bg-finzo-white border-finzo-line",
+          : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800",
         className,
       ].filter(Boolean).join(" ")}
     >
       {/* Row 1: mono uppercase label */}
-      <p className={`font-mono text-[11.5px] tracking-[0.08em] uppercase ${isDark ? "text-white/65" : "text-finzo-ink-3"}`}>
+      <p className={`font-mono text-[11.5px] tracking-[0.08em] uppercase ${isDark ? "text-white/65" : "text-slate-500 dark:text-slate-400"}`}>
         {label}
       </p>
 
       {/* Row 2: serif value */}
       <p
-        className="font-serif text-[30px] leading-none mt-1.5 tracking-[-0.02em]"
+        className={`font-serif text-[30px] leading-none mt-1.5 tracking-[-0.02em] ${isDark ? "" : "text-slate-900 dark:text-slate-100"}`}
         style={{ fontFeatureSettings: '"tnum" 1' }}
       >
         {value}
         {unit && (
-          <small className={`font-mono text-[14px] mr-1 ${isDark ? "text-white/60" : "text-finzo-ink-3"}`}>
+          <small className={`font-mono text-[14px] mr-1 ${isDark ? "text-white/60" : "text-slate-500 dark:text-slate-400"}`}>
             {unit}
           </small>
         )}

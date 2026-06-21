@@ -403,7 +403,22 @@ export default function AdvisorDashboard() {
     const counts = {};
     for (const l of completed) { if (l.bankName) counts[l.bankName] = (counts[l.bankName] || 0) + 1; }
     const entries = Object.entries(counts);
-    return entries.length > 0 ? entries.sort((a, b) => b[1] - a[1])[0][0] : "—";
+    if (entries.length === 0) return { name: null, count: 0 };
+    entries.sort((a, b) => b[1] - a[1]);
+    return { name: entries[0][0], count: entries[0][1] };
+  }, [completed]);
+  const bankClosings = useMemo(() => {
+    const map = {};
+    for (const l of completed) {
+      const bank = l.bankName || "לא צוין";
+      if (!map[bank]) map[bank] = { count: 0, totalMortgage: 0 };
+      map[bank].count++;
+      map[bank].totalMortgage += Number(l.mortgageAmount) || 0;
+    }
+    const total = completed.length || 1;
+    return Object.entries(map)
+      .map(([bank, d]) => ({ bank, count: d.count, totalMortgage: d.totalMortgage, pct: Math.round((d.count / total) * 100) }))
+      .sort((a, b) => b.count - a.count);
   }, [completed]);
   const topSource = useMemo(() => {
     const counts = {};
@@ -521,7 +536,17 @@ export default function AdvisorDashboard() {
               <KpiCard label="אחוז המרה" value={`${conversionRate}%`} />
               <KpiCard label='סה"כ משכנתאות' value={formatILS(totalMortgageAmount)} />
               <KpiCard label="ממוצע שווי נכס" value={formatILS(avgPropertyValue)} />
-              <KpiCard label="ממוצע הון עצמי" value={formatILS(avgEquity)} />
+              <div className="bg-white dark:bg-slate-900 border border-violet-200 dark:border-violet-800 rounded-xl p-4">
+                <p className="text-[11px] font-bold text-violet-600 dark:text-violet-400 mb-1">הבנק המוביל בסגירות</p>
+                {topBank.name ? (
+                  <>
+                    <p className="text-2xl font-black tabular-nums text-slate-900 dark:text-slate-100">{topBank.name}</p>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">{topBank.count} עסקאות שנסגרו</p>
+                  </>
+                ) : (
+                  <p className="text-sm font-bold text-slate-400 dark:text-slate-500 mt-1">אין מספיק נתונים</p>
+                )}
+              </div>
             </div>
           )}
 
@@ -645,6 +670,46 @@ export default function AdvisorDashboard() {
                   </div>
                 </section>
               )}
+              {/* סגירות לפי בנק */}
+              {!loading && bankClosings.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">סגירות לפי בנק</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                      התפלגות עסקאות שנסגרו בהצלחה לפי בנק
+                    </p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-slate-800">
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">בנק</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">תיקים שנסגרו</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">סך משכנתאות</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">% מכלל הסגירות</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bankClosings.map((row) => (
+                          <tr key={row.bank} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="px-4 py-2.5 font-black text-slate-900 dark:text-slate-100">{row.bank}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.count}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{formatILS(row.totalMortgage)}</td>
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                  <div className="h-full rounded-full bg-violet-500" style={{ width: `${row.pct}%` }} />
+                                </div>
+                                <span className="text-xs font-black tabular-nums text-slate-600 dark:text-slate-400">{row.pct}%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
             </div>
 
             {/* ─ Right column (sidebar) ─────────────────────────────────── */}
@@ -729,7 +794,7 @@ export default function AdvisorDashboard() {
                   <h2 className="text-sm font-black text-slate-950 dark:text-slate-50 mb-3">סטטוס מהיר</h2>
                   <div className="space-y-3">
                     {[
-                      { label: "בנק מוביל", value: topBank },
+                      { label: "בנק מוביל", value: topBank.name || "—" },
                       { label: "מקור מוביל", value: topSource },
                       { label: "ללא קשר 7+ ימים", value: noContactLeads.length },
                       { label: "ממתין מסמכים", value: waitingDocs.length },
