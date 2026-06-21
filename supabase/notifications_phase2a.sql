@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public.advisor_notifications (
   priority        TEXT NOT NULL DEFAULT 'normal',
   is_read         BOOLEAN NOT NULL DEFAULT false,
   read_at         TIMESTAMPTZ,
+  dedupe_key      TEXT,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -21,6 +22,13 @@ CREATE INDEX IF NOT EXISTS idx_notifications_is_read
   ON public.advisor_notifications (advisor_id, is_read);
 CREATE INDEX IF NOT EXISTS idx_notifications_created_at
   ON public.advisor_notifications (created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_notifications_dedupe
+  ON public.advisor_notifications (advisor_id, dedupe_key)
+  WHERE dedupe_key IS NOT NULL;
+
+-- Safe migration for existing tables
+ALTER TABLE public.advisor_notifications
+  ADD COLUMN IF NOT EXISTS dedupe_key TEXT;
 
 -- RLS
 ALTER TABLE public.advisor_notifications ENABLE ROW LEVEL SECURITY;

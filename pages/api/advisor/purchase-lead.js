@@ -53,6 +53,7 @@ export default async function handler(req, res) {
       entityType: "lead",
       entityId: leadId,
       priority: "high",
+      dedupeKey: `lead_purchase:${leadId}`,
     }).catch(() => {});
 
     return res.status(200).json({ ok: true, purchase });
