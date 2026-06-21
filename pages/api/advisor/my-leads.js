@@ -57,6 +57,7 @@ export default async function handler(req, res) {
         lastActivityAt: now,
         nextAction: changes.nextAction,
         nextActionAt: changes.nextActionAt,
+        actualCommission: changes.actualCommission,
         bankName: changes.bankName,
         mortgageType: changes.mortgageType,
         documentsCompletionPercent: changes.documentsCompletionPercent,
