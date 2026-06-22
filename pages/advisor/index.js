@@ -609,8 +609,10 @@ export default function AdvisorDashboard() {
     return { forecast, actual, forecastCount, actualCount };
   }, [leads, pricingProfile, hasPricingProfile]);
 
+  const isDebugEnabled = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_DEBUG === "true";
+
   const debugLeadRows = useMemo(() => {
-    if (process.env.NODE_ENV === "production") return [];
+    if (!isDebugEnabled) return [];
     const STAGE_PROBABILITY = {
       new_lead: 0.05, contacted: 0.1,
       documents_requested: 0.35, waiting_documents: 0.35, documents_received: 0.35,
@@ -1139,7 +1141,7 @@ export default function AdvisorDashboard() {
                         expectedCloseIncluded: ADVANCED_STAGES.has(stage),
                       });
                     }
-                    if (process.env.NODE_ENV !== "production") {
+                    if (isDebugEnabled) {
                       console.log("[DEBUG] Pipeline Forecast — weighted:", weightedPipeline, "revenue:", estimatedRevenue, "expectedClose:", expectedClose.length);
                       console.table(debugRows);
                     }
@@ -1427,7 +1429,7 @@ export default function AdvisorDashboard() {
         </div>
 
         {/* Dev-only debug panel */}
-        {process.env.NODE_ENV !== "production" && !loading && debugLeadRows.length > 0 && (
+        {isDebugEnabled && !loading && debugLeadRows.length > 0 && (
           <details className="max-w-6xl mx-auto px-4 lg:px-6 my-4">
             <summary className="cursor-pointer text-xs font-black text-rose-500 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg px-4 py-2 select-none">
               Dashboard Debug ({debugLeadRows.length} leads)
