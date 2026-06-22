@@ -26,8 +26,16 @@ ALTER TABLE public.advisor_pricing_profiles
 ALTER TABLE public.advisor_pricing_profiles ENABLE ROW LEVEL SECURITY;
 
 -- Allow service role full access
-CREATE POLICY IF NOT EXISTS "service_role_full_access"
-  ON public.advisor_pricing_profiles
-  FOR ALL
-  USING (true)
-  WITH CHECK (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'advisor_pricing_profiles' AND policyname = 'service_role_full_access'
+  ) THEN
+    CREATE POLICY "service_role_full_access"
+      ON public.advisor_pricing_profiles
+      FOR ALL
+      USING (true)
+      WITH CHECK (true);
+  END IF;
+END $$;
