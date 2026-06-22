@@ -80,6 +80,27 @@ export default async function handler(req, res) {
       }
       generateBackgroundNotifications(session.advisorId, leads);
 
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[DEBUG my-leads] ${leads.length} leads for advisor ${session.advisorId}`);
+        for (const l of leads) {
+          console.log(JSON.stringify({
+            id: l.id,
+            name: l.name,
+            type: l.mortgageType,
+            pipelineStage: l.pipelineStage,
+            leadStatus: l.leadStatus,
+            status: l.status,
+            mortgageAmount: l.mortgageAmount,
+            selectedBank: l.selectedBank || null,
+            assignedBank: l.assignedBank || null,
+            bankName: l.bankName || null,
+            bankerBank: (l.banker && l.banker.bank) || null,
+            heatScore: l.heatScore,
+            heatLevel: l.heatLevel,
+          }));
+        }
+      }
+
       const sanitized = leads.map(({ source, leadSource, ...rest }) => rest);
       return res.status(200).json({ leads: sanitized });
     } catch (error) {

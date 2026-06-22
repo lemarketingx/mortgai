@@ -609,6 +609,37 @@ export default function AdvisorDashboard() {
     return { forecast, actual, forecastCount, actualCount };
   }, [leads, pricingProfile, hasPricingProfile]);
 
+  const debugLeadRows = useMemo(() => {
+    if (process.env.NODE_ENV === "production") return [];
+    const STAGE_PROBABILITY = {
+      new_lead: 0.05, contacted: 0.1,
+      documents_requested: 0.35, waiting_documents: 0.35, documents_received: 0.35,
+      eligibility_review: 0.2,
+      appraisal_ordered: 0.45, appraisal_completed: 0.5, lawyer_review: 0.55,
+      submitted_to_bank: 0.6,
+      principle_approval: 0.8, bank_negotiation: 0.8, selected_track: 0.8,
+      signing_scheduled: 0.95, signed: 0.95,
+      collateral_completion: 0.97, funds_released: 0.99,
+    };
+    const ADVANCED = new Set(["principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released"]);
+    return leads.map(l => {
+      const stage = getStage(l);
+      const w = STAGE_PROBABILITY[stage] || 0.1;
+      const amount = Number(l.mortgageAmount) || 0;
+      return {
+        id: l.id, name: l.name || "—", type: l.mortgageType || "—",
+        stage, rawStage: l.pipelineStage || l.leadStatus || "—",
+        loanAmount: amount,
+        selectedBank: l.selectedBank || "", assignedBank: l.assignedBank || "",
+        bankName: l.bankName || "", bankerBank: (l.banker && l.banker.bank) || "",
+        resolvedBank: resolveBank(l),
+        heatScore: l.heatScore ?? "—", heatLevel: l.heatLevel || "—",
+        probability: w, weightedContribution: Math.round(amount * w),
+        expectedCloseIncluded: ADVANCED.has(stage),
+      };
+    });
+  }, [leads]);
+
   // ── Empty state — advisor has no leads yet ───────────────────────────────────
   if (!loading && leads.length === 0) {
     return (
@@ -1078,14 +1109,39 @@ export default function AdvisorDashboard() {
                     });
                     let weightedPipeline = 0;
                     let estimatedRevenue = 0;
+                    const debugRows = [];
                     for (const l of active) {
-                      const w = STAGE_PROBABILITY[getStage(l)] || 0.1;
+                      const stage = getStage(l);
+                      const w = STAGE_PROBABILITY[stage] || 0.1;
                       const amount = Number(l.mortgageAmount) || 0;
-                      weightedPipeline += amount * w;
+                      const contribution = amount * w;
+                      weightedPipeline += contribution;
                       if (hasPricingProfile) {
                         const est = calcCommission(pricingProfile, l);
                         if (est !== null && est > 0) estimatedRevenue += est * w;
                       }
+                      debugRows.push({
+                        id: l.id,
+                        name: l.name || "—",
+                        type: l.mortgageType || "—",
+                        stage,
+                        rawStage: l.pipelineStage || l.leadStatus || "—",
+                        loanAmount: amount,
+                        selectedBank: l.selectedBank || "",
+                        assignedBank: l.assignedBank || "",
+                        bankName: l.bankName || "",
+                        bankerBank: (l.banker && l.banker.bank) || "",
+                        resolvedBank: resolveBank(l),
+                        heatScore: l.heatScore ?? "—",
+                        heatLevel: l.heatLevel || "—",
+                        probability: w,
+                        weightedContribution: Math.round(contribution),
+                        expectedCloseIncluded: ADVANCED_STAGES.has(stage),
+                      });
+                    }
+                    if (process.env.NODE_ENV !== "production") {
+                      console.log("[DEBUG] Pipeline Forecast — weighted:", weightedPipeline, "revenue:", estimatedRevenue, "expectedClose:", expectedClose.length);
+                      console.table(debugRows);
                     }
                     return (
                       <div className="space-y-4">
@@ -1369,6 +1425,65 @@ export default function AdvisorDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Dev-only debug panel */}
+        {process.env.NODE_ENV !== "production" && !loading && debugLeadRows.length > 0 && (
+          <details className="max-w-6xl mx-auto px-4 lg:px-6 my-4">
+            <summary className="cursor-pointer text-xs font-black text-rose-500 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg px-4 py-2 select-none">
+              Dashboard Debug ({debugLeadRows.length} leads)
+            </summary>
+            <div className="mt-2 bg-slate-950 text-green-400 rounded-xl p-4 overflow-x-auto text-[11px] font-mono leading-relaxed">
+              <p className="text-amber-400 mb-2 font-bold">Pipeline Summary:</p>
+              <p>Weighted Pipeline: {formatILS(debugLeadRows.reduce((s, r) => s + r.weightedContribution, 0))}</p>
+              <p>Expected Close (advanced stages): {debugLeadRows.filter(r => r.expectedCloseIncluded).length}</p>
+              <p>Unique Resolved Banks: {[...new Set(debugLeadRows.map(r => r.resolvedBank))].join(", ")}</p>
+              <p>Has Pricing Profile: {String(hasPricingProfile)}</p>
+              <p className="text-amber-400 mt-3 mb-2 font-bold">Per-Lead Breakdown:</p>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="text-slate-400 text-left border-b border-slate-700">
+                    <th className="px-1 py-1">id</th>
+                    <th className="px-1 py-1">name</th>
+                    <th className="px-1 py-1">type</th>
+                    <th className="px-1 py-1">stage</th>
+                    <th className="px-1 py-1">rawStage</th>
+                    <th className="px-1 py-1">loan</th>
+                    <th className="px-1 py-1">selectedBank</th>
+                    <th className="px-1 py-1">assignedBank</th>
+                    <th className="px-1 py-1">bankName</th>
+                    <th className="px-1 py-1">banker.bank</th>
+                    <th className="px-1 py-1">resolved</th>
+                    <th className="px-1 py-1">heat</th>
+                    <th className="px-1 py-1">prob</th>
+                    <th className="px-1 py-1">weighted</th>
+                    <th className="px-1 py-1">expClose</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {debugLeadRows.map(r => (
+                    <tr key={r.id} className="border-b border-slate-800 hover:bg-slate-900">
+                      <td className="px-1 py-0.5 text-slate-500 max-w-[60px] truncate">{r.id.slice(-6)}</td>
+                      <td className="px-1 py-0.5 max-w-[80px] truncate">{r.name}</td>
+                      <td className="px-1 py-0.5 max-w-[70px] truncate">{r.type}</td>
+                      <td className="px-1 py-0.5 text-cyan-400">{r.stage}</td>
+                      <td className="px-1 py-0.5 text-slate-500">{r.rawStage}</td>
+                      <td className="px-1 py-0.5 tabular-nums">{r.loanAmount.toLocaleString()}</td>
+                      <td className="px-1 py-0.5">{r.selectedBank || <span className="text-slate-600">—</span>}</td>
+                      <td className="px-1 py-0.5">{r.assignedBank || <span className="text-slate-600">—</span>}</td>
+                      <td className="px-1 py-0.5">{r.bankName || <span className="text-slate-600">—</span>}</td>
+                      <td className="px-1 py-0.5">{r.bankerBank || <span className="text-slate-600">—</span>}</td>
+                      <td className="px-1 py-0.5 text-yellow-400">{r.resolvedBank}</td>
+                      <td className="px-1 py-0.5 tabular-nums">{r.heatScore}</td>
+                      <td className="px-1 py-0.5 tabular-nums">{r.probability}</td>
+                      <td className="px-1 py-0.5 tabular-nums text-emerald-400">{r.weightedContribution.toLocaleString()}</td>
+                      <td className="px-1 py-0.5">{r.expectedCloseIncluded ? <span className="text-emerald-400">yes</span> : <span className="text-slate-600">no</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        )}
 
         {/* Mobile bottom nav */}
         <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
