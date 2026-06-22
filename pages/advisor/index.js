@@ -340,6 +340,24 @@ function filterByDateRange(items, key, dateField = "createdAt") {
   return items.filter(l => new Date(l[dateField] || l.created_at || 0).getTime() >= cutoff);
 }
 
+// ─── Commission calculation (mirrors server-side logic) ──────────────────────
+function calcCommission(profile, lead) {
+  if (!profile || !profile.pricingModel) return null;
+  const loanAmount = Number(lead.mortgageAmount || 0);
+  const leadType = lead.mortgageType || lead.purchaseStatus || "default";
+  switch (profile.pricingModel) {
+    case "fixed":   return profile.fixedFee || 0;
+    case "percent": return loanAmount * ((profile.percentFee || 0) / 100);
+    case "hybrid":  return (profile.hybridBaseFee || 0) + loanAmount * ((profile.hybridPercentFee || 0) / 100);
+    case "by_lead_type": {
+      const rules = profile.leadTypeRules || {};
+      const rule = rules[leadType] || rules["default"];
+      return rule !== undefined && rule !== null ? Number(rule) || 0 : null;
+    }
+    default: return null;
+  }
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AdvisorDashboard() {
   const [leads, setLeads] = useState([]);
@@ -350,6 +368,8 @@ export default function AdvisorDashboard() {
   const [commissionStats, setCommissionStats] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pricingProfile, setPricingProfile] = useState(null);
+  const [pricingLoaded, setPricingLoaded] = useState(false);
 
   // Read display name from localStorage — safe, runs only after hydration
   useEffect(() => {
@@ -374,6 +394,13 @@ export default function AdvisorDashboard() {
       .catch(() => setLoading(false));
     fetch("/api/advisor/commissions?stats=true").then(r => r.ok ? r.json() : null).then(d => { if (d?.stats) setCommissionStats(d.stats); }).catch(() => {});
     fetch("/api/advisor/notifications?limit=5").then(r => r.ok ? r.json() : null).then(d => { if (d) { setNotifications(d.notifications || []); setUnreadCount(d.unreadCount || 0); } }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/advisor/pricing")
+      .then((r) => r.ok ? r.json() : { profile: null })
+      .then((j) => { setPricingProfile(j.profile); setPricingLoaded(true); })
+      .catch(() => setPricingLoaded(true));
   }, []);
 
   // ── Derived data — all useMemos, no calculations in render ──────────────────
@@ -550,6 +577,29 @@ export default function AdvisorDashboard() {
     }
     return Object.entries(months).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
   }, [leads]);
+
+  const commissionData = useMemo(() => {
+    if (!pricingProfile || !pricingProfile.pricingModel) return null;
+    let forecast = 0;
+    let actual = 0;
+    let forecastCount = 0;
+    let actualCount = 0;
+    for (const lead of leads) {
+      const actualVal = Number(lead.actualCommission || lead.commissionAmount || 0);
+      if (lead.commissionStatus === "paid" && actualVal > 0) {
+        actual += actualVal;
+        actualCount++;
+      }
+      if (isActive(lead)) {
+        const est = calcCommission(pricingProfile, lead);
+        if (est !== null && est > 0) {
+          forecast += est;
+          forecastCount++;
+        }
+      }
+    }
+    return { forecast, actual, forecastCount, actualCount };
+  }, [leads, pricingProfile]);
 
   // ── Empty state — advisor has no leads yet ───────────────────────────────────
   if (!loading && leads.length === 0) {
@@ -1212,6 +1262,39 @@ export default function AdvisorDashboard() {
                       </div>
                     ))}
                   </div>
+                </section>
+              )}
+
+              {/* עמלות */}
+              {pricingLoaded && (
+                <section className="bg-white rounded-2xl border border-slate-100 p-5">
+                  <h2 className="text-sm font-black text-slate-950 mb-3">עמלות</h2>
+                  {commissionData ? (
+                    <div className="space-y-2">
+                      <div className="bg-violet-50 rounded-xl px-3 py-3">
+                        <p className="text-[11px] font-black text-violet-500 mb-0.5">עמלות צפויות (forecast)</p>
+                        <p className="text-2xl font-black text-violet-700 tabular-nums">
+                          ₪{commissionData.forecast.toLocaleString("he-IL", { maximumFractionDigits: 0 })}
+                        </p>
+                        <p className="text-[10px] font-bold text-violet-400 mt-0.5">{commissionData.forecastCount} תיקים פעילים</p>
+                      </div>
+                      <div className="bg-emerald-50 rounded-xl px-3 py-3">
+                        <p className="text-[11px] font-black text-emerald-500 mb-0.5">עמלות בפועל (שולמו)</p>
+                        <p className="text-2xl font-black text-emerald-700 tabular-nums">
+                          ₪{commissionData.actual.toLocaleString("he-IL", { maximumFractionDigits: 0 })}
+                        </p>
+                        <p className="text-[10px] font-bold text-emerald-400 mt-0.5">{commissionData.actualCount} תיקים שולמו</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-amber-50 rounded-xl px-3 py-4 text-center">
+                      <p className="text-sm font-black text-amber-700 mb-1">לא הוגדר מודל עמלה</p>
+                      <p className="text-xs font-bold text-amber-500 mb-3">הגדר מודל עמלה בהגדרות כדי לראות תחזית</p>
+                      <Link href="/advisor/settings" className="text-xs font-black text-violet-700 hover:underline">
+                        הגדר עכשיו →
+                      </Link>
+                    </div>
+                  )}
                 </section>
               )}
 

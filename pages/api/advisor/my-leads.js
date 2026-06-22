@@ -4,6 +4,61 @@ import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
 import { getPipelineStageLabel, normalizePipelineStage } from "../../../lib/pipeline";
 import { calculateCollateralProgress, calculateOverallMortgageProgress } from "../../../lib/mortgageCase";
+import { createNotification, timeBucket } from "../../../lib/notificationsStore";
+
+function generateBackgroundNotifications(advisorId, leads) {
+  const today = new Date(new Date().toDateString());
+  const bucket6h = timeBucket(6);
+  const bucket12h = timeBucket(12);
+
+  for (const lead of leads) {
+    const stage = normalizePipelineStage(lead.pipelineStage || lead.leadStatus);
+    if (["closed_won", "closed_lost"].includes(stage)) continue;
+
+    if (lead.nextActionAt && new Date(lead.nextActionAt) < today) {
+      createNotification({
+        advisorId,
+        type: "overdue_task",
+        title: `משימה באיחור: ${lead.name || "ליד"}`,
+        message: lead.nextAction || "פעולה שהוגדרה לא בוצעה בזמן",
+        entityType: "lead",
+        entityId: lead.id,
+        priority: "high",
+        dedupeKey: `overdue_task:${lead.id}:${bucket6h}`,
+      }).catch(() => {});
+    }
+
+    const missingDocs = Number(lead.missingDocumentsCount || 0);
+    if (missingDocs > 0 && ["documents_requested", "waiting_documents"].includes(stage)) {
+      createNotification({
+        advisorId,
+        type: "missing_documents",
+        title: `מסמכים חסרים: ${lead.name || "ליד"}`,
+        message: `${missingDocs} מסמכים חסרים`,
+        entityType: "lead",
+        entityId: lead.id,
+        priority: "normal",
+        dedupeKey: `missing_documents:${lead.id}:${bucket6h}`,
+      }).catch(() => {});
+    }
+
+    if (lead.followUpDate) {
+      const followUp = new Date(lead.followUpDate);
+      if (followUp.toDateString() === today.toDateString()) {
+        createNotification({
+          advisorId,
+          type: "reminder_due",
+          title: `תזכורת להיום: ${lead.name || "ליד"}`,
+          message: lead.nextAction || "מעקב מתוכנן",
+          entityType: "lead",
+          entityId: lead.id,
+          priority: "normal",
+          dedupeKey: `reminder_due:${lead.id}:${bucket12h}`,
+        }).catch(() => {});
+      }
+    }
+  }
+}
 
 function apiError(res, status, code, message) {
   return res.status(status).json({ error: code, message });
@@ -23,6 +78,8 @@ export default async function handler(req, res) {
         const { source: _s, leadSource: _ls, ...safeFields } = lead;
         return res.status(200).json({ lead: safeFields });
       }
+      generateBackgroundNotifications(session.advisorId, leads);
+
       const sanitized = leads.map(({ source, leadSource, ...rest }) => rest);
       return res.status(200).json({ leads: sanitized });
     } catch (error) {
@@ -59,6 +116,7 @@ export default async function handler(req, res) {
         lastActivityAt: now,
         nextAction: changes.nextAction,
         nextActionAt: changes.nextActionAt,
+        actualCommission: changes.actualCommission,
         bankName: changes.bankName,
         mortgageType: changes.mortgageType,
         documentsCompletionPercent: changes.documentsCompletionPercent,
@@ -102,6 +160,19 @@ export default async function handler(req, res) {
           activityType: "status_changed",
           title: `שלב עודכן: "${getPipelineStageLabel(prevStage)}" ← "${getPipelineStageLabel(newStage)}"`,
           metadata: { from: prevStage, to: newStage },
+        }).catch(() => {});
+
+        const isBankStage = ["submitted_to_bank", "principle_approval", "bank_negotiation", "selected_track"].includes(newStage);
+        const stageType = isBankStage ? "bank_status" : "stage_change";
+        createNotification({
+          advisorId: session.advisorId,
+          type: stageType,
+          title: `${lead.name || "ליד"}: ${getPipelineStageLabel(newStage)}`,
+          message: `שלב עודכן מ-"${getPipelineStageLabel(prevStage)}" ל-"${getPipelineStageLabel(newStage)}"`,
+          entityType: "lead",
+          entityId: id,
+          priority: isBankStage ? "high" : "normal",
+          dedupeKey: `${stageType}:${id}:${newStage}`,
         }).catch(() => {});
       }
       if (changes.internalNotes !== undefined && changes.internalNotes !== lead.internalNotes) {

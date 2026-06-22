@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { checkIdempotencyKey, createIdempotencyKey, completeIdempotencyKey, failIdempotencyKey } from "../../../lib/idempotencyStore";
+import { createNotification } from "../../../lib/notificationsStore";
 
 const FIXED_LEAD_PRICE = 249;
 
@@ -73,6 +74,17 @@ export default async function handler(req, res) {
       price,
       isExclusive: false,
     });
+
+    createNotification({
+      advisorId: session.advisorId,
+      type: "lead_purchase",
+      title: `ליד חדש נרכש: ${lead.name || "ללא שם"}`,
+      message: `הליד ${lead.name || ""} מ-${lead.city || "לא ידוע"} נוסף לתיקים שלך`,
+      entityType: "lead",
+      entityId: leadId,
+      priority: "high",
+      dedupeKey: `lead_purchase:${leadId}`,
+    }).catch(() => {});
 
     const responseJson = { ok: true, purchase };
     await completeIdempotencyKey(idempotencyKey, responseJson);
