@@ -578,18 +578,24 @@ export default function AdvisorDashboard() {
     return Object.entries(months).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
   }, [leads]);
 
+  const hasPricingProfile = Boolean(pricingProfile && pricingProfile.pricingModel);
+
   const commissionData = useMemo(() => {
-    if (!pricingProfile || !pricingProfile.pricingModel) return null;
+    if (!hasPricingProfile) return null;
     let forecast = 0;
     let actual = 0;
     let forecastCount = 0;
     let actualCount = 0;
     for (const lead of leads) {
       const actualVal = Number(lead.actualCommission || lead.commissionAmount || 0);
-      if (lead.commissionStatus === "paid" && actualVal > 0) {
+      const stage = getStage(lead);
+
+      if (stage === "closed_won" && actualVal > 0) {
         actual += actualVal;
         actualCount++;
+        continue;
       }
+
       if (isActive(lead)) {
         const est = calcCommission(pricingProfile, lead);
         if (est !== null && est > 0) {
@@ -599,7 +605,7 @@ export default function AdvisorDashboard() {
       }
     }
     return { forecast, actual, forecastCount, actualCount };
-  }, [leads, pricingProfile]);
+  }, [leads, pricingProfile, hasPricingProfile]);
 
   // ── Empty state — advisor has no leads yet ───────────────────────────────────
   if (!loading && leads.length === 0) {
@@ -672,6 +678,20 @@ export default function AdvisorDashboard() {
               </Link>
             </div>
           </div>
+
+          {/* ── Pricing profile warning ────────────────────────────────── */}
+          {pricingLoaded && !hasPricingProfile && !loading && leads.length > 0 && (
+            <div className="flex items-center gap-3 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-5 py-3.5">
+              <span className="text-lg shrink-0">⚠️</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-black text-amber-800 dark:text-amber-200">הגדר מודל עמלות כדי להפעיל תחזיות הכנסה</p>
+                <p className="text-xs font-bold text-amber-600 dark:text-amber-400 mt-0.5">תחזיות הכנסה, ROI ועמלות צפויות מושבתים ללא מודל עמלה מוגדר.</p>
+              </div>
+              <Link href="/advisor/settings" className="shrink-0 text-xs font-black text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-800/50 border border-amber-300 dark:border-amber-700 px-3 py-1.5 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-800 transition-colors">
+                הגדרות →
+              </Link>
+            </div>
+          )}
 
           {/* ── Date & Bank Filters ─────────────────────────────────────── */}
           <div className="flex flex-wrap items-center gap-2">
@@ -968,8 +988,8 @@ export default function AdvisorDashboard() {
                 </section>
               )}
 
-              {/* ROI Dashboard */}
-              {!loading && leads.length > 0 && (
+              {/* ROI Dashboard — only when pricing profile is configured */}
+              {!loading && leads.length > 0 && hasPricingProfile && commissionData && (
                 <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
                   <div className="mb-4">
                     <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">ROI — החזר על השקעה</h2>
@@ -978,7 +998,7 @@ export default function AdvisorDashboard() {
                   {(() => {
                     const totalLeads = filteredLeads.length;
                     const closedWon = completed.length;
-                    const totalRevenue = commissionStats?.totalRevenue || 0;
+                    const totalRevenue = commissionData.actual;
                     const avgDealSize = closedWon > 0 ? Math.round(completed.reduce((s, l) => s + (Number(l.mortgageAmount) || 0), 0) / closedWon) : 0;
                     const avgCommission = closedWon > 0 ? Math.round(totalRevenue / closedWon) : 0;
                     const cac = closedWon > 0 ? Math.round((totalLeads * 150) / closedWon) : 0;
@@ -1048,12 +1068,14 @@ export default function AdvisorDashboard() {
                       const w = STAGE_WEIGHTS[getStage(l)] || 0.1;
                       const amount = Number(l.mortgageAmount) || 0;
                       weightedPipeline += amount * w;
-                      estimatedRevenue += amount * w * 0.005;
+                      if (hasPricingProfile) {
+                        const est = calcCommission(pricingProfile, l);
+                        if (est !== null && est > 0) estimatedRevenue += est * w;
+                      }
                     }
-                    const estimatedCommissions = estimatedRevenue * 0.8;
                     return (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className={`grid ${hasPricingProfile ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"} gap-3`}>
                           <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-100 dark:border-violet-800">
                             <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400">צפי סגירה החודש</p>
                             <p className="text-2xl font-black tabular-nums text-violet-700 dark:text-violet-300">{expectedClose.length}</p>
@@ -1062,14 +1084,18 @@ export default function AdvisorDashboard() {
                             <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Pipeline משוקלל</p>
                             <p className="text-2xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{formatILS(Math.round(weightedPipeline))}</p>
                           </div>
-                          <div className="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl border border-sky-100 dark:border-sky-800">
-                            <p className="text-[10px] font-bold text-sky-600 dark:text-sky-400">הכנסה צפויה</p>
-                            <p className="text-2xl font-black tabular-nums text-sky-700 dark:text-sky-300">{formatILS(Math.round(estimatedRevenue))}</p>
-                          </div>
-                          <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
-                            <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">עמלות צפויות</p>
-                            <p className="text-2xl font-black tabular-nums text-amber-700 dark:text-amber-300">{formatILS(Math.round(estimatedCommissions))}</p>
-                          </div>
+                          {hasPricingProfile && (
+                            <>
+                              <div className="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl border border-sky-100 dark:border-sky-800">
+                                <p className="text-[10px] font-bold text-sky-600 dark:text-sky-400">הכנסה צפויה</p>
+                                <p className="text-2xl font-black tabular-nums text-sky-700 dark:text-sky-300">{formatILS(Math.round(estimatedRevenue))}</p>
+                              </div>
+                              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
+                                <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">עמלות צפויות</p>
+                                <p className="text-2xl font-black tabular-nums text-amber-700 dark:text-amber-300">{formatILS(Math.round(estimatedRevenue))}</p>
+                              </div>
+                            </>
+                          )}
                         </div>
                         {expectedClose.length > 0 && (
                           <div>
@@ -1091,7 +1117,7 @@ export default function AdvisorDashboard() {
               )}
 
               {/* Commission Dashboard */}
-              {!loading && (
+              {!loading && hasPricingProfile && commissionData && (
                 <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
@@ -1099,31 +1125,24 @@ export default function AdvisorDashboard() {
                       <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">מעקב הכנסות ועמלות</p>
                     </div>
                   </div>
-                  {commissionStats ? (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
-                        <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">הכנסות שולמו</p>
-                        <p className="text-xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{formatILS(commissionStats.totalRevenue || 0)}</p>
-                      </div>
-                      <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
-                        <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">עמלות ממתינות</p>
-                        <p className="text-xl font-black tabular-nums text-amber-700 dark:text-amber-300">{formatILS(commissionStats.pendingRevenue || 0)}</p>
-                      </div>
-                      <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-100 dark:border-violet-800">
-                        <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400">הכנסות החודש</p>
-                        <p className="text-xl font-black tabular-nums text-violet-700 dark:text-violet-300">{formatILS(commissionStats.monthlyRevenue || 0)}</p>
-                      </div>
-                      <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">סה״כ עסקאות עמלה</p>
-                        <p className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">{commissionStats.count || 0}</p>
-                      </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                      <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">עמלות בפועל</p>
+                      <p className="text-xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{formatILS(commissionData.actual || 0)}</p>
                     </div>
-                  ) : (
-                    <div className="text-center py-6">
-                      <p className="text-sm font-bold text-slate-400 dark:text-slate-500">אין נתוני עמלות עדיין</p>
-                      <p className="text-[11px] font-bold text-slate-300 dark:text-slate-600 mt-1">עמלות יתעדכנו אוטומטית עם סגירת עסקאות</p>
+                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
+                      <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">עמלות צפויות</p>
+                      <p className="text-xl font-black tabular-nums text-amber-700 dark:text-amber-300">{formatILS(commissionData.forecast || 0)}</p>
                     </div>
-                  )}
+                    <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-100 dark:border-violet-800">
+                      <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400">תיקים פעילים</p>
+                      <p className="text-xl font-black tabular-nums text-violet-700 dark:text-violet-300">{commissionData.forecastCount || 0}</p>
+                    </div>
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">עסקאות שולמו</p>
+                      <p className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">{commissionData.actualCount || 0}</p>
+                    </div>
+                  </div>
                 </section>
               )}
 
@@ -1267,30 +1286,30 @@ export default function AdvisorDashboard() {
 
               {/* עמלות */}
               {pricingLoaded && (
-                <section className="bg-white rounded-2xl border border-slate-100 p-5">
-                  <h2 className="text-sm font-black text-slate-950 mb-3">עמלות</h2>
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <h2 className="text-sm font-black text-slate-950 dark:text-slate-50 mb-3">עמלות</h2>
                   {commissionData ? (
                     <div className="space-y-2">
-                      <div className="bg-violet-50 rounded-xl px-3 py-3">
-                        <p className="text-[11px] font-black text-violet-500 mb-0.5">עמלות צפויות (forecast)</p>
-                        <p className="text-2xl font-black text-violet-700 tabular-nums">
+                      <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl px-3 py-3">
+                        <p className="text-[11px] font-black text-violet-500 dark:text-violet-400 mb-0.5">עמלות צפויות (forecast)</p>
+                        <p className="text-2xl font-black text-violet-700 dark:text-violet-300 tabular-nums">
                           ₪{commissionData.forecast.toLocaleString("he-IL", { maximumFractionDigits: 0 })}
                         </p>
-                        <p className="text-[10px] font-bold text-violet-400 mt-0.5">{commissionData.forecastCount} תיקים פעילים</p>
+                        <p className="text-[10px] font-bold text-violet-400 dark:text-violet-500 mt-0.5">{commissionData.forecastCount} תיקים פעילים</p>
                       </div>
-                      <div className="bg-emerald-50 rounded-xl px-3 py-3">
-                        <p className="text-[11px] font-black text-emerald-500 mb-0.5">עמלות בפועל (שולמו)</p>
-                        <p className="text-2xl font-black text-emerald-700 tabular-nums">
+                      <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl px-3 py-3">
+                        <p className="text-[11px] font-black text-emerald-500 dark:text-emerald-400 mb-0.5">עמלות בפועל (שולמו)</p>
+                        <p className="text-2xl font-black text-emerald-700 dark:text-emerald-300 tabular-nums">
                           ₪{commissionData.actual.toLocaleString("he-IL", { maximumFractionDigits: 0 })}
                         </p>
-                        <p className="text-[10px] font-bold text-emerald-400 mt-0.5">{commissionData.actualCount} תיקים שולמו</p>
+                        <p className="text-[10px] font-bold text-emerald-400 dark:text-emerald-500 mt-0.5">{commissionData.actualCount} תיקים שולמו</p>
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-amber-50 rounded-xl px-3 py-4 text-center">
-                      <p className="text-sm font-black text-amber-700 mb-1">לא הוגדר מודל עמלה</p>
-                      <p className="text-xs font-bold text-amber-500 mb-3">הגדר מודל עמלה בהגדרות כדי לראות תחזית</p>
-                      <Link href="/advisor/settings" className="text-xs font-black text-violet-700 hover:underline">
+                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl px-3 py-4 text-center">
+                      <p className="text-sm font-black text-amber-700 dark:text-amber-200 mb-1">לא הוגדר מודל עמלה</p>
+                      <p className="text-xs font-bold text-amber-500 dark:text-amber-400 mb-3">הגדר מודל עמלה בהגדרות כדי לראות תחזית</p>
+                      <Link href="/advisor/settings" className="text-xs font-black text-violet-700 dark:text-violet-400 hover:underline">
                         הגדר עכשיו →
                       </Link>
                     </div>
