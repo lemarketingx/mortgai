@@ -50,13 +50,23 @@ function PricingSettings() {
 
   useEffect(() => {
     fetch("/api/advisor/pricing")
-      .then((r) => {
+      .then(async (r) => {
         if (r.status === 401) { window.location.href = "/advisor/login"; return null; }
-        return r.ok ? r.json() : { profile: null };
+        if (!r.ok) {
+          const errBody = await r.json().catch(() => ({}));
+          if (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_DEBUG === "true") {
+            console.log("[PricingSettings] load error:", r.status, errBody);
+          }
+          return { profile: null };
+        }
+        return r.json();
       })
       .then((j) => {
         if (j && j.profile) {
           const p = j.profile;
+          if (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_DEBUG === "true") {
+            console.log("[PricingSettings] loaded profile:", p.pricingModel);
+          }
           setProfile(p);
           setModel(p.pricingModel || "");
           setFixedFee(p.fixedFee || "");
@@ -64,10 +74,19 @@ function PricingSettings() {
           setHybridBaseFee(p.hybridBaseFee || "");
           setHybridPercentFee(p.hybridPercentFee || "");
           setLeadTypeRules(p.leadTypeRules || {});
+        } else {
+          if (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_DEBUG === "true") {
+            console.log("[PricingSettings] no profile found — first-time setup");
+          }
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        if (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_DEBUG === "true") {
+          console.log("[PricingSettings] fetch error:", err);
+        }
+        setLoading(false);
+      });
   }, []);
 
   async function handleSave() {
@@ -75,8 +94,9 @@ function PricingSettings() {
     setError("");
     setSaved(false);
     try {
+      const method = profile ? "PUT" : "POST";
       const res = await fetch("/api/advisor/pricing", {
-        method: "PUT",
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pricingModel: model,
@@ -89,8 +109,15 @@ function PricingSettings() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || "שגיאה בשמירה");
+        if (data.error === "TABLE_MISSING") {
+          setError("טבלת הגדרות עמלות חסרה במסד הנתונים. יש להריץ את קובץ ה-SQL migration.");
+        } else {
+          setError(data.message || "שגיאה בשמירה");
+        }
       } else {
+        if (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_DEBUG === "true") {
+          console.log("[PricingSettings] saved profile:", data.profile?.pricingModel);
+        }
         setProfile(data.profile);
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
@@ -208,8 +235,9 @@ function PricingSettings() {
       )}
 
       {!model && (
-        <div className="px-5 py-4">
-          <p className="text-xs font-bold text-amber-600">
+        <div className="px-5 py-4 text-center">
+          <p className="text-sm font-black text-amber-700 dark:text-amber-300 mb-1">עדיין לא הוגדר מודל עמלה</p>
+          <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
             בחר מודל עמלה כדי שהדשבורד יחשב עמלות צפויות בהתאם.
           </p>
         </div>

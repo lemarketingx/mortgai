@@ -399,9 +399,22 @@ export default function AdvisorDashboard() {
 
   useEffect(() => {
     fetch("/api/advisor/pricing")
-      .then((r) => r.ok ? r.json() : { profile: null })
-      .then((j) => { setPricingProfile(j.profile); setPricingLoaded(true); })
-      .catch(() => setPricingLoaded(true));
+      .then((r) => {
+        if (!r.ok) {
+          if (isDebugEnabled) console.log("[dashboard] pricing fetch failed:", r.status);
+          return { profile: null };
+        }
+        return r.json();
+      })
+      .then((j) => {
+        if (isDebugEnabled) console.log("[dashboard] pricingProfile:", j.profile ? j.profile.pricingModel : "null");
+        setPricingProfile(j.profile);
+        setPricingLoaded(true);
+      })
+      .catch((err) => {
+        if (isDebugEnabled) console.log("[dashboard] pricing fetch error:", err);
+        setPricingLoaded(true);
+      });
   }, []);
 
   // ── Derived data — all useMemos, no calculations in render ──────────────────
