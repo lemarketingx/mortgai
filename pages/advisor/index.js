@@ -120,6 +120,7 @@ function formatRelative(d) {
 
 function getStage(l) { return normalizePipelineStage(l.pipelineStage || l.leadStatus); }
 function isActive(l) { return !isClosedPipelineStage(l.pipelineStage || l.leadStatus); }
+function resolveBank(l) { return l.selectedBank || l.assignedBank || l.bankName || (l.banker && l.banker.bank) || "לא הוגדר"; }
 
 // ─── Derives a list of leads that need immediate attention ────────────────────
 // All signals come from existing lead data fields — no invented data.
@@ -405,13 +406,13 @@ export default function AdvisorDashboard() {
 
   // ── Derived data — all useMemos, no calculations in render ──────────────────
   const allBanks = useMemo(() => {
-    const set = new Set(leads.map(l => l.bankName).filter(Boolean));
+    const set = new Set(leads.map(resolveBank).filter(b => b !== "לא הוגדר"));
     return ["all", ...Array.from(set).sort()];
   }, [leads]);
 
   const filteredLeads = useMemo(() => {
     let result = filterByDateRange(leads, dateRange);
-    if (bankFilter !== "all") result = result.filter(l => l.bankName === bankFilter);
+    if (bankFilter !== "all") result = result.filter(l => resolveBank(l) === bankFilter);
     return result;
   }, [leads, dateRange, bankFilter]);
 
@@ -468,8 +469,11 @@ export default function AdvisorDashboard() {
   }, [leads]);
   const topBank = useMemo(() => {
     const counts = {};
-    for (const l of completed) { if (l.bankName) counts[l.bankName] = (counts[l.bankName] || 0) + 1; }
-    const entries = Object.entries(counts);
+    for (const l of completed) {
+      const bank = resolveBank(l);
+      counts[bank] = (counts[bank] || 0) + 1;
+    }
+    const entries = Object.entries(counts).filter(([b]) => b !== "לא הוגדר");
     if (entries.length === 0) return { name: null, count: 0 };
     entries.sort((a, b) => b[1] - a[1]);
     return { name: entries[0][0], count: entries[0][1] };
@@ -477,7 +481,7 @@ export default function AdvisorDashboard() {
   const bankClosings = useMemo(() => {
     const map = {};
     for (const l of completed) {
-      const bank = l.bankName || "לא צוין";
+      const bank = resolveBank(l);
       if (!map[bank]) map[bank] = { count: 0, totalMortgage: 0 };
       map[bank].count++;
       map[bank].totalMortgage += Number(l.mortgageAmount) || 0;
@@ -527,22 +531,20 @@ export default function AdvisorDashboard() {
   }, [filteredLeads]);
 
   const bankPerformance = useMemo(() => {
-    const SUBMITTED_STAGES = new Set(["submitted_to_bank", "principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released", "closed_won"]);
     const APPROVED_STAGES = new Set(["principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released", "closed_won"]);
     const CLOSED_STAGES = new Set(["closed_won"]);
     const map = {};
     for (const l of filteredLeads) {
-      const bank = l.bankName;
-      if (!bank) continue;
+      const bank = resolveBank(l);
       const stage = getStage(l);
-      if (!map[bank]) map[bank] = { submitted: 0, approved: 0, closed: 0 };
-      if (SUBMITTED_STAGES.has(stage)) map[bank].submitted++;
+      if (!map[bank]) map[bank] = { total: 0, approved: 0, closed: 0 };
+      map[bank].total++;
       if (APPROVED_STAGES.has(stage)) map[bank].approved++;
       if (CLOSED_STAGES.has(stage)) map[bank].closed++;
     }
     return Object.entries(map)
-      .map(([bank, d]) => ({ bank, ...d, conversionRate: d.submitted > 0 ? Math.round((d.closed / d.submitted) * 100) : 0 }))
-      .sort((a, b) => b.submitted - a.submitted);
+      .map(([bank, d]) => ({ bank, ...d, conversionRate: d.total > 0 ? Math.round((d.closed / d.total) * 100) : 0 }))
+      .sort((a, b) => b.closed - a.closed);
   }, [filteredLeads]);
 
   const funnelData = useMemo(() => {
@@ -959,9 +961,9 @@ export default function AdvisorDashboard() {
                       <thead>
                         <tr className="border-b border-slate-100 dark:border-slate-800">
                           <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">בנק</th>
-                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">הוגש</th>
-                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">אושר</th>
-                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">נסגר</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">לידים</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">אישורים</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">סגירות</th>
                           <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">% המרה</th>
                         </tr>
                       </thead>
@@ -969,7 +971,7 @@ export default function AdvisorDashboard() {
                         {bankPerformance.map(row => (
                           <tr key={row.bank} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
                             <td className="px-4 py-2.5 font-black text-slate-900 dark:text-slate-100">{row.bank}</td>
-                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.submitted}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.total}</td>
                             <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.approved}</td>
                             <td className="px-4 py-2.5 text-xs font-black tabular-nums text-emerald-600 dark:text-emerald-400">{row.closed}</td>
                             <td className="px-4 py-2.5">
@@ -1055,17 +1057,29 @@ export default function AdvisorDashboard() {
                     <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">הערכות סגירה על בסיס שלב נוכחי</p>
                   </div>
                   {(() => {
-                    const STAGE_WEIGHTS = { new_lead: 0.05, contacted: 0.1, documents_requested: 0.15, waiting_documents: 0.2, documents_received: 0.25, eligibility_review: 0.35, appraisal_ordered: 0.45, appraisal_completed: 0.55, lawyer_review: 0.6, submitted_to_bank: 0.65, principle_approval: 0.75, bank_negotiation: 0.8, selected_track: 0.85, signing_scheduled: 0.9, signed: 0.95, collateral_completion: 0.97, funds_released: 0.99 };
+                    const STAGE_PROBABILITY = {
+                      new_lead: 0.05, contacted: 0.1,
+                      documents_requested: 0.35, waiting_documents: 0.35, documents_received: 0.35,
+                      eligibility_review: 0.2,
+                      appraisal_ordered: 0.45, appraisal_completed: 0.5, lawyer_review: 0.55,
+                      submitted_to_bank: 0.6,
+                      principle_approval: 0.8, bank_negotiation: 0.8, selected_track: 0.8,
+                      signing_scheduled: 0.95, signed: 0.95,
+                      collateral_completion: 0.97, funds_released: 0.99,
+                    };
+                    const ADVANCED_STAGES = new Set(["principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released"]);
                     const now = new Date();
                     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
                     const expectedClose = active.filter(l => {
+                      const stage = getStage(l);
+                      if (!ADVANCED_STAGES.has(stage)) return false;
                       const nextDate = l.nextActionAt || l.followUpDate;
-                      return nextDate && new Date(nextDate) <= monthEnd;
+                      return !nextDate || new Date(nextDate) <= monthEnd;
                     });
                     let weightedPipeline = 0;
                     let estimatedRevenue = 0;
                     for (const l of active) {
-                      const w = STAGE_WEIGHTS[getStage(l)] || 0.1;
+                      const w = STAGE_PROBABILITY[getStage(l)] || 0.1;
                       const amount = Number(l.mortgageAmount) || 0;
                       weightedPipeline += amount * w;
                       if (hasPricingProfile) {
