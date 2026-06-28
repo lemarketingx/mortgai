@@ -13,13 +13,13 @@ const SPECIALTIES = [
   { key: "investors",  label: "משקיעים" },
 ];
 
-function loadProfile() {
+function loadLocalProfile() {
   if (typeof window === "undefined") return {};
   try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}"); }
   catch { return {}; }
 }
 
-function saveProfile(p) {
+function saveLocalProfile(p) {
   try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch {}
 }
 
@@ -27,10 +27,31 @@ export default function AdvisorProfile() {
   const [profile, setProfile] = useState({});
   const [savedFlash, setSavedFlash] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState("");
 
   useEffect(() => {
-    setProfile(loadProfile());
+    const local = loadLocalProfile();
+    setProfile(local);
     setMounted(true);
+    fetch("/api/advisor/profile")
+      .then((r) => r.ok ? r.json() : { profile: null })
+      .then((data) => {
+        if (data.profile) {
+          const merged = {
+            name: data.profile.name || local.name || "",
+            phone: data.profile.phone || local.phone || "",
+            email: data.profile.email || local.email || "",
+            city: data.profile.city || local.city || "",
+            license: data.profile.license || local.license || "",
+            bio: data.profile.bio || local.bio || "",
+            specialties: data.profile.specialties || local.specialties || [],
+          };
+          setProfile(merged);
+          saveLocalProfile(merged);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   function update(key, value) {
@@ -45,13 +66,29 @@ export default function AdvisorProfile() {
     update("specialties", next);
   }
 
-  function handleSave() {
-    saveProfile(profile);
+  async function handleSave() {
+    saveLocalProfile(profile);
+    setSyncing(true);
+    setSyncStatus("");
+    try {
+      const r = await fetch("/api/advisor/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+      if (r.ok) {
+        setSyncStatus("synced");
+      } else {
+        setSyncStatus("local");
+      }
+    } catch {
+      setSyncStatus("local");
+    }
+    setSyncing(false);
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 2500);
   }
 
-  // Skeleton during SSR / hydration
   if (!mounted) {
     return (
       <main dir="rtl" className="min-h-screen bg-slate-50">
@@ -84,15 +121,18 @@ export default function AdvisorProfile() {
               ← הגדרות
             </Link>
             <h1 className="text-xl font-black text-slate-950 flex-1">פרופיל יועץ</h1>
-            {savedFlash && <span className="text-xs font-black text-emerald-600">נשמר ✓</span>}
+            {savedFlash && (
+              <span className="text-xs font-black text-emerald-600">
+                {syncStatus === "synced" ? "נשמר וסונכרן ✓" : syncStatus === "local" ? "נשמר מקומית ✓" : "נשמר ✓"}
+              </span>
+            )}
           </div>
 
-          {/* Privacy notice */}
-          <div className="flex items-start gap-3 bg-sky-50 border border-sky-200 rounded-xl px-4 py-3">
-            <span className="text-base shrink-0">🔒</span>
-            <p className="text-xs font-bold text-sky-800">
-              פרטי הפרופיל נשמרים כרגע באופן <strong>מקומי במכשיר בלבד</strong> ואינם גלויים ללקוחות.
-              בגרסאות עתידיות יסתנכרנו עם הפלטפורמה.
+          {/* Sync notice */}
+          <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+            <span className="text-base shrink-0">☁️</span>
+            <p className="text-xs font-bold text-emerald-800">
+              פרטי הפרופיל מסונכרנים עם הפלטפורמה ונשמרים גם מקומית לגישה מהירה.
             </p>
           </div>
 
@@ -188,9 +228,9 @@ export default function AdvisorProfile() {
           </section>
 
           {/* ── CTA ─────────────────────────────────────────────────────────── */}
-          <button type="button" onClick={handleSave}
-            className="w-full rounded-2xl bg-violet-700 text-white font-black py-3.5 text-sm hover:bg-violet-800 active:bg-violet-900 transition-colors">
-            שמור פרופיל
+          <button type="button" onClick={handleSave} disabled={syncing}
+            className={`w-full rounded-2xl bg-violet-700 text-white font-black py-3.5 text-sm hover:bg-violet-800 active:bg-violet-900 transition-colors ${syncing ? "opacity-60" : ""}`}>
+            {syncing ? "שומר ומסנכרן..." : "שמור פרופיל"}
           </button>
 
         </div>

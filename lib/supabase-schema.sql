@@ -257,6 +257,32 @@ ALTER TABLE document_reminders ENABLE ROW LEVEL SECURITY;
 
 
 -- ══════════════════════════════════════════════════════════════════════════════
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ADVISOR PROFILES TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS advisor_profiles (
+  advisor_id   TEXT PRIMARY KEY,
+  name         TEXT NOT NULL DEFAULT '',
+  phone        TEXT NOT NULL DEFAULT '',
+  email        TEXT NOT NULL DEFAULT '',
+  city         TEXT NOT NULL DEFAULT '',
+  license      TEXT NOT NULL DEFAULT '',
+  bio          TEXT NOT NULL DEFAULT '',
+  specialties  JSONB NOT NULL DEFAULT '[]'::JSONB,
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ADVISOR NOTIFICATION PREFERENCES TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS advisor_notification_prefs (
+  advisor_id        TEXT PRIMARY KEY,
+  overdue_alert     BOOLEAN NOT NULL DEFAULT FALSE,
+  daily_reminder    BOOLEAN NOT NULL DEFAULT FALSE,
+  whatsapp_new_lead BOOLEAN NOT NULL DEFAULT FALSE,
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- SUPABASE STORAGE  (manual step — cannot be done via SQL)
 -- ══════════════════════════════════════════════════════════════════════════════
 -- Create a PRIVATE bucket named: mortgage-documents

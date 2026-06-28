@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatILS } from "../../../lib/format";
+import { generateLeadPdf } from "../../../lib/generateLeadPdf";
 import AdvisorHeader from "../../../components/AdvisorHeader";
 import {
   PIPELINE_STAGES,
@@ -962,10 +963,9 @@ export default function LeadDetailPage() {
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-black border border-violet-200">
               📎 קישור מסמכים
             </button>
-            {/* PDF report — coming soon */}
-            <button type="button" disabled title="הורדת דוח PDF — בקרוב"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-400 text-xs font-black border border-slate-200 cursor-not-allowed select-none">
-              📄 דוח PDF — בקרוב
+            <button type="button" onClick={() => generateLeadPdf(lead, documents, activities)}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 text-xs font-black border border-slate-200 hover:bg-slate-100 transition-colors">
+              📄 דוח PDF
             </button>
           </div>
         </div>

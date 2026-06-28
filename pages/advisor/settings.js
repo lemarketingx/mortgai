@@ -15,12 +15,14 @@ function savePrefs(p) {
   try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch {}
 }
 
-// ─── Disabled toggle (purely visual) ──────────────────────────────────────────
-function FakeToggle({ label }) {
+function Toggle({ checked, onChange, label }) {
   return (
     <div className="flex items-center justify-between py-0.5">
-      <span className="text-sm font-bold text-slate-500">{label}</span>
-      <div className="w-10 h-6 bg-slate-200 rounded-full" />
+      <span className="text-sm font-bold text-slate-700">{label}</span>
+      <button type="button" onClick={() => onChange(!checked)}
+        className={`w-10 h-6 rounded-full transition-colors relative ${checked ? "bg-violet-600" : "bg-slate-200"}`}>
+        <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked ? "right-0.5" : "right-[18px]"}`} />
+      </button>
     </div>
   );
 }
@@ -29,10 +31,26 @@ export default function AdvisorSettings() {
   const [prefs, setPrefs] = useState({});
   const [savedFlash, setSavedFlash] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState({ overdue_alert: false, daily_reminder: false, whatsapp_new_lead: false });
+  const [notifLoading, setNotifLoading] = useState(true);
+  const [notifSaving, setNotifSaving] = useState(false);
 
   useEffect(() => {
     setPrefs(loadPrefs());
     setMounted(true);
+    fetch("/api/advisor/notification-prefs")
+      .then((r) => r.ok ? r.json() : { prefs: {} })
+      .then((data) => {
+        if (data.prefs && Object.keys(data.prefs).length > 0) {
+          setNotifPrefs({
+            overdue_alert: !!data.prefs.overdue_alert,
+            daily_reminder: !!data.prefs.daily_reminder,
+            whatsapp_new_lead: !!data.prefs.whatsapp_new_lead,
+          });
+        }
+        setNotifLoading(false);
+      })
+      .catch(() => setNotifLoading(false));
   }, []);
 
   function update(key, value) {
@@ -41,6 +59,22 @@ export default function AdvisorSettings() {
     savePrefs(next);
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 2000);
+  }
+
+  async function updateNotif(key, value) {
+    const next = { ...notifPrefs, [key]: value };
+    setNotifPrefs(next);
+    setNotifSaving(true);
+    try {
+      await fetch("/api/advisor/notification-prefs", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next),
+      });
+      setSavedFlash(true);
+      setTimeout(() => setSavedFlash(false), 2000);
+    } catch {}
+    setNotifSaving(false);
   }
 
   const VIEW_OPTIONS = [
@@ -141,24 +175,30 @@ export default function AdvisorSettings() {
             </div>
             <div className="px-5 py-4">
               <p className="text-xs font-bold text-slate-500">
-                הפרופיל שלך נשמר מקומית במכשיר. בגרסאות עתידיות יסתנכרן עם הפלטפורמה.
+                הפרופיל מסונכרן עם הפלטפורמה ונשמר גם מקומית לגישה מהירה.
               </p>
             </div>
           </section>
 
-          {/* ── התראות — בקרוב ─────────────────────────────────────────────── */}
-          <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden opacity-60 pointer-events-none select-none">
+          {/* ── התראות ─────────────────────────────────────────────────────── */}
+          <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-black text-slate-950">התראות</h2>
                 <p className="text-xs font-bold text-slate-400 mt-0.5">התראות מייל ו-WhatsApp</p>
               </div>
-              <span className="text-[11px] font-black text-slate-400 bg-slate-100 rounded-full px-2.5 py-1">בקרוב</span>
+              {notifSaving && <span className="text-[11px] font-black text-violet-500 animate-pulse">שומר...</span>}
             </div>
             <div className="px-5 py-4 space-y-3">
-              <FakeToggle label="התראה על פעולה באיחור" />
-              <FakeToggle label="תזכורת יומית בבוקר" />
-              <FakeToggle label="WhatsApp על ליד חדש" />
+              {notifLoading ? (
+                <div className="h-20 animate-pulse bg-slate-50 rounded-xl" />
+              ) : (
+                <>
+                  <Toggle label="התראה על פעולה באיחור" checked={notifPrefs.overdue_alert} onChange={(v) => updateNotif("overdue_alert", v)} />
+                  <Toggle label="תזכורת יומית בבוקר" checked={notifPrefs.daily_reminder} onChange={(v) => updateNotif("daily_reminder", v)} />
+                  <Toggle label="WhatsApp על ליד חדש" checked={notifPrefs.whatsapp_new_lead} onChange={(v) => updateNotif("whatsapp_new_lead", v)} />
+                </>
+              )}
             </div>
           </section>
 
