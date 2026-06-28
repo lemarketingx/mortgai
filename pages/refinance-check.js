@@ -152,12 +152,12 @@ function calculateRefinance(data) {
   }));
 
   let score = 25;
-  score += monthlySavings > 800 ? 24 : monthlySavings > 350 ? 16 : monthlySavings > 100 ? 8 : 0;
-  score += netSavings > 100000 ? 22 : netSavings > 40000 ? 14 : netSavings > 10000 ? 6 : 0;
-  score += rateGap >= 1 ? 12 : rateGap >= 0.5 ? 7 : rateGap > 0 ? 3 : 0;
-  score += breakEvenWithinTerm && breakEvenMonths <= 24 ? 10 : breakEvenWithinTerm ? 5 : 0;
-  score -= totalObligationsRatio > 45 ? 12 : totalObligationsRatio > 35 ? 6 : 0;
-  if (!isWorthwhile && !isBorderline) score = Math.min(score, 42);
+  score += monthlySavings > 800 ? 24 : monthlySavings > 350 ? 18 : monthlySavings > 150 ? 12 : monthlySavings > 50 ? 6 : 0;
+  score += netSavings > 150000 ? 24 : netSavings > 80000 ? 20 : netSavings > 40000 ? 14 : netSavings > 15000 ? 8 : netSavings > 5000 ? 4 : 0;
+  score += rateGap >= 1.5 ? 12 : rateGap >= 0.8 ? 9 : rateGap >= 0.3 ? 6 : rateGap > 0 ? 3 : 0;
+  score += breakEvenWithinTerm && breakEvenMonths <= 12 ? 12 : breakEvenWithinTerm && breakEvenMonths <= 36 ? 8 : breakEvenWithinTerm ? 4 : 0;
+  score -= totalObligationsRatio > 50 ? 10 : totalObligationsRatio > 42 ? 5 : totalObligationsRatio > 35 ? 2 : 0;
+  if (!isWorthwhile && !isBorderline) score = Math.min(score, 45);
   score = hasRequiredInputs ? clamp(Math.round(score)) : 0;
 
   const recommendation = !hasRequiredInputs
