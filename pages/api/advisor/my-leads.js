@@ -4,6 +4,61 @@ import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
 import { getPipelineStageLabel, normalizePipelineStage } from "../../../lib/pipeline";
 import { calculateCollateralProgress, calculateOverallMortgageProgress } from "../../../lib/mortgageCase";
+import { createNotification, timeBucket } from "../../../lib/notificationsStore";
+
+function generateBackgroundNotifications(advisorId, leads) {
+  const today = new Date(new Date().toDateString());
+  const bucket6h = timeBucket(6);
+  const bucket12h = timeBucket(12);
+
+  for (const lead of leads) {
+    const stage = normalizePipelineStage(lead.pipelineStage || lead.leadStatus);
+    if (["closed_won", "closed_lost"].includes(stage)) continue;
+
+    if (lead.nextActionAt && new Date(lead.nextActionAt) < today) {
+      createNotification({
+        advisorId,
+        type: "overdue_task",
+        title: `משימה באיחור: ${lead.name || "ליד"}`,
+        message: lead.nextAction || "פעולה שהוגדרה לא בוצעה בזמן",
+        entityType: "lead",
+        entityId: lead.id,
+        priority: "high",
+        dedupeKey: `overdue_task:${lead.id}:${bucket6h}`,
+      }).catch(() => {});
+    }
+
+    const missingDocs = Number(lead.missingDocumentsCount || 0);
+    if (missingDocs > 0 && ["documents_requested", "waiting_documents"].includes(stage)) {
+      createNotification({
+        advisorId,
+        type: "missing_documents",
+        title: `מסמכים חסרים: ${lead.name || "ליד"}`,
+        message: `${missingDocs} מסמכים חסרים`,
+        entityType: "lead",
+        entityId: lead.id,
+        priority: "normal",
+        dedupeKey: `missing_documents:${lead.id}:${bucket6h}`,
+      }).catch(() => {});
+    }
+
+    if (lead.followUpDate) {
+      const followUp = new Date(lead.followUpDate);
+      if (followUp.toDateString() === today.toDateString()) {
+        createNotification({
+          advisorId,
+          type: "reminder_due",
+          title: `תזכורת להיום: ${lead.name || "ליד"}`,
+          message: lead.nextAction || "מעקב מתוכנן",
+          entityType: "lead",
+          entityId: lead.id,
+          priority: "normal",
+          dedupeKey: `reminder_due:${lead.id}:${bucket12h}`,
+        }).catch(() => {});
+      }
+    }
+  }
+}
 
 function apiError(res, status, code, message) {
   return res.status(status).json({ error: code, message });
@@ -20,9 +75,34 @@ export default async function handler(req, res) {
       if (leadId) {
         const lead = leads.find((l) => l.id === leadId);
         if (!lead) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
-        return res.status(200).json({ lead });
+        const { source: _s, leadSource: _ls, ...safeFields } = lead;
+        return res.status(200).json({ lead: safeFields });
       }
-      return res.status(200).json({ leads });
+      generateBackgroundNotifications(session.advisorId, leads);
+
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[DEBUG my-leads] ${leads.length} leads for advisor ${session.advisorId}`);
+        for (const l of leads) {
+          console.log(JSON.stringify({
+            id: l.id,
+            name: l.name,
+            type: l.mortgageType,
+            pipelineStage: l.pipelineStage,
+            leadStatus: l.leadStatus,
+            status: l.status,
+            mortgageAmount: l.mortgageAmount,
+            selectedBank: l.selectedBank || null,
+            assignedBank: l.assignedBank || null,
+            bankName: l.bankName || null,
+            bankerBank: (l.banker && l.banker.bank) || null,
+            heatScore: l.heatScore,
+            heatLevel: l.heatLevel,
+          }));
+        }
+      }
+
+      const sanitized = leads.map(({ source, leadSource, ...rest }) => rest);
+      return res.status(200).json({ leads: sanitized });
     } catch (error) {
       if (error instanceof LeadStoreError) {
         const status = error.code === "SUPABASE_ENV_MISSING" ? 503 : 502;
@@ -57,6 +137,7 @@ export default async function handler(req, res) {
         lastActivityAt: now,
         nextAction: changes.nextAction,
         nextActionAt: changes.nextActionAt,
+        actualCommission: changes.actualCommission,
         bankName: changes.bankName,
         mortgageType: changes.mortgageType,
         documentsCompletionPercent: changes.documentsCompletionPercent,
@@ -101,6 +182,19 @@ export default async function handler(req, res) {
           title: `שלב עודכן: "${getPipelineStageLabel(prevStage)}" ← "${getPipelineStageLabel(newStage)}"`,
           metadata: { from: prevStage, to: newStage },
         }).catch(() => {});
+
+        const isBankStage = ["submitted_to_bank", "principle_approval", "bank_negotiation", "selected_track"].includes(newStage);
+        const stageType = isBankStage ? "bank_status" : "stage_change";
+        createNotification({
+          advisorId: session.advisorId,
+          type: stageType,
+          title: `${lead.name || "ליד"}: ${getPipelineStageLabel(newStage)}`,
+          message: `שלב עודכן מ-"${getPipelineStageLabel(prevStage)}" ל-"${getPipelineStageLabel(newStage)}"`,
+          entityType: "lead",
+          entityId: id,
+          priority: isBankStage ? "high" : "normal",
+          dedupeKey: `${stageType}:${id}:${newStage}`,
+        }).catch(() => {});
       }
       if (changes.internalNotes !== undefined && changes.internalNotes !== lead.internalNotes) {
         createActivity({
@@ -113,7 +207,8 @@ export default async function handler(req, res) {
       const patch = Object.fromEntries(Object.entries(allowed).filter(([, v]) => v !== undefined));
       const updated = await updateLead(id, patch);
       if (!updated) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
-      return res.status(200).json({ lead: updated });
+      const { source: _src, leadSource: _lSrc, ...safeUpdated } = updated || {};
+      return res.status(200).json({ lead: safeUpdated });
     } catch (error) {
       if (error instanceof LeadStoreError) {
         const status = error.code === "SUPABASE_ENV_MISSING" ? 503 : 502;

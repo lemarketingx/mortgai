@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import BrandLogo from "./BrandLogo";
+import { useTheme } from "../pages/_app";
 
 /* ------------------------------------------------------------------ */
 /*  DATA                                                                */
@@ -101,9 +102,9 @@ export const faqItems = [
 export function SectionHeader({ eyebrow, title, text }) {
   return (
     <div className="mx-auto max-w-3xl text-center">
-      <span className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">{eyebrow}</span>
-      <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950 sm:text-4xl">{title}</h2>
-      <p className="mt-4 text-lg leading-8 text-slate-600">{text}</p>
+      <span className="inline-flex rounded-full bg-violet-50 dark:bg-violet-950 px-4 py-2 text-sm font-black text-violet-700 dark:text-violet-300">{eyebrow}</span>
+      <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950 dark:text-white sm:text-4xl">{title}</h2>
+      <p className="mt-4 text-lg leading-8 text-slate-600 dark:text-slate-400">{text}</p>
     </div>
   );
 }
@@ -121,27 +122,46 @@ function LineIcon({ path }) {
 /* ------------------------------------------------------------------ */
 
 export function Header({ onCtaClick }) {
+  const { theme, toggle } = useTheme();
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-slate-200/70 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <a href="#home"><BrandLogo /></a>
 
-        <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 text-sm font-bold text-slate-600 lg:flex">
+        <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 text-sm font-bold text-slate-600 dark:text-slate-300 lg:flex">
           {navLinks.map(([label, href]) => (
-            <a key={href} href={href} className="transition hover:text-violet-700">
+            <a key={href} href={href} className="transition hover:text-violet-700 dark:hover:text-violet-400">
               {label}
             </a>
           ))}
         </nav>
 
-        <a
-          href="#eligibility-check"
-          onClick={() => onCtaClick?.("header")}
-          aria-label="מעבר לבדיקת התאמה"
-          className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800"
-        >
-          בדוק זכאות ראשונית
-        </a>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={theme === "dark" ? "מעבר למצב בהיר" : "מעבר למצב כהה"}
+            className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            {theme === "dark" ? (
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
+          <a
+            href="#eligibility-check"
+            onClick={() => onCtaClick?.("header")}
+            aria-label="מעבר לבדיקת התאמה"
+            className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800"
+          >
+            בדוק זכאות ראשונית
+          </a>
+        </div>
       </div>
     </header>
   );
@@ -155,7 +175,7 @@ function HeroIllustration() {
   return (
     <div className="relative mx-auto w-full max-w-lg">
       <div className="absolute -inset-6 rounded-[56px] bg-violet-200/30 blur-3xl" />
-      <div className="relative rounded-[44px] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-violet-50 p-6 shadow-[0_28px_80px_rgba(15,23,42,0.12)]">
+      <div className="relative rounded-[44px] border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-white via-slate-50 to-violet-50 dark:from-slate-900 dark:via-slate-900 dark:to-violet-950 p-6 shadow-[0_28px_80px_rgba(15,23,42,0.12)]">
         <svg viewBox="0 0 480 380" className="h-auto w-full" role="img" aria-label="איור בדיקת משכנתא">
           <defs>
             <linearGradient id="purpleLine" x1="0" x2="1" y1="0" y2="1">
@@ -182,17 +202,17 @@ function HeroIllustration() {
 
 export function Hero({ onCtaClick }) {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200/70 bg-white">
+    <section className="relative overflow-hidden border-b border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-900">
       <div className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,0.18),transparent_45%)]" />
       <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2">
         <div className="mx-auto max-w-2xl text-center lg:text-right">
-          <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-black text-violet-800">
+          <span className="inline-flex rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 px-4 py-2 text-sm font-black text-violet-800 dark:text-violet-200">
             ללא עלות · ללא התחייבות · תהליך קצר
           </span>
-          <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+          <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-slate-950 dark:text-white sm:text-5xl lg:text-6xl">
             בדיקת התאמה למשכנתא או מחזור — בצורה חכמה, פשוטה ומהירה
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-lg font-semibold leading-8 text-slate-600 lg:mx-0">
+          <p className="mx-auto mt-6 max-w-xl text-lg font-semibold leading-8 text-slate-600 dark:text-slate-400 lg:mx-0">
             FINZO עוזרת להבין את מצב המשכנתא, לבדוק כיוון ראשוני ולחבר אותך להמשך טיפול מקצועי במידת הצורך.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
@@ -207,22 +227,22 @@ export function Hero({ onCtaClick }) {
             <a
               href="#lead"
               onClick={() => onCtaClick?.("hero_talk")}
-              className="rounded-full border border-violet-200 bg-violet-50 px-8 py-4 text-center text-base font-black text-violet-800 transition hover:bg-violet-100"
+              className="rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 px-8 py-4 text-center text-base font-black text-violet-800 dark:text-violet-200 transition hover:bg-violet-100 dark:hover:bg-violet-900"
             >
               דברו איתי
             </a>
           </div>
-          <p className="mt-5 text-sm font-bold text-slate-500">
+          <p className="mt-5 text-sm font-bold text-slate-500 dark:text-slate-400">
             ללא התחייבות · תהליך קצר · הנתונים משמשים לבדיקה ראשונית בלבד
           </p>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
-              <p className="text-xs font-black text-slate-500">זמן מילוי</p>
-              <p className="mt-1 text-lg font-black text-slate-900">כדקה אחת</p>
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 px-4 py-3 text-right shadow-sm">
+              <p className="text-xs font-black text-slate-500 dark:text-slate-400">זמן מילוי</p>
+              <p className="mt-1 text-lg font-black text-slate-900 dark:text-slate-100">כדקה אחת</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
-              <p className="text-xs font-black text-slate-500">תוצאה מיידית</p>
-              <p className="mt-1 text-lg font-black text-slate-900">אומדן סיכוי + החזר חודשי</p>
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 px-4 py-3 text-right shadow-sm">
+              <p className="text-xs font-black text-slate-500 dark:text-slate-400">תוצאה מיידית</p>
+              <p className="mt-1 text-lg font-black text-slate-900 dark:text-slate-100">אומדן סיכוי + החזר חודשי</p>
             </div>
           </div>
         </div>
@@ -239,16 +259,16 @@ export function Hero({ onCtaClick }) {
 
 export function TrustStrip() {
   return (
-    <section className="border-y border-slate-200 bg-slate-50/80">
+    <section className="border-y border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950">
       <div className="mx-auto grid max-w-6xl gap-3 px-4 py-6 sm:grid-cols-2 sm:px-6">
         {trustItems.map(({ text, icon }) => (
-          <div key={text} className="flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-sm">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700">
+          <div key={text} className="flex items-center gap-3 rounded-2xl bg-white dark:bg-slate-800 px-5 py-4 shadow-sm">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-100 dark:bg-violet-900 text-violet-700 dark:text-violet-300">
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d={icon} strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
-            <span className="font-black text-slate-800">{text}</span>
+            <span className="font-black text-slate-800 dark:text-slate-200">{text}</span>
           </div>
         ))}
       </div>
@@ -270,19 +290,19 @@ export function ProblemSection() {
       />
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {problemItems.map(({ text, icon }) => (
-          <div key={text} className="flex items-start gap-4 rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
-            <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-50 text-violet-600">
+          <div key={text} className="flex items-start gap-4 rounded-[24px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+            <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-50 dark:bg-violet-950 text-violet-600 dark:text-violet-400">
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d={icon} strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
-            <p className="font-bold leading-7 text-slate-700">{text}</p>
+            <p className="font-bold leading-7 text-slate-700 dark:text-slate-300">{text}</p>
           </div>
         ))}
       </div>
-      <div className="mt-10 rounded-[28px] border border-violet-100 bg-violet-50 p-6 text-center sm:p-8">
-        <p className="text-lg font-black text-violet-900">FINZO עוזרת לקבל תמונת מצב ראשונית ברורה — לפני שמגיעים לבנק</p>
-        <p className="mt-2 text-slate-600">בדיקה ראשונית חינמית, אומדן מהיר, וחיבור להמשך טיפול מקצועי רק אם רלוונטי.</p>
+      <div className="mt-10 rounded-[28px] border border-violet-100 dark:border-violet-900 bg-violet-50 dark:bg-violet-950 p-6 text-center sm:p-8">
+        <p className="text-lg font-black text-violet-900 dark:text-violet-100">FINZO עוזרת לקבל תמונת מצב ראשונית ברורה — לפני שמגיעים לבנק</p>
+        <p className="mt-2 text-slate-600 dark:text-slate-400">בדיקה ראשונית חינמית, אומדן מהיר, וחיבור להמשך טיפול מקצועי רק אם רלוונטי.</p>
         <a
           href="#eligibility-check"
           className="mt-5 inline-block rounded-full bg-violet-700 px-8 py-3.5 font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.25)] transition hover:bg-violet-800"
@@ -300,7 +320,7 @@ export function ProblemSection() {
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="bg-slate-50/60 py-16 sm:py-20">
+    <section id="how-it-works" className="bg-slate-50/60 dark:bg-slate-950 py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
           eyebrow="איך זה עובד"
@@ -309,23 +329,23 @@ export function HowItWorks() {
         />
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {processSteps.map((step) => (
-            <div key={step.number} className="relative flex flex-col gap-5 rounded-[28px] border border-slate-200 bg-white p-7 shadow-sm">
+            <div key={step.number} className="relative flex flex-col gap-5 rounded-[28px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-7 shadow-sm">
               <div className="flex items-center gap-4">
                 <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-700 font-black text-2xl text-white">
                   {step.number}
                 </span>
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 dark:bg-violet-950 text-violet-700 dark:text-violet-300">
                   <LineIcon path={step.icon} />
                 </span>
               </div>
               <div>
-                <h3 className="text-xl font-black text-slate-950">{step.title}</h3>
-                <p className="mt-2 leading-7 text-slate-600">{step.text}</p>
+                <h3 className="text-xl font-black text-slate-950 dark:text-white">{step.title}</h3>
+                <p className="mt-2 leading-7 text-slate-600 dark:text-slate-400">{step.text}</p>
               </div>
             </div>
           ))}
         </div>
-        <p className="mt-8 text-center text-sm font-bold text-slate-500">
+        <p className="mt-8 text-center text-sm font-bold text-slate-500 dark:text-slate-400">
           הבדיקה באתר היא אומדן ראשוני בלבד · אינה מהווה אישור בנקאי · המשך טיפול מקצועי יתבצע מול גורם מוסמך
         </p>
       </div>
@@ -340,16 +360,16 @@ export function HowItWorks() {
 export function SeoContentSection() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20" aria-labelledby="mortgage-seo-title">
-      <div className="rounded-[34px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <div className="rounded-[34px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8">
         <div className="grid gap-8 lg:grid-cols-2">
           <div>
-            <span className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+            <span className="inline-flex rounded-full bg-violet-50 dark:bg-violet-950 px-4 py-2 text-sm font-black text-violet-700 dark:text-violet-300">
               בדיקת משכנתא בישראל
             </span>
-            <h2 id="mortgage-seo-title" className="mt-5 text-3xl font-black leading-tight text-slate-950">
+            <h2 id="mortgage-seo-title" className="mt-5 text-3xl font-black leading-tight text-slate-950 dark:text-white">
               מה בודקים לפני שלוקחים משכנתא?
             </h2>
-            <p className="mt-4 leading-8 text-slate-600">
+            <p className="mt-4 leading-8 text-slate-600 dark:text-slate-400">
               לפני שפונים לבנק כדאי להבין אם המספרים עובדים: מה סכום המשכנתא הדרוש, מה ההחזר החודשי המשוער, כמה הון עצמי חסר אם בכלל, ומה יחס ההחזר ביחס להכנסה. בדיקה מוקדמת יכולה לעזור לזהות נקודות סיכון לפני חתימת חוזה או הגשת בקשה לאישור עקרוני, אך היא אומדן בלבד וכפופה לבדיקה סופית.
             </p>
           </div>
@@ -360,9 +380,9 @@ export function SeoContentSection() {
               ["הון עצמי", "מציג אם ההון העצמי מספיק ביחס למחיר הנכס ולמגבלות המימון."],
               ["תזרים אחרי העסקה", "בודק כמה נשאר למחיה אחרי הוצאות, הלוואות והחזר משכנתא."],
             ].map(([title, text]) => (
-              <article key={title} className="rounded-3xl bg-slate-50 p-5">
-                <h3 className="font-black text-slate-950">{title}</h3>
-                <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{text}</p>
+              <article key={title} className="rounded-3xl bg-slate-50 dark:bg-slate-800 p-5">
+                <h3 className="font-black text-slate-950 dark:text-white">{title}</h3>
+                <p className="mt-2 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-400">{text}</p>
               </article>
             ))}
           </div>
@@ -456,24 +476,24 @@ export function TrustContentSection() {
       <h2 id="trust-content-title" className="sr-only">למה לבחור בבדיקה עם FINZO</h2>
       <div className="mt-10 grid gap-4 md:grid-cols-2">
         {trustBlocks.map((item) => (
-          <article key={item.title} className="flex gap-5 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
+          <article key={item.title} className="flex gap-5 rounded-[28px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 dark:bg-violet-950 text-violet-700 dark:text-violet-300">
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d={item.icon} strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
             <div>
-              <h3 className="text-xl font-black text-slate-950">{item.title}</h3>
-              <p className="mt-2 leading-7 text-slate-600">{item.text}</p>
+              <h3 className="text-xl font-black text-slate-950 dark:text-white">{item.title}</h3>
+              <p className="mt-2 leading-7 text-slate-600 dark:text-slate-400">{item.text}</p>
             </div>
           </article>
         ))}
       </div>
 
       {/* Legal disclaimer block */}
-      <div className="mt-8 rounded-[24px] border border-amber-200 bg-amber-50 px-6 py-5">
-        <p className="text-sm font-black text-amber-900">גילוי נאות חשוב</p>
-        <p className="mt-1.5 text-sm leading-7 text-amber-800">
+      <div className="mt-8 rounded-[24px] border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950 px-6 py-5">
+        <p className="text-sm font-black text-amber-900 dark:text-amber-100">גילוי נאות חשוב</p>
+        <p className="mt-1.5 text-sm leading-7 text-amber-800 dark:text-amber-200">
           הבדיקה באתר היא אומדן ראשוני בלבד ואינה מהווה אישור בנקאי, ייעוץ משכנתאות אישי, או התחייבות לפעולה פיננסית כלשהי.
           המשך טיפול מקצועי יתבצע מול גורם מורשה בלבד. התוצאות מבוססות על הנתונים שהוזנו ועשויות להשתנות.
         </p>
@@ -488,24 +508,24 @@ export function TrustContentSection() {
 
 export function AdvisorTeaser() {
   return (
-    <section className="border-t border-slate-200 bg-slate-50 py-10 sm:py-14">
+    <section className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 py-10 sm:py-14">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-right">
           <div>
-            <span className="inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-black text-violet-700">
+            <span className="inline-flex rounded-full bg-violet-100 dark:bg-violet-900 px-3 py-1 text-xs font-black text-violet-700 dark:text-violet-300">
               ליועצי משכנתאות
             </span>
-            <h3 className="mt-2 text-xl font-black text-slate-950">
+            <h3 className="mt-2 text-xl font-black text-slate-950 dark:text-white">
               FINZO מספקת מערכת לניהול לידים ותיקי משכנתא
             </h3>
-            <p className="mt-1 text-sm font-bold text-slate-600">
+            <p className="mt-1 text-sm font-bold text-slate-600 dark:text-slate-400">
               מערכת Back Office לניהול לידים, מעקב תיקים ושיוך לקוחות.
             </p>
           </div>
           <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
             <a
               href="/advisor/login"
-              className="rounded-full border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-700 shadow-sm transition hover:bg-violet-50"
+              className="rounded-full border border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-800 px-5 py-3 text-sm font-black text-violet-700 dark:text-violet-300 shadow-sm transition hover:bg-violet-50 dark:hover:bg-slate-700"
             >
               כניסת יועצים
             </a>
@@ -530,14 +550,14 @@ export function FaqSection() {
   const [openFaq, setOpenFaq] = useState(null);
 
   return (
-    <section id="faq" className="bg-slate-100/60 py-16 sm:py-20">
+    <section id="faq" className="bg-slate-100/60 dark:bg-slate-950 py-16 sm:py-20">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
         <SectionHeader eyebrow="שאלות נפוצות" title="שאלות שכולם שואלים לפני שמתחילים" text="תשובות ישירות ופשוטות — בלי עמימות." />
         <div className="mt-10 space-y-3">
           {faqItems.map((item, index) => {
             const isOpen = openFaq === index;
             return (
-              <div key={item.question} className="rounded-[24px] border border-slate-200 bg-white shadow-sm">
+              <div key={item.question} className="rounded-[24px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
                 <button
                   type="button"
                   onClick={() => setOpenFaq(isOpen ? null : index)}
@@ -545,12 +565,12 @@ export function FaqSection() {
                   aria-controls={`faq-answer-${index}`}
                   className="flex w-full min-h-[44px] items-center justify-between gap-4 px-6 py-5 text-right"
                 >
-                  <span className="text-lg font-black text-slate-950">{item.question}</span>
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-violet-50 text-xl font-black text-violet-700">
+                  <span className="text-lg font-black text-slate-950 dark:text-white">{item.question}</span>
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-violet-50 dark:bg-violet-950 text-xl font-black text-violet-700 dark:text-violet-300">
                     {isOpen ? "-" : "+"}
                   </span>
                 </button>
-                {isOpen && <p id={`faq-answer-${index}`} className="px-6 pb-6 leading-8 text-slate-600">{item.answer}</p>}
+                {isOpen && <p id={`faq-answer-${index}`} className="px-6 pb-6 leading-8 text-slate-600 dark:text-slate-400">{item.answer}</p>}
               </div>
             );
           })}
@@ -566,18 +586,18 @@ export function FaqSection() {
 
 export function Footer({ onCtaClick }) {
   return (
-    <footer className="border-t border-slate-200 bg-white py-10">
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 text-sm font-semibold text-slate-500 sm:px-6 lg:grid-cols-3">
+    <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-10">
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 text-sm font-semibold text-slate-500 dark:text-slate-400 sm:px-6 lg:grid-cols-3">
         <div className="space-y-2">
           <BrandLogo withTagline={false} />
           <p>המידע באתר הוא לצורך מידע כללי בלבד ואינו מהווה ייעוץ פיננסי, ייעוץ משכנתאות או אישור בנקאי.</p>
         </div>
         <div className="space-y-2">
-          <p className="font-black text-slate-900">פרטיות ושימוש במידע</p>
+          <p className="font-black text-slate-900 dark:text-slate-100">פרטיות ושימוש במידע</p>
           <p>המידע נמסר מרצון ומשמש לצורך אומדן ראשוני וחזרה מקצועית בלבד. לא מתבצעת התחייבות לפעולה פיננסית.</p>
         </div>
         <address className="not-italic space-y-2">
-          <p className="font-black text-slate-900">יצירת קשר</p>
+          <p className="font-black text-slate-900 dark:text-slate-100">יצירת קשר</p>
           <p>לשאלות או הבהרות ניתן להשאיר פנייה בטופס ונחזור בהקדם.</p>
           <p className="text-xs">התוכן באתר הינו מידע כללי בלבד ואינו ייעוץ פיננסי או משפטי.</p>
         </address>
@@ -587,26 +607,26 @@ export function Footer({ onCtaClick }) {
           <a href="#eligibility-check" onClick={() => onCtaClick?.("footer")} className="inline-flex rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
             בדיקת התאמה עכשיו
           </a>
-          <a href="#bottom-lead" onClick={() => onCtaClick?.("footer_bottom_lead")} className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800 transition hover:bg-violet-100">
+          <a href="#bottom-lead" onClick={() => onCtaClick?.("footer_bottom_lead")} className="inline-flex rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 px-5 py-3 text-sm font-black text-violet-800 dark:text-violet-200 transition hover:bg-violet-100 dark:hover:bg-violet-900">
             השאירו פרטים
           </a>
-          <a href="/refinance-check" className="text-sm font-bold text-violet-700 hover:underline">בדיקת מחזור ←</a>
-          <a href="/blog" className="text-sm font-bold text-violet-700 hover:underline">בלוג משכנתאות ←</a>
-          <a href="/guides" className="text-sm font-bold text-violet-700 hover:underline">מדריכי משכנתא ←</a>
+          <a href="/refinance-check" className="text-sm font-bold text-violet-700 dark:text-violet-400 hover:underline">בדיקת מחזור ←</a>
+          <a href="/blog" className="text-sm font-bold text-violet-700 dark:text-violet-400 hover:underline">בלוג משכנתאות ←</a>
+          <a href="/guides" className="text-sm font-bold text-violet-700 dark:text-violet-400 hover:underline">מדריכי משכנתא ←</a>
         </div>
-        <p className="mt-4 text-xs text-slate-400">
+        <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
           יועצי משכנתאות?{" "}
-          <a href="/advisor/login" className="font-semibold text-slate-500 hover:underline">לחצו כאן לכניסה למערכת</a>
+          <a href="/advisor/login" className="font-semibold text-slate-500 dark:text-slate-400 hover:underline">לחצו כאן לכניסה למערכת</a>
         </p>
         <nav aria-label="קישורים משפטיים" className="mt-4 flex flex-wrap gap-x-4 gap-y-1">
-          <a href="/privacy" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">מדיניות פרטיות</a>
-          <a href="/terms" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">תנאי שימוש</a>
-          <a href="/accessibility" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">נגישות</a>
-          <a href="/cookies" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">עוגיות</a>
-          <a href="/contact" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">יצירת קשר</a>
-          <a href="/advisor/register" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">הצטרפות יועצים</a>
+          <a href="/privacy" className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline">מדיניות פרטיות</a>
+          <a href="/terms" className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline">תנאי שימוש</a>
+          <a href="/accessibility" className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline">נגישות</a>
+          <a href="/cookies" className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline">עוגיות</a>
+          <a href="/contact" className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline">יצירת קשר</a>
+          <a href="/advisor/register" className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline">הצטרפות יועצים</a>
         </nav>
-        <p className="mt-3 text-xs text-slate-400">© 2026 ל.א.ה שיווק. כל הזכויות שמורות.</p>
+        <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">© 2026 ל.א.ה שיווק. כל הזכויות שמורות.</p>
       </div>
     </footer>
   );
@@ -619,7 +639,7 @@ export function Footer({ onCtaClick }) {
 export function MobileStickyCta({ onCtaClick, hidden }) {
   return (
     <div
-      className={`fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 bg-white/95 px-4 pt-3 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl transition md:hidden ${
+      className={`fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 pt-3 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl transition md:hidden ${
         hidden ? "pointer-events-none translate-y-full opacity-0" : "translate-y-0 opacity-100"
       }`}
       style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))" }}
@@ -634,7 +654,7 @@ export function MobileStickyCta({ onCtaClick, hidden }) {
         </a>
         <a
           href="#refinance"
-          className="flex min-h-[44px] items-center justify-center rounded-full border border-violet-200 bg-violet-50 px-4 text-sm font-black text-violet-800"
+          className="flex min-h-[44px] items-center justify-center rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 px-4 text-sm font-black text-violet-800 dark:text-violet-200"
         >
           בדיקת מחזור
         </a>

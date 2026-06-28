@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import { formatILS } from "../../lib/format";
 import {
   getPipelineStageLabel,
   isClosedPipelineStage,
@@ -77,11 +78,11 @@ const STAGE_TO_GROUP = new Map(
 
 // ─── Attention item tag styles ────────────────────────────────────────────────
 const TAG_META = {
-  danger:  { tag: "bg-rose-100 text-rose-700 border-rose-200",   dot: "bg-rose-500" },
-  warning: { tag: "bg-amber-100 text-amber-800 border-amber-200", dot: "bg-amber-500" },
-  docs:    { tag: "bg-amber-50 text-amber-600 border-amber-100",  dot: "bg-amber-400" },
-  stale:   { tag: "bg-sky-50 text-sky-700 border-sky-200",        dot: "bg-sky-400" },
-  low:     { tag: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" },
+  danger:  { tag: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800",   dot: "bg-rose-500" },
+  warning: { tag: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800", dot: "bg-amber-500" },
+  docs:    { tag: "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",  dot: "bg-amber-400" },
+  stale:   { tag: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800",        dot: "bg-sky-400" },
+  low:     { tag: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700", dot: "bg-slate-400" },
 };
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -119,6 +120,7 @@ function formatRelative(d) {
 
 function getStage(l) { return normalizePipelineStage(l.pipelineStage || l.leadStatus); }
 function isActive(l) { return !isClosedPipelineStage(l.pipelineStage || l.leadStatus); }
+function resolveBank(l) { return l.selectedBank || l.assignedBank || l.bankName || (l.banker && l.banker.bank) || "לא הוגדר"; }
 
 // ─── Derives a list of leads that need immediate attention ────────────────────
 // All signals come from existing lead data fields — no invented data.
@@ -223,12 +225,12 @@ function AttentionItem({ item }) {
   return (
     <Link
       href={attentionHref(item)}
-      className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50/80 transition-colors rounded-xl border border-slate-100"
+      className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800/60 hover:bg-slate-50/80 dark:hover:bg-slate-800 transition-colors rounded-xl border border-slate-100 dark:border-slate-700"
     >
       <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${meta.dot}`} />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-black text-slate-900 truncate">{item.lead.name || "—"}</p>
-        <p className="text-xs font-bold text-slate-400 truncate">
+        <p className="text-sm font-black text-slate-900 dark:text-slate-100 truncate">{item.lead.name || "—"}</p>
+        <p className="text-xs font-bold text-slate-400 dark:text-slate-500 truncate">
           {nextAction ? nextAction : getPipelineStageLabel(getStage(item.lead))}
         </p>
       </div>
@@ -237,7 +239,7 @@ function AttentionItem({ item }) {
           {item.reason}
         </span>
         {item.detail && (
-          <p className="text-[11px] text-slate-400 mt-0.5 text-left">{item.detail}</p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 text-left">{item.detail}</p>
         )}
       </div>
     </Link>
@@ -248,19 +250,21 @@ function TodayTaskItem({ item }) {
   return (
     <Link
       href={item.overdue ? `/advisor/lead/${item.lead.id}?tab=activity` : `/advisor/lead/${item.lead.id}`}
-      className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors rounded-xl border ${
-        item.overdue ? "border-rose-200 bg-rose-50/30" : "border-slate-100 bg-white"
+      className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors rounded-xl border ${
+        item.overdue
+          ? "border-rose-200 dark:border-rose-800 bg-rose-50/30 dark:bg-rose-900/20"
+          : "border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/60"
       }`}
     >
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-black text-slate-900 truncate">{item.lead.name || "—"}</p>
-        <p className="text-xs font-bold text-violet-600 truncate">{item.task}</p>
+        <p className="text-sm font-black text-slate-900 dark:text-slate-100 truncate">{item.lead.name || "—"}</p>
+        <p className="text-xs font-bold text-violet-600 dark:text-violet-400 truncate">{item.task}</p>
       </div>
       <div className="shrink-0 text-left flex flex-col items-end gap-0.5">
-        <span className="text-[11px] font-bold text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
+        <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full">
           {getPipelineStageLabel(getStage(item.lead))}
         </span>
-        <span className={`text-[11px] font-bold ${item.overdue ? "text-rose-600" : "text-slate-400"}`}>
+        <span className={`text-[11px] font-bold ${item.overdue ? "text-rose-600 dark:text-rose-400" : "text-slate-400 dark:text-slate-500"}`}>
           {item.overdue ? "⚠ באיחור" : "פתח תיק →"}
         </span>
       </div>
@@ -274,31 +278,14 @@ function PipelineGroupRow({ group, count, max }) {
       href={`/advisor/my-leads?stage=${encodeURIComponent(group.linkStage)}`}
       className="flex items-center gap-3 group"
     >
-      <span className="text-xs font-bold text-slate-500 w-28 shrink-0 truncate text-right">{group.label}</span>
-      <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden">
+      <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-28 shrink-0 truncate text-right">{group.label}</span>
+      <div className="flex-1 h-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${group.color} opacity-80 group-hover:opacity-100`}
           style={{ width: count > 0 ? `${Math.max(8, (count / max) * 100)}%` : "0%" }}
         />
       </div>
-      <span className="text-xs font-black tabular-nums text-slate-700 w-5 text-left shrink-0">{count}</span>
-    </Link>
-  );
-}
-
-function RecentUpdateRow({ lead }) {
-  const date = lead.lastActivityAt || lead.stageUpdatedAt || lead.lastContactedAt || lead.createdAt;
-  return (
-    <Link
-      href={`/advisor/lead/${lead.id}`}
-      className="flex items-center gap-3 py-2.5 px-2 hover:bg-slate-50 transition-colors rounded-lg"
-    >
-      <span className="h-2 w-2 rounded-full shrink-0 bg-violet-400" />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-black text-slate-800 truncate">{lead.name || "—"}</p>
-        <p className="text-xs font-bold text-slate-400 truncate">{getPipelineStageLabel(getStage(lead))}</p>
-      </div>
-      <span className="text-[11px] font-bold text-slate-400 shrink-0">{formatRelative(date)}</span>
+      <span className="text-xs font-black tabular-nums text-slate-700 dark:text-slate-300 w-5 text-left shrink-0">{count}</span>
     </Link>
   );
 }
@@ -307,7 +294,7 @@ function SectionSkeleton({ rows = 3 }) {
   return (
     <div className="p-4 space-y-2">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />
+        <div key={i} className="h-14 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
       ))}
     </div>
   );
@@ -317,10 +304,59 @@ function EmptySection({ icon, title, sub }) {
   return (
     <div className="px-5 py-8 text-center">
       <p className="text-2xl mb-2">{icon}</p>
-      <p className="text-sm font-black text-slate-700">{title}</p>
-      {sub && <p className="text-xs font-bold text-slate-400 mt-1">{sub}</p>}
+      <p className="text-sm font-black text-slate-700 dark:text-slate-300">{title}</p>
+      {sub && <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-1">{sub}</p>}
     </div>
   );
+}
+
+function KpiCard({ label, value }) {
+  return (
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">{label}</p>
+      <p className="text-2xl font-black tabular-nums text-slate-900 dark:text-slate-100">{value}</p>
+    </div>
+  );
+}
+
+// ─── Date range presets ──────────────────────────────────────────────────────
+const DATE_PRESETS = [
+  { key: "all", label: "הכל" },
+  { key: "7d", label: "7 ימים", days: 7 },
+  { key: "30d", label: "חודש", days: 30 },
+  { key: "90d", label: "רבעון", days: 90 },
+  { key: "ytd", label: "מתחילת השנה" },
+];
+
+function filterByDateRange(items, key, dateField = "createdAt") {
+  if (key === "all") return items;
+  const now = Date.now();
+  if (key === "ytd") {
+    const yearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
+    return items.filter(l => new Date(l[dateField] || l.created_at || 0).getTime() >= yearStart);
+  }
+  const preset = DATE_PRESETS.find(p => p.key === key);
+  if (!preset?.days) return items;
+  const cutoff = now - preset.days * DAY_MS;
+  return items.filter(l => new Date(l[dateField] || l.created_at || 0).getTime() >= cutoff);
+}
+
+// ─── Commission calculation (mirrors server-side logic) ──────────────────────
+function calcCommission(profile, lead) {
+  if (!profile || !profile.pricingModel) return null;
+  const loanAmount = Number(lead.mortgageAmount || 0);
+  const leadType = lead.mortgageType || lead.purchaseStatus || "default";
+  switch (profile.pricingModel) {
+    case "fixed":   return profile.fixedFee || 0;
+    case "percent": return loanAmount * ((profile.percentFee || 0) / 100);
+    case "hybrid":  return (profile.hybridBaseFee || 0) + loanAmount * ((profile.hybridPercentFee || 0) / 100);
+    case "by_lead_type": {
+      const rules = profile.leadTypeRules || {};
+      const rule = rules[leadType] || rules["default"];
+      return rule !== undefined && rule !== null ? Number(rule) || 0 : null;
+    }
+    default: return null;
+  }
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -328,6 +364,13 @@ export default function AdvisorDashboard() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [advisorName, setAdvisorName] = useState("");
+  const [dateRange, setDateRange] = useState("all");
+  const [bankFilter, setBankFilter] = useState("all");
+  const [commissionStats, setCommissionStats] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [pricingProfile, setPricingProfile] = useState(null);
+  const [pricingLoaded, setPricingLoaded] = useState(false);
 
   // Read display name from localStorage — safe, runs only after hydration
   useEffect(() => {
@@ -350,16 +393,49 @@ export default function AdvisorDashboard() {
       })
       .then((j) => { if (j) { setLeads(j.leads || []); setLoading(false); } })
       .catch(() => setLoading(false));
+    fetch("/api/advisor/commissions?stats=true").then(r => r.ok ? r.json() : null).then(d => { if (d?.stats) setCommissionStats(d.stats); }).catch(() => {});
+    fetch("/api/advisor/notifications?limit=5").then(r => r.ok ? r.json() : null).then(d => { if (d) { setNotifications(d.notifications || []); setUnreadCount(d.unreadCount || 0); } }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/advisor/pricing")
+      .then((r) => {
+        if (!r.ok) {
+          if (isDebugEnabled) console.log("[dashboard] pricing fetch failed:", r.status);
+          return { profile: null };
+        }
+        return r.json();
+      })
+      .then((j) => {
+        if (isDebugEnabled) console.log("[dashboard] pricingProfile:", j.profile ? j.profile.pricingModel : "null");
+        setPricingProfile(j.profile);
+        setPricingLoaded(true);
+      })
+      .catch((err) => {
+        if (isDebugEnabled) console.log("[dashboard] pricing fetch error:", err);
+        setPricingLoaded(true);
+      });
   }, []);
 
   // ── Derived data — all useMemos, no calculations in render ──────────────────
-  const active    = useMemo(() => leads.filter(isActive), [leads]);
+  const allBanks = useMemo(() => {
+    const set = new Set(leads.map(resolveBank).filter(b => b !== "לא הוגדר"));
+    return ["all", ...Array.from(set).sort()];
+  }, [leads]);
+
+  const filteredLeads = useMemo(() => {
+    let result = filterByDateRange(leads, dateRange);
+    if (bankFilter !== "all") result = result.filter(l => resolveBank(l) === bankFilter);
+    return result;
+  }, [leads, dateRange, bankFilter]);
+
+  const active    = useMemo(() => filteredLeads.filter(isActive), [filteredLeads]);
   const newLeads  = useMemo(() => active.filter((l) => ["new_lead", "contacted"].includes(getStage(l))), [active]);
   const inProgress = useMemo(() => active.filter((l) => !["new_lead", "contacted"].includes(getStage(l))), [active]);
   const waitingDocs = useMemo(() =>
     active.filter((l) => ["documents_requested", "waiting_documents"].includes(getStage(l))),
   [active]);
-  const completed = useMemo(() => leads.filter((l) => getStage(l) === "closed_won"), [leads]);
+  const completed = useMemo(() => filteredLeads.filter((l) => getStage(l) === "closed_won"), [filteredLeads]);
 
   const pipelineGroups = useMemo(() => {
     const counts = Object.fromEntries(PIPELINE_GROUPS.map((g) => [g.key, 0]));
@@ -389,118 +465,832 @@ export default function AdvisorDashboard() {
       .slice(0, 6),
   [leads]);
 
+  // ── New derived data for enhanced dashboard ─────────────────────────────────
+  const closedLost = useMemo(() => leads.filter(l => getStage(l) === "closed_lost"), [leads]);
+  const conversionRate = useMemo(() => {
+    const total = completed.length + closedLost.length;
+    return total > 0 ? Math.round((completed.length / total) * 100) : 0;
+  }, [completed, closedLost]);
+  const totalMortgageAmount = useMemo(() => leads.reduce((sum, l) => sum + (Number(l.mortgageAmount) || 0), 0), [leads]);
+  const avgPropertyValue = useMemo(() => {
+    const vals = leads.filter(l => l.propertyValue > 0).map(l => Number(l.propertyValue));
+    return vals.length > 0 ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+  }, [leads]);
+  const avgEquity = useMemo(() => {
+    const vals = leads.filter(l => l.equity > 0).map(l => Number(l.equity));
+    return vals.length > 0 ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+  }, [leads]);
+  const topBank = useMemo(() => {
+    const counts = {};
+    for (const l of completed) {
+      const bank = resolveBank(l);
+      counts[bank] = (counts[bank] || 0) + 1;
+    }
+    const entries = Object.entries(counts).filter(([b]) => b !== "לא הוגדר");
+    if (entries.length === 0) return { name: null, count: 0 };
+    entries.sort((a, b) => b[1] - a[1]);
+    return { name: entries[0][0], count: entries[0][1] };
+  }, [completed]);
+  const bankClosings = useMemo(() => {
+    const map = {};
+    for (const l of completed) {
+      const bank = resolveBank(l);
+      if (!map[bank]) map[bank] = { count: 0, totalMortgage: 0 };
+      map[bank].count++;
+      map[bank].totalMortgage += Number(l.mortgageAmount) || 0;
+    }
+    const total = completed.length || 1;
+    return Object.entries(map)
+      .map(([bank, d]) => ({ bank, count: d.count, totalMortgage: d.totalMortgage, pct: Math.round((d.count / total) * 100) }))
+      .sort((a, b) => b.count - a.count);
+  }, [completed]);
+  const caseTypeAnalytics = useMemo(() => {
+    const CASE_TYPE_MAP = {
+      "רכישת דירה יד 2": "דירה ראשונה",
+      "רכישת דירה מקבלן": "מחיר למשתכן",
+      "מחזור משכנתא": "מחזור",
+      "בנייה עצמית": "בניה עצמית",
+      "רכישת מגרש": "השקעה",
+      "שיעבוד נכס קיים": "השקעה",
+      "דירה ראשונה": "דירה ראשונה",
+      "משפרי דיור": "משפרי דיור",
+      "מחזור": "מחזור",
+      "השקעה": "השקעה",
+      "מחיר למשתכן": "מחיר למשתכן",
+      "בניה עצמית": "בניה עצמית",
+    };
+    const map = {};
+    for (const l of filteredLeads) {
+      const raw = l.mortgageType || "";
+      const group = CASE_TYPE_MAP[raw] || (raw ? raw : "לא צוין");
+      if (!map[group]) map[group] = { total: 0, closed: 0 };
+      map[group].total++;
+      if (getStage(l) === "closed_won") map[group].closed++;
+    }
+    return Object.entries(map)
+      .map(([type, d]) => ({ type, total: d.total, closed: d.closed, conversionRate: d.total > 0 ? Math.round((d.closed / d.total) * 100) : 0 }))
+      .sort((a, b) => b.total - a.total);
+  }, [filteredLeads]);
+
+  const heatLevelAnalytics = useMemo(() => {
+    const groups = { hot: { label: "Hot", count: 0 }, warm: { label: "Warm", count: 0 }, cold: { label: "Cold", count: 0 } };
+    for (const l of filteredLeads) {
+      const score = Number(l.heatScore) || 0;
+      if (score >= 70) groups.hot.count++;
+      else if (score >= 40) groups.warm.count++;
+      else groups.cold.count++;
+    }
+    return [groups.hot, groups.warm, groups.cold];
+  }, [filteredLeads]);
+
+  const bankPerformance = useMemo(() => {
+    const APPROVED_STAGES = new Set(["principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released", "closed_won"]);
+    const CLOSED_STAGES = new Set(["closed_won"]);
+    const map = {};
+    for (const l of filteredLeads) {
+      const bank = resolveBank(l);
+      const stage = getStage(l);
+      if (!map[bank]) map[bank] = { total: 0, approved: 0, closed: 0 };
+      map[bank].total++;
+      if (APPROVED_STAGES.has(stage)) map[bank].approved++;
+      if (CLOSED_STAGES.has(stage)) map[bank].closed++;
+    }
+    return Object.entries(map)
+      .map(([bank, d]) => ({ bank, ...d, conversionRate: d.total > 0 ? Math.round((d.closed / d.total) * 100) : 0 }))
+      .sort((a, b) => b.closed - a.closed);
+  }, [filteredLeads]);
+
+  const funnelData = useMemo(() => {
+    const stages = ["new_lead", "documents_requested", "eligibility_review", "submitted_to_bank", "principle_approval", "signed", "closed_won"];
+    const labels = ["ליד חדש", "מסמכים", "בדיקת זכאות", "הגשה לבנק", "אישור עקרוני", "חתימה", "הושלם"];
+    return stages.map((stage, i) => {
+      const count = filteredLeads.filter(l => {
+        const idx = stages.indexOf(getStage(l));
+        return idx >= i;
+      }).length;
+      return { stage, label: labels[i], count };
+    });
+  }, [filteredLeads]);
+
+  const noContactLeads = useMemo(() => active.filter(l => {
+    const days = diffDays(l.lastContactedAt || l.createdAt);
+    return days !== null && days >= 7;
+  }), [active]);
+  const urgentCases = useMemo(() => {
+    return [...active].sort((a, b) => {
+      const scoreA = (a.nextActionAt && isOverdue(a.nextActionAt) ? 100 : 0) + (Number(a.missingDocumentsCount) || 0) * 10 + (diffDays(a.lastContactedAt || a.createdAt) || 0);
+      const scoreB = (b.nextActionAt && isOverdue(b.nextActionAt) ? 100 : 0) + (Number(b.missingDocumentsCount) || 0) * 10 + (diffDays(b.lastContactedAt || b.createdAt) || 0);
+      return scoreB - scoreA;
+    }).slice(0, 10);
+  }, [active]);
+  const monthlyLeadCounts = useMemo(() => {
+    const months = {};
+    for (const l of leads) {
+      const d = new Date(l.createdAt || l.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      months[key] = (months[key] || 0) + 1;
+    }
+    return Object.entries(months).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
+  }, [leads]);
+
+  const hasPricingProfile = Boolean(pricingProfile && pricingProfile.pricingModel);
+
+  const commissionData = useMemo(() => {
+    if (!hasPricingProfile) return null;
+    let forecast = 0;
+    let actual = 0;
+    let forecastCount = 0;
+    let actualCount = 0;
+    for (const lead of leads) {
+      const actualVal = Number(lead.actualCommission || lead.commissionAmount || 0);
+      const stage = getStage(lead);
+
+      if (stage === "closed_won" && actualVal > 0) {
+        actual += actualVal;
+        actualCount++;
+        continue;
+      }
+
+      if (isActive(lead)) {
+        const est = calcCommission(pricingProfile, lead);
+        if (est !== null && est > 0) {
+          forecast += est;
+          forecastCount++;
+        }
+      }
+    }
+    return { forecast, actual, forecastCount, actualCount };
+  }, [leads, pricingProfile, hasPricingProfile]);
+
+  const isDebugEnabled = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_DEBUG === "true";
+
+  const debugLeadRows = useMemo(() => {
+    if (!isDebugEnabled) return [];
+    const STAGE_PROBABILITY = {
+      new_lead: 0.05, contacted: 0.1,
+      documents_requested: 0.35, waiting_documents: 0.35, documents_received: 0.35,
+      eligibility_review: 0.2,
+      appraisal_ordered: 0.45, appraisal_completed: 0.5, lawyer_review: 0.55,
+      submitted_to_bank: 0.6,
+      principle_approval: 0.8, bank_negotiation: 0.8, selected_track: 0.8,
+      signing_scheduled: 0.95, signed: 0.95,
+      collateral_completion: 0.97, funds_released: 0.99,
+    };
+    const ADVANCED = new Set(["principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released"]);
+    return leads.map(l => {
+      const stage = getStage(l);
+      const w = STAGE_PROBABILITY[stage] || 0.1;
+      const amount = Number(l.mortgageAmount) || 0;
+      return {
+        id: l.id, name: l.name || "—", type: l.mortgageType || "—",
+        stage, rawStage: l.pipelineStage || l.leadStatus || "—",
+        loanAmount: amount,
+        selectedBank: l.selectedBank || "", assignedBank: l.assignedBank || "",
+        bankName: l.bankName || "", bankerBank: (l.banker && l.banker.bank) || "",
+        resolvedBank: resolveBank(l),
+        heatScore: l.heatScore ?? "—", heatLevel: l.heatLevel || "—",
+        probability: w, weightedContribution: Math.round(amount * w),
+        expectedCloseIncluded: ADVANCED.has(stage),
+      };
+    });
+  }, [leads]);
+
   // ── Empty state — advisor has no leads yet ───────────────────────────────────
   if (!loading && leads.length === 0) {
     return (
       <>
         <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
-        <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
+        <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
           <AdvisorHeader active="/advisor" urgentItems={[]} />
           <div className="max-w-6xl mx-auto px-4 py-16 flex flex-col items-center text-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-violet-100 flex items-center justify-center text-3xl">📋</div>
-            <h2 className="text-xl font-black text-slate-950">עדיין אין לך לידים פעילים</h2>
-            <p className="text-sm font-bold text-slate-500 max-w-sm leading-relaxed">
+            <div className="w-16 h-16 rounded-2xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-3xl">📋</div>
+            <h2 className="text-xl font-black text-slate-950 dark:text-slate-50">עדיין אין לך לידים פעילים</h2>
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
               כאן יוצגו הלידים שנרכשו מ-FINZO ושויכו אליך. עבור לשוק הלידים כדי לרכוש את הליד הראשון שלך.
             </p>
             <Link
               href="/advisor/leads"
-              className="mt-2 inline-block rounded-2xl bg-violet-700 text-white font-black py-3 px-8 text-sm hover:bg-violet-800 transition-colors"
+              className="mt-2 inline-block rounded-2xl bg-violet-700 dark:bg-violet-600 text-white font-black py-3 px-8 text-sm hover:bg-violet-800 dark:hover:bg-violet-700 transition-colors"
             >
               עבור לשוק הלידים ←
             </Link>
-            <p className="text-xs font-bold text-slate-400">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
               לא ניתן ליצור לידים ידנית. כל הלידים מגיעים דרך FINZO.
             </p>
           </div>
 
           {/* Mobile bottom nav */}
-          <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
-            <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">ראשי</Link>
-            <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">הלידים שלי</Link>
-            <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
+          <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
+            <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 rounded-xl py-2.5">ראשי</Link>
+            <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
+            <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">שוק</Link>
           </div>
         </main>
       </>
     );
   }
 
+  const monthlyMax = Math.max(...monthlyLeadCounts.map(([, c]) => c), 1);
+
   // ── Full dashboard ────────────────────────────────────────────────────────────
   return (
     <>
       <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
-      <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
-        <AdvisorHeader active="/advisor" urgentItems={attentionItems} />
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
+        <AdvisorHeader active="/advisor" urgentItems={attentionItems} notificationCount={unreadCount} notifications={notifications} onMarkAllRead={() => {
+          fetch("/api/advisor/notifications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "readAll" }) }).then(() => { setUnreadCount(0); setNotifications(n => n.map(x => ({ ...x, readAt: new Date().toISOString() }))); }).catch(() => {});
+        }} />
 
         <div className="max-w-6xl mx-auto px-4 lg:px-6 py-5 space-y-5">
 
           {/* ── Welcome / context banner ──────────────────────────────────── */}
-          <div className="flex items-start justify-between gap-3 rounded-2xl bg-gradient-to-l from-violet-50 to-white border border-violet-100 px-5 py-4">
+          <div className="flex items-start justify-between gap-3 rounded-2xl bg-gradient-to-l from-violet-50 dark:from-violet-950/40 to-white dark:to-slate-900 border border-violet-100 dark:border-violet-900/50 px-5 py-4">
             <div className="min-w-0">
-              <h1 className="text-base font-black text-slate-950 mb-0.5">
-                {advisorName ? `שלום, ${advisorName} 👋` : "שלום, ברוך הבא למרכז העבודה"}
+              <h1 className="text-base font-black text-slate-950 dark:text-slate-50 mb-0.5">
+                {advisorName ? `שלום, ${advisorName}` : "שלום, ברוך הבא למרכז העבודה"}
               </h1>
-              <p className="text-xs font-bold text-slate-500 leading-relaxed">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed">
                 {!loading && attentionItems.length > 0
-                  ? <span className="text-rose-600">{attentionItems.length} לידים דורשים טיפול — בדקו את רשימת הדחוף למטה.</span>
+                  ? <span className="text-rose-600 dark:text-rose-400">{attentionItems.length} לידים דורשים טיפול — בדקו את רשימת הדחוף למטה.</span>
                   : "כל התיקים תקינים. עברו לשוק הלידים לרכוש לידים חדשים."}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Link href="/advisor/leads"
-                className="text-xs font-bold text-violet-700 hover:text-violet-900 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-lg transition-colors hidden sm:block">
+                className="text-xs font-bold text-violet-700 dark:text-violet-400 hover:text-violet-900 dark:hover:text-violet-300 px-3 py-1.5 bg-violet-50 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-800 rounded-lg transition-colors hidden sm:block">
                 שוק לידים →
               </Link>
               <Link href="/advisor/settings"
-                className="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-1.5 bg-white border border-slate-200 rounded-lg transition-colors hidden sm:block">
+                className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors hidden sm:block">
                 ⚙
               </Link>
             </div>
           </div>
 
-          {/* ── Summary KPIs — only real counts from lead data ────────────── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {loading
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-2 animate-pulse">
-                    <div className="h-3 w-20 bg-slate-200 rounded" />
-                    <div className="h-8 w-10 bg-slate-200 rounded" />
-                  </div>
-                ))
-              : [
-                  { label: "לידים חדשים",     value: newLeads.length,   color: "text-violet-700" },
-                  { label: "לידים בטיפול",     value: inProgress.length, color: "text-sky-700" },
-                  { label: "ממתינים למסמכים", value: waitingDocs.length, color: "text-amber-700" },
-                  { label: "תיקים שהושלמו",   value: completed.length,  color: "text-emerald-700" },
-                ].map(({ label, value, color }) => (
-                  <div key={label} className="bg-white border border-slate-100 rounded-2xl p-4">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-                    <p className={`text-3xl font-black tabular-nums leading-none ${color}`}>{value}</p>
-                  </div>
-                ))
-            }
+          {/* ── Pricing profile warning ────────────────────────────────── */}
+          {pricingLoaded && !hasPricingProfile && !loading && leads.length > 0 && (
+            <div className="flex items-center gap-3 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-5 py-3.5">
+              <span className="text-lg shrink-0">⚠️</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-black text-amber-800 dark:text-amber-200">הגדר מודל עמלות כדי להפעיל תחזיות הכנסה</p>
+                <p className="text-xs font-bold text-amber-600 dark:text-amber-400 mt-0.5">תחזיות הכנסה, ROI ועמלות צפויות מושבתים ללא מודל עמלה מוגדר.</p>
+              </div>
+              <Link href="/advisor/settings" className="shrink-0 text-xs font-black text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-800/50 border border-amber-300 dark:border-amber-700 px-3 py-1.5 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-800 transition-colors">
+                הגדרות →
+              </Link>
+            </div>
+          )}
+
+          {/* ── Date & Bank Filters ─────────────────────────────────────── */}
+          <div className="flex flex-wrap items-center gap-2">
+            {DATE_PRESETS.map(p => (
+              <button key={p.key} onClick={() => setDateRange(p.key)}
+                className={`text-xs font-black px-3 py-1.5 rounded-lg border transition-colors ${dateRange === p.key ? "bg-violet-100 dark:bg-violet-900/30 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-300" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"}`}>
+                {p.label}
+              </button>
+            ))}
+            {allBanks.length > 1 && (
+              <select value={bankFilter} onChange={e => setBankFilter(e.target.value)}
+                className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400 mr-auto">
+                <option value="all">כל הבנקים</option>
+                {allBanks.filter(b => b !== "all").map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            )}
           </div>
+
+          {/* ── KPI Cards — 2 rows of 4 ──────────────────────────────────── */}
+          {loading ? (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-2 animate-pulse">
+                  <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
+                  <div className="h-8 w-10 bg-slate-200 dark:bg-slate-700 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <KpiCard label="לידים פעילים" value={active.length} />
+              <KpiCard label="לידים חדשים" value={newLeads.length} />
+              <KpiCard label="בטיפול" value={inProgress.length} />
+              <KpiCard label="הושלמו" value={completed.length} />
+              <KpiCard label="אחוז המרה" value={`${conversionRate}%`} />
+              <KpiCard label='סה"כ משכנתאות' value={formatILS(totalMortgageAmount)} />
+              <KpiCard label="ממוצע שווי נכס" value={formatILS(avgPropertyValue)} />
+              <div className="bg-white dark:bg-slate-900 border border-violet-200 dark:border-violet-800 rounded-xl p-4">
+                <p className="text-[11px] font-bold text-violet-600 dark:text-violet-400 mb-1">הבנק המוביל בסגירות</p>
+                {topBank.name ? (
+                  <>
+                    <p className="text-2xl font-black tabular-nums text-slate-900 dark:text-slate-100">{topBank.name}</p>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">{topBank.count} עסקאות שנסגרו</p>
+                  </>
+                ) : (
+                  <p className="text-sm font-bold text-slate-400 dark:text-slate-500 mt-1">אין מספיק נתונים</p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ── Main 2-column grid ────────────────────────────────────────── */}
           <div className="grid lg:grid-cols-[1fr_340px] gap-4 items-start">
 
-            {/* ─ Left column ─────────────────────────────────────────────── */}
+            {/* ─ Left column (main) ─────────────────────────────────────── */}
+            <div className="space-y-4">
+
+              {/* מהלך הטיפול — Pipeline */}
+              <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                <div className="mb-4">
+                  <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">מהלך הטיפול — Pipeline</h2>
+                  <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                    לחץ על שלב כדי לסנן את הרשימה
+                  </p>
+                </div>
+                {loading
+                  ? (
+                      <div className="space-y-2.5">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <div key={i} className="h-4 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                        ))}
+                      </div>
+                    )
+                  : (
+                      <div className="space-y-2.5">
+                        {pipelineGroups.map((g) => (
+                          <PipelineGroupRow key={g.key} group={g} count={g.count} max={pipelineMax} />
+                        ))}
+                      </div>
+                    )
+                }
+              </section>
+
+              {/* לידים לפי חודש — Monthly bar chart */}
+              {!loading && monthlyLeadCounts.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <div className="mb-4">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">לידים לפי חודש</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                      6 חודשים אחרונים
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    {monthlyLeadCounts.map(([month, count]) => (
+                      <div key={month} className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-16 shrink-0 text-right tabular-nums">{month}</span>
+                        <div className="flex-1 h-5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-violet-500 dark:bg-violet-600 transition-all duration-500"
+                            style={{ width: `${Math.max(6, (count / monthlyMax) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-black tabular-nums text-slate-700 dark:text-slate-300 w-5 text-left shrink-0">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 10 התיקים הדחופים ביותר */}
+              {!loading && urgentCases.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">10 התיקים הדחופים ביותר</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                      מדורגים לפי דחיפות: איחור, מסמכים חסרים, זמן ללא קשר
+                    </p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-slate-800">
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">שם</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">שלב</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">ימים ללא קשר</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">מסמכים חסרים</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">פעולה הבאה</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {urgentCases.map((lead) => {
+                          const daysSince = diffDays(lead.lastContactedAt || lead.createdAt);
+                          const missingDocs = Number(lead.missingDocumentsCount) || 0;
+                          const overdue = lead.nextActionAt && isOverdue(lead.nextActionAt);
+                          return (
+                            <tr key={lead.id} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                              <td className="px-4 py-2.5">
+                                <Link href={`/advisor/lead/${lead.id}`} className="font-black text-slate-900 dark:text-slate-100 hover:text-violet-700 dark:hover:text-violet-400 transition-colors">
+                                  {lead.name || "—"}
+                                </Link>
+                              </td>
+                              <td className="px-4 py-2.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+                                {getPipelineStageLabel(getStage(lead))}
+                              </td>
+                              <td className="px-4 py-2.5">
+                                <span className={`text-xs font-black tabular-nums ${daysSince !== null && daysSince >= 7 ? "text-rose-600 dark:text-rose-400" : "text-slate-600 dark:text-slate-400"}`}>
+                                  {daysSince !== null ? daysSince : "—"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2.5">
+                                <span className={`text-xs font-black tabular-nums ${missingDocs > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-400 dark:text-slate-500"}`}>
+                                  {missingDocs}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2.5">
+                                {overdue ? (
+                                  <span className="text-[11px] font-black text-rose-600 dark:text-rose-400">באיחור</span>
+                                ) : lead.nextAction ? (
+                                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate max-w-[120px] inline-block">{lead.nextAction}</span>
+                                ) : (
+                                  <span className="text-[11px] text-slate-300 dark:text-slate-600">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+              {/* Funnel Analytics */}
+              {!loading && funnelData.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <div className="mb-4">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">משפך המרה</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">כמה לידים עברו כל שלב</p>
+                  </div>
+                  <div className="space-y-2">
+                    {funnelData.map((item, i) => {
+                      const maxCount = funnelData[0]?.count || 1;
+                      const pct = Math.max(6, (item.count / maxCount) * 100);
+                      return (
+                        <div key={item.stage} className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-24 shrink-0 text-right truncate">{item.label}</span>
+                          <div className="flex-1 h-5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-violet-500 dark:bg-violet-600 transition-all duration-500" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-xs font-black tabular-nums text-slate-700 dark:text-slate-300 w-6 text-left shrink-0">{item.count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {/* רכישות לפי סוג תיק */}
+              {!loading && caseTypeAnalytics.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">רכישות לפי סוג תיק</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">התפלגות לידים לפי סוג משכנתא</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-slate-800">
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">סוג תיק</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">לידים</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">סגירות</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">% המרה</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {caseTypeAnalytics.map(row => (
+                          <tr key={row.type} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="px-4 py-2.5 font-black text-slate-900 dark:text-slate-100">{row.type}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.total}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.closed}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-600 dark:text-slate-400">{row.conversionRate}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+
+              {/* לידים לפי רמת חום */}
+              {!loading && filteredLeads.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <div className="mb-4">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">לידים לפי רמת חום</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">התפלגות לפי heat score</p>
+                  </div>
+                  <div className="space-y-3">
+                    {heatLevelAnalytics.map(({ label, count }) => {
+                      const total = filteredLeads.length || 1;
+                      const pct = Math.round((count / total) * 100);
+                      const color = label === "Hot" ? "bg-rose-500" : label === "Warm" ? "bg-amber-500" : "bg-sky-500";
+                      const textColor = label === "Hot" ? "text-rose-600 dark:text-rose-400" : label === "Warm" ? "text-amber-600 dark:text-amber-400" : "text-sky-600 dark:text-sky-400";
+                      return (
+                        <div key={label} className="flex items-center gap-3">
+                          <span className={`text-xs font-black w-12 shrink-0 text-right ${textColor}`}>{label}</span>
+                          <div className="flex-1 h-5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${Math.max(4, pct)}%` }} />
+                          </div>
+                          <span className="text-xs font-black tabular-nums text-slate-700 dark:text-slate-300 w-14 text-left shrink-0">{count} ({pct}%)</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {/* ביצועים לפי בנק */}
+              {!loading && bankPerformance.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">ביצועים לפי בנק</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">הגשות, אישורים, סגירות ואחוז המרה</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-slate-800">
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">בנק</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">לידים</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">אישורים</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">סגירות</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">% המרה</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bankPerformance.map(row => (
+                          <tr key={row.bank} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="px-4 py-2.5 font-black text-slate-900 dark:text-slate-100">{row.bank}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.total}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.approved}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-emerald-600 dark:text-emerald-400">{row.closed}</td>
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center gap-2">
+                                <div className="w-12 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                  <div className="h-full rounded-full bg-violet-500" style={{ width: `${row.conversionRate}%` }} />
+                                </div>
+                                <span className="text-xs font-black tabular-nums text-slate-600 dark:text-slate-400">{row.conversionRate}%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+
+              {/* ROI Dashboard — only when pricing profile is configured */}
+              {!loading && leads.length > 0 && hasPricingProfile && commissionData && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <div className="mb-4">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">ROI — החזר על השקעה</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">ביצועים כלליים של רכישת לידים</p>
+                  </div>
+                  {(() => {
+                    const totalLeads = filteredLeads.length;
+                    const closedWon = completed.length;
+                    const totalRevenue = commissionData.actual;
+                    const avgDealSize = closedWon > 0 ? Math.round(completed.reduce((s, l) => s + (Number(l.mortgageAmount) || 0), 0) / closedWon) : 0;
+                    const avgCommission = closedWon > 0 ? Math.round(totalRevenue / closedWon) : 0;
+                    const cac = closedWon > 0 ? Math.round((totalLeads * 150) / closedWon) : 0;
+                    const revenuePerLead = totalLeads > 0 ? Math.round(totalRevenue / totalLeads) : 0;
+                    const roi = cac > 0 ? Math.round(((revenuePerLead - cac) / cac) * 100) : 0;
+                    const bankConversion = (() => {
+                      const submitted = filteredLeads.filter(l => {
+                        const s = getStage(l);
+                        return ["submitted_to_bank", "principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released", "closed_won"].includes(s);
+                      }).length;
+                      const approved = filteredLeads.filter(l => {
+                        const s = getStage(l);
+                        return ["principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released", "closed_won"].includes(s);
+                      }).length;
+                      return submitted > 0 ? Math.round((approved / submitted) * 100) : 0;
+                    })();
+                    return (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">ROI%</p>
+                          <p className={`text-xl font-black tabular-nums ${roi >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>{roi}%</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">CAC (עלות רכישת לקוח)</p>
+                          <p className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">{formatILS(cac)}</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">הכנסה לליד</p>
+                          <p className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">{formatILS(revenuePerLead)}</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">ממוצע עסקה</p>
+                          <p className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">{formatILS(avgDealSize)}</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">ממוצע עמלה</p>
+                          <p className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">{formatILS(avgCommission)}</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">אחוז אישור בנק</p>
+                          <p className="text-xl font-black tabular-nums text-violet-600 dark:text-violet-400">{bankConversion}%</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </section>
+              )}
+
+              {/* Pipeline Forecasting */}
+              {!loading && active.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <div className="mb-4">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">תחזית Pipeline</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">הערכות סגירה על בסיס שלב נוכחי</p>
+                  </div>
+                  {(() => {
+                    const STAGE_PROBABILITY = {
+                      new_lead: 0.05, contacted: 0.1,
+                      documents_requested: 0.35, waiting_documents: 0.35, documents_received: 0.35,
+                      eligibility_review: 0.2,
+                      appraisal_ordered: 0.45, appraisal_completed: 0.5, lawyer_review: 0.55,
+                      submitted_to_bank: 0.6,
+                      principle_approval: 0.8, bank_negotiation: 0.8, selected_track: 0.8,
+                      signing_scheduled: 0.95, signed: 0.95,
+                      collateral_completion: 0.97, funds_released: 0.99,
+                    };
+                    const ADVANCED_STAGES = new Set(["principle_approval", "bank_negotiation", "selected_track", "signing_scheduled", "signed", "collateral_completion", "funds_released"]);
+                    const now = new Date();
+                    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    const expectedClose = active.filter(l => {
+                      const stage = getStage(l);
+                      if (!ADVANCED_STAGES.has(stage)) return false;
+                      const nextDate = l.nextActionAt || l.followUpDate;
+                      return !nextDate || new Date(nextDate) <= monthEnd;
+                    });
+                    let weightedPipeline = 0;
+                    let estimatedRevenue = 0;
+                    const debugRows = [];
+                    for (const l of active) {
+                      const stage = getStage(l);
+                      const w = STAGE_PROBABILITY[stage] || 0.1;
+                      const amount = Number(l.mortgageAmount) || 0;
+                      const contribution = amount * w;
+                      weightedPipeline += contribution;
+                      if (hasPricingProfile) {
+                        const est = calcCommission(pricingProfile, l);
+                        if (est !== null && est > 0) estimatedRevenue += est * w;
+                      }
+                      debugRows.push({
+                        id: l.id,
+                        name: l.name || "—",
+                        type: l.mortgageType || "—",
+                        stage,
+                        rawStage: l.pipelineStage || l.leadStatus || "—",
+                        loanAmount: amount,
+                        selectedBank: l.selectedBank || "",
+                        assignedBank: l.assignedBank || "",
+                        bankName: l.bankName || "",
+                        bankerBank: (l.banker && l.banker.bank) || "",
+                        resolvedBank: resolveBank(l),
+                        heatScore: l.heatScore ?? "—",
+                        heatLevel: l.heatLevel || "—",
+                        probability: w,
+                        weightedContribution: Math.round(contribution),
+                        expectedCloseIncluded: ADVANCED_STAGES.has(stage),
+                      });
+                    }
+                    if (isDebugEnabled) {
+                      console.log("[DEBUG] Pipeline Forecast — weighted:", weightedPipeline, "revenue:", estimatedRevenue, "expectedClose:", expectedClose.length);
+                      console.table(debugRows);
+                    }
+                    return (
+                      <div className="space-y-4">
+                        <div className={`grid ${hasPricingProfile ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"} gap-3`}>
+                          <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-100 dark:border-violet-800">
+                            <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400">צפי סגירה החודש</p>
+                            <p className="text-2xl font-black tabular-nums text-violet-700 dark:text-violet-300">{expectedClose.length}</p>
+                          </div>
+                          <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Pipeline משוקלל</p>
+                            <p className="text-2xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{formatILS(Math.round(weightedPipeline))}</p>
+                          </div>
+                          {hasPricingProfile && (
+                            <>
+                              <div className="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl border border-sky-100 dark:border-sky-800">
+                                <p className="text-[10px] font-bold text-sky-600 dark:text-sky-400">הכנסה צפויה</p>
+                                <p className="text-2xl font-black tabular-nums text-sky-700 dark:text-sky-300">{formatILS(Math.round(estimatedRevenue))}</p>
+                              </div>
+                              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
+                                <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">עמלות צפויות</p>
+                                <p className="text-2xl font-black tabular-nums text-amber-700 dark:text-amber-300">{formatILS(Math.round(estimatedRevenue))}</p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        {expectedClose.length > 0 && (
+                          <div>
+                            <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 mb-2">צפי סגירה החודש:</p>
+                            <div className="space-y-1.5">
+                              {expectedClose.slice(0, 5).map(l => (
+                                <Link key={l.id} href={`/advisor/lead/${l.id}`} className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800/60 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                  <span className="text-xs font-black text-slate-900 dark:text-slate-100 truncate">{l.name || "—"}</span>
+                                  <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 tabular-nums shrink-0 mr-2">{formatILS(Number(l.mortgageAmount) || 0)}</span>
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </section>
+              )}
+
+              {/* Commission Dashboard */}
+              {!loading && hasPricingProfile && commissionData && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">עמלות — דשבורד</h2>
+                      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">מעקב הכנסות ועמלות</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                      <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">עמלות בפועל</p>
+                      <p className="text-xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{formatILS(commissionData.actual || 0)}</p>
+                    </div>
+                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
+                      <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">עמלות צפויות</p>
+                      <p className="text-xl font-black tabular-nums text-amber-700 dark:text-amber-300">{formatILS(commissionData.forecast || 0)}</p>
+                    </div>
+                    <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-100 dark:border-violet-800">
+                      <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400">תיקים פעילים</p>
+                      <p className="text-xl font-black tabular-nums text-violet-700 dark:text-violet-300">{commissionData.forecastCount || 0}</p>
+                    </div>
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">עסקאות שולמו</p>
+                      <p className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">{commissionData.actualCount || 0}</p>
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {/* סגירות לפי בנק */}
+              {!loading && bankClosings.length > 0 && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">סגירות לפי בנק</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                      התפלגות עסקאות שנסגרו בהצלחה לפי בנק
+                    </p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-slate-800">
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">בנק</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">תיקים שנסגרו</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">סך משכנתאות</th>
+                          <th className="text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 px-4 py-2.5">% מכלל הסגירות</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bankClosings.map((row) => (
+                          <tr key={row.bank} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="px-4 py-2.5 font-black text-slate-900 dark:text-slate-100">{row.bank}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.count}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{formatILS(row.totalMortgage)}</td>
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                  <div className="h-full rounded-full bg-violet-500" style={{ width: `${row.pct}%` }} />
+                                </div>
+                                <span className="text-xs font-black tabular-nums text-slate-600 dark:text-slate-400">{row.pct}%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+            </div>
+
+            {/* ─ Right column (sidebar) ─────────────────────────────────── */}
             <div className="space-y-4">
 
               {/* דורש טיפול */}
-              <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
+              <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-black text-slate-950">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">
                       דורש טיפול
                       {!loading && attentionItems.length > 0 && (
-                        <span className="mr-2 text-[11px] font-black text-rose-600 bg-rose-50 rounded-full px-2 py-0.5 align-middle">{attentionItems.length}</span>
+                        <span className="mr-2 text-[11px] font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 rounded-full px-2 py-0.5 align-middle">{attentionItems.length}</span>
                       )}
                     </h2>
-                    <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
                       לידים עם פעולות באיחור, מסמכים חסרים או ללא מעקב
                     </p>
                   </div>
-                  <Link href="/advisor/my-leads" className="text-xs font-black text-violet-600 hover:underline shrink-0">
+                  <Link href="/advisor/my-leads" className="text-xs font-black text-violet-600 dark:text-violet-400 hover:underline shrink-0">
                     כל הלידים →
                   </Link>
                 </div>
@@ -525,16 +1315,16 @@ export default function AdvisorDashboard() {
               </section>
 
               {/* המשימות שלי להיום */}
-              <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
+              <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-black text-slate-950">המשימות שלי להיום</h2>
-                    <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                    <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">המשימות שלי להיום</h2>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
                       פעולות מוגדרות להיום ולידים חדשים הממתינים לקשר ראשון
                     </p>
                   </div>
                   {!loading && (
-                    <span className="text-[11px] font-black text-slate-400 bg-slate-100 rounded-full px-2 py-0.5 tabular-nums shrink-0">
+                    <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-0.5 tabular-nums shrink-0">
                       {todayTasks.length}
                     </span>
                   )}
@@ -559,115 +1349,90 @@ export default function AdvisorDashboard() {
                 }
               </section>
 
-              {/* עדכוני תיקים אחרונים */}
-              <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-50">
-                  <h2 className="text-sm font-black text-slate-950">עדכוני תיקים אחרונים</h2>
-                  <p className="text-[11px] font-bold text-slate-400 mt-0.5">
-                    לידים שעודכנו לאחרונה — לפי תאריך פעילות
-                  </p>
-                </div>
-                {loading
-                  ? (
-                      <div className="p-4 space-y-2">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                          <div key={i} className="h-10 bg-slate-100 rounded-lg animate-pulse" />
-                        ))}
-                      </div>
-                    )
-                  : recentUpdates.length > 0
-                    ? (
-                        <div className="px-3 py-2 divide-y divide-slate-50">
-                          {recentUpdates.map((l) => (
-                            <RecentUpdateRow key={l.id} lead={l} />
-                          ))}
-                        </div>
-                      )
-                    : (
-                        <EmptySection
-                          icon="📅"
-                          title="פעילות אחרונה תופיע כאן לאחר עדכונים בתיקים"
-                        />
-                      )
-                }
-              </section>
-            </div>
-
-            {/* ─ Right column ────────────────────────────────────────────── */}
-            <div className="space-y-4">
-
-              {/* מהלך הטיפול — Pipeline grouped overview */}
-              <section className="bg-white rounded-2xl border border-slate-100 p-5">
-                <div className="mb-4">
-                  <h2 className="text-sm font-black text-slate-950">מהלך הטיפול — Pipeline</h2>
-                  <p className="text-[11px] font-bold text-slate-400 mt-0.5">
-                    לחץ על שלב כדי לסנן את הרשימה
-                  </p>
-                </div>
-                {loading
-                  ? (
-                      <div className="space-y-2.5">
-                        {Array.from({ length: 6 }).map((_, i) => (
-                          <div key={i} className="h-4 bg-slate-100 rounded animate-pulse" />
-                        ))}
-                      </div>
-                    )
-                  : (
-                      <div className="space-y-2.5">
-                        {pipelineGroups.map((g) => (
-                          <PipelineGroupRow key={g.key} group={g} count={g.count} max={pipelineMax} />
-                        ))}
-                      </div>
-                    )
-                }
-              </section>
-
               {/* סטטוס מהיר */}
               {!loading && (
-                <section className="bg-white rounded-2xl border border-slate-100 p-5">
-                  <h2 className="text-sm font-black text-slate-950 mb-3">סטטוס מהיר</h2>
-                  <div className="grid grid-cols-2 gap-2">
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <h2 className="text-sm font-black text-slate-950 dark:text-slate-50 mb-3">סטטוס מהיר</h2>
+                  <div className="space-y-3">
                     {[
-                      ["סה״כ לידים",  leads.length],
-                      ["פעיל",         active.length],
-                      ["הושלמו",       completed.length],
-                      ["ממתין מסמכים", waitingDocs.length],
-                    ].map(([label, value]) => (
-                      <div key={label} className="bg-slate-50 rounded-xl px-3 py-3">
-                        <p className="text-[11px] font-black text-slate-400 mb-0.5">{label}</p>
-                        <p className="text-2xl font-black text-slate-900 tabular-nums">{value}</p>
+                      { label: "בנק מוביל", value: topBank.name || "—" },
+                      { label: "ללא קשר 7+ ימים", value: noContactLeads.length },
+                      { label: "ממתין מסמכים", value: waitingDocs.length },
+                      { label: "לידים חמים", value: heatLevelAnalytics[0].count },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{label}</span>
+                        <span className="text-sm font-black text-slate-900 dark:text-slate-100 tabular-nums">{value}</span>
                       </div>
                     ))}
                   </div>
                 </section>
               )}
 
+              {/* עמלות */}
+              {pricingLoaded && (
+                <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                  <h2 className="text-sm font-black text-slate-950 dark:text-slate-50 mb-3">עמלות</h2>
+                  {commissionData ? (
+                    <div className="space-y-2">
+                      <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl px-3 py-3">
+                        <p className="text-[11px] font-black text-violet-500 dark:text-violet-400 mb-0.5">עמלות צפויות (forecast)</p>
+                        <p className="text-2xl font-black text-violet-700 dark:text-violet-300 tabular-nums">
+                          ₪{commissionData.forecast.toLocaleString("he-IL", { maximumFractionDigits: 0 })}
+                        </p>
+                        <p className="text-[10px] font-bold text-violet-400 dark:text-violet-500 mt-0.5">{commissionData.forecastCount} תיקים פעילים</p>
+                      </div>
+                      <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl px-3 py-3">
+                        <p className="text-[11px] font-black text-emerald-500 dark:text-emerald-400 mb-0.5">עמלות בפועל (שולמו)</p>
+                        <p className="text-2xl font-black text-emerald-700 dark:text-emerald-300 tabular-nums">
+                          ₪{commissionData.actual.toLocaleString("he-IL", { maximumFractionDigits: 0 })}
+                        </p>
+                        <p className="text-[10px] font-bold text-emerald-400 dark:text-emerald-500 mt-0.5">{commissionData.actualCount} תיקים שולמו</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl px-3 py-4 text-center">
+                      <p className="text-sm font-black text-amber-700 dark:text-amber-200 mb-1">לא הוגדר מודל עמלה</p>
+                      <p className="text-xs font-bold text-amber-500 dark:text-amber-400 mb-3">הגדר מודל עמלה בהגדרות כדי לראות תחזית</p>
+                      <Link href="/advisor/settings" className="text-xs font-black text-violet-700 dark:text-violet-400 hover:underline">
+                        הגדר עכשיו →
+                      </Link>
+                    </div>
+                  )}
+                </section>
+              )}
+
               {/* פעולות מהירות */}
-              <section className="bg-white rounded-2xl border border-slate-100 p-5">
-                <h2 className="text-sm font-black text-slate-950 mb-3">פעולות מהירות</h2>
+              <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+                <h2 className="text-sm font-black text-slate-950 dark:text-slate-50 mb-3">פעולות מהירות</h2>
                 <div className="space-y-2">
                   <Link href="/advisor/leads"
-                    className="flex items-center gap-3 rounded-xl bg-violet-700 text-white px-4 py-3 text-sm font-black hover:bg-violet-800 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-violet-700 dark:bg-violet-600 text-white px-4 py-3 text-sm font-black hover:bg-violet-800 dark:hover:bg-violet-700 transition-colors">
                     <span className="shrink-0">🏪</span>
                     <span>שוק הלידים של FINZO</span>
                   </Link>
                   <Link href="/advisor/my-leads"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 text-sm font-black hover:bg-slate-100 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <span className="shrink-0">📋</span>
                     <span>כל הלידים שלי</span>
                   </Link>
+                  <Link href="/advisor/calendar"
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    <span className="shrink-0">📅</span>
+                    <span>יומן ולוח שנה</span>
+                  </Link>
                   <Link href="/"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 text-sm font-black hover:bg-slate-100 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <span className="shrink-0">🧮</span>
                     <span>מחשבון זכאות</span>
                   </Link>
                   <Link href="/refinance-check"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 text-sm font-black hover:bg-slate-100 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <span className="shrink-0">🔄</span>
                     <span>מחשבון מחזור</span>
                   </Link>
                 </div>
-                <p className="text-[10px] font-bold text-slate-300 mt-3 text-center">
+                <p className="text-[10px] font-bold text-slate-300 dark:text-slate-600 mt-3 text-center">
                   * לא ניתן ליצור לידים ידנית — כל הלידים מגיעים דרך FINZO
                 </p>
               </section>
@@ -676,11 +1441,70 @@ export default function AdvisorDashboard() {
           </div>
         </div>
 
+        {/* Dev-only debug panel */}
+        {isDebugEnabled && !loading && debugLeadRows.length > 0 && (
+          <details className="max-w-6xl mx-auto px-4 lg:px-6 my-4">
+            <summary className="cursor-pointer text-xs font-black text-rose-500 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg px-4 py-2 select-none">
+              Dashboard Debug ({debugLeadRows.length} leads)
+            </summary>
+            <div className="mt-2 bg-slate-950 text-green-400 rounded-xl p-4 overflow-x-auto text-[11px] font-mono leading-relaxed">
+              <p className="text-amber-400 mb-2 font-bold">Pipeline Summary:</p>
+              <p>Weighted Pipeline: {formatILS(debugLeadRows.reduce((s, r) => s + r.weightedContribution, 0))}</p>
+              <p>Expected Close (advanced stages): {debugLeadRows.filter(r => r.expectedCloseIncluded).length}</p>
+              <p>Unique Resolved Banks: {[...new Set(debugLeadRows.map(r => r.resolvedBank))].join(", ")}</p>
+              <p>Has Pricing Profile: {String(hasPricingProfile)}</p>
+              <p className="text-amber-400 mt-3 mb-2 font-bold">Per-Lead Breakdown:</p>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="text-slate-400 text-left border-b border-slate-700">
+                    <th className="px-1 py-1">id</th>
+                    <th className="px-1 py-1">name</th>
+                    <th className="px-1 py-1">type</th>
+                    <th className="px-1 py-1">stage</th>
+                    <th className="px-1 py-1">rawStage</th>
+                    <th className="px-1 py-1">loan</th>
+                    <th className="px-1 py-1">selectedBank</th>
+                    <th className="px-1 py-1">assignedBank</th>
+                    <th className="px-1 py-1">bankName</th>
+                    <th className="px-1 py-1">banker.bank</th>
+                    <th className="px-1 py-1">resolved</th>
+                    <th className="px-1 py-1">heat</th>
+                    <th className="px-1 py-1">prob</th>
+                    <th className="px-1 py-1">weighted</th>
+                    <th className="px-1 py-1">expClose</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {debugLeadRows.map(r => (
+                    <tr key={r.id} className="border-b border-slate-800 hover:bg-slate-900">
+                      <td className="px-1 py-0.5 text-slate-500 max-w-[60px] truncate">{r.id.slice(-6)}</td>
+                      <td className="px-1 py-0.5 max-w-[80px] truncate">{r.name}</td>
+                      <td className="px-1 py-0.5 max-w-[70px] truncate">{r.type}</td>
+                      <td className="px-1 py-0.5 text-cyan-400">{r.stage}</td>
+                      <td className="px-1 py-0.5 text-slate-500">{r.rawStage}</td>
+                      <td className="px-1 py-0.5 tabular-nums">{r.loanAmount.toLocaleString()}</td>
+                      <td className="px-1 py-0.5">{r.selectedBank || <span className="text-slate-600">—</span>}</td>
+                      <td className="px-1 py-0.5">{r.assignedBank || <span className="text-slate-600">—</span>}</td>
+                      <td className="px-1 py-0.5">{r.bankName || <span className="text-slate-600">—</span>}</td>
+                      <td className="px-1 py-0.5">{r.bankerBank || <span className="text-slate-600">—</span>}</td>
+                      <td className="px-1 py-0.5 text-yellow-400">{r.resolvedBank}</td>
+                      <td className="px-1 py-0.5 tabular-nums">{r.heatScore}</td>
+                      <td className="px-1 py-0.5 tabular-nums">{r.probability}</td>
+                      <td className="px-1 py-0.5 tabular-nums text-emerald-400">{r.weightedContribution.toLocaleString()}</td>
+                      <td className="px-1 py-0.5">{r.expectedCloseIncluded ? <span className="text-emerald-400">yes</span> : <span className="text-slate-600">no</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        )}
+
         {/* Mobile bottom nav */}
-        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
-          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 bg-violet-50 rounded-xl py-2.5">ראשי</Link>
-          <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">הלידים שלי</Link>
-          <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">שוק</Link>
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
+          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 rounded-xl py-2.5">ראשי</Link>
+          <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
+          <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">שוק</Link>
         </div>
       </main>
     </>

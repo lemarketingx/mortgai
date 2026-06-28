@@ -91,18 +91,18 @@ export default function AdvisorProfile() {
 
   if (!mounted) {
     return (
-      <main dir="rtl" className="min-h-screen bg-slate-50">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <AdvisorHeader active="/advisor/settings" />
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="bg-white rounded-2xl h-40 animate-pulse border border-slate-100" />
+            <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl h-40 animate-pulse border border-slate-100 dark:border-slate-800" />
           ))}
         </div>
       </main>
     );
   }
 
-  const inputCls = "w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 bg-white";
+  const inputCls = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 bg-white dark:bg-slate-800 dark:text-slate-100";
 
   return (
     <>
@@ -110,40 +110,40 @@ export default function AdvisorProfile() {
         <title>פרופיל יועץ | FINZO PRO</title>
         <meta name="robots" content="noindex,nofollow" />
       </Head>
-      <main dir="rtl" className="min-h-screen bg-slate-50 pb-24 md:pb-0">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
         <AdvisorHeader active="/advisor/settings" />
 
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
 
           {/* Page header */}
           <div className="flex items-center gap-3">
-            <Link href="/advisor/settings" className="text-xs font-black text-slate-400 hover:text-slate-700 transition-colors">
+            <Link href="/advisor/settings" className="text-xs font-black text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
               ← הגדרות
             </Link>
-            <h1 className="text-xl font-black text-slate-950 flex-1">פרופיל יועץ</h1>
+            <h1 className="text-xl font-black text-slate-950 dark:text-slate-100 flex-1">פרופיל יועץ</h1>
             {savedFlash && (
-              <span className="text-xs font-black text-emerald-600">
+              <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
                 {syncStatus === "synced" ? "נשמר וסונכרן ✓" : syncStatus === "local" ? "נשמר מקומית ✓" : "נשמר ✓"}
               </span>
             )}
           </div>
 
           {/* Sync notice */}
-          <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+          <div className="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3">
             <span className="text-base shrink-0">☁️</span>
-            <p className="text-xs font-bold text-emerald-800">
+            <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
               פרטי הפרופיל מסונכרנים עם הפלטפורמה ונשמרים גם מקומית לגישה מהירה.
             </p>
           </div>
 
           {/* ── פרטים אישיים ───────────────────────────────────────────────── */}
-          <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100">
-              <h2 className="text-sm font-black text-slate-950">פרטים אישיים</h2>
+          <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-sm font-black text-slate-950 dark:text-slate-100">פרטים אישיים</h2>
             </div>
             <div className="p-5 space-y-3">
               <div>
-                <label className="block text-xs font-black text-slate-500 mb-1.5">שם מלא</label>
+                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 mb-1.5">שם מלא</label>
                 <input type="text" className={inputCls}
                   placeholder="שם היועץ"
                   value={profile.name || ""}
@@ -151,14 +151,14 @@ export default function AdvisorProfile() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-black text-slate-500 mb-1.5">טלפון</label>
+                  <label className="block text-xs font-black text-slate-500 dark:text-slate-400 mb-1.5">טלפון</label>
                   <input type="tel" className={inputCls}
                     placeholder="05X-XXXXXXX"
                     value={profile.phone || ""}
                     onChange={(e) => update("phone", e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-slate-500 mb-1.5">מייל</label>
+                  <label className="block text-xs font-black text-slate-500 dark:text-slate-400 mb-1.5">מייל</label>
                   <input type="email" className={inputCls}
                     placeholder="advisor@example.com"
                     value={profile.email || ""}
@@ -166,7 +166,7 @@ export default function AdvisorProfile() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-black text-slate-500 mb-1.5">עיר / אזור שירות</label>
+                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 mb-1.5">עיר / אזור שירות</label>
                 <input type="text" className={inputCls}
                   placeholder="תל אביב, מרכז"
                   value={profile.city || ""}
@@ -176,20 +176,20 @@ export default function AdvisorProfile() {
           </section>
 
           {/* ── פרופיל מקצועי ───────────────────────────────────────────────── */}
-          <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100">
-              <h2 className="text-sm font-black text-slate-950">פרופיל מקצועי</h2>
+          <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-sm font-black text-slate-950 dark:text-slate-100">פרופיל מקצועי</h2>
             </div>
             <div className="p-5 space-y-3">
               <div>
-                <label className="block text-xs font-black text-slate-500 mb-1.5">רישיון / ניסיון</label>
+                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 mb-1.5">רישיון / ניסיון</label>
                 <input type="text" className={inputCls}
                   placeholder="5 שנות ניסיון, רישיון מספר XXXXX"
                   value={profile.license || ""}
                   onChange={(e) => update("license", e.target.value)} />
               </div>
               <div>
-                <label className="block text-xs font-black text-slate-500 mb-1.5">ביוגרפיה קצרה</label>
+                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 mb-1.5">ביוגרפיה קצרה</label>
                 <textarea className={`${inputCls} min-h-[100px] resize-y`}
                   placeholder="כמה מילים על עצמך, הניסיון שלך ומה מייחד אותך..."
                   value={profile.bio || ""}
@@ -199,10 +199,10 @@ export default function AdvisorProfile() {
           </section>
 
           {/* ── התמחויות ────────────────────────────────────────────────────── */}
-          <section className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100">
-              <h2 className="text-sm font-black text-slate-950">התמחויות</h2>
-              <p className="text-xs font-bold text-slate-400 mt-0.5">בחר את תחומי ההתמחות שלך</p>
+          <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-sm font-black text-slate-950 dark:text-slate-100">התמחויות</h2>
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-0.5">בחר את תחומי ההתמחות שלך</p>
             </div>
             <div className="p-5">
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -213,8 +213,8 @@ export default function AdvisorProfile() {
                       onClick={() => toggleSpecialty(s.key)}
                       className={`rounded-xl px-3 py-3 text-sm font-black border text-right transition-all flex items-center gap-2 ${
                         selected
-                          ? "bg-violet-50 border-violet-300 text-violet-800"
-                          : "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300"
+                          ? "bg-violet-50 dark:bg-violet-900/20 border-violet-300 dark:border-violet-700 text-violet-800 dark:text-violet-300"
+                          : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
                       }`}>
                       <span className={`text-lg shrink-0 transition-transform ${selected ? "scale-110" : ""}`}>
                         {selected ? "✓" : "○"}
@@ -236,10 +236,10 @@ export default function AdvisorProfile() {
         </div>
 
         {/* Mobile bottom nav */}
-        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2">
-          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">ראשי</Link>
-          <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">הלידים שלי</Link>
-          <Link href="/advisor/settings" className="flex-1 text-center text-xs font-black text-slate-600 bg-slate-100 rounded-xl py-2.5">הגדרות</Link>
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
+          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">ראשי</Link>
+          <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
+          <Link href="/advisor/settings" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הגדרות</Link>
         </div>
       </main>
     </>

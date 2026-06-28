@@ -1,5 +1,8 @@
+import { createHash } from "crypto";
 import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
+import { checkIdempotencyKey, createIdempotencyKey, completeIdempotencyKey, failIdempotencyKey } from "../../../lib/idempotencyStore";
+import { createNotification } from "../../../lib/notificationsStore";
 
 const FIXED_LEAD_PRICE = 249;
 
@@ -18,19 +21,47 @@ export default async function handler(req, res) {
 
   if (!leadId) return apiError(res, 400, "LEAD_ID_REQUIRED", "leadId is required");
 
+  const idempotencyKey = `purchase:${session.advisorId}:${leadId}`;
+  const requestHash = createHash("sha256").update(JSON.stringify({ advisorId: session.advisorId, leadId })).digest("hex");
+
+  const existing = await checkIdempotencyKey(idempotencyKey);
+  if (existing) {
+    if (existing.status === "completed" && existing.response_json) {
+      return res.status(200).json(existing.response_json);
+    }
+    if (existing.status === "processing") {
+      return apiError(res, 409, "PURCHASE_IN_PROGRESS", "הרכישה כבר בתהליך. אנא המתן.");
+    }
+  }
+
+  const idemRecord = await createIdempotencyKey({
+    key: idempotencyKey,
+    advisorId: session.advisorId,
+    endpoint: "purchase-lead",
+    requestHash,
+  });
+
+  if (idemRecord && idemRecord.status === "completed" && idemRecord.response_json) {
+    return res.status(200).json(idemRecord.response_json);
+  }
+
   try {
     const storeLeads = await readStoreLeads();
     const lead = storeLeads.find((l) => l.id === leadId);
 
-    if (!lead) return apiError(res, 404, "LEAD_NOT_AVAILABLE", "Lead is not available in the store");
+    if (!lead) {
+      await failIdempotencyKey(idempotencyKey);
+      return apiError(res, 404, "LEAD_NOT_AVAILABLE", "Lead is not available in the store");
+    }
 
     if (lead.storeStatus === "sold") {
+      await failIdempotencyKey(idempotencyKey);
       return apiError(res, 409, "LEAD_ALREADY_SOLD", "הליד כבר נמכר ואינו זמין לרכישה.");
     }
 
-    // Block duplicate purchase by the same advisor
     const ownedIds = await readAdvisorPurchasedLeadIds(session.advisorId);
     if (ownedIds.has(leadId)) {
+      await failIdempotencyKey(idempotencyKey);
       return apiError(res, 409, "ALREADY_PURCHASED_BY_ADVISOR", "הליד כבר נרכש על ידך. ניתן למצוא אותו באזור 'הלידים שלי'.");
     }
 
@@ -44,8 +75,22 @@ export default async function handler(req, res) {
       isExclusive: false,
     });
 
-    return res.status(200).json({ ok: true, purchase });
+    createNotification({
+      advisorId: session.advisorId,
+      type: "lead_purchase",
+      title: `ליד חדש נרכש: ${lead.name || "ללא שם"}`,
+      message: `הליד ${lead.name || ""} מ-${lead.city || "לא ידוע"} נוסף לתיקים שלך`,
+      entityType: "lead",
+      entityId: leadId,
+      priority: "high",
+      dedupeKey: `lead_purchase:${leadId}`,
+    }).catch(() => {});
+
+    const responseJson = { ok: true, purchase };
+    await completeIdempotencyKey(idempotencyKey, responseJson);
+    return res.status(200).json(responseJson);
   } catch (error) {
+    await failIdempotencyKey(idempotencyKey);
     if (error instanceof LeadStoreError) {
       if (error.code === "TABLE_MISSING") {
         return apiError(res, 503, "TABLE_MISSING", "Lead store not configured — run SQL migration");
