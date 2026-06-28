@@ -180,13 +180,13 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
   const bellCount = notifications.length > 0 ? unreadCount : urgentItems.length;
 
   return (
-    <header className="bg-slate-950/95 dark:bg-slate-950 backdrop-blur-sm text-white sticky top-0 z-40 border-b border-white/[0.06]">
+    <header className="bg-slate-950/95 dark:bg-slate-900 backdrop-blur-sm text-white sticky top-0 z-40 border-b border-white/[0.06] dark:border-slate-700/50">
       <div className="max-w-[92rem] mx-auto px-4 lg:px-6">
 
         {/* ── Desktop bar ──────────────────────────────────────────── */}
         <div className="hidden md:flex items-center h-14 gap-6">
           <Link href="/advisor" className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
-            <span className="text-sm font-black tracking-tight">FINZO</span>
+            <span className="text-sm font-black tracking-tight text-white">FINZO</span>
             <span className="text-[10px] font-black text-violet-400 bg-violet-400/10 border border-violet-400/20 px-1.5 py-0.5 rounded-full tracking-widest">PRO</span>
           </Link>
 
@@ -326,7 +326,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
         {/* ── Mobile top bar ───────────────────────────────────────── */}
         <div className="flex md:hidden items-center justify-between h-12 gap-3">
           <Link href="/advisor" className="flex items-center gap-2">
-            <span className="text-sm font-black">FINZO</span>
+            <span className="text-sm font-black text-white">FINZO</span>
             <span className="text-[10px] font-black text-violet-400 bg-violet-400/10 border border-violet-400/20 px-1.5 py-0.5 rounded-full tracking-widest">PRO</span>
           </Link>
           <div className="flex items-center gap-2">
