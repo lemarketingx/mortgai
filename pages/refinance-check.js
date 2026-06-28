@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTheme } from "./_app";
 import { cleanNumber, displayNumber, formatILS, formatPct, toNumber } from "../lib/format";
 import { monthlyPayment } from "../lib/mortgage";
@@ -238,8 +238,39 @@ export default function RefinanceCheck() {
   const [leadConsent, setLeadConsent] = useState(false);
   const [pdfState, setPdfState] = useState({ status: "idle", message: "", fields: null });
   const [pdfConfirmed, setPdfConfirmed] = useState(false);
+  const [mobileNav, setMobileNav] = useState(false);
   const successRef = useRef(null);
   const result = useMemo(() => calculateRefinance(data), [data]);
+
+  const resetForm = useCallback(() => {
+    setData(initialData);
+    setPdfState({ status: "idle", message: "", fields: null });
+    setPdfConfirmed(false);
+  }, []);
+
+  function trackEvent(action, label, value) {
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", action, { event_category: "refinance", event_label: label, value });
+    }
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({ event: action, category: "refinance", label, value });
+    }
+  }
+
+  function shareWhatsApp() {
+    if (!result.hasRequiredInputs) return;
+    const text = `בדיקת מחזור משכנתא - FINZO\n\nציון כדאיות: ${result.score}/100\nחיסכון חודשי: ${formatILS(result.monthlySavings)}\nחיסכון נטו: ${formatILS(result.netSavings)}\nנקודת איזון: ${formatMonths(result.breakEvenMonths)}\n\n${result.recommendation}\n\nלבדיקה: ${typeof window !== "undefined" ? window.location.href : ""}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    trackEvent("share_whatsapp", "refinance_result");
+  }
+
+  function downloadResultPdf() {
+    if (!result.hasRequiredInputs) return;
+    trackEvent("download_pdf", "refinance_result");
+    const html = `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>בדיקת מחזור משכנתא - FINZO</title><style>body{font-family:Arial,Helvetica,sans-serif;max-width:700px;margin:0 auto;padding:32px;color:#1e293b}h1{color:#6d28d9;font-size:24px}h2{font-size:18px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-top:28px}.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9}.label{color:#64748b}.value{font-weight:bold}.score{font-size:48px;font-weight:900;color:#6d28d9}.note{background:#f5f3ff;border-radius:12px;padding:16px;margin-top:12px;font-size:14px;color:#4c1d95}.disclaimer{margin-top:32px;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:16px}</style></head><body><h1>FINZO · בדיקת מחזור משכנתא</h1><p class="score">${result.score}/100</p><div class="note">${result.recommendation}<br/>${result.recommendationText}</div><h2>נתוני המשכנתא</h2><div class="row"><span class="label">יתרה לסילוק</span><span class="value">${formatILS(result.balance)}</span></div><div class="row"><span class="label">ריבית קיימת</span><span class="value">${formatPct(result.currentRate)}</span></div><div class="row"><span class="label">ריבית חדשה</span><span class="value">${formatPct(result.newRate)}</span></div><div class="row"><span class="label">שנים שנותרו</span><span class="value">${result.remainingYears}</span></div><h2>תוצאות</h2><div class="row"><span class="label">החזר נוכחי</span><span class="value">${formatILS(result.currentPayment)}</span></div><div class="row"><span class="label">החזר חדש</span><span class="value">${formatILS(result.newPayment)}</span></div><div class="row"><span class="label">חיסכון חודשי</span><span class="value">${formatILS(result.monthlySavings)}</span></div><div class="row"><span class="label">חיסכון נטו</span><span class="value">${formatILS(result.netSavings)}</span></div><div class="row"><span class="label">נקודת איזון</span><span class="value">${formatMonths(result.breakEvenMonths)}</span></div><div class="row"><span class="label">רמת סיכון</span><span class="value">${result.risk}</span></div><h2>תרחישים</h2>${result.scenarios.map(s => `<div class="row"><span class="label">${s.title} (${formatPct(s.rate)}, ${s.years} שנים)</span><span class="value">${formatILS(s.payment)}/חודש</span></div>`).join("")}<p class="disclaimer">אומדן ראשוני בלבד, לא אישור בנקאי ולא ייעוץ אישי. יש לוודא נתונים מול בנק או יועץ משכנתאות מורשה.<br/>FINZO · ${new Date().toLocaleDateString("he-IL")}</p></body></html>`;
+    const win = window.open("", "_blank");
+    if (win) { win.document.write(html); win.document.close(); win.print(); }
+  }
 
   async function handlePdfUpload(file) {
     if (!file) return;
@@ -249,6 +280,7 @@ export default function RefinanceCheck() {
     }
     setPdfState({ status: "loading", message: "מעבד את ה-PDF...", fields: null });
     setPdfConfirmed(false);
+    trackEvent("pdf_upload", "refinance_pdf");
 
     try {
       const res = await fetch("/api/parse-pdf", {
@@ -353,6 +385,7 @@ export default function RefinanceCheck() {
       }
 
       setLeadSent(true);
+      trackEvent("lead_submit", "refinance_lead", result.score || 0);
       window.requestAnimationFrame(() => successRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
     } catch (err) {
       setLeadSent(false);
@@ -397,7 +430,7 @@ export default function RefinanceCheck() {
         />
       </Head>
 
-      <Header />
+      <Header mobileNav={mobileNav} setMobileNav={setMobileNav} />
       <Hero />
 
       <section id="calculator" className="bg-gradient-to-b from-white via-violet-50/35 to-white dark:from-slate-900 dark:via-violet-950/20 dark:to-slate-900 py-20">
@@ -408,8 +441,8 @@ export default function RefinanceCheck() {
             text="ניתן להעלות דוח משכנתא PDF לחילוץ נתונים, או להזין ידנית. תמיד תוצג אפשרות לאשר לפני השימוש בנתונים שחולצו."
           />
           <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
-            <ManualForm data={data} update={update} pdfState={pdfState} pdfConfirmed={pdfConfirmed} onPdfUpload={handlePdfUpload} onPdfApply={applyPdfFields} onPdfCancel={cancelPdf} />
-            <ResultPanel result={result} />
+            <ManualForm data={data} update={update} pdfState={pdfState} pdfConfirmed={pdfConfirmed} onPdfUpload={handlePdfUpload} onPdfApply={applyPdfFields} onPdfCancel={cancelPdf} onReset={resetForm} />
+            <ResultPanel result={result} onShareWhatsApp={shareWhatsApp} onDownloadPdf={downloadResultPdf} />
           </div>
         </div>
       </section>
@@ -508,7 +541,7 @@ export default function RefinanceCheck() {
   );
 }
 
-function Header() {
+function Header({ mobileNav, setMobileNav }) {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
@@ -521,10 +554,34 @@ function Header() {
             <a key={href} href={href} className="transition hover:text-violet-700">{label}</a>
           ))}
         </nav>
-        <a href="#calculator" className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
-          בדיקה חינם
-        </a>
+        <div className="flex items-center gap-3">
+          <a href="#calculator" className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
+            בדיקה חינם
+          </a>
+          <button
+            type="button"
+            onClick={() => setMobileNav((v) => !v)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 lg:hidden"
+            aria-label={mobileNav ? "סגור תפריט" : "פתח תפריט"}
+            aria-expanded={mobileNav}
+          >
+            {mobileNav ? (
+              <svg className="h-5 w-5 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            ) : (
+              <svg className="h-5 w-5 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+            )}
+          </button>
+        </div>
       </div>
+      {mobileNav && (
+        <nav className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 lg:hidden">
+          <div className="flex flex-col gap-3">
+            {navLinks.map(([label, href]) => (
+              <a key={href} href={href} onClick={() => setMobileNav(false)} className="rounded-xl px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-slate-800">{label}</a>
+            ))}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
@@ -599,9 +656,27 @@ function SectionHeader({ eyebrow, title, text }) {
   );
 }
 
-function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfApply, onPdfCancel }) {
+function getValidationWarning(data) {
+  const rate = Number(data.currentRate);
+  const newRate = Number(data.newRate);
+  const years = Number(data.remainingYears);
+  const balance = toNumber(data.balance);
+  const warnings = [];
+  if (rate > 0 && rate > 12) warnings.push("ריבית קיימת גבוהה מאוד — בדקו שהערך נכון");
+  if (newRate > 0 && newRate > 12) warnings.push("ריבית חדשה גבוהה מאוד — בדקו שהערך נכון");
+  if (rate > 0 && rate < 0.5) warnings.push("ריבית קיימת נמוכה מאוד — בדקו שהערך באחוזים");
+  if (newRate > 0 && newRate < 0.5) warnings.push("ריבית חדשה נמוכה מאוד — בדקו שהערך באחוזים");
+  if (newRate > 0 && rate > 0 && newRate >= rate) warnings.push("הריבית החדשה גבוהה או שווה לקיימת — לא צפוי חיסכון");
+  if (years > 0 && years > 30) warnings.push("תקופה מקסימלית: 30 שנה");
+  if (balance > 0 && balance < 10000) warnings.push("יתרה נמוכה מאוד — בדקו שהסכום בשקלים");
+  return warnings;
+}
+
+function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfApply, onPdfCancel, onReset }) {
   const fileInputRef = useRef(null);
   const isLoading = pdfState.status === "loading";
+  const warnings = getValidationWarning(data);
+  const hasAnyData = Object.values(data).some((v) => v !== "");
 
   return (
     <div className="flex flex-col gap-4">
@@ -676,22 +751,55 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
         <div className="grid gap-4 sm:grid-cols-2">
           <MoneyField label="יתרת משכנתא לסילוק" value={data.balance} onChange={(value) => update("balance", value)} helper="הסכום שנשאר להחזיר לפי הדוח או האפליקציה." />
           <MoneyField label="החזר חודשי נוכחי" value={data.currentPayment} onChange={(value) => update("currentPayment", value)} helper="אם ריק, נחושב לפי יתרה, ריבית ותקופה." />
-          <RateField label="ריבית קיימת ממוצעת" value={data.currentRate} onChange={(value) => update("currentRate", value)} />
+          <RateField label="ריבית קיימת ממוצעת" value={data.currentRate} onChange={(value) => update("currentRate", value)} helper="בדרך כלל 3%–7%. ניתן למצוא בדוח הבנק." />
           <NumberField label="שנים שנותרו" value={data.remainingYears} onChange={(value) => update("remainingYears", value)} />
-          <RateField label="ריבית חדשה לבדיקה" value={data.newRate} onChange={(value) => update("newRate", value)} />
-          <MoneyField label="עלות מחזור משוערת" value={data.refinanceCost} onChange={(value) => update("refinanceCost", value)} />
+          <RateField label="ריבית חדשה לבדיקה" value={data.newRate} onChange={(value) => update("newRate", value)} helper="ריבית משוערת שניתן לקבל כיום. בדקו מול הבנק." />
+          <MoneyField label="עלות מחזור משוערת" value={data.refinanceCost} onChange={(value) => update("refinanceCost", value)} helper="כולל עמלת פירעון מוקדם, שמאות, עו״ד ודמי פתיחת תיק." />
           <MoneyField label="הכנסה נטו" value={data.income} onChange={(value) => update("income", value)} />
           <MoneyField label="הוצאות חודשיות" value={data.expenses} onChange={(value) => update("expenses", value)} helper="שכירות, מזון, ביטוחים וכד׳ — לא כולל הלוואות." />
           <MoneyField label="הלוואות חודשיות" value={data.loans} onChange={(value) => update("loans", value)} helper="סך החזרי הלוואות קיימות (לא כולל המשכנתא)." />
         </div>
+        {warnings.length > 0 && (
+          <div className="mt-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
+            {warnings.map((w) => (
+              <p key={w} className="text-sm font-bold text-amber-700 dark:text-amber-300 leading-6">⚠ {w}</p>
+            ))}
+          </div>
+        )}
+        {hasAnyData && (
+          <button type="button" onClick={onReset} className="mt-4 w-full rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-black text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-800">
+            נקה הכל והתחל מחדש
+          </button>
+        )}
       </form>
     </div>
   );
 }
 
-function ResultPanel({ result }) {
+function PaymentChart({ current, newPay, active }) {
+  const max = Math.max(current, newPay, 1);
+  const currentPct = active ? Math.round((current / max) * 100) : 0;
+  const newPct = active ? Math.round((newPay / max) * 100) : 0;
   return (
-    <aside className="rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-700 to-violet-950 p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.28)] sm:p-8">
+    <div className="mt-6 rounded-3xl bg-white/10 p-5 ring-1 ring-white/10">
+      <p className="text-sm font-black text-violet-100">השוואת החזרים</p>
+      <div className="mt-4 space-y-3">
+        <div>
+          <div className="flex justify-between text-xs font-bold text-violet-200 mb-1"><span>החזר נוכחי</span><span>{active ? formatILS(current) : "--"}</span></div>
+          <div className="h-4 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-violet-300 transition-all duration-500" style={{ width: `${currentPct}%` }} /></div>
+        </div>
+        <div>
+          <div className="flex justify-between text-xs font-bold text-violet-200 mb-1"><span>החזר חדש</span><span>{active ? formatILS(newPay) : "--"}</span></div>
+          <div className="h-4 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-emerald-400 transition-all duration-500" style={{ width: `${newPct}%` }} /></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResultPanel({ result, onShareWhatsApp, onDownloadPdf }) {
+  return (
+    <aside aria-live="polite" aria-atomic="true" className="rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-700 to-violet-950 p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.28)] sm:p-8">
       <p className="text-sm font-black text-violet-100">תוצאה בזמן אמת</p>
       <div className="mt-6 flex items-end justify-between gap-4">
         <div>
@@ -709,6 +817,7 @@ function ResultPanel({ result }) {
         <DarkMetric label="החזר חדש" value={result.hasRequiredInputs ? formatILS(result.newPayment) : "--"} />
         <DarkMetric label="רמת סיכון" value={result.risk} />
       </div>
+      <PaymentChart current={result.currentPayment} newPay={result.newPayment} active={result.hasRequiredInputs} />
       <div className="mt-6 rounded-3xl bg-white/10 p-5 ring-1 ring-white/10">
         <p className="text-sm font-black text-violet-100">הסבר</p>
         <p className="mt-2 leading-7 text-violet-50">{result.recommendationText}</p>
@@ -716,6 +825,16 @@ function ResultPanel({ result }) {
       <a href="#lead" className="mt-6 block rounded-full bg-white px-6 py-4 text-center text-base font-black text-violet-800 shadow-lg transition hover:bg-violet-50">
         בדיקה עם יועץ
       </a>
+      {result.hasRequiredInputs && (
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <button type="button" onClick={onShareWhatsApp} className="rounded-full bg-white/15 px-4 py-3 text-sm font-black text-white ring-1 ring-white/10 transition hover:bg-white/25">
+            שתף בוואטסאפ
+          </button>
+          <button type="button" onClick={onDownloadPdf} className="rounded-full bg-white/15 px-4 py-3 text-sm font-black text-white ring-1 ring-white/10 transition hover:bg-white/25">
+            הורד PDF
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
@@ -875,9 +994,32 @@ function InfoCard({ title, text }) {
 function Footer() {
   return (
     <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-10">
-      <div className="mx-auto max-w-6xl px-4 text-sm font-semibold leading-7 text-slate-500 dark:text-slate-400 sm:px-6">
-        <p className="font-black text-slate-900 dark:text-slate-100">FINZO · בדיקת מחזור משכנתא</p>
-        <p>אומדן ראשוני בלבד, לא אישור בנקאי ולא ייעוץ אישי. יש לוודא נתונים מול בנק או יועץ משכנתאות מורשה.</p>
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="grid gap-8 sm:grid-cols-3">
+          <div>
+            <p className="text-lg font-black text-slate-900 dark:text-slate-100">FINZO</p>
+            <p className="mt-2 text-sm font-semibold leading-7 text-slate-500 dark:text-slate-400">בדיקת זכאות חכמה למשכנתא בישראל. אומדן ראשוני בלבד, לא אישור בנקאי ולא ייעוץ אישי.</p>
+          </div>
+          <div>
+            <p className="text-sm font-black text-slate-700 dark:text-slate-300">ניווט</p>
+            <nav className="mt-3 flex flex-col gap-2">
+              <a href="/" className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-violet-700 transition">דף הבית</a>
+              <a href="#calculator" className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-violet-700 transition">בדיקת מחזור</a>
+              <a href="#faq" className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-violet-700 transition">שאלות נפוצות</a>
+            </nav>
+          </div>
+          <div>
+            <p className="text-sm font-black text-slate-700 dark:text-slate-300">מידע</p>
+            <nav className="mt-3 flex flex-col gap-2">
+              <a href="/privacy" className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-violet-700 transition">מדיניות פרטיות</a>
+              <a href="/terms" className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-violet-700 transition">תנאי שימוש</a>
+              <a href="/accessibility" className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-violet-700 transition">נגישות</a>
+            </nav>
+          </div>
+        </div>
+        <div className="mt-8 border-t border-slate-200 dark:border-slate-800 pt-6 text-center text-xs font-semibold text-slate-400 dark:text-slate-500">
+          © {new Date().getFullYear()} FINZO. יש לוודא נתונים מול בנק או יועץ משכנתאות מורשה.
+        </div>
       </div>
     </footer>
   );
@@ -953,7 +1095,7 @@ function NumberField({ label, value, onChange }) {
   );
 }
 
-function RateField({ label, value, onChange }) {
+function RateField({ label, value, onChange, helper }) {
   return (
     <label className="block">
       <span className="text-sm font-black text-slate-700 dark:text-slate-300">{label}</span>
@@ -966,6 +1108,7 @@ function RateField({ label, value, onChange }) {
         />
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400 dark:text-slate-500">%</span>
       </span>
+      {helper && <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">{helper}</span>}
     </label>
   );
 }
