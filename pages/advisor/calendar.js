@@ -3,6 +3,53 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
 
+// ─── Google Calendar helpers ────────────────────────────────────────────────
+function toGoogleCalendarUrl(event) {
+  const start = (event.startAt || "").replace(/[-:]/g, "").replace("T", "T").slice(0, 15) + "00";
+  const end = (event.endAt || event.startAt || "").replace(/[-:]/g, "").replace("T", "T").slice(0, 15) + "00";
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: event.title || "",
+    dates: `${start}/${end}`,
+    details: event.description || "",
+    ctz: "Asia/Jerusalem",
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function generateICS(events) {
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//FINZO PRO//Calendar//HE",
+    "CALSCALE:GREGORIAN",
+  ];
+  for (const ev of events) {
+    const start = (ev.startAt || "").replace(/[-:]/g, "").slice(0, 15) + "00";
+    const end = (ev.endAt || ev.startAt || "").replace(/[-:]/g, "").slice(0, 15) + "00";
+    lines.push("BEGIN:VEVENT");
+    lines.push(`DTSTART;TZID=Asia/Jerusalem:${start}`);
+    lines.push(`DTEND;TZID=Asia/Jerusalem:${end}`);
+    lines.push(`SUMMARY:${(ev.title || "").replace(/\n/g, "\\n")}`);
+    if (ev.description) lines.push(`DESCRIPTION:${ev.description.replace(/\n/g, "\\n")}`);
+    lines.push(`UID:${ev.id}@finzo.co.il`);
+    lines.push("END:VEVENT");
+  }
+  lines.push("END:VCALENDAR");
+  return lines.join("\r\n");
+}
+
+function downloadICS(events) {
+  const ics = generateICS(events);
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "finzo-calendar.ics";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ─── Hebrew locale data ─────────────────────────────────────────────────────
 const HE_DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 const HE_DAYS_SHORT = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"];
@@ -111,17 +158,27 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
   const [eventType, setEventType] = useState(event ? event.eventType : "meeting");
   const [notes, setNotes] = useState(event ? event.description || "" : "");
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (!title.trim()) return;
-    const payload = {
+  function buildPayload() {
+    if (!title.trim()) return null;
+    return {
       title: title.trim(),
       startAt: `${date}T${startTime}:00`,
       endAt: `${date}T${endTime}:00`,
       eventType,
       description: notes.trim() || undefined,
     };
-    onSave(payload);
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const payload = buildPayload();
+    if (payload) onSave(payload, false);
+  }
+
+  function handleSaveAndGoogle(e) {
+    e.preventDefault();
+    const payload = buildPayload();
+    if (payload) onSave(payload, true);
   }
 
   return (
@@ -207,7 +264,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
               className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500 resize-none"
             />
           </div>
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-2 pt-2">
             <button
               type="submit"
               disabled={saving}
@@ -215,12 +272,21 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
             >
               {saving ? "שומר..." : isEdit ? "עדכון" : "הוספה"}
             </button>
+            <button
+              type="button"
+              onClick={handleSaveAndGoogle}
+              disabled={saving}
+              className="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-400 font-bold px-3 py-2.5 text-sm hover:bg-sky-100 dark:hover:bg-sky-900/40 transition disabled:opacity-50 flex items-center gap-1"
+              title="שמור והוסף ליומן Google"
+            >
+              📅 Google
+            </button>
             {isEdit && onDelete && (
               <button
                 type="button"
                 onClick={onDelete}
                 disabled={saving}
-                className="rounded-xl border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 font-bold px-4 py-2.5 text-sm hover:bg-rose-50 dark:hover:bg-rose-900/30 transition disabled:opacity-50"
+                className="rounded-xl border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 font-bold px-3 py-2.5 text-sm hover:bg-rose-50 dark:hover:bg-rose-900/30 transition disabled:opacity-50"
               >
                 <TrashIcon />
               </button>
@@ -513,7 +579,7 @@ export default function CalendarPage() {
     setModalOpen(true);
   }
 
-  async function handleSave(payload) {
+  async function handleSave(payload, addToGoogle = false) {
     setSaving(true);
     try {
       if (editEvent) {
@@ -526,6 +592,10 @@ export default function CalendarPage() {
           method: "POST",
           body: JSON.stringify(payload),
         });
+      }
+      if (addToGoogle) {
+        const googleUrl = toGoogleCalendarUrl({ ...payload, title: payload.title });
+        window.open(googleUrl, "_blank", "noopener,noreferrer");
       }
       setModalOpen(false);
       setEditEvent(null);
@@ -604,6 +674,14 @@ export default function CalendarPage() {
               <button className={viewBtnClass("week")} onClick={() => setView("week")}>שבוע</button>
               <button className={viewBtnClass("month")} onClick={() => setView("month")}>חודש</button>
             </div>
+            <button
+              onClick={() => downloadICS(events)}
+              disabled={events.length === 0}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-xs font-black hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-40"
+              title="ייצוא ל-Google Calendar / Apple Calendar"
+            >
+              📅 ייצוא .ics
+            </button>
             <button
               onClick={() => openAddModal(currentDate)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-violet-700 dark:bg-violet-600 text-white text-xs font-black hover:bg-violet-800 dark:hover:bg-violet-700 transition"

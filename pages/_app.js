@@ -12,17 +12,20 @@ const ThemeContext = createContext({ dark: false, toggle: () => {} });
 export function useTheme() { return useContext(ThemeContext); }
 
 function ThemeProvider({ children }) {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem(THEME_KEY) === "dark";
+    } catch { return false; }
+  });
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(THEME_KEY);
-      if (stored === "dark") {
-        setDark(true);
-        document.documentElement.classList.add("dark");
-      }
-    } catch {}
-  }, []);
+    if (dark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [dark]);
 
   const toggle = useCallback(() => {
     setDark((prev) => {
@@ -88,6 +91,9 @@ export default function App({ Component, pageProps }) {
         />
       </Head>
 
+      <Script id="finzo-dark-mode-init" strategy="beforeInteractive">
+        {`try{if(localStorage.getItem("finzo_theme_mode")==="dark")document.documentElement.classList.add("dark")}catch(e){}`}
+      </Script>
       <Script id="mortgai-datalayer-init" strategy="beforeInteractive">
         {`window.dataLayer = window.dataLayer || [];`}
       </Script>
