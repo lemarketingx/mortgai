@@ -1,7 +1,17 @@
 import { supabaseUpdatePassword } from "../../../lib/supabaseAuth";
+import { clearAdvisorSessionCookie } from "../../../lib/advisorAuth";
+import { getClientIp, checkRateLimit, recordRateLimitHit } from "../../../lib/rateLimit";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "METHOD_NOT_ALLOWED" });
+
+  const ip = getClientIp(req);
+  const { allowed } = checkRateLimit(ip, { limit: 5, windowMs: 15 * 60 * 1000 });
+  if (!allowed) {
+    recordRateLimitHit(ip);
+    return res.status(429).json({ error: "RATE_LIMITED", message: "יותר מדי ניסיונות. נסה שוב מאוחר יותר." });
+  }
+  recordRateLimitHit(ip);
 
   const { accessToken, password } = req.body || {};
   if (!accessToken || !password) {
@@ -23,5 +33,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "UPDATE_FAILED", message: "לא הצלחנו לעדכן את הסיסמה. ייתכן שהקישור פג תוקף — בקשו קישור חדש." });
   }
 
+  res.setHeader("Set-Cookie", clearAdvisorSessionCookie());
   return res.status(200).json({ ok: true });
 }

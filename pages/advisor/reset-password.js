@@ -65,12 +65,12 @@ export default function AdvisorResetPassword() {
             </Link>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-2xl p-8">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8">
             {done ? (
               <div className="text-center py-4">
                 <div className="text-5xl mb-4">✅</div>
-                <h1 className="text-xl font-black text-slate-950 mb-3">הסיסמה עודכנה בהצלחה</h1>
-                <p className="text-slate-500 text-sm leading-6">כעת תוכלו להתחבר עם הסיסמה החדשה שלכם.</p>
+                <h1 className="text-xl font-black text-slate-950 dark:text-slate-100 mb-3">הסיסמה עודכנה בהצלחה</h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm leading-6">כעת תוכלו להתחבר עם הסיסמה החדשה שלכם.</p>
                 <Link href="/advisor/login" className="mt-8 inline-block w-full text-center bg-violet-700 hover:bg-violet-800 text-white font-black py-3.5 rounded-2xl transition-colors text-sm">
                   כניסה למערכת
                 </Link>
@@ -78,8 +78,8 @@ export default function AdvisorResetPassword() {
             ) : invalidLink ? (
               <div className="text-center py-4">
                 <div className="text-5xl mb-4">⚠️</div>
-                <h1 className="text-xl font-black text-slate-950 mb-3">קישור לא תקין</h1>
-                <p className="text-slate-500 text-sm leading-6 mb-6">
+                <h1 className="text-xl font-black text-slate-950 dark:text-slate-100 mb-3">קישור לא תקין</h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm leading-6 mb-6">
                   הקישור אינו תקין או שפג תוקפו. אנא בקשו קישור שחזור חדש.
                 </p>
                 <Link href="/advisor/forgot-password" className="inline-block w-full text-center bg-violet-700 hover:bg-violet-800 text-white font-black py-3.5 rounded-2xl transition-colors text-sm">
@@ -89,39 +89,39 @@ export default function AdvisorResetPassword() {
             ) : (
               <>
                 <div className="mb-6">
-                  <h1 className="text-2xl font-black text-slate-950 mb-1">הגדרת סיסמה חדשה</h1>
-                  <p className="text-slate-500 text-sm">הזינו סיסמה חדשה לחשבונכם.</p>
+                  <h1 className="text-2xl font-black text-slate-950 dark:text-slate-100 mb-1">הגדרת סיסמה חדשה</h1>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">הזינו סיסמה חדשה לחשבונכם.</p>
                 </div>
 
                 <form onSubmit={submit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-black text-slate-700 mb-1.5">סיסמה חדשה</label>
+                    <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-1.5">סיסמה חדשה</label>
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => { setPassword(e.target.value); setError(""); }}
                       placeholder="לפחות 8 תווים"
-                      className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+                      className="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white dark:bg-slate-800 dark:text-slate-100"
                       required
                       autoComplete="new-password"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-black text-slate-700 mb-1.5">אימות סיסמה</label>
+                    <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-1.5">אימות סיסמה</label>
                     <input
                       type="password"
                       value={confirm}
                       onChange={(e) => { setConfirm(e.target.value); setError(""); }}
                       placeholder="הזינו שוב את הסיסמה"
-                      className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+                      className="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white dark:bg-slate-800 dark:text-slate-100"
                       required
                       autoComplete="new-password"
                     />
                   </div>
 
                   {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-sm text-red-700 font-bold">
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-2xl px-4 py-3 text-sm text-red-700 dark:text-red-400 font-bold">
                       {error}
                     </div>
                   )}
@@ -135,8 +135,8 @@ export default function AdvisorResetPassword() {
                   </button>
                 </form>
 
-                <p className="text-xs text-slate-400 mt-6 text-center">
-                  <Link href="/advisor/login" className="text-violet-600 hover:underline font-bold">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-6 text-center">
+                  <Link href="/advisor/login" className="text-violet-600 dark:text-violet-400 hover:underline font-bold">
                     ← חזרה לכניסה
                   </Link>
                 </p>

@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { supabaseAdminCreateUser } from "../../../lib/supabaseAuth";
 import { createAdvisor, readAdvisors } from "../../../lib/leadsStore";
 import { createAdvisorSessionCookie } from "../../../lib/advisorAuth";
+import { getClientIp, checkRateLimit, recordRateLimitHit } from "../../../lib/rateLimit";
 
 function err(res, status, code, message) {
   return res.status(status).json({ error: code, message });
@@ -9,6 +10,14 @@ function err(res, status, code, message) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return err(res, 405, "METHOD_NOT_ALLOWED", "Method not allowed");
+
+  const ip = getClientIp(req);
+  const { allowed } = checkRateLimit(ip, { limit: 3, windowMs: 60 * 60 * 1000 });
+  if (!allowed) {
+    recordRateLimitHit(ip);
+    return err(res, 429, "RATE_LIMITED", "יותר מדי ניסיונות הרשמה. נסה שוב מאוחר יותר.");
+  }
+  recordRateLimitHit(ip);
 
   const body = req.body || {};
   const fullName = String(body.fullName || "").trim();

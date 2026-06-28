@@ -1,11 +1,22 @@
-import { createHash } from "crypto";
+import { createHash, timingSafeEqual } from "crypto";
+import { getClientIp, checkRateLimit, recordRateLimitHit } from "../../lib/rateLimit";
 
 const COOKIE_NAME = "finzo_access";
 const TOKEN_SUFFIX = ":finzo-access-v1";
-const MAX_AGE = 7 * 24 * 60 * 60; // 7 days in seconds
+const MAX_AGE = 7 * 24 * 60 * 60;
 
 function deriveToken(password) {
   return createHash("sha256").update(password + TOKEN_SUFFIX).digest("hex");
+}
+
+function safeStringCompare(a, b) {
+  const bufA = Buffer.from(String(a));
+  const bufB = Buffer.from(String(b));
+  if (bufA.length !== bufB.length) {
+    timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return timingSafeEqual(bufA, bufB);
 }
 
 function safeNext(value) {
@@ -38,12 +49,18 @@ export default function handler(req, res) {
     return res.redirect(302, errorUrl);
   }
 
-  const submitted = String(req.body?.password || "");
-  const passwordMatch = !!submitted && submitted === sitePassword;
+  const ip = getClientIp(req);
+  const { allowed } = checkRateLimit(ip, { limit: 10, windowMs: 15 * 60 * 1000 });
+  if (!allowed) {
+    const errorUrl = `/unlock?error=3${next !== "/" ? `&next=${encodeURIComponent(next)}` : ""}`;
+    return res.redirect(302, errorUrl);
+  }
 
-  console.log("[unlock] passwordMatch:", passwordMatch);
+  const submitted = String(req.body?.password || "");
+  const passwordMatch = !!submitted && safeStringCompare(submitted, sitePassword);
 
   if (!passwordMatch) {
+    recordRateLimitHit(ip);
     const errorUrl = `/unlock?error=1${next !== "/" ? `&next=${encodeURIComponent(next)}` : ""}`;
     return res.redirect(302, errorUrl);
   }

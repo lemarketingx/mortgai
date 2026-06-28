@@ -4,3 +4,4 @@ node_modules
 .env.local
 .env
 data/leads.json
+.claude/worktrees/

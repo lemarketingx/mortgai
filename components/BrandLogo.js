@@ -11,8 +11,8 @@ export default function BrandLogo({ withTagline = true, className = "" }) {
         <span className="block h-1.5 w-3 rounded-full bg-[#06B6D4]" />
       </span>
       <span className="flex flex-col items-start leading-none">
-        <span dir="ltr" className="text-4xl font-black tracking-tight text-[#0F172A]" style={{ unicodeBidi: "isolate" }}>Finzo</span>
-        {withTagline && <span dir="rtl" className="mt-1 text-xs font-extrabold text-slate-500">בדיקת זכאות חכמה למשכנתא בישראל</span>}
+        <span dir="ltr" className="text-4xl font-black tracking-tight text-[#0F172A] dark:text-white" style={{ unicodeBidi: "isolate" }}>Finzo</span>
+        {withTagline && <span dir="rtl" className="mt-1 text-xs font-extrabold text-slate-500 dark:text-slate-400">בדיקת זכאות חכמה למשכנתא בישראל</span>}
       </span>
     </div>
   );

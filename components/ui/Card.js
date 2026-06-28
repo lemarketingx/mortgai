@@ -66,12 +66,12 @@ export function Eyebrow({ children, className = "" }) {
 /** Empty state — glyph + serif headline + 1-line copy + optional CTA */
 export function EmptyState({ glyph, title, description, action }) {
   return (
-    <div className="flex flex-col items-center text-center p-14 bg-finzo-white border border-dashed border-finzo-line-2 rounded-finzo-lg">
-      <div className="w-14 h-14 rounded-finzo-lg bg-finzo-cream text-finzo-ink-3 grid place-items-center font-serif font-bold text-2xl mb-[18px]">
+    <div className="flex flex-col items-center text-center p-14 bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-700 rounded-finzo-lg">
+      <div className="w-14 h-14 rounded-finzo-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 grid place-items-center font-serif font-bold text-2xl mb-[18px]">
         {glyph}
       </div>
-      <h4 className="font-serif text-[20px] mb-[6px] text-finzo-ink">{title}</h4>
-      <p className="text-[14px] text-finzo-ink-2 max-w-[340px]">{description}</p>
+      <h4 className="font-serif text-[20px] mb-[6px] text-slate-900 dark:text-slate-100">{title}</h4>
+      <p className="text-[14px] text-slate-600 dark:text-slate-400 max-w-[340px]">{description}</p>
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
@@ -88,7 +88,7 @@ export function Skeleton({ variant = "line", className = "" }) {
   return (
     <div
       className={[
-        "rounded-finzo-sm bg-gradient-to-r from-finzo-cream via-finzo-paper to-finzo-cream bg-[length:200%_100%] animate-[shimmer_1400ms_linear_infinite]",
+        "rounded-finzo-sm bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 bg-[length:200%_100%] animate-[shimmer_1400ms_linear_infinite]",
         variants[variant] ?? variants.line,
         className,
       ].filter(Boolean).join(" ")}
