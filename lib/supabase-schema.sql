@@ -124,7 +124,8 @@ ALTER TABLE leads ADD COLUMN IF NOT EXISTS sold_at          TEXT    NOT NULL DEF
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS buyer_advisor_id TEXT    NOT NULL DEFAULT '';
 
 -- ── FINZO Lead Score v2 columns (safe migration) ─────────────────────────────
--- New fields added for score-based pricing. All idempotent.
+-- New fields added for score-based pricing. All idempotent (safe to re-run).
+-- NOTE: requested_contact_time already exists in the CREATE TABLE above — no ADD needed.
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS email                    TEXT NOT NULL DEFAULT '';
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS monthly_obligations      NUMERIC;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS desired_monthly_payment  NUMERIC;

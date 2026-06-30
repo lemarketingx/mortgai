@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cleanNumber } from "../lib/format";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 
@@ -145,6 +145,23 @@ export default function LeadPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const { toasts, addToast, removeToast } = useToast();
+  // Capture UTM params and referrer from the page URL at mount time.
+  // These are NOT available server-side for a POST to /api/lead unless we send them.
+  const sourceMetaRef = useRef({});
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      sourceMetaRef.current = {
+        utmSource:   params.get("utm_source")   || "",
+        utmMedium:   params.get("utm_medium")   || "",
+        utmCampaign: params.get("utm_campaign") || "",
+        utmContent:  params.get("utm_content")  || "",
+        utmTerm:     params.get("utm_term")     || "",
+        referrer:    document.referrer          || "",
+        landingPage: window.location.href       || "",
+      };
+    } catch {}
+  }, []);
 
   useEffect(() => {
     try {
@@ -250,6 +267,14 @@ export default function LeadPage() {
       notes:                  lead.notes || "",
       source:                 "finzo-lead-form",
       createdAt:              new Date().toISOString(),
+      // UTM / attribution — captured from page URL at mount, never from API query string
+      utmSource:              sourceMetaRef.current.utmSource   || "",
+      utmMedium:              sourceMetaRef.current.utmMedium   || "",
+      utmCampaign:            sourceMetaRef.current.utmCampaign || "",
+      utmContent:             sourceMetaRef.current.utmContent  || "",
+      utmTerm:                sourceMetaRef.current.utmTerm     || "",
+      referrer:               sourceMetaRef.current.referrer    || "",
+      landingPage:            sourceMetaRef.current.landingPage || "",
     };
 
     try {
