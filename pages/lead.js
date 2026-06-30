@@ -284,14 +284,25 @@ export default function LeadPage() {
         body: JSON.stringify({ lead: payload }),
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok || result?.ok !== true) throw new Error(result?.message || "LEAD_FAILED");
+      if (!response.ok || result?.ok !== true) {
+        console.error("[lead-form] submit failed", {
+          status: response.status,
+          error: result?.error,
+          supabaseCode: result?.supabaseCode,
+          supabaseMessage: result?.supabaseMessage,
+          supabaseDetails: result?.supabaseDetails,
+          message: result?.message,
+        });
+        throw new Error(result?.message || "LEAD_FAILED");
+      }
       setSent(true);
       try {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(PREFILL_KEY);
       } catch {}
       addToast({ title: "הפנייה נשלחה בהצלחה", description: "נחזור אליכם בהקדם.", variant: "success" });
-    } catch {
+    } catch (err) {
+      console.error("[lead-form] catch", err?.message);
       addToast({ title: "הפנייה לא נשלחה", description: "נסו שוב, או צרו קשר ישירות.", variant: "danger" });
     } finally {
       setLoading(false);

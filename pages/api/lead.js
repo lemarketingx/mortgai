@@ -176,6 +176,7 @@ export default async function handler(req, res) {
       internalCode: error?.code || "LEAD_SAVE_FAILED",
       message: error?.message || "",
       details: error?.details || "",
+      hint: error?.hint || "",
       stack: error?.stack || "",
       leadKeys: Object.keys(req.body?.lead || {}),
     });
@@ -205,6 +206,8 @@ export default async function handler(req, res) {
       step: "supabase_insert",
       error: "SUPABASE_INSERT_FAILED",
       supabaseCode: insertError?.internalCode || "",
+      supabaseMessage: insertError?.message || "",
+      supabaseDetails: insertError?.details || "",
       message: "לא הצלחנו לשלוח את הפרטים כרגע. נסה שוב בעוד רגע.",
       localOnly,
     });
