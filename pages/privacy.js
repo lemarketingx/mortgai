@@ -27,7 +27,7 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-xl font-black text-slate-900 mb-3">1. מי אנחנו</h2>
               <p>
-                FINZO הוא שירות דיגיטלי המופעל על ידי <strong>ל.א.ה שיווק</strong> (להלן: "החברה", "אנחנו").
+                FINZO הוא שירות דיגיטלי המופעל על ידי <strong>ל.א.ה דיגיטל</strong> (להלן: "החברה", "אנחנו").
                 ניתן ליצור איתנו קשר בכתובת:{" "}
                 <a href="mailto:lemarketingx@gmail.com" className="text-violet-700 hover:underline">lemarketingx@gmail.com</a>.
               </p>
@@ -85,7 +85,7 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-xl font-black text-slate-900 mb-3">7. שיווק ישיר</h2>
               <p>
-                בעצם מסירת פרטיכם אתם מסכימים לקבל יצירת קשר מחברת ל.א.ה שיווק ו/או מיועצים מורשים לצורך מתן שירות.
+                בעצם מסירת פרטיכם אתם מסכימים לקבל יצירת קשר מחברת ל.א.ה דיגיטל ו/או מיועצים מורשים לצורך מתן שירות.
                 ניתן לבקש הפסקת פנייה שיווקית בכל עת באמצעות פנייה ל-{" "}
                 <a href="mailto:lemarketingx@gmail.com" className="text-violet-700 hover:underline">lemarketingx@gmail.com</a>.
               </p>
