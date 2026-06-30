@@ -89,10 +89,16 @@ export default async function handler(req, res) {
       equityAmount: rawLead.equityAmount ?? rawLead.equity_amount,
       monthlyIncome: rawLead.monthlyIncome ?? rawLead.monthly_income,
       debtLevel: rawLead.debtLevel ?? rawLead.debt_level,
-      // Normalize consent: accept camelCase or snake_case, default false
+      // Normalize consent before Zod: merge camelCase + snake_case aliases, default false
       consentAdvisorContact: rawLead.consentAdvisorContact ?? rawLead.consent_advisor_contact ?? false,
     },
   };
+
+  console.log("[lead-api] pre-validation consent", {
+    raw_camel: rawLead.consentAdvisorContact,
+    raw_snake: rawLead.consent_advisor_contact,
+    normalized: bodyWithUtm.lead?.consentAdvisorContact,
+  });
 
   const parsed = publicLeadSchema.safeParse(bodyWithUtm);
   if (!parsed.success) {
