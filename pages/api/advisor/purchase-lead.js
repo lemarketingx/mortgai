@@ -61,8 +61,8 @@ export default async function handler(req, res) {
 
     // Price comes exclusively from DB (price_at_creation set at lead creation time).
     // We never accept a price from the client request body.
-    const price = lead.priceAtCreation || 0;
-    if (!price) {
+    const price = lead.priceAtCreation;
+    if (!price || typeof price !== "number" || price <= 0) {
       await failIdempotencyKey(idempotencyKey);
       return apiError(res, 409, "LEAD_NOT_PRICED", "הליד אינו מתומחר ואינו זמין לרכישה.");
     }

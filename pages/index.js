@@ -547,6 +547,7 @@ export default function Home() {
           trackEvent={trackEvent}
           consent={leadConsent}
           setConsent={setLeadConsent}
+          onLeadFormLink={handleLeadFormLink}
         />
         <FaqSection />
         <BottomLeadSection
@@ -830,7 +831,7 @@ function ResultsSection({ analysis, ready }) {
 /*  LEAD SECTION                                                        */
 /* ------------------------------------------------------------------ */
 
-function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, analysis, ready, trackEvent, consent, setConsent }) {
+function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, analysis, ready, trackEvent, consent, setConsent, onLeadFormLink }) {
   return (
     <section id="lead" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
@@ -866,7 +867,7 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
             <li className="flex items-center gap-2"><CheckIcon /><span>פרטיות מלאה ושימוש במידע לצורך חזרה בלבד</span></li>
             <li className="flex items-center gap-2"><CheckIcon /><span>שיחה מקצועית קצרה להבנת הצעד הבא</span></li>
           </ul>
-          <a href="/lead" onClick={handleLeadFormLink} className="mt-5 block text-center text-sm font-bold text-violet-700 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-200 hover:underline">
+          <a href="/lead" onClick={onLeadFormLink} className="mt-5 block text-center text-sm font-bold text-violet-700 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-200 hover:underline">
             רוצים בדיקה מעמיקה יותר? עברו לטופס המפורט ←
           </a>
         </div>

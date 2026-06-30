@@ -130,19 +130,23 @@ export default async function handler(req, res) {
   };
   const scoreResult = calculateLeadScore(scoringInput);
 
+  // Consent is mandatory — no consent means never sellable, regardless of score
+  const consentGiven = scoringInput.consentAdvisorContact === true;
+  const isSellable = scoreResult.isSellable && consentGiven;
+
   // Inject scoring fields into the lead payload before saving
   req.body = {
     ...parsed.data,
     lead: {
       ...parsed.data.lead,
-      leadScore:        scoreResult.score,
-      leadScoreTier:    scoreResult.tier,
+      leadScore:          scoreResult.score,
+      leadScoreTier:      scoreResult.tier,
       leadScoreBreakdown: scoreResult.breakdown,
-      priceAtCreation:  scoreResult.price,
-      scoreVersion:     scoreResult.version,
-      isSellable:       scoreResult.isSellable,
-      qualityNotes:     scoreResult.qualityNotes,
-      storeStatus:      scoreResult.isSellable ? "available" : "hidden",
+      priceAtCreation:    isSellable ? scoreResult.price : 0,
+      scoreVersion:       scoreResult.version,
+      isSellable,
+      qualityNotes:       scoreResult.qualityNotes,
+      storeStatus:        isSellable ? "available" : "hidden",
     },
   };
 
