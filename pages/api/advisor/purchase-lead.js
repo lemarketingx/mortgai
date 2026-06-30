@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds, updateLead } from "../../../lib/leadsStore";
+import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds, claimLeadForPurchase } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { checkIdempotencyKey, createIdempotencyKey, completeIdempotencyKey, failIdempotencyKey } from "../../../lib/idempotencyStore";
 import { createNotification } from "../../../lib/notificationsStore";
@@ -66,17 +66,10 @@ export default async function handler(req, res) {
       return apiError(res, 409, "LEAD_NOT_PRICED", "הליד אינו מתומחר ואינו זמין לרכישה.");
     }
 
-    // Atomic guard: mark lead as purchased before creating the purchase record
-    // so concurrent requests cannot buy the same lead twice.
-    const now = new Date().toISOString();
-    const updatedLead = await updateLead(leadId, {
-      storeStatus: "sold",
-      soldAt: now,
-      buyerAdvisorId: session.advisorId,
-    });
-
-    // If updateLead returned null, the row didn't match — race condition
-    if (!updatedLead || updatedLead.storeStatus !== "sold") {
+    // Atomic claim: PATCHes with store_status=eq.available&is_sellable=eq.true&buyer_advisor_id=eq.
+    // Returns null if no row matched — meaning another request won the race.
+    const claimed = await claimLeadForPurchase(leadId, session.advisorId);
+    if (!claimed) {
       await failIdempotencyKey(idempotencyKey);
       return apiError(res, 409, "LEAD_ALREADY_SOLD", "הליד כבר נמכר ואינו זמין לרכישה.");
     }
