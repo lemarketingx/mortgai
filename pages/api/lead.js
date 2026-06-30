@@ -89,6 +89,8 @@ export default async function handler(req, res) {
       equityAmount: rawLead.equityAmount ?? rawLead.equity_amount,
       monthlyIncome: rawLead.monthlyIncome ?? rawLead.monthly_income,
       debtLevel: rawLead.debtLevel ?? rawLead.debt_level,
+      // Normalize consent: accept camelCase or snake_case, default false
+      consentAdvisorContact: rawLead.consentAdvisorContact ?? rawLead.consent_advisor_contact ?? false,
     },
   };
 
@@ -122,7 +124,7 @@ export default async function handler(req, res) {
     contractStatus:        parsed.data.lead?.contractStatus || parsed.data.lead?.contract_status || "",
     requestedContactTime:  parsed.data.lead?.requestedContactTime || parsed.data.lead?.requested_contact_time || "",
     preferredContactMethod: parsed.data.lead?.preferredContactMethod || parsed.data.lead?.preferred_contact_method || "",
-    consentAdvisorContact: parsed.data.lead?.consentAdvisorContact ?? parsed.data.lead?.consent_advisor_contact,
+    consentAdvisorContact: parsed.data.lead?.consentAdvisorContact ?? false,
     utmSource:             parsed.data.lead?.utmSource || "",
     utmMedium:             parsed.data.lead?.utmMedium || "",
     referrer:              parsed.data.lead?.referrer || "",
