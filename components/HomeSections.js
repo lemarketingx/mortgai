@@ -2,9 +2,9 @@
  * Homepage presentational sections — no state from Home(), zero business logic.
  * Import these in pages/index.js.
  */
-
 import { useState } from "react";
 import BrandLogo from "./BrandLogo";
+import LahDigitalLogo from "./LahDigitalLogo";
 import { useTheme } from "../pages/_app";
 
 /* ------------------------------------------------------------------ */
@@ -626,7 +626,15 @@ export function Footer({ onCtaClick }) {
           <a href="/contact" className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline">יצירת קשר</a>
           <a href="/advisor/register" className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline">הצטרפות יועצים</a>
         </nav>
-        <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">© 2026 ל.א.ה שיווק. כל הזכויות שמורות.</p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <p className="text-xs text-slate-400 dark:text-slate-500">© 2026 ל.א.ה דיגיטל. כל הזכויות שמורות.</p>
+          <span className="text-slate-300 dark:text-slate-600 text-xs">·</span>
+          <span className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-400 dark:text-slate-500">FINZO מבית</span>
+            <LahDigitalLogo variant="symbol" className="opacity-80 hover:opacity-100 transition-opacity" />
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">ל.א.ה דיגיטל</span>
+          </span>
+        </div>
       </div>
     </footer>
   );

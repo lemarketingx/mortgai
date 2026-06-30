@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
+import LahDigitalLogo from "../components/LahDigitalLogo";
 
 export default function PrivacyPage() {
   return (
@@ -114,8 +115,15 @@ export default function PrivacyPage() {
             </section>
           </div>
 
-          <div className="mt-12 border-t border-slate-200 pt-6 text-sm text-slate-400">
-            <Link href="/" className="text-violet-700 hover:underline font-bold">← חזרה לעמוד הבית</Link>
+          <div className="mt-12 border-t border-slate-200 pt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <Link href="/" className="text-sm text-violet-700 hover:underline font-bold">← חזרה לעמוד הבית</Link>
+            <div dir="rtl" className="flex items-center gap-3 rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3">
+              <LahDigitalLogo variant="compact" />
+              <p className="text-xs text-slate-500 leading-snug">
+                <strong className="text-slate-700">ל.א.ה דיגיטל</strong> היא הגורם המפעיל את מערכת FINZO<br />
+                והאחראית על עיבוד המידע האישי באתר.
+              </p>
+            </div>
           </div>
         </main>
       </div>
