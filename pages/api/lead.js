@@ -121,7 +121,13 @@ export default async function handler(req, res) {
     city:                  parsed.data.lead?.city || "",
     mortgageAmount:        parsed.data.lead?.mortgageAmount,
     propertyPrice:         parsed.data.lead?.propertyPrice ?? parsed.data.lead?.property_price,
-    equityAmount:          parsed.data.lead?.equityAmount ?? parsed.data.lead?.equity_amount,
+    equityAmount:          (() => {
+      const ea = parsed.data.lead?.equityAmount ?? parsed.data.lead?.equity_amount;
+      if (ea != null && Number(ea) > 0) return Number(ea);
+      const pp = Number(parsed.data.lead?.propertyPrice ?? parsed.data.lead?.property_price) || 0;
+      const ma = Number(parsed.data.lead?.mortgageAmount) || 0;
+      return pp > 0 && ma > 0 ? Math.max(0, pp - ma) : ea;
+    })(),
     monthlyIncome:         parsed.data.lead?.monthlyIncome ?? parsed.data.lead?.monthly_income,
     monthlyObligations:    parsed.data.lead?.monthlyObligations ?? parsed.data.lead?.monthly_obligations,
     debtLevel:             parsed.data.lead?.debtLevel ?? parsed.data.lead?.debt_level,

@@ -121,8 +121,13 @@ function FinzoScoreExplanation({ lead, score }) {
   const days = ageInDays(lead.createdAt);
   const quality = lead.leadScoreTier || lead.computedQuality || lead.leadQuality || "—";
   const status = PURCHASE_STATUS_LABELS[lead.purchaseStatus] || lead.purchaseStatus || "—";
-  const equityRatio = lead.propertyPrice > 0 && lead.equityAmount > 0
-    ? (Number(lead.equityAmount) / Number(lead.propertyPrice)) * 100
+  const _price     = Number(lead.propertyPrice || 0);
+  const _mortgage  = Number(lead.mortgageAmount || 0);
+  const _equity    = lead.equityAmount != null
+    ? Number(lead.equityAmount)
+    : _price > 0 && _mortgage > 0 ? Math.max(0, _price - _mortgage) : 0;
+  const equityRatio = _price > 0 && _equity > 0
+    ? (_equity / _price) * 100
     : null;
   const repaymentRatio = lead.monthlyIncome > 0 && lead.estimatedPayment > 0
     ? (Number(lead.estimatedPayment) / Number(lead.monthlyIncome)) * 100
@@ -378,11 +383,13 @@ function DepartmentSection({ dept, leads, onPurchase, purchasing, favorites, onT
 }
 
 function AnonymousSnapshot({ lead }) {
-  const equity = Number(lead.equityAmount || lead.equity || 0);
-  const price = Number(lead.propertyPrice || lead.propertyValue || 0);
-  const equityPct = price > 0 ? Math.round((equity / price) * 100) : null;
+  const price    = Number(lead.propertyPrice || lead.propertyValue || 0);
   const mortgage = Number(lead.mortgageAmount || 0);
-  const ltvPct = price > 0 ? Math.round((mortgage / price) * 100) : null;
+  const equity   = lead.equityAmount != null
+    ? Number(lead.equityAmount)
+    : price > 0 && mortgage > 0 ? Math.max(0, price - mortgage) : 0;
+  const equityPct = price > 0 && equity > 0 ? Math.round((equity / price) * 100) : null;
+  const ltvPct    = price > 0 && mortgage > 0 ? Math.round((mortgage / price) * 100) : null;
 
   return (
     <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-3 space-y-2">
