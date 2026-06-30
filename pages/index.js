@@ -278,6 +278,26 @@ export default function Home() {
     trackEvent("cta_click", { location });
   }
 
+  function handleLeadFormLink(e) {
+    try {
+      const prefill = {
+        mortgageAmount: data.mortgage || data.mortgageAmount || "",
+        propertyPrice: data.price || "",
+        equityAmount: data.equity || "",
+        monthlyIncome: data.income || "",
+        purchaseStatus: data.propertyType || "",
+        city: lead.city || "",
+        utmSource: sourceMetaRef.current?.utmSource || "",
+        utmMedium: sourceMetaRef.current?.utmMedium || "",
+        utmCampaign: sourceMetaRef.current?.utmCampaign || "",
+        referrer: sourceMetaRef.current?.referrer || "",
+      };
+      localStorage.setItem("finzo_calc_prefill", JSON.stringify(prefill));
+    } catch {
+      // Non-critical — proceed to lead form even if localStorage fails
+    }
+  }
+
   const analysis = useMemo(() => calculateMortgageAnalysis(data, rates), [data, rates]);
   const ready = useMemo(() => hasEnoughData(data), [data]);
   const recommendation = useMemo(() => leadRecommendation(analysis, ready), [analysis, ready]);
@@ -335,6 +355,7 @@ export default function Home() {
       hasExistingMortgage: bottomLead.hasExistingMortgage || "",
       requestedContactTime: bottomLead.requestedContactTime || "",
       propertyCity: bottomLead.propertyCity || "",
+      consentAdvisorContact: true, // validated client-side via bottomLeadConsent check above
     };
 
     try {
@@ -410,6 +431,7 @@ export default function Home() {
       existingPropertyValue: toNumeric(data.existingPropertyValue) || 0,
       existingMortgageBalance: toNumeric(data.existingMortgageBalance) || 0,
       householdExpenses: toNumeric(data.householdExpenses) || 0,
+      consentAdvisorContact: true, // validated client-side via leadConsent check above
     };
     const { leadQuality, leadPriority, leadScore } = evaluateLeadProfile(leadPayload);
     leadPayload.leadQuality = leadQuality;
@@ -527,6 +549,7 @@ export default function Home() {
           trackEvent={trackEvent}
           consent={leadConsent}
           setConsent={setLeadConsent}
+          onLeadFormLink={handleLeadFormLink}
         />
         <FaqSection />
         <BottomLeadSection
@@ -810,7 +833,7 @@ function ResultsSection({ analysis, ready }) {
 /*  LEAD SECTION                                                        */
 /* ------------------------------------------------------------------ */
 
-function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, analysis, ready, trackEvent, consent, setConsent }) {
+function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, leadError, analysis, ready, trackEvent, consent, setConsent, onLeadFormLink }) {
   return (
     <section id="lead" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
       <SectionHeader
@@ -846,7 +869,7 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
             <li className="flex items-center gap-2"><CheckIcon /><span>פרטיות מלאה ושימוש במידע לצורך חזרה בלבד</span></li>
             <li className="flex items-center gap-2"><CheckIcon /><span>שיחה מקצועית קצרה להבנת הצעד הבא</span></li>
           </ul>
-          <a href="/lead" className="mt-5 block text-center text-sm font-bold text-violet-700 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-200 hover:underline">
+          <a href="/lead" onClick={onLeadFormLink} className="mt-5 block text-center text-sm font-bold text-violet-700 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-200 hover:underline">
             רוצים בדיקה מעמיקה יותר? עברו לטופס המפורט ←
           </a>
         </div>

@@ -123,6 +123,33 @@ ALTER TABLE leads ADD COLUMN IF NOT EXISTS preview_summary  TEXT    NOT NULL DEF
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS sold_at          TEXT    NOT NULL DEFAULT '';
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS buyer_advisor_id TEXT    NOT NULL DEFAULT '';
 
+-- ── FINZO Lead Score v2 columns (safe migration) ─────────────────────────────
+-- New fields added for score-based pricing. All idempotent (safe to re-run).
+-- NOTE: requested_contact_time already exists in the CREATE TABLE above — no ADD needed.
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS email                    TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS monthly_obligations      NUMERIC;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS desired_monthly_payment  NUMERIC;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS process_stage            TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS preferred_contact_method TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS consent_advisor_contact  BOOLEAN NOT NULL DEFAULT FALSE;
+-- Lead Score fields
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS lead_score               INTEGER;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS lead_score_tier          TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS lead_score_breakdown     JSONB;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS price_at_creation        INTEGER;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS score_version            TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS is_sellable              BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS quality_notes            TEXT NOT NULL DEFAULT '';
+-- Ensure UTM/source columns exist (in case of older schema)
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS source        TEXT NOT NULL DEFAULT 'mortgai2';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS utm_source    TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS utm_medium    TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS utm_campaign  TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS utm_content   TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS utm_term      TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS referrer      TEXT NOT NULL DEFAULT '';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS landing_page  TEXT NOT NULL DEFAULT '';
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS leads_created_at_idx   ON leads (created_at DESC);
 CREATE INDEX IF NOT EXISTS leads_status_idx        ON leads (lead_status);
@@ -130,6 +157,9 @@ CREATE INDEX IF NOT EXISTS leads_phone_idx         ON leads (phone);
 CREATE INDEX IF NOT EXISTS leads_quality_idx       ON leads (lead_quality);
 CREATE INDEX IF NOT EXISTS leads_store_status_idx  ON leads (store_status);
 CREATE INDEX IF NOT EXISTS leads_buyer_advisor_idx ON leads (buyer_advisor_id);
+CREATE INDEX IF NOT EXISTS leads_lead_score_idx    ON leads (lead_score DESC);
+CREATE INDEX IF NOT EXISTS leads_is_sellable_idx   ON leads (is_sellable);
+CREATE INDEX IF NOT EXISTS leads_score_tier_idx    ON leads (lead_score_tier);
 
 -- Row Level Security
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;

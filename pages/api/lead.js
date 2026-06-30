@@ -2,6 +2,7 @@ import { createLead } from "../../lib/leadsStore";
 import { publicLeadSchema, validationErrorPayload } from "../../lib/validation";
 import { checkRateLimit, getClientIp, recordRateLimitHit } from "../../lib/rateLimit";
 import { sendLeadNotification } from "../../lib/email";
+import { calculateLeadScore } from "../../lib/leadScoring";
 
 function normalizeLeadFields(raw = {}) {
   const lead = { ...raw };
@@ -88,8 +89,16 @@ export default async function handler(req, res) {
       equityAmount: rawLead.equityAmount ?? rawLead.equity_amount,
       monthlyIncome: rawLead.monthlyIncome ?? rawLead.monthly_income,
       debtLevel: rawLead.debtLevel ?? rawLead.debt_level,
+      // Normalize consent before Zod: merge camelCase + snake_case aliases, default false
+      consentAdvisorContact: rawLead.consentAdvisorContact ?? rawLead.consent_advisor_contact ?? false,
     },
   };
+
+  console.log("[lead-api] pre-validation consent", {
+    raw_camel: rawLead.consentAdvisorContact,
+    raw_snake: rawLead.consent_advisor_contact,
+    normalized: bodyWithUtm.lead?.consentAdvisorContact,
+  });
 
   const parsed = publicLeadSchema.safeParse(bodyWithUtm);
   if (!parsed.success) {
@@ -103,6 +112,62 @@ export default async function handler(req, res) {
     return res.status(400).json({ ok: false, success: false, error: "VALIDATION_FAILED", details: validation.details || [] });
   }
   req.body = parsed.data;
+
+  // Compute lead score entirely server-side — never trust client-submitted score/price
+  const scoringInput = {
+    fullName:              parsed.data.lead?.name || "",
+    phone:                 parsed.data.lead?.phone || "",
+    email:                 parsed.data.lead?.email || "",
+    city:                  parsed.data.lead?.city || "",
+    mortgageAmount:        parsed.data.lead?.mortgageAmount,
+    propertyPrice:         parsed.data.lead?.propertyPrice ?? parsed.data.lead?.property_price,
+    equityAmount:          (() => {
+      const ea = parsed.data.lead?.equityAmount ?? parsed.data.lead?.equity_amount;
+      if (ea != null && Number(ea) > 0) return Number(ea);
+      const pp = Number(parsed.data.lead?.propertyPrice ?? parsed.data.lead?.property_price) || 0;
+      const ma = Number(parsed.data.lead?.mortgageAmount) || 0;
+      return pp > 0 && ma > 0 ? Math.max(0, pp - ma) : ea;
+    })(),
+    monthlyIncome:         parsed.data.lead?.monthlyIncome ?? parsed.data.lead?.monthly_income,
+    monthlyObligations:    parsed.data.lead?.monthlyObligations ?? parsed.data.lead?.monthly_obligations,
+    debtLevel:             parsed.data.lead?.debtLevel ?? parsed.data.lead?.debt_level,
+    serviceType:           parsed.data.lead?.purchaseStatus || "",
+    processStage:          parsed.data.lead?.processStage || parsed.data.lead?.process_stage || "",
+    contractStatus:        parsed.data.lead?.contractStatus || parsed.data.lead?.contract_status || "",
+    requestedContactTime:  parsed.data.lead?.requestedContactTime || parsed.data.lead?.requested_contact_time || "",
+    preferredContactMethod: parsed.data.lead?.preferredContactMethod || parsed.data.lead?.preferred_contact_method || "",
+    consentAdvisorContact: parsed.data.lead?.consentAdvisorContact ?? false,
+    utmSource:             parsed.data.lead?.utmSource || "",
+    utmMedium:             parsed.data.lead?.utmMedium || "",
+    referrer:              parsed.data.lead?.referrer || "",
+    createdAt:             parsed.data.lead?.createdAt || new Date().toISOString(),
+  };
+  const scoreResult = calculateLeadScore(scoringInput);
+
+  // Consent is mandatory — no consent means never sellable, regardless of score
+  console.log("[lead-api] consent debug", {
+    rawConsent: req.body?.lead?.consentAdvisorContact,
+    parsedConsent: parsed.data.lead?.consentAdvisorContact,
+    scoringInputConsent: scoringInput.consentAdvisorContact,
+  });
+  const consentGiven = Boolean(scoringInput.consentAdvisorContact);
+  const isSellable = scoreResult.isSellable && consentGiven;
+
+  // Inject scoring fields into the lead payload before saving
+  req.body = {
+    ...parsed.data,
+    lead: {
+      ...parsed.data.lead,
+      leadScore:          scoreResult.score,
+      leadScoreTier:      scoreResult.tier,
+      leadScoreBreakdown: scoreResult.breakdown,
+      priceAtCreation:    isSellable ? scoreResult.price : 0,
+      scoreVersion:       scoreResult.version,
+      isSellable,
+      qualityNotes:       scoreResult.qualityNotes,
+      storeStatus:        isSellable ? "available" : "hidden",
+    },
+  };
 
   const webhookUrl = process.env.LEAD_WEBHOOK_URL;
   let savedLead = null;
@@ -125,6 +190,7 @@ export default async function handler(req, res) {
       internalCode: error?.code || "LEAD_SAVE_FAILED",
       message: error?.message || "",
       details: error?.details || "",
+      hint: error?.hint || "",
       stack: error?.stack || "",
       leadKeys: Object.keys(req.body?.lead || {}),
     });
@@ -154,6 +220,8 @@ export default async function handler(req, res) {
       step: "supabase_insert",
       error: "SUPABASE_INSERT_FAILED",
       supabaseCode: insertError?.internalCode || "",
+      supabaseMessage: insertError?.message || "",
+      supabaseDetails: insertError?.details || "",
       message: "לא הצלחנו לשלוח את הפרטים כרגע. נסה שוב בעוד רגע.",
       localOnly,
     });

@@ -5,7 +5,7 @@ import { KpiTile, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
 import { calculateLeadPriceSync as calculateLeadPrice, getPriceLabel } from "../../lib/leadPricing";
 
-const FIXED_LEAD_PRICE = 249;
+const FIXED_LEAD_PRICE = 0; // unused — price comes from priceAtCreation
 const FAVORITES_KEY = "finzo_lead_favorites";
 
 const PURCHASE_STATUS_LABELS = {
@@ -119,10 +119,15 @@ function InfoBox({ label, value }) {
 function FinzoScoreExplanation({ lead, score }) {
   const [open, setOpen] = useState(false);
   const days = ageInDays(lead.createdAt);
-  const quality = lead.computedQuality || lead.leadQuality || "—";
+  const quality = lead.leadScoreTier || lead.computedQuality || lead.leadQuality || "—";
   const status = PURCHASE_STATUS_LABELS[lead.purchaseStatus] || lead.purchaseStatus || "—";
-  const equityRatio = lead.propertyPrice > 0 && lead.equityAmount > 0
-    ? (Number(lead.equityAmount) / Number(lead.propertyPrice)) * 100
+  const _price     = Number(lead.propertyPrice || 0);
+  const _mortgage  = Number(lead.mortgageAmount || 0);
+  const _equity    = lead.equityAmount != null
+    ? Number(lead.equityAmount)
+    : _price > 0 && _mortgage > 0 ? Math.max(0, _price - _mortgage) : 0;
+  const equityRatio = _price > 0 && _equity > 0
+    ? (_equity / _price) * 100
     : null;
   const repaymentRatio = lead.monthlyIncome > 0 && lead.estimatedPayment > 0
     ? (Number(lead.estimatedPayment) / Number(lead.monthlyIncome)) * 100
@@ -271,7 +276,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isFavorite, onToggleFavor
             {isFavorite ? "★" : "☆"}
           </button>
           <div className="text-start">
-            <p className="text-xl font-black text-slate-950 dark:text-slate-100 tabular-nums leading-none">{formatPrice(lead.storePrice)}</p>
+            <p className="text-xl font-black text-slate-950 dark:text-slate-100 tabular-nums leading-none">{formatPrice(lead.priceAtCreation || lead.storePrice)}</p>
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">לליד</p>
           </div>
         </div>
@@ -329,7 +334,7 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isFavorite, onToggleFavor
             disabled={purchasing}
             className="w-full text-sm font-black px-3 py-2.5 rounded-2xl bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-50 min-h-[46px]"
           >
-            רכישת ליד · {formatPrice(lead.storePrice || FIXED_LEAD_PRICE)}
+            רכישת ליד · {formatPrice(lead.priceAtCreation || lead.storePrice || FIXED_LEAD_PRICE)}
           </button>
         )}
 
@@ -378,11 +383,13 @@ function DepartmentSection({ dept, leads, onPurchase, purchasing, favorites, onT
 }
 
 function AnonymousSnapshot({ lead }) {
-  const equity = Number(lead.equityAmount || lead.equity || 0);
-  const price = Number(lead.propertyPrice || lead.propertyValue || 0);
-  const equityPct = price > 0 ? Math.round((equity / price) * 100) : null;
+  const price    = Number(lead.propertyPrice || lead.propertyValue || 0);
   const mortgage = Number(lead.mortgageAmount || 0);
-  const ltvPct = price > 0 ? Math.round((mortgage / price) * 100) : null;
+  const equity   = lead.equityAmount != null
+    ? Number(lead.equityAmount)
+    : price > 0 && mortgage > 0 ? Math.max(0, price - mortgage) : 0;
+  const equityPct = price > 0 && equity > 0 ? Math.round((equity / price) * 100) : null;
+  const ltvPct    = price > 0 && mortgage > 0 ? Math.round((mortgage / price) * 100) : null;
 
   return (
     <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-3 space-y-2">
@@ -506,7 +513,7 @@ export default function AdvisorLeadsStore() {
         if (dept && !dept.types.includes(lead.purchaseStatus || "")) return false;
       }
       if (filterQuality !== "all" && (lead.computedQuality || lead.leadQuality) !== filterQuality) return false;
-      if (filterPriceMax !== Infinity && (lead.storePrice || 0) > filterPriceMax) return false;
+      if (filterPriceMax !== Infinity && (lead.priceAtCreation || lead.storePrice || 0) > filterPriceMax) return false;
       if (filterCity && filterCity !== "הכל" && lead.city !== filterCity) return false;
       if (filterMaxDays !== Infinity && ageInDays(lead.createdAt) > filterMaxDays) return false;
       if (showFavoritesOnly && !favorites.has(lead.id)) return false;
