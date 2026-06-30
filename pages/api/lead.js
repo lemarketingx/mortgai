@@ -2,6 +2,7 @@ import { createLead } from "../../lib/leadsStore";
 import { publicLeadSchema, validationErrorPayload } from "../../lib/validation";
 import { checkRateLimit, getClientIp, recordRateLimitHit } from "../../lib/rateLimit";
 import { sendLeadNotification } from "../../lib/email";
+import { calculateLeadScore } from "../../lib/leadScoring";
 
 function normalizeLeadFields(raw = {}) {
   const lead = { ...raw };
@@ -103,6 +104,47 @@ export default async function handler(req, res) {
     return res.status(400).json({ ok: false, success: false, error: "VALIDATION_FAILED", details: validation.details || [] });
   }
   req.body = parsed.data;
+
+  // Compute lead score entirely server-side — never trust client-submitted score/price
+  const scoringInput = {
+    fullName:              parsed.data.lead?.name || "",
+    phone:                 parsed.data.lead?.phone || "",
+    email:                 parsed.data.lead?.email || "",
+    city:                  parsed.data.lead?.city || "",
+    mortgageAmount:        parsed.data.lead?.mortgageAmount,
+    propertyPrice:         parsed.data.lead?.propertyPrice ?? parsed.data.lead?.property_price,
+    equityAmount:          parsed.data.lead?.equityAmount ?? parsed.data.lead?.equity_amount,
+    monthlyIncome:         parsed.data.lead?.monthlyIncome ?? parsed.data.lead?.monthly_income,
+    monthlyObligations:    parsed.data.lead?.monthlyObligations ?? parsed.data.lead?.monthly_obligations,
+    debtLevel:             parsed.data.lead?.debtLevel ?? parsed.data.lead?.debt_level,
+    serviceType:           parsed.data.lead?.purchaseStatus || "",
+    processStage:          parsed.data.lead?.processStage || parsed.data.lead?.process_stage || "",
+    contractStatus:        parsed.data.lead?.contractStatus || parsed.data.lead?.contract_status || "",
+    requestedContactTime:  parsed.data.lead?.requestedContactTime || parsed.data.lead?.requested_contact_time || "",
+    preferredContactMethod: parsed.data.lead?.preferredContactMethod || parsed.data.lead?.preferred_contact_method || "",
+    consentAdvisorContact: parsed.data.lead?.consentAdvisorContact ?? parsed.data.lead?.consent_advisor_contact,
+    utmSource:             parsed.data.lead?.utmSource || "",
+    utmMedium:             parsed.data.lead?.utmMedium || "",
+    referrer:              parsed.data.lead?.referrer || "",
+    createdAt:             parsed.data.lead?.createdAt || new Date().toISOString(),
+  };
+  const scoreResult = calculateLeadScore(scoringInput);
+
+  // Inject scoring fields into the lead payload before saving
+  req.body = {
+    ...parsed.data,
+    lead: {
+      ...parsed.data.lead,
+      leadScore:        scoreResult.score,
+      leadScoreTier:    scoreResult.tier,
+      leadScoreBreakdown: scoreResult.breakdown,
+      priceAtCreation:  scoreResult.price,
+      scoreVersion:     scoreResult.version,
+      isSellable:       scoreResult.isSellable,
+      qualityNotes:     scoreResult.qualityNotes,
+      storeStatus:      scoreResult.isSellable ? "available" : "hidden",
+    },
+  };
 
   const webhookUrl = process.env.LEAD_WEBHOOK_URL;
   let savedLead = null;

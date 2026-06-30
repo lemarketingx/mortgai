@@ -1,10 +1,8 @@
 import { createHash } from "crypto";
-import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds } from "../../../lib/leadsStore";
+import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds, updateLead } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { checkIdempotencyKey, createIdempotencyKey, completeIdempotencyKey, failIdempotencyKey } from "../../../lib/idempotencyStore";
 import { createNotification } from "../../../lib/notificationsStore";
-
-const FIXED_LEAD_PRICE = 249;
 
 function apiError(res, status, code, message, details = "") {
   return res.status(status).json({ error: code, message, ...(details ? { details } : {}) });
@@ -49,14 +47,10 @@ export default async function handler(req, res) {
     const storeLeads = await readStoreLeads();
     const lead = storeLeads.find((l) => l.id === leadId);
 
+    // readStoreLeads() already filters by isSellable=true AND storeStatus='available'
     if (!lead) {
       await failIdempotencyKey(idempotencyKey);
-      return apiError(res, 404, "LEAD_NOT_AVAILABLE", "Lead is not available in the store");
-    }
-
-    if (lead.storeStatus === "sold") {
-      await failIdempotencyKey(idempotencyKey);
-      return apiError(res, 409, "LEAD_ALREADY_SOLD", "הליד כבר נמכר ואינו זמין לרכישה.");
+      return apiError(res, 404, "LEAD_NOT_AVAILABLE", "הליד אינו זמין לרכישה.");
     }
 
     const ownedIds = await readAdvisorPurchasedLeadIds(session.advisorId);
@@ -65,7 +59,27 @@ export default async function handler(req, res) {
       return apiError(res, 409, "ALREADY_PURCHASED_BY_ADVISOR", "הליד כבר נרכש על ידך. ניתן למצוא אותו באזור 'הלידים שלי'.");
     }
 
-    const price = lead.storePrice || FIXED_LEAD_PRICE;
+    // Price is immutable — always use price_at_creation set when lead was scored
+    const price = lead.priceAtCreation || lead.storePrice || 0;
+    if (!price) {
+      await failIdempotencyKey(idempotencyKey);
+      return apiError(res, 409, "LEAD_NOT_PRICED", "הליד אינו מתומחר ואינו זמין לרכישה.");
+    }
+
+    // Atomic guard: mark lead as purchased before creating the purchase record
+    // so concurrent requests cannot buy the same lead twice.
+    const now = new Date().toISOString();
+    const updatedLead = await updateLead(leadId, {
+      storeStatus: "sold",
+      soldAt: now,
+      buyerAdvisorId: session.advisorId,
+    });
+
+    // If updateLead returned null, the row didn't match — race condition
+    if (!updatedLead || updatedLead.storeStatus !== "sold") {
+      await failIdempotencyKey(idempotencyKey);
+      return apiError(res, 409, "LEAD_ALREADY_SOLD", "הליד כבר נמכר ואינו זמין לרכישה.");
+    }
 
     const purchase = await createLeadPurchase({
       leadId,
