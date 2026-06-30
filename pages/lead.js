@@ -263,7 +263,7 @@ export default function LeadPage() {
       employmentStatus:       lead.employmentStatus || "",
       requestedContactTime:   lead.requestedContactTime || "",
       preferredContactMethod: lead.preferredContactMethod || "",
-      consentAdvisorContact:  true,
+      consentAdvisorContact:  Boolean(lead.consentAdvisorContact),
       notes:                  lead.notes || "",
       source:                 "finzo-lead-form",
       createdAt:              new Date().toISOString(),

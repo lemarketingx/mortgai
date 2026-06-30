@@ -131,7 +131,12 @@ export default async function handler(req, res) {
   const scoreResult = calculateLeadScore(scoringInput);
 
   // Consent is mandatory — no consent means never sellable, regardless of score
-  const consentGiven = scoringInput.consentAdvisorContact === true;
+  console.log("[lead-api] consent debug", {
+    rawConsent: req.body?.lead?.consentAdvisorContact,
+    parsedConsent: parsed.data.lead?.consentAdvisorContact,
+    scoringInputConsent: scoringInput.consentAdvisorContact,
+  });
+  const consentGiven = Boolean(scoringInput.consentAdvisorContact);
   const isSellable = scoreResult.isSellable && consentGiven;
 
   // Inject scoring fields into the lead payload before saving

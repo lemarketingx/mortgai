@@ -355,6 +355,7 @@ export default function Home() {
       hasExistingMortgage: bottomLead.hasExistingMortgage || "",
       requestedContactTime: bottomLead.requestedContactTime || "",
       propertyCity: bottomLead.propertyCity || "",
+      consentAdvisorContact: true, // validated client-side via bottomLeadConsent check above
     };
 
     try {
@@ -430,6 +431,7 @@ export default function Home() {
       existingPropertyValue: toNumeric(data.existingPropertyValue) || 0,
       existingMortgageBalance: toNumeric(data.existingMortgageBalance) || 0,
       householdExpenses: toNumeric(data.householdExpenses) || 0,
+      consentAdvisorContact: true, // validated client-side via leadConsent check above
     };
     const { leadQuality, leadPriority, leadScore } = evaluateLeadProfile(leadPayload);
     leadPayload.leadQuality = leadQuality;
