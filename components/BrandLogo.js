@@ -29,15 +29,15 @@ const ASSETS = {
 
 const SIZE_CLASSES = {
   public: {
-    sm: "h-9 w-auto max-w-[180px]",
-    md: "h-12 w-auto max-w-[280px]",
-    lg: "h-16 w-auto max-w-[420px]",
+    sm: "h-14 w-auto max-w-[260px] scale-[1.55]",
+    md: "h-20 w-auto max-w-[400px] scale-[1.45]",
+    lg: "h-28 w-auto max-w-[620px] scale-[1.35]",
     icon: "h-10 w-10",
   },
   advisor: {
-    sm: "h-9 w-auto max-w-[210px]",
-    md: "h-13 w-auto max-w-[340px]",
-    lg: "h-16 w-auto max-w-[520px]",
+    sm: "h-14 w-auto max-w-[310px] scale-[1.45]",
+    md: "h-20 w-auto max-w-[500px] scale-[1.38]",
+    lg: "h-28 w-auto max-w-[720px] scale-[1.28]",
     icon: "h-10 w-10",
   },
   operator: {
@@ -104,7 +104,7 @@ export default function BrandLogo({
   }
 
   return (
-    <span dir="ltr" className={`inline-flex shrink-0 items-center ${className}`} style={{ unicodeBidi: "isolate" }}>
+    <span dir="ltr" className={`inline-flex shrink-0 items-center justify-center overflow-visible ${className}`} style={{ unicodeBidi: "isolate" }}>
       <img
         src={src}
         alt={asset.alt}
