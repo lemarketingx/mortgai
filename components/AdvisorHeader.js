@@ -184,7 +184,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
   return (
     <header className="bg-[#0B132B]/95 dark:bg-[#0B132B] backdrop-blur-sm text-white sticky top-0 z-40 border-b border-white/[0.06] dark:border-slate-700/50">
       <Head>
-        <link rel="icon" type="image/svg+xml" href="/brand/finzo/favicon-pro.svg" key="finzo-favicon" />
+        <link rel="icon" type="image/png" href="/brand/finzo/finzo-pro-app-icon.png" key="finzo-favicon" />
       </Head>
       <div className="max-w-[92rem] mx-auto px-4 lg:px-6">
 

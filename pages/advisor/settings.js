@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import BrandLogo from "../../components/BrandLogo";
 
 const PREFS_KEY = "finzo_prefs_v1";
 
@@ -445,9 +446,10 @@ export default function AdvisorSettings() {
             <PricingSettings />
           </section>
 
-          <p className="text-center text-xs font-bold text-slate-400 dark:text-slate-600 pb-4">
-            FINZO PRO מבית ל.א.ה דיגיטל
-          </p>
+          <div className="flex items-center justify-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-600 pb-4">
+            <span>FINZO PRO מבית</span>
+            <BrandLogo variant="operator" mode="light" size="sm" />
+          </div>
 
         </div>
 

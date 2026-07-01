@@ -627,7 +627,11 @@ export function Footer({ onCtaClick }) {
           <a href="/contact" className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline">יצירת קשר</a>
           <a href="/advisor/register" className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline">הצטרפות יועצים</a>
         </nav>
-        <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">© 2026 FINZO מבית ל.א.ה דיגיטל. כל הזכויות שמורות.</p>
+        <div className="mt-3 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+          <span>© 2026 FINZO מבית</span>
+          <BrandLogo variant="operator" mode={dark ? "dark" : "light"} size="sm" />
+          <span>· כל הזכויות שמורות.</span>
+        </div>
       </div>
     </footer>
   );

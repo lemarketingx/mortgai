@@ -740,7 +740,10 @@ export default function FinzoProLanding() {
           <p>
             FINZO PRO — פלטפורמת לידים ליועצי משכנתאות | מערכת זו מיועדת ליועצים מקצועיים בלבד
           </p>
-          <p className="mt-1">FINZO PRO מבית ל.א.ה דיגיטל</p>
+          <div className="mt-1 flex items-center justify-center gap-2">
+            <span>FINZO PRO מבית</span>
+            <BrandLogo variant="operator" mode="dark" size="sm" />
+          </div>
         </footer>
 
       </main>
