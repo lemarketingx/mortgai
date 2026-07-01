@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import BrandLogo from "../../components/BrandLogo";
 
 export default function AdvisorLogin() {
   const router = useRouter();
@@ -52,15 +53,13 @@ export default function AdvisorLogin() {
         <meta name="robots" content="noindex,nofollow" />
       </Head>
 
-      <main dir="rtl" className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-800 flex items-center justify-center px-4 py-12">
+      <main dir="rtl" className="min-h-screen bg-gradient-to-b from-[#0B132B] via-slate-950 to-slate-900 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
 
           <div className="text-center mb-8">
-            <Link href="/advisors" className="inline-flex items-center gap-2.5">
-              <span className="text-2xl font-black text-white">FINZO</span>
-              <span className="text-sm font-black text-violet-400 bg-violet-400/10 border border-violet-400/30 px-2.5 py-0.5 rounded-full">PRO</span>
+            <Link href="/advisors" className="inline-flex justify-center">
+              <BrandLogo variant="advisor" mode="dark" size="lg" withTagline />
             </Link>
-            <p className="text-slate-400 text-sm mt-2 font-bold">פלטפורמת לידים ליועצי משכנתאות</p>
           </div>
 
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8">
@@ -150,7 +149,7 @@ export default function AdvisorLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-violet-700 hover:bg-violet-800 disabled:opacity-60 text-white font-black py-3.5 rounded-2xl transition-colors text-sm"
+                className="w-full bg-gradient-to-r from-[#7B3DFF] to-[#FF2EA6] hover:opacity-95 disabled:opacity-60 text-white font-black py-3.5 rounded-2xl transition-colors text-sm shadow-[0_16px_36px_rgba(123,61,255,0.26)]"
               >
                 {loading ? "מתחבר..." : "כניסה ←"}
               </button>
