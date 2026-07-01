@@ -11,9 +11,9 @@ const TAGLINES = {
 const SIZE = {
   icon: {
     mark: "h-9 w-9",
-    word: "text-0",
-    pro: "text-0",
-    tagline: "text-0",
+    word: "text-xs",
+    pro: "text-xs",
+    tagline: "text-xs",
     gap: "gap-0",
   },
   sm: {
@@ -60,7 +60,7 @@ function FinzoMark({ className = "", icon = false, pro = false }) {
             <stop offset="1" stopColor="#0B132B" stopOpacity="0" />
           </linearGradient>
         </defs>
-        <g filter="url(#none)">
+        <g>
           <path d="M20 16H78L69.5 31.5H11.5L20 16Z" fill="url(#finzoMarkGradient)" />
           <path d="M15.5 42H65L56.5 57.5H7L15.5 42Z" fill="url(#finzoMarkGradient)" />
           <path d="M7 58H32.5V84L7 94V58Z" fill="url(#finzoMarkGradient)" />
