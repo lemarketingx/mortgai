@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
+import BrandLogo from "../components/BrandLogo";
 
 export default function AccessibilityPage() {
   return (
@@ -12,7 +13,7 @@ export default function AccessibilityPage() {
       <div dir="rtl" className="min-h-screen bg-white">
         <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
           <div className="mx-auto flex max-w-4xl items-center gap-3">
-            <Link href="/" className="text-xl font-black text-violet-700">FINZO</Link>
+            <Link href="/"><BrandLogo variant="public" mode="light" size="sm" /></Link>
             <span className="text-slate-300">/</span>
             <span className="text-sm font-bold text-slate-500">נגישות</span>
           </div>
@@ -26,7 +27,7 @@ export default function AccessibilityPage() {
             <section>
               <h2 className="text-xl font-black text-slate-900 mb-3">המחויבות שלנו לנגישות</h2>
               <p>
-                ל.א.ה שיווק, מפעילת שירות FINZO, מאמינה שכל אדם זכאי לגישה נוחה לשירותים דיגיטליים.
+                ל.א.ה דיגיטל, מפעילת שירות FINZO, מאמינה שכל אדם זכאי לגישה נוחה לשירותים דיגיטליים.
                 אנו עושים מאמצים סבירים להנגיש את האתר למגוון משתמשים, ופועלים לשיפור הנגישות באופן שוטף.
               </p>
             </section>

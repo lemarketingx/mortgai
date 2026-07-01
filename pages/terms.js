@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
+import BrandLogo from "../components/BrandLogo";
 
 export default function TermsPage() {
   return (
@@ -12,7 +13,7 @@ export default function TermsPage() {
       <div dir="rtl" className="min-h-screen bg-white">
         <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
           <div className="mx-auto flex max-w-4xl items-center gap-3">
-            <Link href="/" className="text-xl font-black text-violet-700">FINZO</Link>
+            <Link href="/"><BrandLogo variant="public" mode="light" size="sm" /></Link>
             <span className="text-slate-300">/</span>
             <span className="text-sm font-bold text-slate-500">תנאי שימוש</span>
           </div>
@@ -26,7 +27,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-black text-slate-900 mb-3">1. כללי</h2>
               <p>
-                ברוכים הבאים ל-FINZO, שירות דיגיטלי המופעל על ידי <strong>ל.א.ה שיווק</strong>. השימוש באתר מהווה הסכמה לתנאים המפורטים להלן. אם אינכם מסכימים לתנאים, אנא הפסיקו את השימוש בשירות.
+                ברוכים הבאים ל-FINZO, שירות דיגיטלי המופעל על ידי <strong>ל.א.ה דיגיטל</strong>. השימוש באתר מהווה הסכמה לתנאים המפורטים להלן. אם אינכם מסכימים לתנאים, אנא הפסיקו את השימוש בשירות.
               </p>
             </section>
 
@@ -47,21 +48,21 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-black text-slate-900 mb-3">4. עצמאות היועצים</h2>
               <p>
-                יועצי המשכנתאות הפועלים דרך פלטפורמת FINZO PRO הם עצמאיים ואינם עובדי ל.א.ה שיווק. החברה אינה אחראית לייעוץ, לשירות, לתוצאות או לטיב הפעילות של יועצים אלה. כל הסכם בין לקוח ויועץ הוא בין הצדדים ישירות.
+                יועצי המשכנתאות הפועלים דרך פלטפורמת FINZO PRO הם עצמאיים ואינם עובדי ל.א.ה דיגיטל. החברה אינה אחראית לייעוץ, לשירות, לתוצאות או לטיב הפעילות של יועצים אלה. כל הסכם בין לקוח ויועץ הוא בין הצדדים ישירות.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-black text-slate-900 mb-3">5. הגבלת אחריות</h2>
               <p>
-                ל.א.ה שיווק לא תישא באחריות לכל נזק ישיר, עקיף, מיוחד או תוצאתי הנובע משימוש בשירות, לרבות החלטות פיננסיות שהתקבלו בהסתמך על מידע מהאתר.
+                ל.א.ה דיגיטל לא תישא באחריות לכל נזק ישיר, עקיף, מיוחד או תוצאתי הנובע משימוש בשירות, לרבות החלטות פיננסיות שהתקבלו בהסתמך על מידע מהאתר.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-black text-slate-900 mb-3">6. קניין רוחני</h2>
               <p>
-                כל התכנים, העיצובים, הלוגואים והפיתוחים באתר FINZO הם קניינה של ל.א.ה שיווק. אין להעתיק, לשכפל, להפיץ או לעשות שימוש מסחרי בתכנים ללא אישור מפורש בכתב.
+                כל התכנים, העיצובים, הלוגואים והפיתוחים באתר FINZO הם קניינה של ל.א.ה דיגיטל. אין להעתיק, לשכפל, להפיץ או לעשות שימוש מסחרי בתכנים ללא אישור מפורש בכתב.
               </p>
             </section>
 

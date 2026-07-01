@@ -79,7 +79,7 @@ function formatPercent(value) {
 
 function ScoreBar({ score }) {
   const pct = Math.min(100, Math.max(0, Number(score) || 0));
-  const color = pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-slate-300 dark:bg-slate-600";
+  const color = pct >= 70 ? "bg-finzo-gradient" : pct >= 40 ? "bg-amber-400" : "bg-slate-300 dark:bg-slate-600";
   return (
     <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
       <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />

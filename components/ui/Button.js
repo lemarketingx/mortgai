@@ -23,7 +23,7 @@ const BASE =
 
 const VARIANTS = {
   cobalt:
-    "bg-finzo-cobalt text-white shadow-e-cobalt hover:bg-finzo-cobalt-d rounded-finzo-pill",
+    "bg-finzo-gradient text-white shadow-e-cobalt hover:brightness-110 rounded-finzo-pill",
   ink:
     "bg-finzo-ink text-white hover:bg-finzo-ink-2 rounded-finzo-pill",
   ghost:

@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
+import BrandLogo from "../../components/BrandLogo";
 
 export default function AdvisorTermsPage() {
   return (
@@ -12,7 +13,7 @@ export default function AdvisorTermsPage() {
       <div dir="rtl" className="min-h-screen bg-white">
         <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
           <div className="mx-auto flex max-w-4xl items-center gap-3">
-            <Link href="/" className="text-xl font-black text-violet-700">FINZO PRO</Link>
+            <Link href="/advisor"><BrandLogo variant="advisor" mode="light" size="sm" /></Link>
             <span className="text-slate-300">/</span>
             <span className="text-sm font-bold text-slate-500">תנאי שימוש ליועצים</span>
           </div>
@@ -30,7 +31,7 @@ export default function AdvisorTermsPage() {
             <section>
               <h2 className="text-xl font-black text-slate-900 mb-3">1. מהות הפלטפורמה</h2>
               <p>
-                FINZO PRO היא פלטפורמה המחברת בין לקוחות פוטנציאליים ליועצי משכנתאות עצמאיים. החברה המפעילה (ל.א.ה שיווק) אינה מספקת ייעוץ פיננסי ואינה אחראית לתוצאות הייעוץ שמספקים היועצים.
+                FINZO PRO היא פלטפורמה המחברת בין לקוחות פוטנציאליים ליועצי משכנתאות עצמאיים. החברה המפעילה (ל.א.ה דיגיטל) אינה מספקת ייעוץ פיננסי ואינה אחראית לתוצאות הייעוץ שמספקים היועצים.
               </p>
             </section>
 
@@ -83,7 +84,7 @@ export default function AdvisorTermsPage() {
               <ul className="list-disc list-inside space-y-1 mr-4">
                 <li>לפעול בהתאם לחוק הפיקוח על שירותים פיננסיים</li>
                 <li>להחזיק בכל אישור, הסמכה, רישום או היתר הנדרש ממנו לפי דין, ככל שנדרש, לאורך כל תקופת הפעילות בפלטפורמה</li>
-                <li>לעדכן את ל.א.ה שיווק בכל שינוי ברישיון, בכתובת או בפרטי ההתקשרות</li>
+                <li>לעדכן את ל.א.ה דיגיטל בכל שינוי ברישיון, בכתובת או בפרטי ההתקשרות</li>
                 <li>לא לעשות שימוש מטעה בשם FINZO או FINZO PRO בפרסום חיצוני</li>
               </ul>
             </section>
@@ -91,7 +92,7 @@ export default function AdvisorTermsPage() {
             <section>
               <h2 className="text-xl font-black text-slate-900 mb-3">6. הפסקת שירות</h2>
               <p>
-                ל.א.ה שיווק שומרת לעצמה את הזכות להשעות או לבטל חשבון יועץ בכל עת, ללא הודעה מוקדמת, במקרה של הפרת תנאים אלו.
+                ל.א.ה דיגיטל שומרת לעצמה את הזכות להשעות או לבטל חשבון יועץ בכל עת, ללא הודעה מוקדמת, במקרה של הפרת תנאים אלו.
               </p>
             </section>
 

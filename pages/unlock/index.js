@@ -1,5 +1,6 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
+import BrandLogo from "../../components/BrandLogo";
 
 export default function UnlockPage() {
   const { query } = useRouter();
@@ -24,7 +25,7 @@ export default function UnlockPage() {
         {/* Brand */}
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2.5">
-            <span className="text-3xl font-black text-white tracking-tight">FINZO</span>
+            <BrandLogo variant="public" mode="dark" size="lg" />
             <span className="text-sm font-black text-violet-400 bg-violet-400/10 border border-violet-400/30 px-2.5 py-0.5 rounded-full">
               Beta
             </span>

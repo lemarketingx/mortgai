@@ -10,24 +10,34 @@
    these inline — update here and let tokens cascade.
    ================================================================ */
 :root {
+  /* FINZO brand — canonical named tokens */
+  --finzo-purple:   #7B3DFF;
+  --finzo-pink:     #FF2EA6;
+  --finzo-navy:     #0B132B;
+  --finzo-light:    #F6F4FF;
+  --finzo-white:    #FFFFFF;
+  --finzo-muted:    #64748B;
+  --finzo-gradient: linear-gradient(135deg, #7B3DFF 0%, #FF2EA6 100%);
+  --finzo-pro-bg:   #0B132B;
+
   /* INK */
-  --c-ink:        #0A1733;
+  --c-ink:        #0B132B;
   --c-ink-2:      #1A2A57;
   --c-ink-3:      #4A5980;
-  --c-mute:       #8090B0;
+  --c-mute:       #64748B;
 
   /* PAPER */
-  --c-paper:      #EEF1F7;
+  --c-paper:      #F6F4FF;
   --c-surface:    #FFFFFF;
-  --c-cream:      #DDE5F0;
-  --c-cream-2:    #C6D2E4;
-  --c-line:       #DDE3EE;
-  --c-line-2:     #C1CADD;
+  --c-cream:      #EDE5FF;
+  --c-cream-2:    #DCCBFF;
+  --c-line:       #E4E0F5;
+  --c-line-2:     #D3CBEC;
 
   /* ACCENT */
-  --c-cobalt:     #2C5BFF;
-  --c-cobalt-d:   #1A3FCC;
-  --c-cobalt-l:   #DCE7FF;
+  --c-cobalt:     #7B3DFF;
+  --c-cobalt-d:   #6423E8;
+  --c-cobalt-l:   #EDE5FF;
   --c-azure:      #6BA8FF;
   --c-sky:        #BFD7FF;
   --c-teal:       #0E3E6E;
@@ -36,8 +46,8 @@
   --c-success:    #1DAF6B;
   --c-warning:    #E0A93D;
   --c-danger:     #DA4949;
-  --c-info:       #2C5BFF;
-  --c-coral:      #FF8A47;
+  --c-info:       #7B3DFF;
+  --c-coral:      #FF2EA6;
 
   /* SPACING (4px base) */
   --s-1:  4px;  --s-2:  8px;  --s-3:  12px; --s-4:  16px;
@@ -93,19 +103,20 @@
 
 /* Dark-mode overrides */
 .dark {
+  --finzo-navy:   #0B132B;
   --c-ink:        #E8ECF4;
   --c-ink-2:      #C5CDE0;
   --c-ink-3:      #9AAAC8;
-  --c-mute:       #6B7FA0;
+  --c-mute:       #8090B0;
   --c-paper:      #0F1729;
-  --c-surface:    #1A2340;
-  --c-cream:      #1E2A4A;
-  --c-cream-2:    #253458;
-  --c-line:       #253458;
-  --c-line-2:     #2E3F6A;
-  --c-cobalt:     #4D7AFF;
-  --c-cobalt-d:   #3A5FE6;
-  --c-cobalt-l:   #1E2A4A;
+  --c-surface:    #151B33;
+  --c-cream:      #22143F;
+  --c-cream-2:    #2C1B52;
+  --c-line:       #2A2050;
+  --c-line-2:     #362A66;
+  --c-cobalt:     #9B6FFF;
+  --c-cobalt-d:   #7B3DFF;
+  --c-cobalt-l:   #22143F;
   --c-success:    #2ED885;
   --c-warning:    #F0BD55;
   --c-danger:     #EF6363;
@@ -126,10 +137,10 @@
     direction: rtl;
     color: #243746;
     background:
-      radial-gradient(circle at 12% 5%, rgba(111, 251, 190, 0.24), transparent 30%),
-      radial-gradient(circle at 88% 8%, rgba(188, 199, 222, 0.28), transparent 32%),
-      radial-gradient(circle at 50% 92%, rgba(204, 168, 48, 0.10), transparent 38%),
-      linear-gradient(145deg, #f8f9ff 0%, #eff4ff 42%, #f7fbfa 100%);
+      radial-gradient(circle at 12% 5%, rgba(123, 61, 255, 0.14), transparent 30%),
+      radial-gradient(circle at 88% 8%, rgba(255, 46, 166, 0.10), transparent 32%),
+      radial-gradient(circle at 50% 92%, rgba(123, 61, 255, 0.07), transparent 38%),
+      linear-gradient(145deg, #FBFAFF 0%, #F6F4FF 42%, #FDF6FA 100%);
     font-family: "Assistant", "Heebo", "Rubik", Arial, sans-serif;
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
@@ -137,7 +148,7 @@
   .dark body,
   html.dark body {
     color: #E8ECF4;
-    background: linear-gradient(145deg, #0B1120 0%, #0F1729 42%, #111D35 100%);
+    background: linear-gradient(145deg, #0B132B 0%, #0F1729 42%, #151233 100%);
   }
 
   button,
@@ -148,7 +159,7 @@
   }
 
   :focus-visible {
-    outline: 3px solid #8b5cf6;
+    outline: 3px solid #7B3DFF;
     outline-offset: 3px;
   }
 
@@ -195,6 +206,17 @@
 
   .focus-field {
     @apply outline-none ring-emerald-200 transition focus:ring-4;
+  }
+
+  /* FINZO primary CTA — purple → pink gradient, white text */
+  .finzo-btn-primary {
+    background: var(--finzo-gradient);
+    @apply inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-black text-white shadow-e-cobalt transition hover:brightness-110;
+  }
+
+  /* FINZO secondary CTA — white surface, purple border/text */
+  .finzo-btn-secondary {
+    @apply inline-flex items-center justify-center rounded-full border border-[#7B3DFF]/30 bg-white px-5 py-3 text-sm font-black text-[#7B3DFF] transition hover:bg-[#7B3DFF]/5 dark:bg-transparent dark:text-[#C6A6FF] dark:border-[#7B3DFF]/40;
   }
 }
 

@@ -75,8 +75,9 @@ export default function App({ Component, pageProps }) {
       <Head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="theme-color" content="#2C5BFF" />
+        <meta name="theme-color" content="#7B3DFF" />
         <meta name="format-detection" content="telephone=no" />
+        <link rel="icon" type="image/svg+xml" href="/brand/finzo/favicon.svg" key="finzo-favicon" />
         <meta httpEquiv="content-language" content="he-IL" />
         <meta property="og:locale" content="he_IL" />
         {process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? (

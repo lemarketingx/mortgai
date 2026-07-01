@@ -445,6 +445,10 @@ export default function AdvisorSettings() {
             <PricingSettings />
           </section>
 
+          <p className="text-center text-xs font-bold text-slate-400 dark:text-slate-600 pb-4">
+            FINZO PRO מבית ל.א.ה דיגיטל
+          </p>
+
         </div>
 
         {/* Mobile bottom nav */}

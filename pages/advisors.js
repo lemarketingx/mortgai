@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
 import { canonicalUrl } from "../lib/seo";
+import BrandLogo from "../components/BrandLogo";
 
 /* ─── Data ─────────────────────────────────────────────────────────────── */
 
@@ -227,10 +228,7 @@ export default function FinzoProLanding() {
         {/* ── Sticky header ─────────────────────────────────────────────── */}
         <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur-xl">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-black tracking-tight text-white">FINZO</span>
-              <span className="rounded-full bg-violet-600 px-2.5 py-0.5 text-xs font-black text-white">PRO</span>
-            </div>
+            <BrandLogo variant="advisor" mode="dark" size="sm" />
             <div className="flex items-center gap-3">
               <Link href="/advisor/login" className="text-sm font-bold text-slate-300 hover:text-white transition-colors hidden sm:block">
                 כניסה ליועצים
@@ -714,9 +712,8 @@ export default function FinzoProLanding() {
         {/* ── 11. Final CTA ─────────────────────────────────────────────── */}
         <section className="bg-slate-950 py-24 text-white">
           <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-700/60 bg-violet-900/40 px-4 py-2 text-sm font-black text-violet-300 mb-8">
-              <span className="text-xl font-black text-white">FINZO</span>
-              <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs font-black text-white">PRO</span>
+            <div className="inline-flex items-center justify-center mb-8">
+              <BrandLogo variant="advisor" mode="dark" size="md" />
             </div>
             <h2 className="text-3xl font-black leading-tight sm:text-5xl">
               מערכת עבודה מלאה — לא רק לידים
@@ -741,10 +738,9 @@ export default function FinzoProLanding() {
         {/* ── Footer ────────────────────────────────────────────────────── */}
         <footer className="border-t border-slate-800 bg-slate-950 py-8 text-center text-xs text-slate-600">
           <p>
-            <span className="font-black text-white">FINZO</span>
-            <span className="rounded-full bg-violet-600 px-1.5 py-0.5 text-xs font-black text-white mr-1.5">PRO</span>
-            — פלטפורמת לידים ליועצי משכנתאות | מערכת זו מיועדת ליועצים מקצועיים בלבד
+            FINZO PRO — פלטפורמת לידים ליועצי משכנתאות | מערכת זו מיועדת ליועצים מקצועיים בלבד
           </p>
+          <p className="mt-1">FINZO PRO מבית ל.א.ה דיגיטל</p>
         </footer>
 
       </main>

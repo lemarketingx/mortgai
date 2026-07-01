@@ -13,18 +13,23 @@ MortgAI2 uses a conversion-focused advisory dashboard pattern:
 
 ## Color Palette
 
-- Ink: `#0b1720`
-- Body text: `#243746`
-- Muted text: `#64748b`
-- Surface: `rgba(255,255,255,.86)`
-- Surface strong: `#ffffff`
-- Border: `rgba(15,23,42,.10)`
-- Brand emerald: `#059669`
-- Brand teal: `#0f766e`
-- Trust blue: `#2563eb`
-- Premium gold: `#b7791f`
-- Warning red: `#dc2626`
-- Soft background: `#eef7f4`
+FINZO brand refresh (purple/pink/navy):
+
+- Brand purple: `#7B3DFF`
+- Brand pink: `#FF2EA6`
+- Brand gradient: `linear-gradient(135deg, #7B3DFF 0%, #FF2EA6 100%)`
+- Navy (FINZO PRO surfaces): `#0B132B`
+- Light background: `#F6F4FF`
+- White: `#FFFFFF`
+- Muted text: `#64748B`
+- Dark text / ink: `#0B132B`
+- Success: `#1DAF6B`
+- Warning: `#E0A93D`
+- Danger: `#DA4949`
+
+Tailwind's `violet-*` scale is overridden project-wide to this purple ramp (see `tailwind.config.js`),
+so any `violet-*` utility class already renders in brand purple. FINZO (public) uses light/clean
+surfaces; FINZO PRO (advisor) uses the navy surface with the same purple/pink gradient accents.
 
 ## Typography
 

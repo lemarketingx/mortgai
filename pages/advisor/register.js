@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/router";
+import BrandLogo from "../../components/BrandLogo";
 
 const ADVISOR_TYPES = ["", "יועץ עצמאי", "משרד יועצים", "אחר"];
 
@@ -82,11 +83,10 @@ export default function AdvisorRegister() {
       </Head>
 
       <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950">
-        <header className="bg-slate-950 text-white px-4 py-5">
+        <header className="bg-[#0B132B] text-white px-4 py-5">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
             <Link href="/advisors" className="flex items-center gap-2.5">
-              <span className="text-lg font-black">FINZO</span>
-              <span className="text-xs font-black text-violet-400 bg-violet-400/10 border border-violet-400/30 px-2 py-0.5 rounded-full">PRO</span>
+              <BrandLogo variant="advisor" mode="dark" size="sm" />
             </Link>
             <Link href="/advisor/login" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">
               כניסה לחשבון קיים ←
