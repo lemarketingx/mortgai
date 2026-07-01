@@ -1,6 +1,6 @@
 // LOCKED BRAND COMPONENT
-// Single source of truth for FINZO / FINZO PRO / operator branding.
-// Keep this component simple: no floating decorative lines, no RTL/LTR tricks outside this file.
+// FINZO and FINZO PRO must render from one fixed SVG wordmark.
+// Do not rebuild the logo ad-hoc in pages.
 
 const TAGLINES = {
   public: "בדיקת זכאות חכמה למשכנתא בישראל",
@@ -8,74 +8,134 @@ const TAGLINES = {
   operator: "ל.א.ה דיגיטל",
 };
 
-const SIZE = {
-  sm: {
-    mark: "h-6 w-6",
-    word: "text-lg",
-    pro: "text-sm",
-    tagline: "text-[10px]",
-    gap: "gap-2",
+const WIDTH = {
+  public: {
+    sm: "w-[168px]",
+    md: "w-[270px]",
+    lg: "w-[390px]",
   },
-  md: {
-    mark: "h-9 w-9",
-    word: "text-3xl",
-    pro: "text-2xl",
-    tagline: "text-xs",
-    gap: "gap-3",
-  },
-  lg: {
-    mark: "h-12 w-12",
-    word: "text-4xl",
-    pro: "text-3xl",
-    tagline: "text-sm",
-    gap: "gap-4",
+  advisor: {
+    sm: "w-[218px]",
+    md: "w-[340px]",
+    lg: "w-[500px]",
   },
 };
 
-function FinzoMark({ className = "", appIcon = false, pro = false }) {
+function MarkShape({ pro = false }) {
   return (
-    <span
-      className={`relative inline-grid shrink-0 place-items-center ${className}`}
-      aria-hidden="true"
-    >
-      {appIcon && (
-        <span className={`absolute inset-0 rounded-[26%] ${pro ? "bg-[#0B132B]" : "bg-white"} shadow-[0_16px_40px_rgba(15,19,43,0.16)]`} />
+    <g>
+      <defs>
+        <linearGradient id="finzoGradient" x1="0" y1="0" x2="88" y2="88" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#6B3DFF" />
+          <stop offset="0.55" stopColor="#8A35F6" />
+          <stop offset="1" stopColor="#FF2EA6" />
+        </linearGradient>
+        <linearGradient id="finzoShadow" x1="8" y1="55" x2="36" y2="92" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0B132B" stopOpacity="0.22" />
+          <stop offset="1" stopColor="#0B132B" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d="M19 10H83L74 27H10L19 10Z" fill="url(#finzoGradient)" />
+      <path d="M14 39H69L60 56H5L14 39Z" fill="url(#finzoGradient)" />
+      <path d="M5 56H35V86L5 98V56Z" fill="url(#finzoGradient)" />
+      <path d="M5 56H35V72H5V56Z" fill="url(#finzoShadow)" />
+      {pro && (
+        <g transform="translate(64 66)">
+          <circle cx="10" cy="10" r="18" fill="#0B132B" stroke="url(#finzoGradient)" strokeWidth="3.5" />
+          <rect x="1" y="11" width="4" height="8" rx="1" fill="#FFFFFF" />
+          <rect x="8" y="5" width="4" height="14" rx="1" fill="#FFFFFF" opacity="0.92" />
+          <rect x="15" y="0" width="4" height="19" rx="1" fill="#FFFFFF" opacity="0.86" />
+        </g>
       )}
-      <svg viewBox="0 0 96 96" className="relative h-full w-full overflow-visible" fill="none">
-        <defs>
-          <linearGradient id="finzoMarkGradient" x1="8" y1="8" x2="88" y2="88" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stopColor="#6B3DFF" />
-            <stop offset="0.55" stopColor="#8A35F6" />
-            <stop offset="1" stopColor="#FF2EA6" />
-          </linearGradient>
-          <linearGradient id="finzoMarkShadow" x1="18" y1="54" x2="48" y2="92" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stopColor="#0B132B" stopOpacity="0.2" />
-            <stop offset="1" stopColor="#0B132B" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d="M20 16H78L69.5 31.5H11.5L20 16Z" fill="url(#finzoMarkGradient)" />
-        <path d="M15.5 42H65L56.5 57.5H7L15.5 42Z" fill="url(#finzoMarkGradient)" />
-        <path d="M7 58H32.5V84L7 94V58Z" fill="url(#finzoMarkGradient)" />
-        <path d="M7 58H32.5V72H7V58Z" fill="url(#finzoMarkShadow)" />
-        {pro && appIcon && (
-          <g>
-            <circle cx="72" cy="72" r="17" fill="#0B132B" stroke="url(#finzoMarkGradient)" strokeWidth="3" />
-            <rect x="63" y="73" width="4" height="8" rx="1" fill="#FFFFFF" />
-            <rect x="70" y="66" width="4" height="15" rx="1" fill="#FFFFFF" opacity="0.92" />
-            <rect x="77" y="59" width="4" height="22" rx="1" fill="#FFFFFF" opacity="0.86" />
-          </g>
-        )}
-      </svg>
-    </span>
+    </g>
   );
 }
 
-function FinzoO({ dark = false }) {
+function LogoO({ x, y, dark }) {
+  const stroke = dark ? "#FFFFFF" : "#0B132B";
   return (
-    <span className="relative inline-flex h-[1em] w-[0.92em] items-center justify-center align-[-0.12em]">
-      <span className={`absolute inset-[0.12em] rounded-full border-[0.15em] ${dark ? "border-white" : "border-[#0B132B]"}`} />
-      <span className="absolute right-[0.02em] top-[0.08em] h-[0.31em] w-[0.12em] rotate-45 rounded-full bg-[#7B3DFF]" />
-      <span className="absolute right-[0.02em] bottom-[0.08em] h-[0.31em] w-[0.12em] -rotate-45 rounded-full bg-[#FF2EA6]" />
+    <g transform={`translate(${x} ${y})`}>
+      <circle cx="0" cy="0" r="24" fill="none" stroke={stroke} strokeWidth="12" />
+      <path d="M16 -18 A24 24 0 0 1 23 -5" fill="none" stroke="#7B3DFF" strokeWidth="12" strokeLinecap="round" />
+      <path d="M20 12 A24 24 0 0 1 7 23" fill="none" stroke="#FF2EA6" strokeWidth="12" strokeLinecap="round" />
+    </g>
+  );
+}
+
+function WordmarkSvg({ variant, mode, withTagline }) {
+  const isAdvisor = variant === "advisor";
+  const dark = mode === "dark";
+  const textColor = dark ? "#FFFFFF" : "#0B132B";
+  const muted = dark ? "#CBD5E1" : "#64748B";
+  const width = isAdvisor ? 620 : 470;
+  const height = withTagline ? 124 : 82;
+  const oX = isAdvisor ? 340 : 340;
+  const proX = 397;
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className="block h-auto w-full overflow-visible"
+      role="img"
+      aria-label={isAdvisor ? "FINZO PRO - פלטפורמה חכמה ליועצי משכנתאות בישראל" : "FINZO - בדיקת זכאות חכמה למשכנתא בישראל"}
+    >
+      <g transform="translate(0 4) scale(0.72)">
+        <MarkShape />
+      </g>
+
+      <text
+        x="98"
+        y="57"
+        fill={textColor}
+        fontFamily="Heebo, Arial, sans-serif"
+        fontSize="54"
+        fontWeight="900"
+        letterSpacing="10"
+      >
+        FINZ
+      </text>
+      <LogoO x={oX} y={39} dark={dark} />
+
+      {isAdvisor && (
+        <text
+          x={proX}
+          y="57"
+          fill="#7B3DFF"
+          fontFamily="Heebo, Arial, sans-serif"
+          fontSize="43"
+          fontWeight="900"
+          letterSpacing="3"
+        >
+          PRO
+        </text>
+      )}
+
+      {withTagline && (
+        <text
+          x={isAdvisor ? 330 : 250}
+          y="104"
+          fill={muted}
+          fontFamily="Heebo, Arial, sans-serif"
+          fontSize={isAdvisor ? "23" : "22"}
+          fontWeight="800"
+          textAnchor="middle"
+          direction="rtl"
+        >
+          {TAGLINES[variant]}
+        </text>
+      )}
+    </svg>
+  );
+}
+
+function OperatorLogo({ className = "" }) {
+  return (
+    <span dir="rtl" className={`inline-flex items-center gap-2 whitespace-nowrap font-black text-[#0B132B] dark:text-white ${className}`}>
+      <span className="inline-flex gap-1" aria-hidden="true">
+        <span className="h-2 w-2 rounded-full bg-[#7B3DFF] shadow-[0_0_14px_rgba(123,61,255,0.45)]" />
+        <span className="h-2 w-2 rounded-full bg-[#19C7C9] shadow-[0_0_14px_rgba(25,199,201,0.45)]" />
+      </span>
+      <span>ל.א.ה דיגיטל</span>
     </span>
   );
 }
@@ -84,7 +144,9 @@ export function FinzoAppIcon({ variant = "public", className = "" }) {
   const pro = variant === "advisor";
   return (
     <span className={`inline-grid place-items-center rounded-[28%] ${pro ? "bg-[#0B132B]" : "bg-white"} shadow-[0_16px_40px_rgba(15,19,43,0.16)] ${className}`}>
-      <FinzoMark appIcon pro={pro} className="h-[72%] w-[72%]" />
+      <svg viewBox="0 0 96 96" className="h-[72%] w-[72%] overflow-visible" fill="none" aria-hidden="true">
+        <MarkShape pro={pro} />
+      </svg>
     </span>
   );
 }
@@ -96,63 +158,15 @@ export default function BrandLogo({
   withTagline = true,
   className = "",
 }) {
-  const isAdvisor = variant === "advisor";
-  const isOperator = variant === "operator";
-  const isIcon = size === "icon";
-  const cfg = SIZE[size] || SIZE.md;
-  const dark = mode === "dark";
-  const tagline = TAGLINES[variant] || TAGLINES.public;
+  if (variant === "operator") return <OperatorLogo className={className} />;
+  if (size === "icon") return <FinzoAppIcon variant={variant} className={className || "h-10 w-10"} />;
 
-  if (isOperator) {
-    return (
-      <span dir="rtl" className={`inline-flex items-center gap-2 whitespace-nowrap font-black text-[#0B132B] dark:text-white ${className}`}>
-        <span className="inline-flex gap-1" aria-hidden="true">
-          <span className="h-2 w-2 rounded-full bg-[#7B3DFF] shadow-[0_0_14px_rgba(123,61,255,0.45)]" />
-          <span className="h-2 w-2 rounded-full bg-[#19C7C9] shadow-[0_0_14px_rgba(25,199,201,0.45)]" />
-        </span>
-        <span>ל.א.ה דיגיטל</span>
-      </span>
-    );
-  }
-
-  if (isIcon) {
-    return <FinzoAppIcon variant={variant} className={className || "h-10 w-10"} />;
-  }
+  const bucket = variant === "advisor" ? "advisor" : "public";
+  const widthClass = WIDTH[bucket][size] || WIDTH[bucket].md;
 
   return (
-    <span
-      className={`inline-flex max-w-full items-center ${cfg.gap} whitespace-nowrap leading-none ${className}`}
-      dir="ltr"
-      aria-label={isAdvisor ? "FINZO PRO - פלטפורמה ליועצי משכנתאות" : "FINZO - בדיקת זכאות חכמה למשכנתא בישראל"}
-      style={{ unicodeBidi: "isolate" }}
-    >
-      <FinzoMark className={cfg.mark} />
-      <span className="flex min-w-0 flex-col items-start leading-none">
-        <span className="inline-flex items-baseline gap-2 whitespace-nowrap" dir="ltr" style={{ unicodeBidi: "isolate" }}>
-          <span
-            className={`${cfg.word} font-black tracking-[0.12em] ${dark ? "text-white" : "text-[#0B132B]"}`}
-            style={{ fontFamily: "Heebo, Arial, sans-serif" }}
-          >
-            FINZ<FinzoO dark={dark} />
-          </span>
-          {isAdvisor && (
-            <span
-              className={`${cfg.pro} font-black tracking-[0.04em] bg-gradient-to-r from-[#7B3DFF] to-[#FF2EA6] bg-clip-text text-transparent`}
-              style={{ fontFamily: "Heebo, Arial, sans-serif" }}
-            >
-              PRO
-            </span>
-          )}
-        </span>
-        {withTagline && (
-          <span
-            dir="rtl"
-            className={`mt-1 block max-w-full truncate whitespace-nowrap text-right ${cfg.tagline} font-extrabold tracking-normal ${dark ? "text-slate-300" : "text-slate-500"}`}
-          >
-            {tagline}
-          </span>
-        )}
-      </span>
+    <span dir="ltr" className={`inline-block max-w-full shrink-0 ${widthClass} ${className}`} style={{ unicodeBidi: "isolate" }}>
+      <WordmarkSvg variant={bucket} mode={mode} withTagline={withTagline} />
     </span>
   );
 }
