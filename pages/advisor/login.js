@@ -56,9 +56,9 @@ export default function AdvisorLogin() {
       <main dir="rtl" className="min-h-screen bg-gradient-to-b from-[#0B132B] via-slate-950 to-slate-900 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
 
-          <div className="text-center mb-8">
-            <Link href="/advisors" className="inline-flex justify-center">
-              <BrandLogo variant="advisor" mode="dark" size="lg" withTagline />
+          <div className="mb-8 flex justify-center overflow-hidden px-3">
+            <Link href="/advisors" className="inline-flex max-w-full justify-center">
+              <BrandLogo variant="advisor" mode="dark" size="md" withTagline />
             </Link>
           </div>
 
