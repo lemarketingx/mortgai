@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/router";
+import BrandLogo from "../../components/BrandLogo";
 
 const ADVISOR_TYPES = ["", "יועץ עצמאי", "משרד יועצים", "אחר"];
 
@@ -82,11 +83,10 @@ export default function AdvisorRegister() {
       </Head>
 
       <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950">
-        <header className="bg-slate-950 text-white px-4 py-5">
+        <header className="bg-[#0B132B] text-white px-4 py-5">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
             <Link href="/advisors" className="flex items-center gap-2.5">
-              <span className="text-lg font-black">FINZO</span>
-              <span className="text-xs font-black text-violet-400 bg-violet-400/10 border border-violet-400/30 px-2 py-0.5 rounded-full">PRO</span>
+              <BrandLogo variant="advisor" mode="dark" size="sm" withTagline={false} />
             </Link>
             <Link href="/advisor/login" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">
               כניסה לחשבון קיים ←
@@ -95,14 +95,17 @@ export default function AdvisorRegister() {
         </header>
 
         <div className="max-w-xl mx-auto px-4 py-12">
-          <div className="mb-8">
-            <h1 className="text-3xl font-black text-slate-950 dark:text-slate-100">פתיחת חשבון ב־FINZO PRO</h1>
-            <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm leading-6">
-              גישה מיידית לחנות לידים, ניהול לקוחות ופורטל יועצים.
-            </p>
+          <div className="mb-8 flex justify-center">
+            <BrandLogo variant="advisor" mode="light" size="md" withTagline />
           </div>
 
           <form onSubmit={submit} className="space-y-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-7 shadow-sm">
+            <div className="pb-2">
+              <h1 className="text-3xl font-black text-slate-950 dark:text-slate-100">פתיחת חשבון יועץ</h1>
+              <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm leading-6">
+                גישה מיידית לחנות לידים, ניהול לקוחות ופורטל יועצים.
+              </p>
+            </div>
 
             <Field
               label="שם מלא"
@@ -203,7 +206,7 @@ export default function AdvisorRegister() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-full bg-violet-700 hover:bg-violet-800 px-6 py-4 font-black text-white transition-colors disabled:opacity-70 text-sm"
+              className="w-full rounded-full bg-gradient-to-r from-[#7B3DFF] to-[#FF2EA6] hover:opacity-95 px-6 py-4 font-black text-white transition-colors disabled:opacity-70 text-sm shadow-[0_16px_36px_rgba(123,61,255,0.22)]"
             >
               {loading ? "יוצר חשבון..." : "פתיחת חשבון ב־FINZO PRO ←"}
             </button>
