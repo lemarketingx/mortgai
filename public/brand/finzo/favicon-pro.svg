@@ -1,15 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
   <defs>
-    <linearGradient id="g" x1="4" y1="2" x2="30" y2="46" gradientUnits="userSpaceOnUse">
+    <linearGradient id="g" x1="4" y1="2" x2="24" y2="54" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#7B3DFF"/>
       <stop offset="1" stop-color="#FF2EA6"/>
     </linearGradient>
   </defs>
   <rect width="48" height="48" rx="10" fill="#0B132B"/>
-  <path d="M9 9H37L26 21H9V9Z" fill="url(#g)"/>
-  <path d="M9 25H31L21 37H9V25Z" fill="url(#g)"/>
-  <path d="M9 39H19L9 47V39Z" fill="url(#g)"/>
-  <circle cx="38" cy="38" r="8" fill="#0B132B" stroke="#FFFFFF" stroke-width="1.5"/>
-  <path d="M38 31.5A6.5 6.5 0 0144.5 38" stroke="#7B3DFF" stroke-width="2" stroke-linecap="round" fill="none"/>
-  <path d="M38 44.5A6.5 6.5 0 0131.5 38" stroke="#FF2EA6" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <g transform="translate(9.8,6) scale(0.643)">
+    <path d="M4 2H34L24 16H4V2Z" fill="url(#g)"/>
+    <path d="M4 22H26L16 36H4V22Z" fill="url(#g)"/>
+    <path d="M4 40H14L4 54V40Z" fill="url(#g)"/>
+  </g>
+  <circle cx="38.5" cy="38.5" r="8.2" fill="#0B132B" stroke="#F6F4FF" stroke-width="1.4"/>
+  <path d="M42 32.94A7 7 0 0 1 44.84 36.04" stroke="#7B3DFF" stroke-width="2" stroke-linecap="round"/>
+  <path d="M44.84 40.96A7 7 0 0 1 42 44.06" stroke="#FF2EA6" stroke-width="2" stroke-linecap="round"/>
+  <path d="M35.5 42V39.8M38.5 42V36.8M41.5 42V38.5" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round"/>
 </svg>
