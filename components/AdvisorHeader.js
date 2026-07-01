@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "../pages/_app";
+import BrandLogo from "./BrandLogo";
 
 const PROFILE_KEY = "finzo_advisor_profile_v1";
 
@@ -186,8 +187,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
         {/* ── Desktop bar ──────────────────────────────────────────── */}
         <div className="hidden md:flex items-center h-14 gap-6">
           <Link href="/advisor" className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
-            <span className="text-sm font-black tracking-tight text-white">FINZO</span>
-            <span className="text-[10px] font-black text-violet-400 bg-violet-400/10 border border-violet-400/20 px-1.5 py-0.5 rounded-full tracking-widest">PRO</span>
+            <BrandLogo variant="advisor" mode="dark" size="sm" withTagline={false} />
           </Link>
 
           <nav className="flex items-center gap-0.5 flex-1 justify-center">
@@ -326,8 +326,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
         {/* ── Mobile top bar ───────────────────────────────────────── */}
         <div className="flex md:hidden items-center justify-between h-12 gap-3">
           <Link href="/advisor" className="flex items-center gap-2">
-            <span className="text-sm font-black text-white">FINZO</span>
-            <span className="text-[10px] font-black text-violet-400 bg-violet-400/10 border border-violet-400/20 px-1.5 py-0.5 rounded-full tracking-widest">PRO</span>
+            <BrandLogo variant="advisor" mode="dark" size="sm" withTagline={false} />
           </Link>
           <div className="flex items-center gap-2">
             {/* Mobile theme toggle */}
