@@ -49,8 +49,30 @@ function ThemeProvider({ children }) {
 
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY || process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com";
 
 const PRIVATE_PREFIXES = ["/advisor", "/admin", "/client"];
+
+function pathWithoutQuery(url = "") {
+  return String(url).split("?")[0].split("#")[0] || "/";
+}
+
+function isPrivatePath(url = "") {
+  const path = pathWithoutQuery(url);
+  return PRIVATE_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+}
+
+function captureSafePostHogPageview(url = "") {
+  if (typeof window === "undefined" || !window.posthog) return;
+  const path = pathWithoutQuery(url || window.location.pathname || "/");
+  if (isPrivatePath(path)) return;
+
+  window.posthog.capture("$pageview", {
+    path,
+    source: "next_router",
+  });
+}
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
@@ -69,6 +91,19 @@ export default function App({ Component, pageProps }) {
     router.events.on("routeChangeComplete", handleRouteChange);
     return () => router.events.off("routeChangeComplete", handleRouteChange);
   }, [router.events]);
+
+  // Privacy-safe PostHog page views. Query strings are intentionally removed.
+  useEffect(() => {
+    if (!POSTHOG_KEY) return undefined;
+
+    captureSafePostHogPageview(router.asPath || "/");
+    function handleRouteChange(url) {
+      captureSafePostHogPageview(url);
+    }
+
+    router.events.on("routeChangeComplete", handleRouteChange);
+    return () => router.events.off("routeChangeComplete", handleRouteChange);
+  }, [router.asPath, router.events]);
 
   return (
     <ErrorBoundary>
@@ -97,6 +132,34 @@ export default function App({ Component, pageProps }) {
       <Script id="mortgai-datalayer-init" strategy="beforeInteractive">
         {`window.dataLayer = window.dataLayer || [];`}
       </Script>
+
+      {POSTHOG_KEY ? (
+        <Script id="finzo-posthog-init" strategy="afterInteractive">
+          {`
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once set_config unregister identify alias setPersonProperties group reset onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onCapture".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])}}(document,window.posthog||[]);
+posthog.init(${JSON.stringify(POSTHOG_KEY)}, {
+  api_host: ${JSON.stringify(POSTHOG_HOST)},
+  capture_pageview: false,
+  capture_pageleave: false,
+  autocapture: false,
+  person_profiles: "identified_only",
+  mask_all_text: true,
+  mask_all_element_attributes: true,
+  sanitize_properties: function(properties) {
+    var blocked = ["name","fullName","phone","email","idNumber","tz","teudatZehut","address","city","notes","income","monthlyIncome","propertyPrice","equityAmount","debtLevel","mortgageAmount","obligations","existingPropertyValue","existingMortgageBalance"];
+    if (!properties) return properties;
+    blocked.forEach(function(key) {
+      if (Object.prototype.hasOwnProperty.call(properties, key)) delete properties[key];
+    });
+    return properties;
+  },
+  loaded: function(posthog) {
+    posthog.capture("finzo_posthog_ready", { source: "app_init" });
+  }
+});
+          `}
+        </Script>
+      ) : null}
 
       {GTM_ID ? (
         <>
