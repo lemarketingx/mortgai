@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
+import BrandLogo from "../../components/BrandLogo";
 
 export default function AdvisorTermsPage() {
   return (
@@ -12,7 +13,7 @@ export default function AdvisorTermsPage() {
       <div dir="rtl" className="min-h-screen bg-white">
         <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
           <div className="mx-auto flex max-w-4xl items-center gap-3">
-            <Link href="/" className="text-xl font-black text-violet-700">FINZO PRO</Link>
+            <Link href="/" className="inline-flex items-center"><BrandLogo variant="advisor" size="sm" withTagline={false} /></Link>
             <span className="text-slate-300">/</span>
             <span className="text-sm font-bold text-slate-500">תנאי שימוש ליועצים</span>
           </div>

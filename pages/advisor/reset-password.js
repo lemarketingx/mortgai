@@ -1,6 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import BrandLogo from "../../components/BrandLogo";
 
 export default function AdvisorResetPassword() {
   const [password, setPassword] = useState("");
@@ -59,9 +60,8 @@ export default function AdvisorResetPassword() {
         <div className="w-full max-w-md">
 
           <div className="text-center mb-8">
-            <Link href="/advisors" className="inline-flex items-center gap-2.5">
-              <span className="text-2xl font-black text-white">FINZO</span>
-              <span className="text-sm font-black text-violet-400 bg-violet-400/10 border border-violet-400/30 px-2.5 py-0.5 rounded-full">PRO</span>
+            <Link href="/advisors" className="inline-flex items-center">
+              <BrandLogo variant="advisor" mode="dark" size="md" withTagline={false} />
             </Link>
           </div>
 

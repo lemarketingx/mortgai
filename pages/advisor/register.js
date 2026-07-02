@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import BrandLogo from "../../components/BrandLogo";
+import { useTheme } from "../_app";
 
 const ADVISOR_TYPES = ["", "יועץ עצמאי", "משרד יועצים", "אחר"];
 
@@ -29,6 +30,7 @@ function Field({ label, value, onChange, placeholder = "", type = "text", requir
 
 export default function AdvisorRegister() {
   const router = useRouter();
+  const { dark } = useTheme();
   const [form, setForm] = useState({
     fullName: "", phone: "", email: "",
     password: "", region: "",
@@ -96,7 +98,7 @@ export default function AdvisorRegister() {
 
         <div className="max-w-xl mx-auto px-4 py-12">
           <div className="mb-8 flex justify-center">
-            <BrandLogo variant="advisor" mode="light" size="md" withTagline />
+            <BrandLogo variant="advisor" mode={dark ? "dark" : "light"} size="md" withTagline />
           </div>
 
           <form onSubmit={submit} className="space-y-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-7 shadow-sm">

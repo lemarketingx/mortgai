@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import BrandLogo from "../../../../components/BrandLogo";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
@@ -284,7 +285,7 @@ export default function ClientDocumentPortal() {
         {/* ── Header ── */}
         <header className="bg-white border-b border-slate-100 shadow-sm py-4 px-4">
           <div className="max-w-lg mx-auto flex items-center gap-3">
-            <span className="text-xl font-black text-violet-700">FINZO</span>
+            <BrandLogo size="sm" withTagline={false} />
             <span className="text-slate-300">|</span>
             <span className="text-sm font-bold text-slate-500">העלאת מסמכים</span>
           </div>
