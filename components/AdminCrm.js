@@ -638,7 +638,7 @@ export default function AdminCrm() {
   if (!isAuthenticated) {
     return (
       <main dir="rtl" className="flex min-h-screen items-center justify-center bg-pro-paper px-4 py-12">
-        <Head><title>FINZO Back Office</title><meta name="robots" content="noindex,nofollow" /></Head>
+        <Head><title>FINZO Back Office</title><meta name="robots" content="noindex,nofollow" /><link rel="icon" type="image/png" href="/brand/finzo/finzo-pro-app-icon.png" key="favicon" /></Head>
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
             <div className="mb-4 flex justify-center"><BrandLogo size="sm" withTagline={false} /></div>
@@ -676,7 +676,7 @@ export default function AdminCrm() {
 
   return (
     <div dir="rtl" className="flex min-h-screen bg-pro-paper text-mort-text">
-      <Head><title>FINZO Back Office</title><meta name="robots" content="noindex,nofollow" /></Head>
+      <Head><title>FINZO Back Office</title><meta name="robots" content="noindex,nofollow" /><link rel="icon" type="image/png" href="/brand/finzo/finzo-pro-app-icon.png" key="favicon" /></Head>
 
       {/* Mobile overlay */}
       {sidebarOpen && <div className="fixed inset-0 z-20 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)} />}

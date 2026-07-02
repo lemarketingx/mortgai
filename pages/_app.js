@@ -114,6 +114,7 @@ export default function App({ Component, pageProps }) {
         <meta name="format-detection" content="telephone=no" />
         <meta httpEquiv="content-language" content="he-IL" />
         <meta property="og:locale" content="he_IL" />
+        <link rel="icon" type="image/png" href="/brand/finzo/finzo-app-icon.png" key="favicon" />
         {process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? (
           <meta name="google-site-verification" content={process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION} />
         ) : null}

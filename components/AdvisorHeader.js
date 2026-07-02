@@ -1,3 +1,4 @@
+import Head from "next/head";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "../pages/_app";
@@ -181,6 +182,10 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
   const bellCount = notifications.length > 0 ? unreadCount : urgentItems.length;
 
   return (
+    <>
+    <Head>
+      <link rel="icon" type="image/png" href="/brand/finzo/finzo-pro-app-icon.png" key="favicon" />
+    </Head>
     <header className="bg-slate-950/95 dark:bg-slate-900 backdrop-blur-sm text-white sticky top-0 z-40 border-b border-white/[0.06] dark:border-slate-700/50">
       <div className="max-w-[92rem] mx-auto px-4 lg:px-6">
 
@@ -372,5 +377,6 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
 
       </div>
     </header>
+    </>
   );
 }
