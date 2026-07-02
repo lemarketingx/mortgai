@@ -30,7 +30,10 @@ module.exports = {
           mid: "#e5eeff",
           high: "#dce9ff",
         },
-        // FINZO design system v1.0 — under `finzo` namespace, no conflicts
+        // FINZO design system v1.0 — under `finzo` namespace, no conflicts.
+        // Accent tokens (cobalt/azure/sky/magenta) are derived from the
+        // logo's violet-to-magenta gradient so the Back Office and the
+        // public site share one brand palette.
         finzo: {
           ink:       "#0A1733",
           "ink-2":   "#1A2A57",
@@ -42,12 +45,15 @@ module.exports = {
           "cream-2": "#C6D2E4",
           line:      "#DDE3EE",
           "line-2":  "#C1CADD",
-          cobalt:    "#2C5BFF",
-          "cobalt-d":"#1A3FCC",
-          "cobalt-l":"#DCE7FF",
-          azure:     "#6BA8FF",
-          sky:       "#BFD7FF",
+          cobalt:    "#7B3DFF",
+          "cobalt-d":"#5B21B6",
+          "cobalt-l":"#EDE4FF",
+          azure:     "#A78BFA",
+          sky:       "#DDD6FE",
           teal:      "#0E3E6E",
+          magenta:   "#FF2EA6",
+          "magenta-d":"#C2187D",
+          "magenta-l":"#FFE1F2",
           coral:     "#FF8A47",
           success:   "#1DAF6B",
           warning:   "#E0A93D",

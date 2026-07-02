@@ -639,7 +639,7 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
           <p className="text-sm font-black text-slate-700 dark:text-slate-300">{wizardSteps[step].title}</p>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-white dark:bg-slate-700">
-          <div className="h-full rounded-full bg-violet-700 transition-all duration-300" style={{ ...PROGRESS_BAR_STYLE, width: `${((step + 1) / wizardSteps.length) * 100}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-l from-violet-700 to-fuchsia-500 transition-all duration-300" style={{ ...PROGRESS_BAR_STYLE, width: `${((step + 1) / wizardSteps.length) * 100}%` }} />
         </div>
       </div>
 

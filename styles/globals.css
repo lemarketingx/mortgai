@@ -24,19 +24,22 @@
   --c-line:       #DDE3EE;
   --c-line-2:     #C1CADD;
 
-  /* ACCENT */
-  --c-cobalt:     #2C5BFF;
-  --c-cobalt-d:   #1A3FCC;
-  --c-cobalt-l:   #DCE7FF;
-  --c-azure:      #6BA8FF;
-  --c-sky:        #BFD7FF;
+  /* ACCENT — matches the logo's violet-to-magenta gradient */
+  --c-cobalt:     #7B3DFF;
+  --c-cobalt-d:   #5B21B6;
+  --c-cobalt-l:   #EDE4FF;
+  --c-azure:      #A78BFA;
+  --c-sky:        #DDD6FE;
   --c-teal:       #0E3E6E;
+  --c-magenta:    #FF2EA6;
+  --c-magenta-d:  #C2187D;
+  --c-magenta-l:  #FFE1F2;
 
   /* SEMANTIC */
   --c-success:    #1DAF6B;
   --c-warning:    #E0A93D;
   --c-danger:     #DA4949;
-  --c-info:       #2C5BFF;
+  --c-info:       #7B3DFF;
   --c-coral:      #FF8A47;
 
   /* SPACING (4px base) */
@@ -103,9 +106,12 @@
   --c-cream-2:    #253458;
   --c-line:       #253458;
   --c-line-2:     #2E3F6A;
-  --c-cobalt:     #4D7AFF;
-  --c-cobalt-d:   #3A5FE6;
-  --c-cobalt-l:   #1E2A4A;
+  --c-cobalt:     #9D6BFF;
+  --c-cobalt-d:   #7B3DFF;
+  --c-cobalt-l:   #2A1E4A;
+  --c-magenta:    #FF5CBE;
+  --c-magenta-d:  #FF2EA6;
+  --c-magenta-l:  #3A1E33;
   --c-success:    #2ED885;
   --c-warning:    #F0BD55;
   --c-danger:     #EF6363;
@@ -126,9 +132,9 @@
     direction: rtl;
     color: #243746;
     background:
-      radial-gradient(circle at 12% 5%, rgba(111, 251, 190, 0.24), transparent 30%),
-      radial-gradient(circle at 88% 8%, rgba(188, 199, 222, 0.28), transparent 32%),
-      radial-gradient(circle at 50% 92%, rgba(204, 168, 48, 0.10), transparent 38%),
+      radial-gradient(circle at 12% 5%, rgba(123, 61, 255, 0.14), transparent 30%),
+      radial-gradient(circle at 88% 8%, rgba(255, 46, 166, 0.12), transparent 32%),
+      radial-gradient(circle at 50% 92%, rgba(123, 61, 255, 0.08), transparent 38%),
       linear-gradient(145deg, #f8f9ff 0%, #eff4ff 42%, #f7fbfa 100%);
     font-family: "Assistant", "Heebo", "Rubik", Arial, sans-serif;
     padding-bottom: env(safe-area-inset-bottom, 0);
@@ -137,7 +143,10 @@
   .dark body,
   html.dark body {
     color: #E8ECF4;
-    background: linear-gradient(145deg, #0B1120 0%, #0F1729 42%, #111D35 100%);
+    background:
+      radial-gradient(circle at 12% 5%, rgba(123, 61, 255, 0.16), transparent 30%),
+      radial-gradient(circle at 88% 8%, rgba(255, 46, 166, 0.10), transparent 32%),
+      linear-gradient(145deg, #0B1120 0%, #0F1729 42%, #111D35 100%);
   }
 
   button,
