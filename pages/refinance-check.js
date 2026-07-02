@@ -689,7 +689,28 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
   );
 }
 
+const SCORE_TONE = {
+  good:    { text: "text-emerald-300", bar: "bg-emerald-300" },
+  mid:     { text: "text-amber-200",   bar: "bg-amber-200" },
+  low:     { text: "text-rose-300",    bar: "bg-rose-300" },
+  neutral: { text: "text-white",       bar: "bg-white" },
+};
+
+const RISK_BADGE = {
+  "גבוהה":  "bg-rose-500 text-white",
+  "בינונית": "bg-amber-300 text-violet-950",
+  "נמוכה":  "bg-emerald-300 text-violet-950",
+};
+
+function scoreTone(result) {
+  if (!result.hasRequiredInputs) return SCORE_TONE.neutral;
+  if (result.score >= 65) return SCORE_TONE.good;
+  if (result.score >= 40) return SCORE_TONE.mid;
+  return SCORE_TONE.low;
+}
+
 function ResultPanel({ result }) {
+  const tone = scoreTone(result);
   return (
     <aside className="rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-700 to-violet-950 p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.28)] sm:p-8">
       <p className="text-sm font-black text-violet-100">תוצאה בזמן אמת</p>
@@ -698,19 +719,19 @@ function ResultPanel({ result }) {
           <h3 className="text-2xl font-black">ציון כדאיות למחזור</h3>
           <p className="mt-2 text-violet-100">{result.recommendation}</p>
         </div>
-        <span className="number-display text-5xl font-black">{result.hasRequiredInputs ? result.score : "--"}</span>
+        <span className={`number-display text-5xl font-black ${tone.text}`}>{result.hasRequiredInputs ? result.score : "--"}</span>
       </div>
       <div className="mt-7 h-3 overflow-hidden rounded-full bg-white/15">
-        <div className="h-full rounded-full bg-white transition-all duration-500" style={{ width: `${result.score}%` }} />
+        <div className={`h-full rounded-full transition-all duration-500 ${tone.bar}`} style={{ width: `${result.score}%` }} />
       </div>
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
         <DarkMetric label="חיסכון חודשי" value={result.hasRequiredInputs ? formatILS(result.monthlySavings) : "--"} />
         <DarkMetric label="חיסכון נטו" value={result.hasRequiredInputs ? formatILS(result.netSavings) : "--"} />
         <DarkMetric label="החזר חדש" value={result.hasRequiredInputs ? formatILS(result.newPayment) : "--"} />
-        <DarkMetric label="רמת סיכון" value={result.risk} />
+        <DarkMetric label="רמת סיכון" badge={RISK_BADGE[result.risk]} value={result.risk} />
       </div>
-      <div className="mt-6 rounded-3xl bg-white/10 p-5 ring-1 ring-white/10">
-        <p className="text-sm font-black text-violet-100">הסבר</p>
+      <div className="mt-6 rounded-3xl border-r-4 border-fuchsia-400 bg-violet-950/40 p-5">
+        <p className="text-sm font-black text-fuchsia-200">הסבר</p>
         <p className="mt-2 leading-7 text-violet-50">{result.recommendationText}</p>
       </div>
       <a href="#lead" className="mt-6 block rounded-full bg-white px-6 py-4 text-center text-base font-black text-violet-800 shadow-lg transition hover:bg-violet-50">
@@ -970,11 +991,15 @@ function RateField({ label, value, onChange }) {
   );
 }
 
-function DarkMetric({ label, value }) {
+function DarkMetric({ label, value, badge }) {
   return (
     <div className="rounded-3xl bg-white/10 p-4 ring-1 ring-white/10">
       <p className="text-xs font-black text-violet-100">{label}</p>
-      <p className="number-display mt-2 text-xl font-black text-white">{value}</p>
+      {badge ? (
+        <span className={`number-display mt-2 inline-block rounded-full px-3 py-1 text-sm font-black ${badge}`}>{value}</span>
+      ) : (
+        <p className="number-display mt-2 text-xl font-black text-white">{value}</p>
+      )}
     </div>
   );
 }
