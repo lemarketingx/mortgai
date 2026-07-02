@@ -51,6 +51,7 @@ function MidCta({ slug, category }) {
 
 function LeadForm({ slug, category }) {
   const [form, setForm] = useState({ name: "", phone: "", city: "" });
+  const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [error, setError] = useState("");
 
@@ -60,8 +61,14 @@ function LeadForm({ slug, category }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setStatus("loading");
     setError("");
+
+    if (!consent) {
+      setError("יש לאשר את הסכמתכם לשיתוף המידע לפני שליחה.");
+      return;
+    }
+
+    setStatus("loading");
     trackEvent("blog_lead_submit_started", { slug, category }, { source: "blog" });
 
     try {
@@ -75,6 +82,7 @@ function LeadForm({ slug, category }) {
             city: form.city,
             source: "blog",
             landingPage: `/blog/${slug}`,
+            consentAdvisorContact: true, // validated client-side via consent check above
           },
         }),
       });
@@ -139,6 +147,18 @@ function LeadForm({ slug, category }) {
           />
         </div>
       </div>
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={consent}
+          onChange={(e) => setConsent(e.target.checked)}
+          className="mt-0.5 w-4 h-4 accent-violet-600 shrink-0"
+        />
+        <span className="text-xs font-bold text-mort-muted leading-5">
+          אני מסכים/ה לשיתוף הפרטים עם יועצי משכנתאות מורשים לצורך קבלת ייעוץ.{" "}
+          <a href="/privacy" className="text-violet-600 hover:underline">מדיניות פרטיות</a>
+        </span>
+      </label>
       {error && <p className="text-red-600 text-sm">{error}</p>}
       <button
         type="submit"
