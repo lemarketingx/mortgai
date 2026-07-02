@@ -342,7 +342,7 @@ export default function BlogPostPage({ post, relatedPosts }) {
                 href={`https://wa.me/?text=${encodeURIComponent(`${post.h1} - ${shareUrl}`)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-sm bg-success-50 text-success-700 px-4 py-2 rounded-full font-bold"
+                className="text-sm bg-success-50 text-success-700 px-4 py-2 rounded-full font-bold hover:bg-success-100 transition-colors"
               >
                 WhatsApp
               </a>
@@ -350,13 +350,13 @@ export default function BlogPostPage({ post, relatedPosts }) {
                 href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-sm bg-brand-50 text-brand-700 px-4 py-2 rounded-full font-bold"
+                className="text-sm bg-brand-50 text-brand-700 px-4 py-2 rounded-full font-bold hover:bg-brand-100 transition-colors"
               >
                 Facebook
               </a>
               <a
                 href={`mailto:?subject=${encodeURIComponent(post.h1)}&body=${encodeURIComponent(shareUrl)}`}
-                className="text-sm bg-slate-100 text-slate-700 px-4 py-2 rounded-full font-bold"
+                className="text-sm bg-brand-50 text-brand-700 px-4 py-2 rounded-full font-bold hover:bg-brand-100 transition-colors"
               >
                 Email
               </a>

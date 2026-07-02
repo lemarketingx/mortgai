@@ -99,7 +99,7 @@ function DocUploadCard({ doc, file, result, uploading, onFileSelect, onUpload, o
               type="button"
               onClick={onClear}
               disabled={uploading}
-              className="px-3 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-black disabled:opacity-50"
+              className="px-3 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-black disabled:opacity-50 hover:bg-brand-50 hover:text-brand-700 transition-colors"
             >
               ביטול
             </button>

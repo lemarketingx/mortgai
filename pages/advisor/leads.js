@@ -222,7 +222,7 @@ function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
         <Link href="/advisor/my-leads" className="px-4 py-2.5 rounded-full border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-900/20 text-brand-800 dark:text-brand-300 text-sm font-black hover:bg-brand-100 transition-colors">
           עבור ללידים שלי
         </Link>
-        <button onClick={onClose} className="px-4 py-2.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-sm font-black hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+        <button onClick={onClose} className="px-4 py-2.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-sm font-black hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:hover:border-brand-700 dark:hover:bg-brand-900/20 dark:hover:text-brand-300 transition-colors">
           המשך לקנות לידים
         </button>
       </div>

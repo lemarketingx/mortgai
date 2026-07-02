@@ -1412,22 +1412,22 @@ export default function AdvisorDashboard() {
                     <span>שוק הלידים של FINZO</span>
                   </Link>
                   <Link href="/advisor/my-leads"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 px-4 py-3 text-sm font-black hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors">
                     <span className="shrink-0">📋</span>
                     <span>כל הלידים שלי</span>
                   </Link>
                   <Link href="/advisor/calendar"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 px-4 py-3 text-sm font-black hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors">
                     <span className="shrink-0">📅</span>
                     <span>יומן ולוח שנה</span>
                   </Link>
                   <Link href="/"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 px-4 py-3 text-sm font-black hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors">
                     <span className="shrink-0">🧮</span>
                     <span>מחשבון זכאות</span>
                   </Link>
                   <Link href="/refinance-check"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 px-4 py-3 text-sm font-black hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors">
                     <span className="shrink-0">🔄</span>
                     <span>מחשבון מחזור</span>
                   </Link>

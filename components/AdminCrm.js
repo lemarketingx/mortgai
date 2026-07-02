@@ -1510,7 +1510,7 @@ function LeadsView({
       {/* Empty */}
       {!loading && leads.length === 0 && (
         <Empty title={emptyTitle} sub={emptySub}
-          action={hasFilters && <button type="button" onClick={clearFilters} className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-black text-mort-ink hover:bg-slate-100">נקה סינון</button>}
+          action={hasFilters && <button type="button" onClick={clearFilters} className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-black text-mort-ink hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 transition-colors">נקה סינון</button>}
         />
       )}
 

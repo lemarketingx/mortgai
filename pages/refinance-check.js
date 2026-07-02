@@ -690,16 +690,16 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
 }
 
 const SCORE_TONE = {
-  good:    { text: "text-success-300", bar: "bg-success-300" },
-  mid:     { text: "text-warning-200",   bar: "bg-warning-200" },
-  low:     { text: "text-danger-300",    bar: "bg-danger-300" },
-  neutral: { text: "text-white",       bar: "bg-white" },
+  good:    { text: "text-success-600", bar: "bg-success-500" },
+  mid:     { text: "text-warning-600", bar: "bg-warning-500" },
+  low:     { text: "text-danger-600",  bar: "bg-danger-500" },
+  neutral: { text: "text-slate-400",   bar: "bg-slate-300" },
 };
 
 const RISK_BADGE = {
-  "גבוהה":  "bg-danger-500 text-white",
-  "בינונית": "bg-warning-300 text-brand-950",
-  "נמוכה":  "bg-success-300 text-brand-950",
+  "גבוהה":  "bg-danger-50 text-danger-700 border border-danger-200",
+  "בינונית": "bg-warning-50 text-warning-700 border border-warning-200",
+  "נמוכה":  "bg-success-50 text-success-700 border border-success-200",
 };
 
 function scoreTone(result) {
@@ -712,31 +712,34 @@ function scoreTone(result) {
 function ResultPanel({ result }) {
   const tone = scoreTone(result);
   return (
-    <aside className="rounded-[34px] border border-brand-100 bg-gradient-to-br from-brand-700 to-brand-950 p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.28)] sm:p-8">
-      <p className="text-sm font-black text-brand-100">תוצאה בזמן אמת</p>
-      <div className="mt-6 flex items-end justify-between gap-4">
-        <div>
-          <h3 className="text-2xl font-black">ציון כדאיות למחזור</h3>
-          <p className="mt-2 text-brand-100">{result.recommendation}</p>
+    <aside className="overflow-hidden rounded-[34px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[0_24px_70px_rgba(15,23,42,0.10)]">
+      <div className="h-1.5 w-full bg-gradient-to-l from-brand-600 to-accent-500" />
+      <div className="p-6 sm:p-8">
+        <span className="inline-flex rounded-full bg-brand-50 dark:bg-brand-950 px-4 py-1.5 text-xs font-black text-brand-700 dark:text-brand-300">תוצאה בזמן אמת</span>
+        <div className="mt-6 flex items-end justify-between gap-4">
+          <div>
+            <h3 className="text-2xl font-black text-slate-950 dark:text-white">ציון כדאיות למחזור</h3>
+            <p className="mt-2 text-slate-500 dark:text-slate-400">{result.recommendation}</p>
+          </div>
+          <span className={`number-display text-5xl font-black ${tone.text}`}>{result.hasRequiredInputs ? result.score : "--"}</span>
         </div>
-        <span className={`number-display text-5xl font-black ${tone.text}`}>{result.hasRequiredInputs ? result.score : "--"}</span>
+        <div className="mt-7 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <div className={`h-full rounded-full transition-all duration-500 ${tone.bar}`} style={{ width: `${result.score}%` }} />
+        </div>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          <LightMetric label="חיסכון חודשי" value={result.hasRequiredInputs ? formatILS(result.monthlySavings) : "--"} />
+          <LightMetric label="חיסכון נטו" value={result.hasRequiredInputs ? formatILS(result.netSavings) : "--"} />
+          <LightMetric label="החזר חדש" value={result.hasRequiredInputs ? formatILS(result.newPayment) : "--"} />
+          <LightMetric label="רמת סיכון" badge={RISK_BADGE[result.risk]} value={result.risk} />
+        </div>
+        <div className="mt-6 rounded-3xl border-r-4 border-accent-400 bg-brand-50/60 dark:bg-brand-950/30 p-5">
+          <p className="text-sm font-black text-accent-700 dark:text-accent-300">הסבר</p>
+          <p className="mt-2 leading-7 text-slate-600 dark:text-slate-300">{result.recommendationText}</p>
+        </div>
+        <a href="#lead" className="mt-6 block rounded-full bg-brand-700 px-6 py-4 text-center text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-brand-800">
+          בדיקה עם יועץ
+        </a>
       </div>
-      <div className="mt-7 h-3 overflow-hidden rounded-full bg-white/15">
-        <div className={`h-full rounded-full transition-all duration-500 ${tone.bar}`} style={{ width: `${result.score}%` }} />
-      </div>
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        <DarkMetric label="חיסכון חודשי" value={result.hasRequiredInputs ? formatILS(result.monthlySavings) : "--"} />
-        <DarkMetric label="חיסכון נטו" value={result.hasRequiredInputs ? formatILS(result.netSavings) : "--"} />
-        <DarkMetric label="החזר חדש" value={result.hasRequiredInputs ? formatILS(result.newPayment) : "--"} />
-        <DarkMetric label="רמת סיכון" badge={RISK_BADGE[result.risk]} value={result.risk} />
-      </div>
-      <div className="mt-6 rounded-3xl border-r-4 border-accent-400 bg-brand-950/40 p-5">
-        <p className="text-sm font-black text-accent-200">הסבר</p>
-        <p className="mt-2 leading-7 text-brand-50">{result.recommendationText}</p>
-      </div>
-      <a href="#lead" className="mt-6 block rounded-full bg-white px-6 py-4 text-center text-base font-black text-brand-800 shadow-lg transition hover:bg-brand-50">
-        בדיקה עם יועץ
-      </a>
     </aside>
   );
 }
@@ -991,14 +994,14 @@ function RateField({ label, value, onChange }) {
   );
 }
 
-function DarkMetric({ label, value, badge }) {
+function LightMetric({ label, value, badge }) {
   return (
-    <div className="rounded-3xl bg-white/10 p-4 ring-1 ring-white/10">
-      <p className="text-xs font-black text-brand-100">{label}</p>
+    <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-4">
+      <p className="text-xs font-black text-slate-500 dark:text-slate-400">{label}</p>
       {badge ? (
         <span className={`number-display mt-2 inline-block rounded-full px-3 py-1 text-sm font-black ${badge}`}>{value}</span>
       ) : (
-        <p className="number-display mt-2 text-xl font-black text-white">{value}</p>
+        <p className="number-display mt-2 text-xl font-black text-slate-950 dark:text-white">{value}</p>
       )}
     </div>
   );

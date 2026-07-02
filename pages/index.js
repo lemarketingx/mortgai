@@ -725,51 +725,66 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
 /*  LIVE RESULT PANEL                                                   */
 /* ------------------------------------------------------------------ */
 
+const HOME_SCORE_TONE_STOPS = [
+  { min: 65, text: "text-success-600", bar: "bg-success-500" },
+  { min: 40, text: "text-warning-600", bar: "bg-warning-500" },
+  { min: 0,  text: "text-danger-600",  bar: "bg-danger-500" },
+];
+
+function homeScoreTone(ready, score) {
+  if (!ready) return { text: "text-slate-400", bar: "bg-slate-300" };
+  return HOME_SCORE_TONE_STOPS.find((s) => score >= s.min) || HOME_SCORE_TONE_STOPS[HOME_SCORE_TONE_STOPS.length - 1];
+}
+
 function LiveResultPanel({ analysis, ready, recommendation }) {
   const score = ready ? Math.round(analysis.approval) : 0;
+  const tone = homeScoreTone(ready, score);
 
   return (
-    <aside className="rounded-[34px] border border-brand-100 bg-gradient-to-br from-brand-700 to-brand-950 p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.28)] sm:p-8">
-      <p className="text-sm font-black text-brand-100">{ready ? "תוצאה מתעדכנת בזמן אמת" : "מלאו נתונים לבדיקה ראשונית"}</p>
-      <div className="mt-6 flex items-end justify-between gap-4">
-        <div>
-          <h3 className="text-2xl font-black">אומדן סיכוי אישור</h3>
-          <p className="mt-2 text-brand-100">{approvalLabel(analysis, ready)}</p>
+    <aside className="overflow-hidden rounded-[34px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[0_24px_70px_rgba(15,23,42,0.10)]">
+      <div className="h-1.5 w-full bg-gradient-to-l from-brand-600 to-accent-500" />
+      <div className="p-6 sm:p-8">
+        <span className="inline-flex rounded-full bg-brand-50 dark:bg-brand-950 px-4 py-1.5 text-xs font-black text-brand-700 dark:text-brand-300">{ready ? "תוצאה מתעדכנת בזמן אמת" : "מלאו נתונים לבדיקה ראשונית"}</span>
+        <div className="mt-6 flex items-end justify-between gap-4">
+          <div>
+            <h3 className="text-2xl font-black text-slate-950 dark:text-white">אומדן סיכוי אישור</h3>
+            <p className="mt-2 text-slate-500 dark:text-slate-400">{approvalLabel(analysis, ready)}</p>
+          </div>
+          <div className="text-left">
+            <span className={`number-display text-5xl font-black ${tone.text}`}>{ready ? `${score}%` : "--"}</span>
+          </div>
         </div>
-        <div className="text-left">
-          <span className="number-display text-5xl font-black">{ready ? `${score}%` : "--"}</span>
+
+        <div className="mt-7 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${tone.bar}`}
+            style={{ width: ready ? `${Math.min(100, Math.max(0, score))}%` : "0%" }}
+          />
         </div>
-      </div>
 
-      <div className="mt-7 h-3 overflow-hidden rounded-full bg-white/15">
-        <div
-          className="h-full rounded-full bg-white transition-all duration-500"
-          style={{ width: ready ? `${Math.min(100, Math.max(0, score))}%` : "0%" }}
-        />
-      </div>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          <LightMetric label="החזר חודשי משוער" value={displayMoney(analysis.monthly, ready)} />
+          <LightMetric label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} />
+          <LightMetric label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
+          <LightMetric label="אחוז מימון LTV" value={displayPercent(analysis.ltv, ready)} />
+        </div>
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        <DarkMetric label="החזר חודשי משוער" value={displayMoney(analysis.monthly, ready)} />
-        <DarkMetric label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} />
-        <DarkMetric label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
-        <DarkMetric label="אחוז מימון LTV" value={displayPercent(analysis.ltv, ready)} />
-      </div>
+        <div className="mt-6 rounded-3xl border-r-4 border-accent-400 bg-brand-50/60 dark:bg-brand-950/30 p-5">
+          <p className="text-sm font-black text-accent-700 dark:text-accent-300">נקודת שיפור מרכזית</p>
+          <p className="mt-2 text-lg font-black text-slate-950 dark:text-white">{ready ? analysis.mainIssue : "הזינו נתונים כדי לקבל חיווי"}</p>
+          <p className="mt-3 leading-7 text-slate-600 dark:text-slate-300">{ready ? recommendation : ""}</p>
+        </div>
 
-      <div className="mt-6 rounded-3xl bg-white/10 p-5 ring-1 ring-white/10">
-        <p className="text-sm font-black text-brand-100">נקודת שיפור מרכזית</p>
-        <p className="mt-2 text-lg font-black">{ready ? analysis.mainIssue : "הזינו נתונים כדי לקבל חיווי"}</p>
-        <p className="mt-3 leading-7 text-brand-50">{ready ? recommendation : ""}</p>
+        <a
+          href="#lead"
+          className="mt-5 block rounded-full bg-brand-700 px-6 py-4 text-center text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-brand-800"
+        >
+          רוצים לשפר את הסיכוי? דברו איתנו
+        </a>
+        <p className="mt-3 text-center text-xs font-bold text-slate-400 dark:text-slate-500">
+          התוצאה היא אומדן ראשוני בלבד ואינה מהווה אישור בנקאי או ייעוץ פיננסי מחייב.
+        </p>
       </div>
-
-      <a
-        href="#lead"
-        className="mt-5 block rounded-full bg-white px-6 py-4 text-center text-base font-black text-brand-800 shadow-lg transition hover:bg-brand-50"
-      >
-        רוצים לשפר את הסיכוי? דברו איתנו
-      </a>
-      <p className="mt-3 text-center text-xs font-bold text-brand-200">
-        התוצאה היא אומדן ראשוני בלבד ואינה מהווה אישור בנקאי או ייעוץ פיננסי מחייב.
-      </p>
     </aside>
   );
 }
@@ -1161,11 +1176,11 @@ function ResultSummaryRow({ label, value, highlight = false, warn = false }) {
   );
 }
 
-function DarkMetric({ label, value }) {
+function LightMetric({ label, value }) {
   return (
-    <div className="rounded-3xl bg-white/10 p-4 ring-1 ring-white/10">
-      <p className="text-xs font-black text-brand-100">{label}</p>
-      <p className="number-display mt-2 text-xl font-black text-white">{value}</p>
+    <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-4">
+      <p className="text-xs font-black text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="number-display mt-2 text-xl font-black text-slate-950 dark:text-white">{value}</p>
     </div>
   );
 }

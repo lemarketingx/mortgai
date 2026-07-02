@@ -423,7 +423,7 @@ export default function LeadPage() {
             <div className="mt-6 flex gap-3">
               {step > 1 && (
                 <button type="button" onClick={goBack}
-                  className="min-h-12 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-7 py-3 text-sm font-black text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                  className="min-h-12 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-7 py-3 text-sm font-black text-slate-700 dark:text-slate-300 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:hover:border-brand-700 dark:hover:bg-brand-900/20 dark:hover:text-brand-300 transition">
                   חזרה
                 </button>
               )}

@@ -191,7 +191,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
           <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
             {isEdit ? "עריכת אירוע" : "אירוע חדש"}
           </h3>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20 hover:text-brand-600 text-slate-400 transition-colors">
             <XIcon />
           </button>
         </div>
@@ -656,11 +656,11 @@ export default function CalendarPage() {
         {/* Top bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <button onClick={goPrev} className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+            <button onClick={goPrev} className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:hover:border-brand-700 dark:hover:bg-brand-900/20 dark:hover:text-brand-300 transition">
               <ChevronRight />
             </button>
             <h1 className="text-xl font-black text-slate-900 dark:text-slate-100">{headerTitle}</h1>
-            <button onClick={goNext} className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+            <button onClick={goNext} className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:hover:border-brand-700 dark:hover:bg-brand-900/20 dark:hover:text-brand-300 transition">
               <ChevronLeft />
             </button>
             <button onClick={goToday} className="px-3 py-2 rounded-xl text-xs font-bold text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition">

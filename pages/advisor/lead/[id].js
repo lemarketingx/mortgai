@@ -1280,7 +1280,7 @@ export default function LeadDetailPage() {
                         </div>
                         <div className="flex gap-2 flex-wrap">
                           {lead?.phone && <button type="button" onClick={openWaWithUploadLink} className="flex-1 rounded-lg bg-brand-600 text-white py-2.5 text-xs font-semibold hover:bg-brand-700 transition-colors">שלח ב-WA</button>}
-                          <button type="button" onClick={generateUploadToken} disabled={tokenLoading} className="flex-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 py-2.5 text-xs font-semibold disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">{tokenLoading ? "יוצר..." : "חדש קישור"}</button>
+                          <button type="button" onClick={generateUploadToken} disabled={tokenLoading} className="flex-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 py-2.5 text-xs font-semibold disabled:opacity-50 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:hover:border-brand-700 dark:hover:bg-brand-900/20 dark:hover:text-brand-300 transition-colors">{tokenLoading ? "יוצר..." : "חדש קישור"}</button>
                           <button type="button" onClick={revokeUploadToken} className="flex-1 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400 border border-danger-200 dark:border-danger-800 py-2.5 text-xs font-semibold hover:bg-danger-100 dark:hover:bg-danger-900/30 transition-colors">בטל</button>
                         </div>
                         <p className="text-[10px] text-slate-400 dark:text-slate-500">תוקף: {uploadToken.record?.expires_at ? new Date(uploadToken.record.expires_at).toLocaleDateString("he-IL") : "—"}</p>
@@ -1621,7 +1621,7 @@ export default function LeadDetailPage() {
                                 {lead?.phone && (
                                   <button type="button" onClick={openWaWithUploadLink} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand-600 text-white text-xs font-semibold hover:bg-brand-700 transition-colors">שלח ב-WA</button>
                                 )}
-                                <button type="button" onClick={generateUploadToken} disabled={tokenLoading} className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-semibold disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">{tokenLoading ? "יוצר..." : "חדש קישור"}</button>
+                                <button type="button" onClick={generateUploadToken} disabled={tokenLoading} className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-semibold disabled:opacity-50 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:hover:border-brand-700 dark:hover:bg-brand-900/20 dark:hover:text-brand-300 transition-colors">{tokenLoading ? "יוצר..." : "חדש קישור"}</button>
                                 <button type="button" onClick={revokeUploadToken} className="px-3 py-2 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400 border border-danger-200 dark:border-danger-800 text-xs font-semibold hover:bg-danger-100 dark:hover:bg-danger-900/30 transition-colors">בטל</button>
                               </div>
                               <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-3">תוקף: {uploadToken.record?.expires_at ? new Date(uploadToken.record.expires_at).toLocaleDateString("he-IL") : "—"}</p>
@@ -1643,7 +1643,7 @@ export default function LeadDetailPage() {
                                 )}
                                 {missingDocs > 0 && (
                                   <div className="flex gap-2 flex-wrap">
-                                    <button type="button" onClick={copyReminderMessage} className="px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">העתק הודעת תזכורת</button>
+                                    <button type="button" onClick={copyReminderMessage} className="px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:hover:border-brand-700 dark:hover:bg-brand-900/20 dark:hover:text-brand-300 transition-colors">העתק הודעת תזכורת</button>
                                     {lead?.phone && (
                                       <button type="button" onClick={openWaReminder} className="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-700 dark:text-brand-300 text-xs font-semibold hover:bg-brand-100 dark:hover:bg-brand-900/30 transition-colors">שלח תזכורת ב-WA</button>
                                     )}
