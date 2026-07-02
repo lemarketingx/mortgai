@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
 import { canonicalUrl } from "../lib/seo";
+import BrandLogo from "../components/BrandLogo";
 
 /* ─── Data ─────────────────────────────────────────────────────────────── */
 
@@ -227,10 +228,9 @@ export default function FinzoProLanding() {
         {/* ── Sticky header ─────────────────────────────────────────────── */}
         <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur-xl">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-black tracking-tight text-white">FINZO</span>
-              <span className="rounded-full bg-violet-600 px-2.5 py-0.5 text-xs font-black text-white">PRO</span>
-            </div>
+            <Link href="/" className="inline-flex items-center">
+              <BrandLogo variant="advisor" mode="dark" size="sm" withTagline={false} />
+            </Link>
             <div className="flex items-center gap-3">
               <Link href="/advisor/login" className="text-sm font-bold text-slate-300 hover:text-white transition-colors hidden sm:block">
                 כניסה ליועצים

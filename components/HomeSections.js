@@ -122,11 +122,11 @@ function LineIcon({ path }) {
 /* ------------------------------------------------------------------ */
 
 export function Header({ onCtaClick }) {
-  const { theme, toggle } = useTheme();
+  const { dark, toggle } = useTheme();
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-        <a href="#home"><BrandLogo /></a>
+        <a href="#home"><BrandLogo mode={dark ? "dark" : "light"} size="sm" withTagline={false} /></a>
 
         <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 text-sm font-bold text-slate-600 dark:text-slate-300 lg:flex">
           {navLinks.map(([label, href]) => (
@@ -140,10 +140,10 @@ export function Header({ onCtaClick }) {
           <button
             type="button"
             onClick={toggle}
-            aria-label={theme === "dark" ? "מעבר למצב בהיר" : "מעבר למצב כהה"}
+            aria-label={dark ? "מעבר למצב בהיר" : "מעבר למצב כהה"}
             className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-slate-700"
           >
-            {theme === "dark" ? (
+            {dark ? (
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -585,11 +585,12 @@ export function FaqSection() {
 /* ------------------------------------------------------------------ */
 
 export function Footer({ onCtaClick }) {
+  const { dark } = useTheme();
   return (
     <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-10">
       <div className="mx-auto grid max-w-6xl gap-6 px-4 text-sm font-semibold text-slate-500 dark:text-slate-400 sm:px-6 lg:grid-cols-3">
         <div className="space-y-2">
-          <BrandLogo withTagline={false} />
+          <BrandLogo mode={dark ? "dark" : "light"} size="sm" withTagline={false} />
           <p>המידע באתר הוא לצורך מידע כללי בלבד ואינו מהווה ייעוץ פיננסי, ייעוץ משכנתאות או אישור בנקאי.</p>
         </div>
         <div className="space-y-2">

@@ -7,6 +7,8 @@ const ASSETS = {
   public: {
     light: "/brand/finzo/finzo-logo-light.png",
     dark: "/brand/finzo/finzo-logo-dark.png",
+    lightCompact: "/brand/finzo/finzo-logo-light-compact.png",
+    darkCompact: "/brand/finzo/finzo-logo-dark-compact.png",
     icon: "/brand/finzo/finzo-app-icon.png",
     alt: "FINZO - בדיקת זכאות חכמה למשכנתא בישראל",
     fallback: "FINZO",
@@ -14,6 +16,8 @@ const ASSETS = {
   advisor: {
     light: "/brand/finzo/finzo-pro-logo-light.png",
     dark: "/brand/finzo/finzo-pro-logo-dark.png",
+    lightCompact: "/brand/finzo/finzo-pro-logo-light-compact.png",
+    darkCompact: "/brand/finzo/finzo-pro-logo-dark-compact.png",
     icon: "/brand/finzo/finzo-pro-app-icon.png",
     alt: "FINZO PRO - פלטפורמה חכמה ליועצי משכנתאות בישראל",
     fallback: "FINZO PRO",
@@ -21,29 +25,32 @@ const ASSETS = {
   operator: {
     light: "/brand/finzo/lah-digital-logo-light.png",
     dark: "/brand/finzo/lah-digital-logo-dark.png",
+    lightCompact: "/brand/finzo/lah-digital-logo-light.png",
+    darkCompact: "/brand/finzo/lah-digital-logo-dark.png",
     icon: "/brand/finzo/lah-digital-mark.png",
     alt: "ל.א.ה דיגיטל",
     fallback: "ל.א.ה דיגיטל",
   },
 };
 
+// Direct pixel heights — no CSS scale() transforms. Scaling a rasterized
+// <img> box with transform upscales an already-downsampled bitmap and
+// blurs it; sizing the box itself lets the browser downsample straight
+// from the source PNG, which stays crisp at every size.
 const SIZE_CLASSES = {
   public: {
-    sm: "h-14 w-auto max-w-[260px] scale-[1.55]",
-    md: "h-20 w-auto max-w-[400px] scale-[1.45]",
-    lg: "h-28 w-auto max-w-[620px] scale-[1.35]",
+    withTagline: { sm: "h-16", md: "h-[88px]", lg: "h-[120px]" },
+    compact: { sm: "h-9", md: "h-11", lg: "h-14" },
     icon: "h-10 w-10",
   },
   advisor: {
-    sm: "h-14 w-auto max-w-[310px] scale-[1.45]",
-    md: "h-20 w-auto max-w-[500px] scale-[1.38]",
-    lg: "h-28 w-auto max-w-[720px] scale-[1.28]",
+    withTagline: { sm: "h-16", md: "h-[84px]", lg: "h-[112px]" },
+    compact: { sm: "h-8", md: "h-10", lg: "h-[52px]" },
     icon: "h-10 w-10",
   },
   operator: {
-    sm: "h-8 w-auto max-w-[160px]",
-    md: "h-10 w-auto max-w-[220px]",
-    lg: "h-12 w-auto max-w-[280px]",
+    withTagline: { sm: "h-8", md: "h-10", lg: "h-12" },
+    compact: { sm: "h-8", md: "h-10", lg: "h-12" },
     icon: "h-9 w-9",
   },
 };
@@ -96,22 +103,25 @@ export default function BrandLogo({
   const safeVariant = ASSETS[variant] ? variant : "public";
   const asset = ASSETS[safeVariant];
   const isDark = mode === "dark";
-  const src = size === "icon" ? asset.icon : isDark ? asset.dark : asset.light;
-  const sizeClass = SIZE_CLASSES[safeVariant]?.[size] || SIZE_CLASSES[safeVariant].md;
 
   if (size === "icon") {
-    return <FinzoAppIcon variant={safeVariant} className={className || sizeClass} />;
+    return <FinzoAppIcon variant={safeVariant} className={className || SIZE_CLASSES[safeVariant].icon} />;
   }
 
+  const src = withTagline
+    ? isDark ? asset.dark : asset.light
+    : isDark ? asset.darkCompact : asset.lightCompact;
+  const sizeGroup = withTagline ? "withTagline" : "compact";
+  const sizeClass = SIZE_CLASSES[safeVariant]?.[sizeGroup]?.[size] || SIZE_CLASSES[safeVariant][sizeGroup].md;
+
   return (
-    <span dir="ltr" className={`inline-flex shrink-0 items-center justify-center overflow-visible ${className}`} style={{ unicodeBidi: "isolate" }}>
+    <span dir="ltr" className={`inline-flex shrink-0 items-center ${className}`} style={{ unicodeBidi: "isolate" }}>
       <img
         src={src}
         alt={asset.alt}
-        className={`block object-contain ${sizeClass}`}
+        className={`block w-auto object-contain ${sizeClass}`}
         loading="eager"
         decoding="async"
-        data-with-tagline={withTagline ? "true" : "false"}
         onError={(event) => {
           const wrapper = event.currentTarget.parentElement;
           if (wrapper) wrapper.dataset.logoMissing = "true";
