@@ -38,8 +38,8 @@ function DocUploadCard({ doc, file, result, uploading, onFileSelect, onUpload, o
 
   const bgClass = {
     missing:   "bg-slate-50   border-slate-200",
-    requested: "bg-amber-50   border-amber-200",
-    rejected:  "bg-rose-50    border-rose-200",
+    requested: "bg-warning-50   border-warning-200",
+    rejected:  "bg-danger-50    border-danger-200",
   }[doc.status] || "bg-white border-slate-200";
 
   const icon = { missing: "📋", requested: "⏳", rejected: "❌" }[doc.status] || "📄";
@@ -53,7 +53,7 @@ function DocUploadCard({ doc, file, result, uploading, onFileSelect, onUpload, o
           <p className="text-sm font-black text-slate-900 leading-snug">{doc.label}</p>
           <p className="text-xs font-bold text-slate-500 mt-0.5">{STATUS_LABEL[doc.status]}</p>
           {doc.status === "rejected" && doc.rejectionNote && (
-            <p className="text-xs text-rose-700 mt-1.5 bg-white rounded-lg px-2.5 py-1.5 border border-rose-200">
+            <p className="text-xs text-danger-700 mt-1.5 bg-white rounded-lg px-2.5 py-1.5 border border-danger-200">
               💬 {doc.rejectionNote}
             </p>
           )}
@@ -86,7 +86,7 @@ function DocUploadCard({ doc, file, result, uploading, onFileSelect, onUpload, o
               type="button"
               onClick={onUpload}
               disabled={uploading}
-              className="flex-1 py-2.5 rounded-xl bg-violet-700 text-white text-xs font-black disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+              className="flex-1 py-2.5 rounded-xl bg-brand-700 text-white text-xs font-black disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
               {uploading ? (
                 <span className="flex items-center justify-center gap-1.5">
@@ -109,7 +109,7 @@ function DocUploadCard({ doc, file, result, uploading, onFileSelect, onUpload, o
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="w-full py-3 rounded-xl border-2 border-dashed border-slate-300 text-xs font-black text-slate-500 hover:border-violet-400 hover:text-violet-600 transition-colors"
+          className="w-full py-3 rounded-xl border-2 border-dashed border-slate-300 text-xs font-black text-slate-500 hover:border-brand-400 hover:text-brand-600 transition-colors"
         >
           + בחר קובץ להעלאה
         </button>
@@ -119,8 +119,8 @@ function DocUploadCard({ doc, file, result, uploading, onFileSelect, onUpload, o
       {result && (
         <div className={`rounded-xl px-3 py-2 text-xs font-black border ${
           result.ok
-            ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-            : "bg-rose-50 border-rose-200 text-rose-700"
+            ? "bg-success-50 border-success-200 text-success-700"
+            : "bg-danger-50 border-danger-200 text-danger-700"
         }`}>
           {result.message}
         </div>
@@ -240,7 +240,7 @@ export default function ClientDocumentPortal() {
     return (
       <main dir="rtl" className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center p-8">
-          <div className="w-10 h-10 rounded-full border-4 border-violet-200 border-t-violet-700 animate-spin mx-auto mb-4" />
+          <div className="w-10 h-10 rounded-full border-4 border-brand-200 border-t-brand-700 animate-spin mx-auto mb-4" />
           <p className="text-sm font-bold text-slate-400">טוען...</p>
         </div>
       </main>
@@ -324,12 +324,12 @@ export default function ClientDocumentPortal() {
               </div>
               <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-violet-500 transition-all duration-500"
+                  className="h-full rounded-full bg-brand-500 transition-all duration-500"
                   style={{ width: `${documents.completionPercent}%` }}
                 />
               </div>
               {allDone && (
-                <p className="text-xs font-black text-emerald-600 mt-2">
+                <p className="text-xs font-black text-success-600 mt-2">
                   🎉 כל המסמכים הועלו! נציג ייצור איתך קשר בהקדם.
                 </p>
               )}
@@ -337,8 +337,8 @@ export default function ClientDocumentPortal() {
 
             {/* Deadline */}
             {deadline && (
-              <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5">
-                <p className="text-xs font-black text-amber-700">
+              <div className="rounded-xl bg-warning-50 border border-warning-200 px-3 py-2.5">
+                <p className="text-xs font-black text-warning-700">
                   ⏰ נא להעלות את המסמכים עד: {formatDeadline(deadline)}
                 </p>
               </div>
@@ -372,13 +372,13 @@ export default function ClientDocumentPortal() {
               <h2 className="text-sm font-black text-slate-400 mb-2">מסמכים שהועלו</h2>
               <div className="space-y-2">
                 {completedDocs.map((doc) => (
-                  <div key={doc.document_type} className="bg-white rounded-xl border border-emerald-100 px-4 py-3 flex items-center gap-3">
-                    <span className="text-emerald-500 font-black shrink-0">✓</span>
+                  <div key={doc.document_type} className="bg-white rounded-xl border border-success-100 px-4 py-3 flex items-center gap-3">
+                    <span className="text-success-500 font-black shrink-0">✓</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-black text-slate-700">{doc.label}</p>
                       {doc.fileName && <p className="text-xs text-slate-400 truncate">{doc.fileName}</p>}
                     </div>
-                    <span className="text-xs font-black text-emerald-600 shrink-0">
+                    <span className="text-xs font-black text-success-600 shrink-0">
                       {doc.status === "approved" ? "אושר" : "התקבל"}
                     </span>
                   </div>

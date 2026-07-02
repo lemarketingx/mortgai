@@ -48,18 +48,18 @@ export default function ContactPage() {
             תמיכה ניתנת דרך ערוצים דיגיטליים בלבד. נחזור אליכם תוך 1–3 ימי עסקים.
           </p>
 
-          <div className="mt-4 rounded-2xl bg-violet-50 border border-violet-200 px-5 py-4 text-sm font-bold text-violet-800">
+          <div className="mt-4 rounded-2xl bg-brand-50 border border-brand-200 px-5 py-4 text-sm font-bold text-brand-800">
             כתובת אימייל ישירה:{" "}
-            <a href="mailto:lemarketingx@gmail.com" className="text-violet-700 hover:underline">
+            <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">
               lemarketingx@gmail.com
             </a>
           </div>
 
           {sent ? (
-            <div className="mt-8 rounded-[28px] border border-emerald-200 bg-emerald-50 p-8 text-center">
-              <p className="text-2xl font-black text-emerald-800">הפנייה נשלחה</p>
-              <p className="mt-2 text-sm font-semibold text-emerald-700">נפתחה אפליקציית הדואר האלקטרוני שלכם עם הפנייה.</p>
-              <p className="mt-1 text-xs text-emerald-600">אם לא נפתח כלום, שלחו אלינו ישירות ל-lemarketingx@gmail.com</p>
+            <div className="mt-8 rounded-[28px] border border-success-200 bg-success-50 p-8 text-center">
+              <p className="text-2xl font-black text-success-800">הפנייה נשלחה</p>
+              <p className="mt-2 text-sm font-semibold text-success-700">נפתחה אפליקציית הדואר האלקטרוני שלכם עם הפנייה.</p>
+              <p className="mt-1 text-xs text-success-600">אם לא נפתח כלום, שלחו אלינו ישירות ל-lemarketingx@gmail.com</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-[28px] border border-slate-200 bg-slate-50 p-6 shadow-sm">
@@ -70,7 +70,7 @@ export default function ContactPage() {
                   required
                   value={form.name}
                   onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full border border-slate-200 bg-white rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 h-12"
+                  className="w-full border border-slate-200 bg-white rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100 h-12"
                   placeholder="הכניסו את שמכם"
                 />
               </div>
@@ -82,7 +82,7 @@ export default function ContactPage() {
                   required
                   value={form.email}
                   onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-                  className="w-full border border-slate-200 bg-white rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 h-12"
+                  className="w-full border border-slate-200 bg-white rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100 h-12"
                   placeholder="your@email.com"
                 />
               </div>
@@ -93,7 +93,7 @@ export default function ContactPage() {
                   required
                   value={form.type}
                   onChange={(e) => setForm(f => ({ ...f, type: e.target.value }))}
-                  className="w-full border border-slate-200 bg-white rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 h-12"
+                  className="w-full border border-slate-200 bg-white rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100 h-12"
                 >
                   {INQUIRY_TYPES.map(t => (
                     <option key={t.value} value={t.value} disabled={!t.value}>{t.label}</option>
@@ -108,14 +108,14 @@ export default function ContactPage() {
                   rows={5}
                   value={form.message}
                   onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))}
-                  className="w-full border border-slate-200 bg-white rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 resize-none"
+                  className="w-full border border-slate-200 bg-white rounded-2xl px-4 py-3 text-base text-slate-950 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100 resize-none"
                   placeholder="תארו את פנייתכם בפירוט..."
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full rounded-full bg-violet-700 hover:bg-violet-800 px-6 py-4 font-black text-white transition text-sm"
+                className="w-full rounded-full bg-brand-700 hover:bg-brand-800 px-6 py-4 font-black text-white transition text-sm"
               >
                 שלחו פנייה ←
               </button>
@@ -126,7 +126,7 @@ export default function ContactPage() {
           )}
 
           <div className="mt-12 border-t border-slate-200 pt-6 text-sm text-slate-400">
-            <Link href="/" className="text-violet-700 hover:underline font-bold">← חזרה לעמוד הבית</Link>
+            <Link href="/" className="text-brand-700 hover:underline font-bold">← חזרה לעמוד הבית</Link>
           </div>
         </main>
       </div>

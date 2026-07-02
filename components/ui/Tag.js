@@ -10,16 +10,16 @@
 /*  TAG                                                                 */
 /* ------------------------------------------------------------------ */
 
-const TAG_BASE = "inline-flex items-center gap-[6px] font-mono text-[11.5px] px-[10px] py-[5px] rounded-finzo-sm tracking-[0.04em]";
+const TAG_BASE = "inline-flex items-center gap-[6px] font-mono text-[11.5px] px-[10px] py-[5px] rounded-pro-sm tracking-[0.04em]";
 
 const TAG_VARIANTS = {
-  default:   "bg-finzo-cream text-finzo-ink-2",
-  first:     "bg-finzo-cobalt-l text-finzo-cobalt-d",
-  refi:      "bg-[#fff3ec] text-[#C25E2A]",
-  upgrade:   "bg-[#edfaf3] text-[#0F7A48]",
-  hot:       "bg-finzo-cobalt text-white",
-  exclusive: "bg-finzo-ink text-white",
-  danger:    "bg-red-50 text-red-700 border border-red-100",
+  default:   "bg-pro-cream text-pro-ink-2",
+  first:     "bg-pro-cobalt-l text-pro-cobalt-d",
+  refi:      "bg-pro-coral/10 text-pro-coral",
+  upgrade:   "bg-success-50 text-success-700",
+  hot:       "bg-pro-cobalt text-white",
+  exclusive: "bg-pro-ink text-white",
+  danger:    "bg-danger-50 text-danger-700 border border-danger-100",
 };
 
 export function Tag({ variant = "default", children, className = "" }) {
@@ -36,7 +36,7 @@ export function Tag({ variant = "default", children, className = "" }) {
 /* ------------------------------------------------------------------ */
 
 const PILL_BASE =
-  "inline-flex items-center gap-2 px-[14px] py-[7px] rounded-finzo-pill border font-mono text-[13px] tracking-[0.04em] cursor-pointer select-none transition-[background-color,color,border-color]";
+  "inline-flex items-center gap-2 px-[14px] py-[7px] rounded-pro-pill border font-mono text-[13px] tracking-[0.04em] cursor-pointer select-none transition-[background-color,color,border-color]";
 
 export function Pill({ active = false, count, children, onClick, className = "" }) {
   return (
@@ -46,16 +46,16 @@ export function Pill({ active = false, count, children, onClick, className = "" 
       className={[
         PILL_BASE,
         active
-          ? "bg-finzo-ink text-white border-finzo-ink"
-          : "bg-finzo-white text-finzo-ink-2 border-finzo-line hover:bg-finzo-cream hover:border-finzo-cream-2",
+          ? "bg-pro-ink text-white border-pro-ink"
+          : "bg-pro-white text-pro-ink-2 border-pro-line hover:bg-pro-cream hover:border-pro-cream-2",
         className,
       ].filter(Boolean).join(" ")}
     >
       {children}
       {count !== undefined && (
         <span
-          className={`font-mono text-[10.5px] px-[6px] py-[1px] rounded-finzo-xs ${
-            active ? "bg-white/16 text-white" : "bg-finzo-cream text-finzo-ink-2"
+          className={`font-mono text-[10.5px] px-[6px] py-[1px] rounded-pro-xs ${
+            active ? "bg-white/16 text-white" : "bg-pro-cream text-pro-ink-2"
           }`}
         >
           {count}
@@ -70,11 +70,11 @@ export function Pill({ active = false, count, children, onClick, className = "" 
 /* ------------------------------------------------------------------ */
 
 const STATUS_DOTS = {
-  new:      "bg-finzo-cobalt",
-  progress: "bg-finzo-warning",
-  docs:     "bg-finzo-azure",
-  won:      "bg-finzo-success",
-  lost:     "bg-finzo-danger",
+  new:      "bg-pro-cobalt",
+  progress: "bg-warning-500",
+  docs:     "bg-pro-azure",
+  won:      "bg-success-600",
+  lost:     "bg-danger-500",
 };
 
 const STATUS_LABELS = {
@@ -86,10 +86,10 @@ const STATUS_LABELS = {
 };
 
 export function StatusDot({ status, label, className = "" }) {
-  const dotClass = STATUS_DOTS[status] ?? "bg-finzo-mute";
+  const dotClass = STATUS_DOTS[status] ?? "bg-pro-mute";
   const displayLabel = label ?? STATUS_LABELS[status] ?? status;
   return (
-    <span className={`inline-flex items-center gap-[6px] font-mono text-[12px] text-finzo-ink-2 tracking-[0.04em] ${className}`}>
+    <span className={`inline-flex items-center gap-[6px] font-mono text-[12px] text-pro-ink-2 tracking-[0.04em] ${className}`}>
       <span className={`w-[7px] h-[7px] rounded-full shrink-0 ${dotClass}`} aria-hidden="true" />
       {displayLabel}
     </span>
@@ -103,7 +103,7 @@ export function StatusDot({ status, label, className = "" }) {
 export function DemoPill() {
   if (process.env.NODE_ENV === "production") return null;
   return (
-    <span className="font-mono text-[11px] tracking-[0.06em] text-finzo-warning border border-finzo-warning px-[10px] py-1 rounded-finzo-pill bg-finzo-warning/8">
+    <span className="font-mono text-[11px] tracking-[0.06em] text-warning-500 border border-warning-500 px-[10px] py-1 rounded-pro-pill bg-warning-500/8">
       DEMO · נתוני המחשה
     </span>
   );

@@ -20,7 +20,7 @@ function Toggle({ checked, onChange, label }) {
     <div className="flex items-center justify-between py-0.5">
       <span className="text-sm font-bold text-slate-700 dark:text-slate-400">{label}</span>
       <button type="button" onClick={() => onChange(!checked)}
-        className={`w-10 h-6 rounded-full transition-colors relative ${checked ? "bg-violet-600" : "bg-slate-200 dark:bg-slate-700"}`}>
+        className={`w-10 h-6 rounded-full transition-colors relative ${checked ? "bg-brand-600" : "bg-slate-200 dark:bg-slate-700"}`}>
         <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked ? "right-0.5" : "right-[18px]"}`} />
       </button>
     </div>
@@ -153,7 +153,7 @@ function PricingSettings() {
               onClick={() => setModel(opt.value)}
               className={`rounded-xl py-3 text-sm font-black border transition-all flex flex-col items-center gap-1 ${
                 model === opt.value
-                  ? "bg-violet-700 text-white border-violet-700 shadow-sm"
+                  ? "bg-brand-700 text-white border-brand-700 shadow-sm"
                   : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
               }`}>
               <span className="text-base">{opt.icon}</span>
@@ -168,7 +168,7 @@ function PricingSettings() {
           <label className="block text-xs font-black text-slate-600 dark:text-slate-400 mb-1.5">עמלה קבועה לתיק (₪)</label>
           <input type="number" value={fixedFee} onChange={(e) => setFixedFee(e.target.value)}
             placeholder="לדוגמה: 3000"
-            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-violet-400" />
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-400" />
         </div>
       )}
 
@@ -177,7 +177,7 @@ function PricingSettings() {
           <label className="block text-xs font-black text-slate-600 dark:text-slate-400 mb-1.5">אחוז עמלה מסכום המשכנתא (%)</label>
           <input type="number" step="0.01" value={percentFee} onChange={(e) => setPercentFee(e.target.value)}
             placeholder="לדוגמה: 0.5"
-            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-violet-400" />
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-400" />
           {percentFee && Number(percentFee) > 0 && (
             <p className="text-[11px] font-bold text-slate-400 mt-1">
               למשכנתא של ₪1,000,000 → עמלה: ₪{(1000000 * Number(percentFee) / 100).toLocaleString("he-IL")}
@@ -192,13 +192,13 @@ function PricingSettings() {
             <label className="block text-xs font-black text-slate-600 dark:text-slate-400 mb-1.5">עמלת בסיס (₪)</label>
             <input type="number" value={hybridBaseFee} onChange={(e) => setHybridBaseFee(e.target.value)}
               placeholder="לדוגמה: 1500"
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-violet-400" />
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-400" />
           </div>
           <div>
             <label className="block text-xs font-black text-slate-600 dark:text-slate-400 mb-1.5">אחוז נוסף מסכום המשכנתא (%)</label>
             <input type="number" step="0.01" value={hybridPercentFee} onChange={(e) => setHybridPercentFee(e.target.value)}
               placeholder="לדוגמה: 0.25"
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-violet-400" />
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-400" />
           </div>
           {hybridBaseFee && hybridPercentFee && (
             <p className="text-[11px] font-bold text-slate-400">
@@ -219,7 +219,7 @@ function PricingSettings() {
               <input type="number" value={leadTypeRules[type] || ""}
                 onChange={(e) => updateLeadTypeRule(type, e.target.value)}
                 placeholder="₪"
-                className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-violet-400" />
+                className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-400" />
             </div>
           ))}
         </div>
@@ -227,10 +227,10 @@ function PricingSettings() {
 
       {model && (
         <div className="px-5 py-4 space-y-2">
-          {error && <p className="text-xs font-bold text-rose-600">{error}</p>}
-          {saved && <p className="text-xs font-bold text-emerald-600 animate-pulse">מודל העמלה נשמר בהצלחה ✓</p>}
+          {error && <p className="text-xs font-bold text-danger-600">{error}</p>}
+          {saved && <p className="text-xs font-bold text-success-600 animate-pulse">מודל העמלה נשמר בהצלחה ✓</p>}
           <button type="button" onClick={handleSave} disabled={saving}
-            className="w-full rounded-xl bg-violet-700 text-white font-black py-3 text-sm hover:bg-violet-800 transition-colors disabled:opacity-50">
+            className="w-full rounded-xl bg-brand-700 text-white font-black py-3 text-sm hover:bg-brand-800 transition-colors disabled:opacity-50">
             {saving ? "שומר..." : "שמור מודל עמלה"}
           </button>
         </div>
@@ -238,8 +238,8 @@ function PricingSettings() {
 
       {!model && (
         <div className="px-5 py-4 text-center">
-          <p className="text-sm font-black text-amber-700 dark:text-amber-300 mb-1">עדיין לא הוגדר מודל עמלה</p>
-          <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+          <p className="text-sm font-black text-warning-700 dark:text-warning-300 mb-1">עדיין לא הוגדר מודל עמלה</p>
+          <p className="text-xs font-bold text-warning-600 dark:text-warning-400">
             בחר מודל עמלה כדי שהדשבורד יחשב עמלות צפויות בהתאם.
           </p>
         </div>
@@ -322,7 +322,7 @@ export default function AdvisorSettings() {
           {/* Page header */}
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-black text-slate-950 dark:text-slate-100">הגדרות</h1>
-            {savedFlash && <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 animate-pulse">נשמר ✓</span>}
+            {savedFlash && <span className="text-xs font-black text-success-600 dark:text-success-400 animate-pulse">נשמר ✓</span>}
           </div>
 
           {/* ── תצוגה ──────────────────────────────────────────────────────── */}
@@ -345,7 +345,7 @@ export default function AdvisorSettings() {
                         onClick={() => update("defaultView", opt.value)}
                         className={`rounded-xl py-3 text-sm font-black border transition-all flex flex-col items-center gap-1 ${
                           active
-                            ? "bg-violet-700 text-white border-violet-700 shadow-sm"
+                            ? "bg-brand-700 text-white border-brand-700 shadow-sm"
                             : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
                         }`}>
                         <span className="text-base">{opt.icon}</span>
@@ -367,7 +367,7 @@ export default function AdvisorSettings() {
                         onClick={() => update("defaultSort", opt.value)}
                         className={`rounded-xl py-2.5 text-sm font-black border transition-all ${
                           active
-                            ? "bg-violet-700 text-white border-violet-700"
+                            ? "bg-brand-700 text-white border-brand-700"
                             : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
                         }`}>
                         {opt.label}
@@ -387,7 +387,7 @@ export default function AdvisorSettings() {
                 <h2 className="text-sm font-black text-slate-950 dark:text-slate-100">פרופיל יועץ</h2>
                 <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-0.5">שם, טלפון, התמחויות</p>
               </div>
-              <Link href="/advisor/profile" className="text-xs font-black text-violet-700 dark:text-violet-300 hover:text-violet-900 dark:hover:text-violet-200 transition-colors">
+              <Link href="/advisor/profile" className="text-xs font-black text-brand-700 dark:text-brand-300 hover:text-brand-900 dark:hover:text-brand-200 transition-colors">
                 עריכה →
               </Link>
             </div>
@@ -430,7 +430,7 @@ export default function AdvisorSettings() {
                 התבניות מנוהלות בתוך תיק הליד. פתח כל תיק ולחץ על "תבניות WA ▾" לעריכה ושליחה.
               </p>
               <Link href="/advisor/my-leads"
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-4 py-2 text-xs font-black hover:bg-emerald-100 dark:hover:bg-emerald-800 transition-colors">
+                className="inline-flex items-center gap-2 rounded-xl bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800 text-success-700 dark:text-success-300 px-4 py-2 text-xs font-black hover:bg-success-100 dark:hover:bg-success-800 transition-colors">
                 עבור ל-הלידים שלי →
               </Link>
             </div>
@@ -451,7 +451,7 @@ export default function AdvisorSettings() {
         <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
           <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">ראשי</Link>
           <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
-          <Link href="/advisor/settings" className="flex-1 text-center text-xs font-black text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/20 rounded-xl py-2.5">הגדרות</Link>
+          <Link href="/advisor/settings" className="flex-1 text-center text-xs font-black text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/20 rounded-xl py-2.5">הגדרות</Link>
         </div>
       </main>
     </>

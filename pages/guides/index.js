@@ -37,7 +37,7 @@ export default function GuidesIndexPage() {
         <ul className="space-y-3">
           {guides.map((guide) => (
             <li key={guide.path} className="border rounded-md p-4 hover:bg-slate-50">
-              <Link href={guide.path} className="text-blue-700 font-medium hover:underline">{guide.h1}</Link>
+              <Link href={guide.path} className="text-brand-700 font-medium hover:underline">{guide.h1}</Link>
               <p className="text-sm mt-1 text-slate-700">{guide.description}</p>
             </li>
           ))}

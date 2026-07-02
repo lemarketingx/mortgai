@@ -12,7 +12,7 @@ function Field({ label, value, onChange, placeholder = "", type = "text", requir
     <div>
       <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-1.5">
         {label}
-        {required && <span className="text-red-500 dark:text-red-400 mr-1">*</span>}
+        {required && <span className="text-danger-500 dark:text-danger-400 mr-1">*</span>}
       </label>
       <input
         type={type}
@@ -21,7 +21,7 @@ function Field({ label, value, onChange, placeholder = "", type = "text", requir
         required={required}
         onChange={(e) => onChange(e.target.value)}
         autoComplete={type === "email" ? "email" : type === "password" ? "new-password" : "off"}
-        className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 rounded-2xl px-4 py-3 text-base text-slate-950 dark:text-slate-100 outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-violet-100 h-12"
+        className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 rounded-2xl px-4 py-3 text-base text-slate-950 dark:text-slate-100 outline-none transition focus:border-brand-400 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-brand-100 h-12"
       />
       {hint && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 font-bold">{hint}</p>}
     </div>
@@ -135,7 +135,7 @@ export default function AdvisorRegister() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-black text-slate-700 dark:text-slate-300">
-                  סיסמה<span className="text-red-500 dark:text-red-400 mr-1">*</span>
+                  סיסמה<span className="text-danger-500 dark:text-danger-400 mr-1">*</span>
                 </label>
               </div>
               <div className="relative">
@@ -145,7 +145,7 @@ export default function AdvisorRegister() {
                   onChange={(e) => update("password", e.target.value)}
                   placeholder="לפחות 8 תווים"
                   autoComplete="new-password"
-                  className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 rounded-2xl px-4 py-3 text-base text-slate-950 dark:text-slate-100 outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-violet-100 h-12 pl-16"
+                  className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 rounded-2xl px-4 py-3 text-base text-slate-950 dark:text-slate-100 outline-none transition focus:border-brand-400 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-brand-100 h-12 pl-16"
                 />
                 <button
                   type="button"
@@ -179,7 +179,7 @@ export default function AdvisorRegister() {
               <select
                 value={form.advisorType}
                 onChange={(e) => update("advisorType", e.target.value)}
-                className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 rounded-2xl px-4 py-3 text-base text-slate-950 dark:text-slate-100 outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-violet-100 h-12"
+                className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 rounded-2xl px-4 py-3 text-base text-slate-950 dark:text-slate-100 outline-none transition focus:border-brand-400 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-brand-100 h-12"
               >
                 {ADVISOR_TYPES.map((o) => <option key={o} value={o}>{o || "בחרו..."}</option>)}
               </select>
@@ -190,17 +190,17 @@ export default function AdvisorRegister() {
                 type="checkbox"
                 checked={form.terms}
                 onChange={(e) => update("terms", e.target.checked)}
-                className="mt-1 w-4 h-4 accent-violet-600 shrink-0"
+                className="mt-1 w-4 h-4 accent-brand-600 shrink-0"
               />
               <span className="text-sm text-slate-600 dark:text-slate-400 font-bold leading-6">
                 קראתי ואני מסכים/ה ל
-                <a href="/advisor/terms" target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 hover:underline">תנאי השימוש של FINZO PRO</a>
-                <span className="text-red-500 dark:text-red-400 mr-1">*</span>
+                <a href="/advisor/terms" target="_blank" rel="noopener noreferrer" className="text-brand-600 dark:text-brand-400 hover:underline">תנאי השימוש של FINZO PRO</a>
+                <span className="text-danger-500 dark:text-danger-400 mr-1">*</span>
               </span>
             </label>
 
             {error && (
-              <p role="alert" className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 px-4 py-3 text-sm font-bold text-red-700 dark:text-red-400">
+              <p role="alert" className="rounded-2xl bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-700 px-4 py-3 text-sm font-bold text-danger-700 dark:text-danger-400">
                 {error}
               </p>
             )}
@@ -215,7 +215,7 @@ export default function AdvisorRegister() {
 
             <p className="text-center text-xs text-slate-400 dark:text-slate-500">
               כבר יש לכם חשבון?{" "}
-              <Link href="/advisor/login" className="text-violet-600 dark:text-violet-400 hover:underline font-bold">
+              <Link href="/advisor/login" className="text-brand-600 dark:text-brand-400 hover:underline font-bold">
                 כניסה לפורטל
               </Link>
             </p>

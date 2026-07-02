@@ -6,10 +6,10 @@ export default function BetaBanner() {
       dir="rtl"
       role="banner"
       aria-label="הודעת גרסת בטא"
-      className="w-full border-b border-amber-200 bg-amber-50 px-4 py-2.5"
+      className="w-full border-b border-warning-200 bg-warning-50 px-4 py-2.5"
     >
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-4">
-        <p className="text-center text-sm font-medium leading-snug text-amber-900 sm:text-right">
+        <p className="text-center text-sm font-medium leading-snug text-warning-900 sm:text-right">
           🚧 <strong>FINZO נמצאת בגרסת בטא.</strong>
           <span className="hidden sm:inline"> </span>
           <br className="sm:hidden" />
@@ -17,7 +17,7 @@ export default function BetaBanner() {
         </p>
         <Link
           href="/contact"
-          className="shrink-0 rounded-full bg-amber-500 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+          className="shrink-0 rounded-full bg-warning-500 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-warning-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-500 focus-visible:ring-offset-2"
         >
           צור קשר
         </Link>

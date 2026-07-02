@@ -48,12 +48,12 @@ function MoonIcon() {
 }
 
 const TYPE_META = {
-  lead_purchase:     { dot: "bg-emerald-500", label: "רכישת ליד" },
-  overdue_task:      { dot: "bg-rose-500",    label: "משימה באיחור" },
-  missing_documents: { dot: "bg-amber-400",   label: "מסמכים חסרים" },
-  bank_status:       { dot: "bg-blue-500",    label: "עדכון בנק" },
-  reminder_due:      { dot: "bg-sky-400",     label: "תזכורת" },
-  stage_change:      { dot: "bg-violet-500",  label: "שינוי שלב" },
+  lead_purchase:     { dot: "bg-success-500", label: "רכישת ליד" },
+  overdue_task:      { dot: "bg-danger-500",    label: "משימה באיחור" },
+  missing_documents: { dot: "bg-warning-400",   label: "מסמכים חסרים" },
+  bank_status:       { dot: "bg-brand-500",    label: "עדכון בנק" },
+  reminder_due:      { dot: "bg-accent-400",     label: "תזכורת" },
+  stage_change:      { dot: "bg-brand-500",  label: "שינוי שלב" },
   system:            { dot: "bg-slate-400",   label: "מערכת" },
 };
 
@@ -227,7 +227,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
               >
                 <BellIcon />
                 {bellCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 flex items-center justify-center rounded-full bg-rose-500 text-white text-[9px] font-black px-0.5 leading-none">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 flex items-center justify-center rounded-full bg-danger-500 text-white text-[9px] font-black px-0.5 leading-none">
                     {bellCount > 9 ? "9+" : bellCount}
                   </span>
                 )}
@@ -240,10 +240,10 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
                     <div className="flex items-center gap-2">
                       {bellCount > 0 && (
                         <>
-                          <span className="text-xs font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 rounded-full px-2 py-0.5">{bellCount}</span>
+                          <span className="text-xs font-black text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/30 rounded-full px-2 py-0.5">{bellCount}</span>
                           <button
                             onClick={handleMarkAllRead}
-                            className="text-[11px] font-black text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-200 transition-colors"
+                            className="text-[11px] font-black text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-200 transition-colors"
                           >
                             סמן הכל כנקרא
                           </button>
@@ -264,7 +264,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
                           ? `/advisor/lead/${item.entityId}`
                           : "/advisor/my-leads";
                         return (
-                          <div key={item.id} className={`flex items-start gap-3 px-4 py-3 border-b border-slate-50 dark:border-slate-800 last:border-0 transition-colors ${item.isRead ? "bg-white dark:bg-slate-900" : "bg-violet-50/30 dark:bg-violet-900/10"}`}>
+                          <div key={item.id} className={`flex items-start gap-3 px-4 py-3 border-b border-slate-50 dark:border-slate-800 last:border-0 transition-colors ${item.isRead ? "bg-white dark:bg-slate-900" : "bg-brand-50/30 dark:bg-brand-900/10"}`}>
                             <Link
                               href={href}
                               onClick={() => setBellOpen(false)}
@@ -283,7 +283,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
                             {!item.isRead && !item._isComputed && (
                               <button
                                 onClick={(e) => handleMarkRead(e, item.id)}
-                                className="shrink-0 mt-1 w-5 h-5 flex items-center justify-center rounded-full text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                                className="shrink-0 mt-1 w-5 h-5 flex items-center justify-center rounded-full text-slate-400 hover:text-success-600 hover:bg-success-50 dark:hover:bg-success-900/30 transition-colors"
                                 title="סמן כנקרא"
                               >
                                 <CheckIcon />
@@ -295,7 +295,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
                     )}
                   </div>
                   <div className="px-4 py-2.5 border-t border-slate-100 dark:border-slate-800 text-center">
-                    <Link href="/advisor/my-leads" onClick={() => setBellOpen(false)} className="text-xs font-black text-violet-600 dark:text-violet-400 hover:underline">
+                    <Link href="/advisor/my-leads" onClick={() => setBellOpen(false)} className="text-xs font-black text-brand-600 dark:text-brand-400 hover:underline">
                       כל הלידים שלי →
                     </Link>
                   </div>
@@ -308,7 +308,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
               href="/advisor/profile"
               aria-label="פרופיל"
               className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black text-white shrink-0 select-none transition-colors ${
-                active === "/advisor/profile" ? "bg-violet-500 ring-2 ring-violet-400" : "bg-violet-600 hover:bg-violet-500"
+                active === "/advisor/profile" ? "bg-brand-500 ring-2 ring-brand-400" : "bg-brand-600 hover:bg-brand-500"
               }`}
             >
               {initials}
@@ -342,13 +342,13 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
               >
                 <BellIcon />
                 {bellCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[13px] h-3 flex items-center justify-center rounded-full bg-rose-500 text-white text-[8px] font-black px-0.5 leading-none">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[13px] h-3 flex items-center justify-center rounded-full bg-danger-500 text-white text-[8px] font-black px-0.5 leading-none">
                     {bellCount > 9 ? "9+" : bellCount}
                   </span>
                 )}
               </button>
             </div>
-            <Link href="/advisor/profile" className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white select-none ${active === "/advisor/profile" ? "bg-violet-500" : "bg-violet-600"}`}>
+            <Link href="/advisor/profile" className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white select-none ${active === "/advisor/profile" ? "bg-brand-500" : "bg-brand-600"}`}>
               {initials}
             </Link>
             <button onClick={logout} className="text-xs text-slate-500 font-semibold">יציאה</button>

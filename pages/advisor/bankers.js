@@ -18,7 +18,7 @@ function BankerFormFields({ form, onChange }) {
         <div>
           <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">בנק *</label>
           <select
-            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
             value={form.bank_name}
             onChange={(e) => onChange("bank_name", e.target.value)}
           >
@@ -29,7 +29,7 @@ function BankerFormFields({ form, onChange }) {
         <div>
           <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">סניף</label>
           <input
-            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="שם/מספר סניף"
             value={form.branch_name}
             onChange={(e) => onChange("branch_name", e.target.value)}
@@ -40,7 +40,7 @@ function BankerFormFields({ form, onChange }) {
         <div>
           <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">שם בנקאי/ת *</label>
           <input
-            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="שם מלא"
             value={form.banker_name}
             onChange={(e) => onChange("banker_name", e.target.value)}
@@ -49,7 +49,7 @@ function BankerFormFields({ form, onChange }) {
         <div>
           <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">תפקיד</label>
           <input
-            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="יועץ משכנתאות, מנהל סניף..."
             value={form.role_title}
             onChange={(e) => onChange("role_title", e.target.value)}
@@ -60,7 +60,7 @@ function BankerFormFields({ form, onChange }) {
         <div>
           <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">טלפון</label>
           <input
-            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="050-000-0000"
             type="tel"
             value={form.phone}
@@ -70,7 +70,7 @@ function BankerFormFields({ form, onChange }) {
         <div>
           <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">מייל</label>
           <input
-            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="banker@bank.co.il"
             type="email"
             value={form.email}
@@ -82,7 +82,7 @@ function BankerFormFields({ form, onChange }) {
         <div>
           <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">אזור</label>
           <input
-            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="תל אביב, ירושלים, חיפה..."
             value={form.region}
             onChange={(e) => onChange("region", e.target.value)}
@@ -91,7 +91,7 @@ function BankerFormFields({ form, onChange }) {
         <div>
           <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">התמחות</label>
           <input
-            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
             placeholder="משכנתאות גדולות, מחיר למשתכן..."
             value={form.specialties}
             onChange={(e) => onChange("specialties", e.target.value)}
@@ -101,7 +101,7 @@ function BankerFormFields({ form, onChange }) {
       <div>
         <label className="block text-xs font-black text-slate-400 dark:text-slate-500 mb-1">הערות</label>
         <textarea
-          className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm font-bold min-h-[64px] resize-y outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
+          className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm font-bold min-h-[64px] resize-y outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
           placeholder="שעות פעילות, העדפות, מידע נוסף..."
           value={form.notes}
           onChange={(e) => onChange("notes", e.target.value)}
@@ -110,7 +110,7 @@ function BankerFormFields({ form, onChange }) {
       <label className="flex items-center gap-2 cursor-pointer">
         <input
           type="checkbox"
-          className="w-4 h-4 accent-violet-700"
+          className="w-4 h-4 accent-brand-700"
           checked={form.is_active}
           onChange={(e) => onChange("is_active", e.target.checked)}
         />
@@ -290,14 +290,14 @@ export default function BankersPage() {
             <button
               type="button"
               onClick={startAdd}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-700 text-white text-sm font-black hover:bg-violet-800 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-700 text-white text-sm font-black hover:bg-brand-800 transition-colors"
             >
               + הוסף בנקאי
             </button>
           </div>
 
           {msg.text && (
-            <div className={`mt-3 px-4 py-2.5 rounded-xl text-sm font-bold ${msg.ok ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"}`}>
+            <div className={`mt-3 px-4 py-2.5 rounded-xl text-sm font-bold ${msg.ok ? "bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800" : "bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400 border border-danger-200 dark:border-danger-800"}`}>
               {msg.text}
             </div>
           )}
@@ -308,13 +308,13 @@ export default function BankersPage() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-3 flex flex-wrap gap-2 items-center">
             <input
               type="text"
-              className="flex-1 min-w-[160px] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
+              className="flex-1 min-w-[160px] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
               placeholder="🔍 חיפוש בנקאי..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             <select
-              className="border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 dark:bg-slate-800 dark:text-slate-200"
+              className="border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
               value={filterBank}
               onChange={(e) => setFilterBank(e.target.value)}
             >
@@ -322,7 +322,7 @@ export default function BankersPage() {
               {uniqueBanks.map((b) => <option key={b}>{b}</option>)}
             </select>
             <label className="flex items-center gap-1.5 text-xs font-black text-slate-500 dark:text-slate-400 cursor-pointer">
-              <input type="checkbox" className="accent-violet-700" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
+              <input type="checkbox" className="accent-brand-700" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
               כולל לא פעילים
             </label>
           </div>
@@ -346,7 +346,7 @@ export default function BankersPage() {
                 <BankerFormFields form={form} onChange={updateForm} />
                 <div className="flex gap-2 mt-5">
                   <button type="submit" disabled={saving}
-                    className="flex-1 py-2.5 rounded-xl bg-violet-700 text-white text-sm font-black disabled:opacity-50 hover:bg-violet-800 transition-colors">
+                    className="flex-1 py-2.5 rounded-xl bg-brand-700 text-white text-sm font-black disabled:opacity-50 hover:bg-brand-800 transition-colors">
                     {saving ? "שומר..." : editingId ? "שמור שינויים" : "הוסף בנקאי"}
                   </button>
                   <button type="button" onClick={() => setShowAdd(false)}
@@ -374,7 +374,7 @@ export default function BankersPage() {
                   <p className="text-3xl mb-3">🏦</p>
                   <p className="text-sm font-black text-slate-700 dark:text-slate-300 mb-1">ספר הבנקאים ריק</p>
                   <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-4">הוסף בנקאים ותוכל לבחור אותם בתוך תיקי לקוח</p>
-                  <button type="button" onClick={startAdd} className="px-4 py-2.5 rounded-xl bg-violet-700 text-white text-sm font-black">
+                  <button type="button" onClick={startAdd} className="px-4 py-2.5 rounded-xl bg-brand-700 text-white text-sm font-black">
                     + הוסף בנקאי ראשון
                   </button>
                 </>
@@ -405,22 +405,22 @@ export default function BankersPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">
-                        <span className="font-black text-violet-700 dark:text-violet-300">{banker.bank_name}</span>
+                        <span className="font-black text-brand-700 dark:text-brand-300">{banker.bank_name}</span>
                         {banker.branch_name && <span>· סניף {banker.branch_name}</span>}
                         {banker.region && <span>· {banker.region}</span>}
                       </div>
                       <div className="flex flex-wrap gap-2 text-xs">
                         {banker.phone && (
                           <div className="flex items-center gap-1">
-                            <a href={`tel:${banker.phone}`} className="font-bold text-slate-600 dark:text-slate-400 hover:text-violet-700 dark:hover:text-violet-300">{banker.phone}</a>
-                            <a href={`tel:${banker.phone}`} className="px-1.5 py-0.5 rounded-md bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 font-black text-[10px]">☎</a>
-                            <a href={`https://wa.me/${banker.phone.replace(/[^\d]/g, "").replace(/^0/, "972")}`} target="_blank" rel="noopener noreferrer" className="px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 font-black text-[10px]">💬</a>
+                            <a href={`tel:${banker.phone}`} className="font-bold text-slate-600 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300">{banker.phone}</a>
+                            <a href={`tel:${banker.phone}`} className="px-1.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 font-black text-[10px]">☎</a>
+                            <a href={`https://wa.me/${banker.phone.replace(/[^\d]/g, "").replace(/^0/, "972")}`} target="_blank" rel="noopener noreferrer" className="px-1.5 py-0.5 rounded-md bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300 font-black text-[10px]">💬</a>
                           </div>
                         )}
                         {banker.email && (
                           <div className="flex items-center gap-1">
-                            <a href={`mailto:${banker.email}`} className="font-bold text-slate-600 dark:text-slate-400 hover:text-violet-700 dark:hover:text-violet-300 truncate max-w-[180px]">{banker.email}</a>
-                            <a href={`mailto:${banker.email}`} className="px-1.5 py-0.5 rounded-md bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 font-black text-[10px]">✉</a>
+                            <a href={`mailto:${banker.email}`} className="font-bold text-slate-600 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300 truncate max-w-[180px]">{banker.email}</a>
+                            <a href={`mailto:${banker.email}`} className="px-1.5 py-0.5 rounded-md bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 font-black text-[10px]">✉</a>
                           </div>
                         )}
                       </div>
@@ -444,7 +444,7 @@ export default function BankersPage() {
                       <button
                         type="button"
                         onClick={() => toggleActive(banker)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors ${banker.is_active ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-800" : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-800"}`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors ${banker.is_active ? "bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-300 hover:bg-warning-100 dark:hover:bg-warning-800" : "bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300 hover:bg-success-100 dark:hover:bg-success-800"}`}
                       >
                         {banker.is_active ? "השבת" : "הפעל"}
                       </button>
@@ -452,7 +452,7 @@ export default function BankersPage() {
                         type="button"
                         onClick={() => confirmDelete(banker)}
                         disabled={deletingId === banker.id}
-                        className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 text-xs font-black hover:bg-rose-100 dark:hover:bg-rose-800 transition-colors disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400 text-xs font-black hover:bg-danger-100 dark:hover:bg-danger-800 transition-colors disabled:opacity-50"
                       >
                         {deletingId === banker.id ? "..." : "מחק"}
                       </button>

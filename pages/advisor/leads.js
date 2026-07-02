@@ -79,7 +79,7 @@ function formatPercent(value) {
 
 function ScoreBar({ score }) {
   const pct = Math.min(100, Math.max(0, Number(score) || 0));
-  const color = pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-slate-300 dark:bg-slate-600";
+  const color = pct >= 70 ? "bg-success-500" : pct >= 40 ? "bg-warning-400" : "bg-slate-300 dark:bg-slate-600";
   return (
     <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
       <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
@@ -91,9 +91,9 @@ function AgeBadge({ createdAt }) {
   const days = ageInDays(createdAt);
   const label = days === 0 ? "היום" : `לפני ${days} ימים`;
   const cls = days <= 3
-    ? "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800"
+    ? "text-success-700 dark:text-success-300 bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-800"
     : days <= 14
-      ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
+      ? "text-warning-700 dark:text-warning-300 bg-warning-50 dark:bg-warning-900/20 border-warning-200 dark:border-warning-800"
       : "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-800";
   return <span className={`text-[10px] font-black border rounded-full px-2 py-0.5 ${cls}`}>{label}</span>;
 }
@@ -102,7 +102,7 @@ function MarketplaceTags({ lead }) {
   if (ageInDays(lead.createdAt) > 3) return null;
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
-      <span className="text-[10px] font-black border rounded-full px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">חדש</span>
+      <span className="text-[10px] font-black border rounded-full px-2 py-0.5 bg-success-100 dark:bg-success-900/20 text-success-800 dark:text-success-300 border-success-200 dark:border-success-800">חדש</span>
     </div>
   );
 }
@@ -145,7 +145,7 @@ function FinzoScoreExplanation({ lead, score }) {
         className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-right"
       >
         <span className="text-[10px] font-black text-slate-500 dark:text-slate-400">הסבר ציון FINZO ↕</span>
-        <span className="text-[10px] font-black text-violet-700 dark:text-violet-300">{score}/100</span>
+        <span className="text-[10px] font-black text-brand-700 dark:text-brand-300">{score}/100</span>
       </button>
       {open && (
         <div className="px-3 py-3 space-y-3">
@@ -203,10 +203,10 @@ function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
   const now = new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="mb-6 rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 dark:from-emerald-900/20 to-white dark:to-slate-900 shadow-md overflow-hidden">
-      <div className="flex items-center justify-between gap-3 bg-emerald-600 px-4 py-3">
+    <div className="mb-6 rounded-2xl border border-success-300 dark:border-success-800 bg-gradient-to-br from-success-50 dark:from-success-900/20 to-white dark:to-slate-900 shadow-md overflow-hidden">
+      <div className="flex items-center justify-between gap-3 bg-success-600 px-4 py-3">
         <span className="text-sm font-black text-white">הליד נרכש בהצלחה ונוסף ל'הלקוחות שלי'</span>
-        <button onClick={onClose} className="text-emerald-200 hover:text-white font-black text-lg leading-none shrink-0">×</button>
+        <button onClick={onClose} className="text-success-200 hover:text-white font-black text-lg leading-none shrink-0">×</button>
       </div>
       <div className="px-4 pt-4 pb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {label && <InfoBox label="סוג תיק" value={label} />}
@@ -216,10 +216,10 @@ function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
         {quality && <InfoBox label="איכות ליד" value={quality} />}
       </div>
       <div className="px-4 pb-4 flex flex-wrap gap-2">
-        <Link href={`/advisor/lead/${leadId}?newPurchase=1`} className="px-4 py-2.5 rounded-full bg-violet-700 text-white text-sm font-black hover:bg-violet-800 transition-colors">
+        <Link href={`/advisor/lead/${leadId}?newPurchase=1`} className="px-4 py-2.5 rounded-full bg-brand-700 text-white text-sm font-black hover:bg-brand-800 transition-colors">
           פתח את הליד עכשיו ←
         </Link>
-        <Link href="/advisor/my-leads" className="px-4 py-2.5 rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 text-violet-800 dark:text-violet-300 text-sm font-black hover:bg-violet-100 transition-colors">
+        <Link href="/advisor/my-leads" className="px-4 py-2.5 rounded-full border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-900/20 text-brand-800 dark:text-brand-300 text-sm font-black hover:bg-brand-100 transition-colors">
           עבור ללידים שלי
         </Link>
         <button onClick={onClose} className="px-4 py-2.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-sm font-black hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
@@ -246,33 +246,33 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isFavorite, onToggleFavor
   return (
     <article className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm transition-all border ${
       lead._purchased || alreadyOwnedByMe
-        ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-900/10"
+        ? "border-success-200 dark:border-success-800 bg-success-50/30 dark:bg-success-900/10"
         : isSold
           ? "border-slate-100 dark:border-slate-800 opacity-60"
           : isNew
-            ? "border-emerald-200 dark:border-emerald-800 ring-1 ring-emerald-300/40 shadow-md hover:shadow-lg"
-            : "border-slate-100 dark:border-slate-800 hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-sm"
+            ? "border-success-200 dark:border-success-800 ring-1 ring-success-300/40 shadow-md hover:shadow-lg"
+            : "border-slate-100 dark:border-slate-800 hover:border-brand-200 dark:hover:border-brand-800 hover:shadow-sm"
     }`}>
       <div className="flex items-start justify-between gap-3 p-4 pb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-2">
             {qualityLabel && (
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 whitespace-nowrap">
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-success-50 dark:bg-success-900/20 text-success-800 dark:text-success-300 border-success-200 dark:border-success-800 whitespace-nowrap">
                 {qualityLabel}
               </span>
             )}
             {lead.purchaseStatus && PURCHASE_STATUS_LABELS[lead.purchaseStatus] && (
-              <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full border bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800 whitespace-nowrap">
+              <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full border bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800 whitespace-nowrap">
                 {PURCHASE_STATUS_LABELS[lead.purchaseStatus]}
               </span>
             )}
-            {isSold && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800">נמכר</span>}
-            {(lead._purchased || alreadyOwnedByMe) && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">נרכש ✓</span>}
+            {isSold && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400 border-danger-200 dark:border-danger-800">נמכר</span>}
+            {(lead._purchased || alreadyOwnedByMe) && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-success-100 dark:bg-success-900/20 text-success-800 dark:text-success-300 border-success-200 dark:border-success-800">נרכש ✓</span>}
           </div>
           <MarketplaceTags lead={lead} />
         </div>
         <div className="flex items-start gap-2 shrink-0">
-          <button onClick={() => onToggleFavorite?.(lead.id)} className={`text-lg leading-none mt-0.5 transition-colors ${isFavorite ? "text-amber-500" : "text-slate-300 dark:text-slate-600 hover:text-amber-400"}`} aria-label={isFavorite ? "הסר ממועדפים" : "הוסף למועדפים"}>
+          <button onClick={() => onToggleFavorite?.(lead.id)} className={`text-lg leading-none mt-0.5 transition-colors ${isFavorite ? "text-warning-500" : "text-slate-300 dark:text-slate-600 hover:text-warning-400"}`} aria-label={isFavorite ? "הסר ממועדפים" : "הוסף למועדפים"}>
             {isFavorite ? "★" : "☆"}
           </button>
           <div className="text-start">
@@ -320,9 +320,9 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isFavorite, onToggleFavor
         )}
 
         {(lead._purchased || alreadyOwnedByMe) && (
-          <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-3 flex items-center justify-between gap-3">
-            <p className="text-sm font-black text-emerald-700 dark:text-emerald-300">הליד כבר נרכש על ידך</p>
-            <Link href={`/advisor/lead/${lead.id}`} className="text-xs font-black text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/20 hover:bg-emerald-200 border border-emerald-300 dark:border-emerald-800 rounded-full px-3 py-1.5 transition-colors shrink-0">
+          <div className="rounded-xl bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800 px-4 py-3 flex items-center justify-between gap-3">
+            <p className="text-sm font-black text-success-700 dark:text-success-300">הליד כבר נרכש על ידך</p>
+            <Link href={`/advisor/lead/${lead.id}`} className="text-xs font-black text-success-700 dark:text-success-300 bg-success-100 dark:bg-success-900/20 hover:bg-success-200 border border-success-300 dark:border-success-800 rounded-full px-3 py-1.5 transition-colors shrink-0">
               פתח בלידים שלי ←
             </Link>
           </div>
@@ -332,20 +332,20 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isFavorite, onToggleFavor
           <button
             onClick={() => setConfirm(true)}
             disabled={purchasing}
-            className="w-full text-sm font-black px-3 py-2.5 rounded-2xl bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-50 min-h-[46px]"
+            className="w-full text-sm font-black px-3 py-2.5 rounded-2xl bg-brand-700 text-white hover:bg-brand-800 transition-colors disabled:opacity-50 min-h-[46px]"
           >
             רכישת ליד · {formatPrice(lead.priceAtCreation || lead.storePrice || FIXED_LEAD_PRICE)}
           </button>
         )}
 
         {confirm && !lead._purchased && !alreadyOwnedByMe && (
-          <div className="rounded-2xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 px-4 py-4">
-            <p className="text-sm font-black text-violet-900 dark:text-violet-200 mb-1">אישור רכישת ליד</p>
-            <p className="text-xs text-violet-700 dark:text-violet-300 mb-4 leading-relaxed">
+          <div className="rounded-2xl border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-900/20 px-4 py-4">
+            <p className="text-sm font-black text-brand-900 dark:text-brand-200 mb-1">אישור רכישת ליד</p>
+            <p className="text-xs text-brand-700 dark:text-brand-300 mb-4 leading-relaxed">
               לאחר הרכישה תקבלו גישה לפרטי הקשר המלאים של הלקוח.
             </p>
             <div className="flex gap-2">
-              <button onClick={handleConfirm} disabled={purchasing} className="flex-1 text-sm font-black px-4 py-2.5 rounded-full bg-violet-700 text-white hover:bg-violet-800 transition-colors disabled:opacity-70 min-h-[44px]">
+              <button onClick={handleConfirm} disabled={purchasing} className="flex-1 text-sm font-black px-4 py-2.5 rounded-full bg-brand-700 text-white hover:bg-brand-800 transition-colors disabled:opacity-70 min-h-[44px]">
                 {purchasing ? "מעבד..." : "אשר רכישה"}
               </button>
               <button onClick={() => setConfirm(false)} disabled={purchasing} className="text-sm font-bold px-4 py-2.5 rounded-full border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors min-h-[44px]">
@@ -366,7 +366,7 @@ function DepartmentSection({ dept, leads, onPurchase, purchasing, favorites, onT
     <section className="mb-6">
       <button onClick={() => setCollapsed((value) => !value)} className="w-full flex items-center justify-between gap-3 mb-3 group">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-black text-slate-800 dark:text-slate-200 group-hover:text-violet-700 dark:group-hover:text-violet-300 transition-colors">{dept.label}</h2>
+          <h2 className="text-base font-black text-slate-800 dark:text-slate-200 group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors">{dept.label}</h2>
           <span className="text-xs font-black text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-0.5 tabular-nums">{leads.length}</span>
         </div>
         <span className="text-slate-400 dark:text-slate-500 font-black text-sm">{collapsed ? "▼" : "▲"}</span>
@@ -555,10 +555,10 @@ export default function AdvisorLeadsStore() {
         <AdvisorHeader active="/advisor/leads" />
         <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4 lg:py-5">
           <div className="mb-5">
-            <p className="text-[10px] font-black text-violet-600 dark:text-violet-400 tracking-[0.15em] uppercase mb-2">FINZO MARKETPLACE · שוק לידים</p>
+            <p className="text-[10px] font-black text-brand-600 dark:text-brand-400 tracking-[0.15em] uppercase mb-2">FINZO MARKETPLACE · שוק לידים</p>
             <h1 className="text-2xl md:text-3xl font-black text-slate-950 dark:text-slate-100 leading-tight mb-1.5">
               לידים מסווגים לפי מחלקות<br />
-              <span className="text-violet-700 dark:text-violet-300">מחיר ברור, ניקוד מוסבר.</span>
+              <span className="text-brand-700 dark:text-brand-300">מחיר ברור, ניקוד מוסבר.</span>
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 font-bold max-w-lg">
               כל ליד מקבל ציון FINZO והסבר איכות קצר. פרטי הקשר נפתחים לאחר רכישה.
@@ -583,37 +583,37 @@ export default function AdvisorLeadsStore() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 mb-5 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-black text-slate-700 dark:text-slate-300">סינון לידים</p>
-              {hasFilters && <button onClick={clearFilters} className="text-[10px] font-black text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 transition-colors">נקה סינון ×</button>}
+              {hasFilters && <button onClick={clearFilters} className="text-[10px] font-black text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 transition-colors">נקה סינון ×</button>}
             </div>
             <div className="flex flex-wrap gap-2">
-              <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400">
+              <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-brand-400">
                 <option value="all">כל המחלקות</option>
                 {DEPARTMENTS.map((dept) => <option key={dept.key} value={dept.key}>{dept.label}</option>)}
               </select>
-              <select value={filterQuality} onChange={(e) => setFilterQuality(e.target.value)} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400">
+              <select value={filterQuality} onChange={(e) => setFilterQuality(e.target.value)} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-brand-400">
                 <option value="all">כל הרמות</option>
                 {qualityLevels.filter((quality) => quality !== "all").map((quality) => <option key={quality} value={quality}>{quality}</option>)}
               </select>
-              <select value={filterPriceMax === Infinity ? "Infinity" : String(filterPriceMax)} onChange={(e) => setFilterPriceMax(e.target.value === "Infinity" ? Infinity : Number(e.target.value))} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400">
+              <select value={filterPriceMax === Infinity ? "Infinity" : String(filterPriceMax)} onChange={(e) => setFilterPriceMax(e.target.value === "Infinity" ? Infinity : Number(e.target.value))} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-brand-400">
                 {PRICE_RANGES.map((range) => <option key={range.label} value={range.max === Infinity ? "Infinity" : String(range.max)}>{range.label}</option>)}
               </select>
-              <select value={filterCity || "הכל"} onChange={(e) => setFilterCity(e.target.value === "הכל" ? "" : e.target.value)} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400">
+              <select value={filterCity || "הכל"} onChange={(e) => setFilterCity(e.target.value === "הכל" ? "" : e.target.value)} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-brand-400">
                 {cities.map((city) => <option key={city} value={city}>{city}</option>)}
               </select>
-              <select value={filterMaxDays === Infinity ? "Infinity" : String(filterMaxDays)} onChange={(e) => setFilterMaxDays(e.target.value === "Infinity" ? Infinity : Number(e.target.value))} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400">
+              <select value={filterMaxDays === Infinity ? "Infinity" : String(filterMaxDays)} onChange={(e) => setFilterMaxDays(e.target.value === "Infinity" ? Infinity : Number(e.target.value))} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-brand-400">
                 {AGE_RANGES.map((range) => <option key={range.label} value={range.maxDays === Infinity ? "Infinity" : String(range.maxDays)}>{range.label}</option>)}
               </select>
               <button onClick={() => setShowFavoritesOnly(v => !v)}
-                className={`text-xs font-black border rounded-xl px-3 py-1.5 transition-colors ${showFavoritesOnly ? "bg-violet-100 dark:bg-violet-900/30 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-300" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"}`}>
+                className={`text-xs font-black border rounded-xl px-3 py-1.5 transition-colors ${showFavoritesOnly ? "bg-brand-100 dark:bg-brand-900/30 border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-300" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"}`}>
                 {showFavoritesOnly ? "מועדפים בלבד" : "מועדפים"} ({favorites.size})
               </button>
             </div>
           </div>
 
           {error && (
-            <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 font-bold flex items-center justify-between gap-3">
+            <div className="mb-4 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl px-4 py-3 text-sm text-danger-700 dark:text-danger-400 font-bold flex items-center justify-between gap-3">
               <span>{error}</span>
-              <button onClick={() => setError("")} className="text-red-400 dark:text-red-500 hover:text-red-600 dark:hover:text-red-400 font-black text-lg leading-none">×</button>
+              <button onClick={() => setError("")} className="text-danger-400 dark:text-danger-500 hover:text-danger-600 dark:hover:text-danger-400 font-black text-lg leading-none">×</button>
             </div>
           )}
 

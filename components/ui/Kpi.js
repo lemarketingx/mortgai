@@ -10,16 +10,16 @@ export function KpiTile({ label, value, unit, delta, deltaDir = "up", variant = 
   const isDark = variant === "dark";
 
   const deltaColor =
-    deltaDir === "up"   ? "text-finzo-success" :
-    deltaDir === "down" ? "text-finzo-danger"  :
-                          "text-finzo-mute";
+    deltaDir === "up"   ? "text-success-600" :
+    deltaDir === "down" ? "text-danger-500"  :
+                          "text-pro-mute";
 
   return (
     <div
       className={[
-        "rounded-finzo-lg p-4 border",
+        "rounded-pro-lg p-4 border",
         isDark
-          ? "bg-finzo-ink text-white border-finzo-ink"
+          ? "bg-pro-ink text-white border-pro-ink"
           : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800",
         className,
       ].filter(Boolean).join(" ")}

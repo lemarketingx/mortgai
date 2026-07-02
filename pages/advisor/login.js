@@ -108,14 +108,14 @@ export default function AdvisorLogin() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   autoComplete="email"
-                  className="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white dark:bg-slate-800 dark:text-slate-100"
+                  className="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-slate-800 dark:text-slate-100"
                   required
                 />
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-sm font-black text-slate-700 dark:text-slate-300">סיסמה</label>
-                  <Link href="/advisor/forgot-password" className="text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline">
+                  <Link href="/advisor/forgot-password" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline">
                     שכחתי סיסמה
                   </Link>
                 </div>
@@ -126,7 +126,7 @@ export default function AdvisorLogin() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white dark:bg-slate-800 dark:text-slate-100 pl-14"
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-slate-800 dark:text-slate-100 pl-14"
                     required
                   />
                   <button
@@ -141,7 +141,7 @@ export default function AdvisorLogin() {
               </div>
 
               {message && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-2xl px-4 py-3 text-sm text-red-700 dark:text-red-400 font-bold">
+                <div className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-700 rounded-2xl px-4 py-3 text-sm text-danger-700 dark:text-danger-400 font-bold">
                   {message}
                 </div>
               )}
@@ -157,7 +157,7 @@ export default function AdvisorLogin() {
 
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-6 text-center">
               עדיין אין לכם חשבון?{" "}
-              <Link href="/advisor/register" className="text-violet-600 dark:text-violet-400 hover:underline font-bold">
+              <Link href="/advisor/register" className="text-brand-600 dark:text-brand-400 hover:underline font-bold">
                 פתיחת חשבון ב־FINZO PRO
               </Link>
             </p>

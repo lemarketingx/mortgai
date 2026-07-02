@@ -21,10 +21,10 @@ import { useState, useCallback, useEffect, useId } from "react";
 /* ------------------------------------------------------------------ */
 
 const VARIANT_STYLES = {
-  info:    { border: "border-finzo-cobalt",   icon: "bg-finzo-cobalt-l text-finzo-cobalt-d",  char: "i" },
-  success: { border: "border-finzo-success",  icon: "bg-[#edfaf3] text-[#0F7A48]",            char: "✓" },
-  warning: { border: "border-finzo-warning",  icon: "bg-[#fdf6e7] text-[#8A6A2A]",            char: "!" },
-  danger:  { border: "border-finzo-danger",   icon: "bg-[#faeaea] text-[#A53636]",            char: "✕" },
+  info:    { border: "border-pro-cobalt",   icon: "bg-pro-cobalt-l text-pro-cobalt-d",  char: "i" },
+  success: { border: "border-success-600",  icon: "bg-success-50 text-success-700",     char: "✓" },
+  warning: { border: "border-warning-500",  icon: "bg-warning-50 text-warning-700",     char: "!" },
+  danger:  { border: "border-danger-500",   icon: "bg-danger-50 text-danger-700",       char: "✕" },
 };
 
 export function Toast({ id, title, description, variant = "info", onRemove }) {
@@ -39,24 +39,24 @@ export function Toast({ id, title, description, variant = "info", onRemove }) {
     <div
       role="alert"
       aria-live="polite"
-      className={`grid grid-cols-[28px_1fr_auto] gap-[14px] items-center px-[18px] py-[14px] bg-finzo-white border border-finzo-line border-s-4 ${styles.border} rounded-finzo-md shadow-e-3 max-w-[480px] w-full animate-[slideUp_200ms_ease-out]`}
+      className={`grid grid-cols-[28px_1fr_auto] gap-[14px] items-center px-[18px] py-[14px] bg-pro-white border border-pro-line border-s-4 ${styles.border} rounded-pro-md shadow-pro-3 max-w-[480px] w-full animate-[slideUp_200ms_ease-out]`}
     >
       {/* Icon */}
-      <span className={`w-7 h-7 rounded-finzo-sm grid place-items-center font-mono text-[13px] font-semibold shrink-0 ${styles.icon}`}>
+      <span className={`w-7 h-7 rounded-pro-sm grid place-items-center font-mono text-[13px] font-semibold shrink-0 ${styles.icon}`}>
         {styles.char}
       </span>
 
       {/* Body */}
       <div className="min-w-0">
-        {title && <p className="font-semibold text-[14px] text-finzo-ink mb-[2px]">{title}</p>}
-        {description && <p className="text-[12.5px] text-finzo-ink-2">{description}</p>}
+        {title && <p className="font-semibold text-[14px] text-pro-ink mb-[2px]">{title}</p>}
+        {description && <p className="text-[12.5px] text-pro-ink-2">{description}</p>}
       </div>
 
       {/* Dismiss */}
       <button
         type="button"
         onClick={() => onRemove(id)}
-        className="w-6 h-6 rounded-finzo-sm text-finzo-mute hover:text-finzo-ink transition-colors grid place-items-center shrink-0"
+        className="w-6 h-6 rounded-pro-sm text-pro-mute hover:text-pro-ink transition-colors grid place-items-center shrink-0"
         aria-label="סגור"
       >
         ✕
