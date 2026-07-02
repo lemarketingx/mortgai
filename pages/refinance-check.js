@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { useMemo, useRef, useState } from "react";
 import { useTheme } from "./_app";
+import BrandLogo from "../components/BrandLogo";
 import { cleanNumber, displayNumber, formatILS, formatPct, toNumber } from "../lib/format";
 import { monthlyPayment } from "../lib/mortgage";
 import {
@@ -509,11 +510,12 @@ export default function RefinanceCheck() {
 }
 
 function Header() {
+  const { dark } = useTheme();
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <a href="/" className="flex items-center gap-2.5">
-          <span className="text-lg font-black text-slate-950 dark:text-white">FINZO</span>
+          <BrandLogo mode={dark ? "dark" : "light"} size="sm" withTagline={false} />
           <span className="text-[11px] font-black text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-950 border border-brand-200 dark:border-slate-800 px-2 py-0.5 rounded-full">בדיקת מחזור משכנתא</span>
         </a>
         <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 text-sm font-bold text-slate-600 dark:text-slate-400 lg:flex">
