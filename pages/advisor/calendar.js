@@ -60,10 +60,10 @@ const HE_MONTHS = [
 
 // ─── Event type config ───────────────────────────────────────────────────────
 const EVENT_TYPES = {
-  meeting: { label: "פגישה", dot: "bg-violet-500", pill: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300" },
-  task: { label: "משימה", dot: "bg-amber-500", pill: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
-  reminder: { label: "תזכורת", dot: "bg-sky-500", pill: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300" },
-  bank_followup: { label: "מעקב בנק", dot: "bg-emerald-500", pill: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
+  meeting: { label: "פגישה", dot: "bg-brand-500", pill: "bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300" },
+  task: { label: "משימה", dot: "bg-warning-500", pill: "bg-warning-100 text-warning-700 dark:bg-warning-900/40 dark:text-warning-300" },
+  reminder: { label: "תזכורת", dot: "bg-accent-500", pill: "bg-accent-100 text-accent-700 dark:bg-accent-900/40 dark:text-accent-300" },
+  bank_followup: { label: "מעקב בנק", dot: "bg-success-500", pill: "bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300" },
 };
 
 // ─── Date helpers ────────────────────────────────────────────────────────────
@@ -191,7 +191,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
           <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
             {isEdit ? "עריכת אירוע" : "אירוע חדש"}
           </h3>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20 hover:text-brand-600 text-slate-400 transition-colors">
             <XIcon />
           </button>
         </div>
@@ -201,7 +201,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-brand-500"
               required
             />
           </div>
@@ -212,7 +212,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-brand-500"
                 required
               />
             </div>
@@ -222,7 +222,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div>
@@ -231,7 +231,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
           </div>
@@ -245,7 +245,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
                   onClick={() => setEventType(key)}
                   className={`rounded-xl border px-3 py-2 text-sm font-bold transition-all ${
                     eventType === key
-                      ? cfg.pill + " border-transparent ring-2 ring-violet-500"
+                      ? cfg.pill + " border-transparent ring-2 ring-brand-500"
                       : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >
@@ -261,14 +261,14 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500 resize-none"
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-brand-500 resize-none"
             />
           </div>
           <div className="flex gap-2 pt-2">
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-xl bg-violet-700 dark:bg-violet-600 text-white font-black py-2.5 text-sm hover:bg-violet-800 dark:hover:bg-violet-700 transition disabled:opacity-50"
+              className="flex-1 rounded-xl bg-brand-700 dark:bg-brand-600 text-white font-black py-2.5 text-sm hover:bg-brand-800 dark:hover:bg-brand-700 transition disabled:opacity-50"
             >
               {saving ? "שומר..." : isEdit ? "עדכון" : "הוספה"}
             </button>
@@ -276,7 +276,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
               type="button"
               onClick={handleSaveAndGoogle}
               disabled={saving}
-              className="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-400 font-bold px-3 py-2.5 text-sm hover:bg-sky-100 dark:hover:bg-sky-900/40 transition disabled:opacity-50 flex items-center gap-1"
+              className="rounded-xl border border-accent-200 dark:border-accent-800 bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-400 font-bold px-3 py-2.5 text-sm hover:bg-accent-100 dark:hover:bg-accent-900/40 transition disabled:opacity-50 flex items-center gap-1"
               title="שמור והוסף ליומן Google"
             >
               📅 Google
@@ -286,7 +286,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
                 type="button"
                 onClick={onDelete}
                 disabled={saving}
-                className="rounded-xl border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 font-bold px-3 py-2.5 text-sm hover:bg-rose-50 dark:hover:bg-rose-900/30 transition disabled:opacity-50"
+                className="rounded-xl border border-danger-200 dark:border-danger-800 text-danger-600 dark:text-danger-400 font-bold px-3 py-2.5 text-sm hover:bg-danger-50 dark:hover:bg-danger-900/30 transition disabled:opacity-50"
               >
                 <TrashIcon />
               </button>
@@ -337,12 +337,12 @@ function MonthView({ year, month, events, today, onDayClick }) {
               <button
                 key={day}
                 onClick={() => onDayClick(new Date(year, month, day))}
-                className={`min-h-[90px] p-2 text-right border-b border-l border-slate-200 dark:border-slate-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors ${
-                  isToday ? "bg-violet-50 dark:bg-violet-900/20" : "bg-white dark:bg-slate-900"
+                className={`min-h-[90px] p-2 text-right border-b border-l border-slate-200 dark:border-slate-800 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors ${
+                  isToday ? "bg-brand-50 dark:bg-brand-900/20" : "bg-white dark:bg-slate-900"
                 }`}
               >
                 <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-bold ${
-                  isToday ? "bg-violet-700 dark:bg-violet-600 text-white" : "text-slate-900 dark:text-slate-100"
+                  isToday ? "bg-brand-700 dark:bg-brand-600 text-white" : "text-slate-900 dark:text-slate-100"
                 }`}>
                   {day}
                 </span>
@@ -374,13 +374,13 @@ function MonthView({ year, month, events, today, onDayClick }) {
               onClick={() => onDayClick(new Date(year, month, day))}
               className={`w-full flex items-start gap-3 p-3 rounded-xl border transition-colors ${
                 isToday
-                  ? "border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/20"
+                  ? "border-brand-300 dark:border-brand-700 bg-brand-50 dark:bg-brand-900/20"
                   : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
             >
               <div className="flex flex-col items-center min-w-[40px]">
                 <span className="text-xs font-bold text-slate-400 dark:text-slate-500">{HE_DAYS_SHORT[new Date(year, month, day).getDay()]}</span>
-                <span className={`text-lg font-black ${isToday ? "text-violet-700 dark:text-violet-400" : "text-slate-900 dark:text-slate-100"}`}>{day}</span>
+                <span className={`text-lg font-black ${isToday ? "text-brand-700 dark:text-brand-400" : "text-slate-900 dark:text-slate-100"}`}>{day}</span>
               </div>
               <div className="flex-1 flex flex-wrap gap-1">
                 {dayEvents.length === 0 && <span className="text-xs text-slate-400 dark:text-slate-500">—</span>}
@@ -425,13 +425,13 @@ function WeekView({ weekStart, events, today, onDayClick }) {
             onClick={() => onDayClick(day)}
             className={`rounded-xl border p-3 text-right min-h-[120px] transition-colors ${
               isToday
-                ? "border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/20"
+                ? "border-brand-300 dark:border-brand-700 bg-brand-50 dark:bg-brand-900/20"
                 : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800"
             }`}
           >
             <div className="flex items-center gap-2 mb-2">
               <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-black ${
-                isToday ? "bg-violet-700 dark:bg-violet-600 text-white" : "text-slate-900 dark:text-slate-100"
+                isToday ? "bg-brand-700 dark:bg-brand-600 text-white" : "text-slate-900 dark:text-slate-100"
               }`}>
                 {day.getDate()}
               </span>
@@ -473,7 +473,7 @@ function DayView({ date, events, onAddClick, onEventClick }) {
         </h3>
         <button
           onClick={onAddClick}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-700 dark:bg-violet-600 text-white text-xs font-black hover:bg-violet-800 dark:hover:bg-violet-700 transition"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-700 dark:bg-brand-600 text-white text-xs font-black hover:bg-brand-800 dark:hover:bg-brand-700 transition"
         >
           <PlusIcon /> הוספה
         </button>
@@ -641,7 +641,7 @@ export default function CalendarPage() {
   const viewBtnClass = (v) =>
     `px-4 py-2 text-xs font-black rounded-xl transition ${
       view === v
-        ? "bg-violet-700 dark:bg-violet-600 text-white"
+        ? "bg-brand-700 dark:bg-brand-600 text-white"
         : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
     }`;
 
@@ -656,14 +656,14 @@ export default function CalendarPage() {
         {/* Top bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <button onClick={goPrev} className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+            <button onClick={goPrev} className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:hover:border-brand-700 dark:hover:bg-brand-900/20 dark:hover:text-brand-300 transition">
               <ChevronRight />
             </button>
             <h1 className="text-xl font-black text-slate-900 dark:text-slate-100">{headerTitle}</h1>
-            <button onClick={goNext} className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+            <button onClick={goNext} className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:hover:border-brand-700 dark:hover:bg-brand-900/20 dark:hover:text-brand-300 transition">
               <ChevronLeft />
             </button>
-            <button onClick={goToday} className="px-3 py-2 rounded-xl text-xs font-bold text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition">
+            <button onClick={goToday} className="px-3 py-2 rounded-xl text-xs font-bold text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition">
               היום
             </button>
           </div>
@@ -684,7 +684,7 @@ export default function CalendarPage() {
             </button>
             <button
               onClick={() => openAddModal(currentDate)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-violet-700 dark:bg-violet-600 text-white text-xs font-black hover:bg-violet-800 dark:hover:bg-violet-700 transition"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-700 dark:bg-brand-600 text-white text-xs font-black hover:bg-brand-800 dark:hover:bg-brand-700 transition"
             >
               <PlusIcon /> אירוע חדש
             </button>
@@ -694,7 +694,7 @@ export default function CalendarPage() {
         {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-violet-200 dark:border-violet-800 border-t-violet-600 rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-brand-200 dark:border-brand-800 border-t-brand-600 rounded-full animate-spin" />
           </div>
         )}
 

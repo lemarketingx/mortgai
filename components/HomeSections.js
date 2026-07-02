@@ -102,7 +102,7 @@ export const faqItems = [
 export function SectionHeader({ eyebrow, title, text }) {
   return (
     <div className="mx-auto max-w-3xl text-center">
-      <span className="inline-flex rounded-full bg-violet-50 dark:bg-violet-950 px-4 py-2 text-sm font-black text-violet-700 dark:text-violet-300">{eyebrow}</span>
+      <span className="inline-flex rounded-full bg-brand-50 dark:bg-brand-950 px-4 py-2 text-sm font-black text-brand-700 dark:text-brand-300">{eyebrow}</span>
       <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950 dark:text-white sm:text-4xl">{title}</h2>
       <p className="mt-4 text-lg leading-8 text-slate-600 dark:text-slate-400">{text}</p>
     </div>
@@ -130,7 +130,7 @@ export function Header({ onCtaClick }) {
 
         <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 text-sm font-bold text-slate-600 dark:text-slate-300 lg:flex">
           {navLinks.map(([label, href]) => (
-            <a key={href} href={href} className="transition hover:text-violet-700 dark:hover:text-violet-400">
+            <a key={href} href={href} className="transition hover:text-brand-700 dark:hover:text-brand-400">
               {label}
             </a>
           ))}
@@ -157,7 +157,7 @@ export function Header({ onCtaClick }) {
             href="#eligibility-check"
             onClick={() => onCtaClick?.("header")}
             aria-label="מעבר לבדיקת התאמה"
-            className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800"
+            className="rounded-full bg-brand-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-brand-800"
           >
             בדוק זכאות ראשונית
           </a>
@@ -174,8 +174,8 @@ export function Header({ onCtaClick }) {
 function HeroIllustration() {
   return (
     <div className="relative mx-auto w-full max-w-lg">
-      <div className="absolute -inset-6 rounded-[56px] bg-violet-200/30 blur-3xl" />
-      <div className="relative rounded-[44px] border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-white via-slate-50 to-violet-50 dark:from-slate-900 dark:via-slate-900 dark:to-violet-950 p-6 shadow-[0_28px_80px_rgba(15,23,42,0.12)]">
+      <div className="absolute -inset-6 rounded-[56px] bg-brand-200/30 blur-3xl" />
+      <div className="relative rounded-[44px] border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-white via-slate-50 to-brand-50 dark:from-slate-900 dark:via-slate-900 dark:to-brand-950 p-6 shadow-[0_28px_80px_rgba(15,23,42,0.12)]">
         <svg viewBox="0 0 480 380" className="h-auto w-full" role="img" aria-label="איור בדיקת משכנתא">
           <defs>
             <linearGradient id="purpleLine" x1="0" x2="1" y1="0" y2="1">
@@ -206,7 +206,7 @@ export function Hero({ onCtaClick }) {
       <div className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,0.18),transparent_45%)]" />
       <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2">
         <div className="mx-auto max-w-2xl text-center lg:text-right">
-          <span className="inline-flex rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 px-4 py-2 text-sm font-black text-violet-800 dark:text-violet-200">
+          <span className="inline-flex rounded-full border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-950 px-4 py-2 text-sm font-black text-brand-800 dark:text-brand-200">
             ללא עלות · ללא התחייבות · תהליך קצר
           </span>
           <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-slate-950 dark:text-white sm:text-5xl lg:text-6xl">
@@ -220,14 +220,14 @@ export function Hero({ onCtaClick }) {
               href="#eligibility-check"
               onClick={() => onCtaClick?.("hero_primary")}
               aria-label="בדיקת זכאות ראשונית למשכנתא"
-              className="rounded-full bg-violet-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-violet-800"
+              className="rounded-full bg-brand-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-brand-800"
             >
               קבל בדיקת משכנתא
             </a>
             <a
               href="#lead"
               onClick={() => onCtaClick?.("hero_talk")}
-              className="rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 px-8 py-4 text-center text-base font-black text-violet-800 dark:text-violet-200 transition hover:bg-violet-100 dark:hover:bg-violet-900"
+              className="rounded-full border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-950 px-8 py-4 text-center text-base font-black text-brand-800 dark:text-brand-200 transition hover:bg-brand-100 dark:hover:bg-brand-900"
             >
               דברו איתי
             </a>
@@ -263,7 +263,7 @@ export function TrustStrip() {
       <div className="mx-auto grid max-w-6xl gap-3 px-4 py-6 sm:grid-cols-2 sm:px-6">
         {trustItems.map(({ text, icon }) => (
           <div key={text} className="flex items-center gap-3 rounded-2xl bg-white dark:bg-slate-800 px-5 py-4 shadow-sm">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-100 dark:bg-violet-900 text-violet-700 dark:text-violet-300">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300">
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d={icon} strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -291,7 +291,7 @@ export function ProblemSection() {
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {problemItems.map(({ text, icon }) => (
           <div key={text} className="flex items-start gap-4 rounded-[24px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
-            <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-50 dark:bg-violet-950 text-violet-600 dark:text-violet-400">
+            <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400">
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d={icon} strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -300,12 +300,12 @@ export function ProblemSection() {
           </div>
         ))}
       </div>
-      <div className="mt-10 rounded-[28px] border border-violet-100 dark:border-violet-900 bg-violet-50 dark:bg-violet-950 p-6 text-center sm:p-8">
-        <p className="text-lg font-black text-violet-900 dark:text-violet-100">FINZO עוזרת לקבל תמונת מצב ראשונית ברורה — לפני שמגיעים לבנק</p>
+      <div className="mt-10 rounded-[28px] border border-brand-100 dark:border-brand-900 bg-brand-50 dark:bg-brand-950 p-6 text-center sm:p-8">
+        <p className="text-lg font-black text-brand-900 dark:text-brand-100">FINZO עוזרת לקבל תמונת מצב ראשונית ברורה — לפני שמגיעים לבנק</p>
         <p className="mt-2 text-slate-600 dark:text-slate-400">בדיקה ראשונית חינמית, אומדן מהיר, וחיבור להמשך טיפול מקצועי רק אם רלוונטי.</p>
         <a
           href="#eligibility-check"
-          className="mt-5 inline-block rounded-full bg-violet-700 px-8 py-3.5 font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.25)] transition hover:bg-violet-800"
+          className="mt-5 inline-block rounded-full bg-brand-700 px-8 py-3.5 font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.25)] transition hover:bg-brand-800"
         >
           בדוק זכאות ראשונית
         </a>
@@ -331,10 +331,10 @@ export function HowItWorks() {
           {processSteps.map((step) => (
             <div key={step.number} className="relative flex flex-col gap-5 rounded-[28px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-7 shadow-sm">
               <div className="flex items-center gap-4">
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-700 font-black text-2xl text-white">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-700 font-black text-2xl text-white">
                   {step.number}
                 </span>
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 dark:bg-violet-950 text-violet-700 dark:text-violet-300">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300">
                   <LineIcon path={step.icon} />
                 </span>
               </div>
@@ -363,7 +363,7 @@ export function SeoContentSection() {
       <div className="rounded-[34px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8">
         <div className="grid gap-8 lg:grid-cols-2">
           <div>
-            <span className="inline-flex rounded-full bg-violet-50 dark:bg-violet-950 px-4 py-2 text-sm font-black text-violet-700 dark:text-violet-300">
+            <span className="inline-flex rounded-full bg-brand-50 dark:bg-brand-950 px-4 py-2 text-sm font-black text-brand-700 dark:text-brand-300">
               בדיקת משכנתא בישראל
             </span>
             <h2 id="mortgage-seo-title" className="mt-5 text-3xl font-black leading-tight text-slate-950 dark:text-white">
@@ -398,42 +398,42 @@ export function SeoContentSection() {
 
 export function RefinanceSection() {
   return (
-    <section id="refinance" className="bg-violet-950 py-16 text-white sm:py-20">
+    <section id="refinance" className="bg-brand-950 py-16 text-white sm:py-20">
       <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-2">
         <div>
-          <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-black text-violet-100">
+          <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-black text-brand-100">
             יש לכם משכנתא קיימת?
           </span>
           <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
             בדקו אם יש פוטנציאל לחיסכון במחזור
           </h2>
-          <p className="mt-4 max-w-xl text-lg leading-8 text-violet-100">
+          <p className="mt-4 max-w-xl text-lg leading-8 text-brand-100">
             שינוי ריבית, תקופה או תמהיל עשוי להפחית את ההחזר החודשי או את עלות הריבית הכוללת. הבדיקה מוקדמת, ראשונית ובחינם.
           </p>
         </div>
         <div className="rounded-[32px] border border-white/10 bg-white/10 p-6">
           <p className="text-xl font-black">מה בודקים במחזור?</p>
-          <ul className="mt-4 space-y-3 text-violet-50">
+          <ul className="mt-4 space-y-3 text-brand-50">
             <li className="flex items-start gap-2">
-              <span className="mt-1 text-violet-300">•</span>
+              <span className="mt-1 text-brand-300">•</span>
               <span>החזר חודשי נוכחי מול החזר חדש משוער</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-1 text-violet-300">•</span>
+              <span className="mt-1 text-brand-300">•</span>
               <span>חיסכון ריבית משוער לאחר עלויות המחזור</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-1 text-violet-300">•</span>
+              <span className="mt-1 text-brand-300">•</span>
               <span>נקודת איזון — האם היא בתוך התקופה שנותרה</span>
             </li>
           </ul>
           <a
             href="/refinance-check"
-            className="mt-6 block rounded-full bg-white px-6 py-4 text-center font-black text-violet-900 transition hover:bg-violet-50"
+            className="mt-6 block rounded-full bg-white px-6 py-4 text-center font-black text-brand-900 transition hover:bg-brand-50"
           >
             בדיקת מחזור משכנתא
           </a>
-          <p className="mt-3 text-center text-xs font-bold text-violet-200">
+          <p className="mt-3 text-center text-xs font-bold text-brand-200">
             אומדן ראשוני בלבד · לא ייעוץ מקצועי
           </p>
         </div>
@@ -477,7 +477,7 @@ export function TrustContentSection() {
       <div className="mt-10 grid gap-4 md:grid-cols-2">
         {trustBlocks.map((item) => (
           <article key={item.title} className="flex gap-5 rounded-[28px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 dark:bg-violet-950 text-violet-700 dark:text-violet-300">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300">
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d={item.icon} strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -491,9 +491,9 @@ export function TrustContentSection() {
       </div>
 
       {/* Legal disclaimer block */}
-      <div className="mt-8 rounded-[24px] border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950 px-6 py-5">
-        <p className="text-sm font-black text-amber-900 dark:text-amber-100">גילוי נאות חשוב</p>
-        <p className="mt-1.5 text-sm leading-7 text-amber-800 dark:text-amber-200">
+      <div className="mt-8 rounded-[24px] border border-warning-200 dark:border-warning-800 bg-warning-50 dark:bg-warning-950 px-6 py-5">
+        <p className="text-sm font-black text-warning-900 dark:text-warning-100">גילוי נאות חשוב</p>
+        <p className="mt-1.5 text-sm leading-7 text-warning-800 dark:text-warning-200">
           הבדיקה באתר היא אומדן ראשוני בלבד ואינה מהווה אישור בנקאי, ייעוץ משכנתאות אישי, או התחייבות לפעולה פיננסית כלשהי.
           המשך טיפול מקצועי יתבצע מול גורם מורשה בלבד. התוצאות מבוססות על הנתונים שהוזנו ועשויות להשתנות.
         </p>
@@ -512,7 +512,7 @@ export function AdvisorTeaser() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-right">
           <div>
-            <span className="inline-flex rounded-full bg-violet-100 dark:bg-violet-900 px-3 py-1 text-xs font-black text-violet-700 dark:text-violet-300">
+            <span className="inline-flex rounded-full bg-brand-100 dark:bg-brand-900 px-3 py-1 text-xs font-black text-brand-700 dark:text-brand-300">
               ליועצי משכנתאות
             </span>
             <h3 className="mt-2 text-xl font-black text-slate-950 dark:text-white">
@@ -525,13 +525,13 @@ export function AdvisorTeaser() {
           <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
             <a
               href="/advisor/login"
-              className="rounded-full border border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-800 px-5 py-3 text-sm font-black text-violet-700 dark:text-violet-300 shadow-sm transition hover:bg-violet-50 dark:hover:bg-slate-700"
+              className="rounded-full border border-brand-200 dark:border-brand-800 bg-white dark:bg-slate-800 px-5 py-3 text-sm font-black text-brand-700 dark:text-brand-300 shadow-sm transition hover:bg-brand-50 dark:hover:bg-slate-700"
             >
               כניסת יועצים
             </a>
             <a
               href="/advisor/register"
-              className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-800"
+              className="rounded-full bg-brand-700 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-brand-800"
             >
               הצטרפות ליועצים
             </a>
@@ -566,7 +566,7 @@ export function FaqSection() {
                   className="flex w-full min-h-[44px] items-center justify-between gap-4 px-6 py-5 text-right"
                 >
                   <span className="text-lg font-black text-slate-950 dark:text-white">{item.question}</span>
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-violet-50 dark:bg-violet-950 text-xl font-black text-violet-700 dark:text-violet-300">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-50 dark:bg-brand-950 text-xl font-black text-brand-700 dark:text-brand-300">
                     {isOpen ? "-" : "+"}
                   </span>
                 </button>
@@ -605,15 +605,15 @@ export function Footer({ onCtaClick }) {
       </div>
       <div className="mx-auto mt-6 max-w-6xl px-4 sm:px-6">
         <div className="flex flex-wrap items-center gap-3">
-          <a href="#eligibility-check" onClick={() => onCtaClick?.("footer")} className="inline-flex rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
+          <a href="#eligibility-check" onClick={() => onCtaClick?.("footer")} className="inline-flex rounded-full bg-brand-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-brand-800">
             בדיקת התאמה עכשיו
           </a>
-          <a href="#bottom-lead" onClick={() => onCtaClick?.("footer_bottom_lead")} className="inline-flex rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 px-5 py-3 text-sm font-black text-violet-800 dark:text-violet-200 transition hover:bg-violet-100 dark:hover:bg-violet-900">
+          <a href="#bottom-lead" onClick={() => onCtaClick?.("footer_bottom_lead")} className="inline-flex rounded-full border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-950 px-5 py-3 text-sm font-black text-brand-800 dark:text-brand-200 transition hover:bg-brand-100 dark:hover:bg-brand-900">
             השאירו פרטים
           </a>
-          <a href="/refinance-check" className="text-sm font-bold text-violet-700 dark:text-violet-400 hover:underline">בדיקת מחזור ←</a>
-          <a href="/blog" className="text-sm font-bold text-violet-700 dark:text-violet-400 hover:underline">בלוג משכנתאות ←</a>
-          <a href="/guides" className="text-sm font-bold text-violet-700 dark:text-violet-400 hover:underline">מדריכי משכנתא ←</a>
+          <a href="/refinance-check" className="text-sm font-bold text-brand-700 dark:text-brand-400 hover:underline">בדיקת מחזור ←</a>
+          <a href="/blog" className="text-sm font-bold text-brand-700 dark:text-brand-400 hover:underline">בלוג משכנתאות ←</a>
+          <a href="/guides" className="text-sm font-bold text-brand-700 dark:text-brand-400 hover:underline">מדריכי משכנתא ←</a>
         </div>
         <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
           יועצי משכנתאות?{" "}
@@ -640,7 +640,7 @@ export function Footer({ onCtaClick }) {
 export function MobileStickyCta({ onCtaClick, hidden }) {
   return (
     <div
-      className={`fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 pt-3 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl transition md:hidden ${
+      className={`fixed inset-x-0 bottom-0 z-40 border-t border-brand-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 pt-3 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl transition md:hidden ${
         hidden ? "pointer-events-none translate-y-full opacity-0" : "translate-y-0 opacity-100"
       }`}
       style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))" }}
@@ -649,13 +649,13 @@ export function MobileStickyCta({ onCtaClick, hidden }) {
         <a
           href="#eligibility-check"
           onClick={() => onCtaClick?.("sticky_mobile")}
-          className="flex min-h-[44px] items-center justify-center rounded-full bg-violet-700 px-4 text-sm font-black text-white shadow-[0_12px_28px_rgba(109,40,217,0.28)]"
+          className="flex min-h-[44px] items-center justify-center rounded-full bg-brand-700 px-4 text-sm font-black text-white shadow-[0_12px_28px_rgba(109,40,217,0.28)]"
         >
           בדיקת התאמה
         </a>
         <a
           href="#refinance"
-          className="flex min-h-[44px] items-center justify-center rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 px-4 text-sm font-black text-violet-800 dark:text-violet-200"
+          className="flex min-h-[44px] items-center justify-center rounded-full border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-950 px-4 text-sm font-black text-brand-800 dark:text-brand-200"
         >
           בדיקת מחזור
         </a>

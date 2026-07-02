@@ -27,34 +27,36 @@ const PURCHASE_STATUS_LABELS = {
 };
 
 // ─── Static lookup maps ───────────────────────────────────────────────────────
+// Same violet → amber → magenta → green progression as the lead detail
+// page's pipeline dots, so a stage reads the same color everywhere.
 const STAGE_BADGE = {
-  new_lead:            "bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800",
-  contacted:           "bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800",
-  documents_requested: "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
-  waiting_documents:   "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
-  documents_received:  "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
-  eligibility_review:  "bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800",
-  appraisal_ordered:   "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800",
-  appraisal_completed: "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800",
-  lawyer_review:       "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800",
-  submitted_to_bank:   "bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800",
-  principle_approval:  "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
-  bank_negotiation:    "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
-  selected_track:      "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-  signing_scheduled:   "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-  signed:              "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800",
-  collateral_completion:"bg-lime-50 dark:bg-lime-900/20 text-lime-800 dark:text-lime-200 border-lime-200 dark:border-lime-800",
-  funds_released:      "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800",
-  closed_won:          "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800",
-  closed_lost:         "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",
+  new_lead:            "bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800",
+  contacted:           "bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800",
+  documents_requested: "bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800",
+  waiting_documents:   "bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800",
+  documents_received:  "bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800",
+  eligibility_review:  "bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800",
+  appraisal_ordered:   "bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-300 border-warning-200 dark:border-warning-800",
+  appraisal_completed: "bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-300 border-warning-200 dark:border-warning-800",
+  lawyer_review:       "bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-300 border-warning-200 dark:border-warning-800",
+  submitted_to_bank:   "bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-300 border-warning-200 dark:border-warning-800",
+  principle_approval:  "bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-300 border-warning-200 dark:border-warning-800",
+  bank_negotiation:    "bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-300 border-warning-200 dark:border-warning-800",
+  selected_track:      "bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 border-accent-200 dark:border-accent-800",
+  signing_scheduled:   "bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 border-accent-200 dark:border-accent-800",
+  signed:              "bg-success-50 dark:bg-success-900/20 text-success-800 dark:text-success-200 border-success-200 dark:border-success-800",
+  collateral_completion:"bg-success-50 dark:bg-success-900/20 text-success-800 dark:text-success-200 border-success-200 dark:border-success-800",
+  funds_released:      "bg-success-50 dark:bg-success-900/20 text-success-800 dark:text-success-200 border-success-200 dark:border-success-800",
+  closed_won:          "bg-success-50 dark:bg-success-900/20 text-success-800 dark:text-success-200 border-success-200 dark:border-success-800",
+  closed_lost:         "bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400 border-danger-200 dark:border-danger-800",
 };
 
 const STAGE_PROGRESS_COLOR = [
-  "bg-violet-500","bg-violet-400","bg-indigo-400","bg-amber-400",
-  "bg-amber-500","bg-sky-400","bg-sky-500","bg-blue-500",
-  "bg-cyan-500","bg-teal-500","bg-blue-400","bg-blue-500",
-  "bg-blue-400","bg-emerald-400","bg-emerald-500","bg-green-500",
-  "bg-lime-500","bg-green-600","bg-green-700",
+  "bg-brand-300", "bg-brand-400", "bg-brand-500", "bg-brand-500",
+  "bg-brand-600", "bg-brand-600", "bg-warning-300", "bg-warning-400",
+  "bg-warning-400", "bg-warning-500", "bg-warning-500", "bg-warning-600",
+  "bg-accent-400", "bg-accent-500", "bg-success-400", "bg-success-500",
+  "bg-success-600", "bg-success-700", "bg-danger-500",
 ];
 
 const ACTIVE_PIPELINE_STAGES = PIPELINE_STAGES.filter((s) => s !== "closed_lost");
@@ -63,13 +65,13 @@ const PREFS_KEY = "finzo_prefs_v1";
 
 // Pre-build Sets for O(1) stage membership lookup in kanban grouping
 const KANBAN_GROUPS = [
-  { key: "new_lead",    label: "ליד חדש",     color: "bg-violet-500",  stageSet: new Set(["new_lead"]) },
-  { key: "contacted",  label: "נוצר קשר",     color: "bg-violet-400",  stageSet: new Set(["contacted"]) },
-  { key: "documents",  label: "מסמכים",        color: "bg-amber-500",   stageSet: new Set(["documents_requested","waiting_documents","documents_received"]) },
-  { key: "eligibility",label: "בדיקת זכאות",  color: "bg-sky-500",     stageSet: new Set(["eligibility_review","appraisal_ordered","appraisal_completed"]) },
-  { key: "bank",       label: "בנק",           color: "bg-blue-500",    stageSet: new Set(["lawyer_review","submitted_to_bank","principle_approval","bank_negotiation","selected_track"]) },
-  { key: "signing",    label: "חתימות",        color: "bg-emerald-500", stageSet: new Set(["signing_scheduled","signed","collateral_completion","funds_released"]) },
-  { key: "closed",     label: "נסגר",          color: "bg-green-600",   stageSet: new Set(["closed_won"]) },
+  { key: "new_lead",    label: "ליד חדש",     color: "bg-brand-400",  stageSet: new Set(["new_lead"]) },
+  { key: "contacted",  label: "נוצר קשר",     color: "bg-brand-600",  stageSet: new Set(["contacted"]) },
+  { key: "documents",  label: "מסמכים",        color: "bg-warning-400",   stageSet: new Set(["documents_requested","waiting_documents","documents_received"]) },
+  { key: "eligibility",label: "בדיקת זכאות",  color: "bg-warning-600",     stageSet: new Set(["eligibility_review","appraisal_ordered","appraisal_completed"]) },
+  { key: "bank",       label: "בנק",           color: "bg-accent-500",    stageSet: new Set(["lawyer_review","submitted_to_bank","principle_approval","bank_negotiation","selected_track"]) },
+  { key: "signing",    label: "חתימות",        color: "bg-success-500", stageSet: new Set(["signing_scheduled","signed","collateral_completion","funds_released"]) },
+  { key: "closed",     label: "נסגר",          color: "bg-success-600",   stageSet: new Set(["closed_won"]) },
 ];
 
 const DAY_MS = 864e5;
@@ -135,8 +137,8 @@ const MyLeadCard = memo(function MyLeadCard({ lead }) {
   const stageBadge = STAGE_BADGE[stage] || "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800";
   const score = Math.round(Number(lead.approvalScore || lead.estimatedApprovalResult) || 0);
   const quality = lead.leadQuality || (score >= 70 ? "חם" : score >= 40 ? "בינוני" : "חלש");
-  const qualityColor = String(quality).includes("חם") || score >= 70 ? "text-emerald-600 dark:text-emerald-400"
-    : String(quality).includes("בינוני") || score >= 40 ? "text-amber-600 dark:text-amber-300" : "text-slate-400 dark:text-slate-500";
+  const qualityColor = String(quality).includes("חם") || score >= 70 ? "text-success-600 dark:text-success-400"
+    : String(quality).includes("בינוני") || score >= 40 ? "text-warning-600 dark:text-warning-300" : "text-slate-400 dark:text-slate-500";
   // computePriority is O(1) per card — computed once, not inside sort
   const { priority, badges } = computePriority(lead);
   const missing = Number(lead.missingDocumentsCount || 0);
@@ -147,26 +149,26 @@ const MyLeadCard = memo(function MyLeadCard({ lead }) {
   const isRecentlyPurchased = lead.purchasedAt && (Date.now() - new Date(lead.purchasedAt).getTime()) < 864e5;
 
   return (
-    <article className={`bg-white dark:bg-slate-900 rounded-xl border shadow-sm p-4 ${priority >= 90 ? "border-rose-300 dark:border-rose-800 bg-rose-50/20 dark:bg-rose-900/10" : isRecentlyPurchased ? "border-emerald-200 dark:border-emerald-800" : "border-slate-100 dark:border-slate-800"}`}>
+    <article className={`bg-white dark:bg-slate-900 rounded-xl border shadow-sm p-4 ${priority >= 90 ? "border-danger-300 dark:border-danger-800 bg-danger-50/20 dark:bg-danger-900/10" : isRecentlyPurchased ? "border-success-200 dark:border-success-800" : "border-slate-100 dark:border-slate-800"}`}>
       {/* Badges */}
       <div className="flex items-center gap-1.5 flex-wrap mb-2">
         <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${stageBadge}`}>{getPipelineStageLabel(stage)}</span>
         <span className={`text-[11px] font-black ${qualityColor}`}>{quality}</span>
         {lead.purchaseStatus && PURCHASE_STATUS_LABELS[lead.purchaseStatus] && (
-          <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 whitespace-nowrap">
+          <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 whitespace-nowrap">
             {PURCHASE_STATUS_LABELS[lead.purchaseStatus]}
           </span>
         )}
         {isRecentlyPurchased && (
-          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">נרכש לאחרונה ✓</span>
+          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-success-100 dark:bg-success-900/20 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800 whitespace-nowrap">נרכש לאחרונה ✓</span>
         )}
         {badges.slice(0, 2).map((badge) => (
-          <span key={badge} className={`text-[11px] font-black px-2 py-0.5 rounded-full ${badge === "דחוף" ? "bg-rose-100 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400" : "bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300"}`}>{badge}</span>
+          <span key={badge} className={`text-[11px] font-black px-2 py-0.5 rounded-full ${badge === "דחוף" ? "bg-danger-100 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400" : "bg-warning-100 dark:bg-warning-900/20 text-warning-700 dark:text-warning-300"}`}>{badge}</span>
         ))}
       </div>
       {/* Name + phone */}
-      <Link href={`/advisor/lead/${lead.id}`} className="block text-base font-black text-slate-950 dark:text-slate-100 hover:text-violet-700 dark:hover:text-violet-300 truncate mb-0.5">{lead.name || "—"}</Link>
-      {lead.phone && <a href={`tel:${lead.phone}`} className="text-sm font-black text-violet-600 dark:text-violet-400 hover:underline block mb-3">{lead.phone}</a>}
+      <Link href={`/advisor/lead/${lead.id}`} className="block text-base font-black text-slate-950 dark:text-slate-100 hover:text-brand-700 dark:hover:text-brand-300 truncate mb-0.5">{lead.name || "—"}</Link>
+      {lead.phone && <a href={`tel:${lead.phone}`} className="text-sm font-black text-brand-600 dark:text-brand-400 hover:underline block mb-3">{lead.phone}</a>}
       {/* Next action + follow-up */}
       <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
         <div className="rounded-lg bg-slate-50 dark:bg-slate-800 px-3 py-2">
@@ -175,31 +177,31 @@ const MyLeadCard = memo(function MyLeadCard({ lead }) {
         </div>
         <div className="rounded-lg bg-slate-50 dark:bg-slate-800 px-3 py-2">
           <p className="font-black text-slate-400 dark:text-slate-500 mb-0.5">מעקב</p>
-          <p className={`font-black truncate ${overdue ? "text-rose-700 dark:text-rose-400" : "text-slate-800 dark:text-slate-200"}`}>{formatShort(dueDate) || "—"}</p>
+          <p className={`font-black truncate ${overdue ? "text-danger-700 dark:text-danger-400" : "text-slate-800 dark:text-slate-200"}`}>{formatShort(dueDate) || "—"}</p>
         </div>
       </div>
       {/* Missing docs */}
       {missing > 0 && (
-        <div className="mb-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-1.5">
-          <span className="text-xs font-black text-amber-800 dark:text-amber-300">חסרים {missing} מסמכים</span>
+        <div className="mb-3 rounded-lg bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 px-3 py-1.5">
+          <span className="text-xs font-black text-warning-800 dark:text-warning-300">חסרים {missing} מסמכים</span>
         </div>
       )}
       {/* Progress bar */}
       <div className="flex items-center gap-2 mb-3">
         <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-          <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.max(0, Math.min(100, overall))}%` }} />
+          <div className="h-full rounded-full bg-success-500" style={{ width: `${Math.max(0, Math.min(100, overall))}%` }} />
         </div>
         <span className="text-xs font-black text-slate-500 dark:text-slate-400 tabular-nums">{overall}%</span>
       </div>
       {/* Hebrew action buttons */}
       <div className="grid grid-cols-3 gap-1.5">
         {lead.phone
-          ? <a href={`tel:${lead.phone}`} className="text-center text-xs font-black rounded-lg py-2 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 active:bg-violet-100">התקשר</a>
+          ? <a href={`tel:${lead.phone}`} className="text-center text-xs font-black rounded-lg py-2 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 active:bg-brand-100">התקשר</a>
           : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500">התקשר</button>}
         {lead.phone
-          ? <button type="button" onClick={() => openWaPhone(lead.phone)} className="text-center text-xs font-black rounded-lg py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 active:bg-emerald-100">וואטסאפ</button>
+          ? <button type="button" onClick={() => openWaPhone(lead.phone)} className="text-center text-xs font-black rounded-lg py-2 bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300 active:bg-success-100">וואטסאפ</button>
           : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500">וואטסאפ</button>}
-        <Link href={`/advisor/lead/${lead.id}`} className="text-center text-xs font-black rounded-lg py-2 bg-violet-700 text-white active:bg-violet-900">פתח תיק</Link>
+        <Link href={`/advisor/lead/${lead.id}`} className="text-center text-xs font-black rounded-lg py-2 bg-brand-700 text-white active:bg-brand-900">פתח תיק</Link>
       </div>
     </article>
   );
@@ -212,15 +214,15 @@ const LeadListRow = memo(function LeadListRow({ lead }) {
   const overall = Number(lead.overallProgressPercent ?? calculateOverallMortgageProgress(lead)) || 0;
   const dueDate = lead.nextActionAt || lead.followUpDate;
   const stageBadge = STAGE_BADGE[stage] || "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800";
-  const color = STAGE_PROGRESS_COLOR[si] || "bg-violet-400";
+  const color = STAGE_PROGRESS_COLOR[si] || "bg-brand-400";
   const overdue = isOverdue(dueDate);
   return (
-    <tr className={`border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/60 dark:hover:bg-slate-800/60 transition-colors ${overdue ? "bg-rose-50/30 dark:bg-rose-900/20" : ""}`}>
+    <tr className={`border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/60 dark:hover:bg-slate-800/60 transition-colors ${overdue ? "bg-danger-50/30 dark:bg-danger-900/20" : ""}`}>
       <td className="px-4 py-3">
-        <Link href={`/advisor/lead/${lead.id}`} className="font-black text-slate-900 dark:text-slate-100 hover:text-violet-700 dark:hover:text-violet-300 block truncate max-w-[160px]">{lead.name || "—"}</Link>
+        <Link href={`/advisor/lead/${lead.id}`} className="font-black text-slate-900 dark:text-slate-100 hover:text-brand-700 dark:hover:text-brand-300 block truncate max-w-[160px]">{lead.name || "—"}</Link>
       </td>
       <td className="px-4 py-3">
-        {lead.phone ? <a href={`tel:${lead.phone}`} className="text-sm font-bold text-violet-600 dark:text-violet-400 hover:underline whitespace-nowrap">{lead.phone}</a> : <span className="text-slate-400 dark:text-slate-500">—</span>}
+        {lead.phone ? <a href={`tel:${lead.phone}`} className="text-sm font-bold text-brand-600 dark:text-brand-400 hover:underline whitespace-nowrap">{lead.phone}</a> : <span className="text-slate-400 dark:text-slate-500">—</span>}
       </td>
       <td className="px-4 py-3">
         <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border whitespace-nowrap ${stageBadge}`}>{getPipelineStageLabel(stage)}</span>
@@ -229,7 +231,7 @@ const LeadListRow = memo(function LeadListRow({ lead }) {
         <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate block">{lead.nextAction || "—"}</span>
       </td>
       <td className="px-4 py-3">
-        <span className={`text-xs font-bold whitespace-nowrap ${overdue ? "text-rose-700 dark:text-rose-400 font-black" : "text-slate-600 dark:text-slate-400"}`}>{formatShort(dueDate) || "—"}</span>
+        <span className={`text-xs font-bold whitespace-nowrap ${overdue ? "text-danger-700 dark:text-danger-400 font-black" : "text-slate-600 dark:text-slate-400"}`}>{formatShort(dueDate) || "—"}</span>
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
@@ -241,9 +243,9 @@ const LeadListRow = memo(function LeadListRow({ lead }) {
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-1.5">
-          {lead.phone && <a href={`tel:${lead.phone}`} className="text-[11px] font-black px-2 py-1 rounded-lg bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 active:bg-violet-100 whitespace-nowrap">התקשר</a>}
-          {lead.phone && <button type="button" onClick={() => openWaPhone(lead.phone)} className="text-[11px] font-black px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 active:bg-emerald-100 whitespace-nowrap">וואטסאפ</button>}
-          <Link href={`/advisor/lead/${lead.id}`} className="text-[11px] font-black px-2 py-1 rounded-lg bg-violet-700 text-white active:bg-violet-900 whitespace-nowrap">פתח תיק</Link>
+          {lead.phone && <a href={`tel:${lead.phone}`} className="text-[11px] font-black px-2 py-1 rounded-lg bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 active:bg-brand-100 whitespace-nowrap">התקשר</a>}
+          {lead.phone && <button type="button" onClick={() => openWaPhone(lead.phone)} className="text-[11px] font-black px-2 py-1 rounded-lg bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300 active:bg-success-100 whitespace-nowrap">וואטסאפ</button>}
+          <Link href={`/advisor/lead/${lead.id}`} className="text-[11px] font-black px-2 py-1 rounded-lg bg-brand-700 text-white active:bg-brand-900 whitespace-nowrap">פתח תיק</Link>
         </div>
       </td>
     </tr>
@@ -475,16 +477,16 @@ export default function AdvisorMyLeads() {
               onChange={handleSearchChange}
               placeholder="חיפוש שם / טלפון / עיר / שלב..."
               autoComplete="off" autoCorrect="off" spellCheck="false" dir="rtl"
-              className="flex-1 min-w-[200px] max-w-sm border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              className="flex-1 min-w-[200px] max-w-sm border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
             <div className="flex rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shrink-0">
               {[{ k: "kanban", l: "קנבן" }, { k: "cards", l: "כרטיסים" }, { k: "list", l: "רשימה" }].map(({ k, l }) => (
                 <button key={k} onClick={() => setViewAndSave(k)}
-                  className={`px-4 py-2 text-xs font-black transition-colors ${view === k ? "bg-violet-700 text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"}`}>{l}</button>
+                  className={`px-4 py-2 text-xs font-black transition-colors ${view === k ? "bg-brand-700 text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"}`}>{l}</button>
               ))}
             </div>
             <select value={sortBy} onChange={(e) => setSortAndSave(e.target.value)}
-              className="border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-black bg-white dark:bg-slate-900 outline-none focus:ring-2 focus:ring-violet-300 shrink-0 text-slate-600 dark:text-slate-400">
+              className="border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-black bg-white dark:bg-slate-900 outline-none focus:ring-2 focus:ring-brand-300 shrink-0 text-slate-600 dark:text-slate-400">
               <option value="purchased">נרכש לאחרונה</option>
               <option value="priority">עדיפות</option>
               <option value="newest">חדש</option>
@@ -503,7 +505,7 @@ export default function AdvisorMyLeads() {
           <div className="flex gap-1.5 flex-wrap mb-4">
             {statusTabs.map(({ key, label, count }) => (
               <button key={key} onClick={() => setStageFilter(key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold whitespace-nowrap rounded-full transition-colors ${stageFilter === key ? "bg-violet-700 text-white" : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"}`}>
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold whitespace-nowrap rounded-full transition-colors ${stageFilter === key ? "bg-brand-700 text-white" : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"}`}>
                 {label}
                 <span className={`tabular-nums text-[11px] px-1.5 py-0.5 rounded-full font-black ${stageFilter === key ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"}`}>{count}</span>
               </button>
@@ -511,9 +513,9 @@ export default function AdvisorMyLeads() {
           </div>
 
           {error && (
-            <div className="mb-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 font-bold flex justify-between">
+            <div className="mb-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl px-4 py-3 text-sm text-danger-700 dark:text-danger-400 font-bold flex justify-between">
               <span>{error}</span>
-              <button onClick={() => setError("")} className="text-red-400 dark:text-red-500 font-black">×</button>
+              <button onClick={() => setError("")} className="text-danger-400 dark:text-danger-500 font-black">×</button>
             </div>
           )}
 
@@ -529,7 +531,7 @@ export default function AdvisorMyLeads() {
 
           {!loading && filtered.length === 0 && stageFilter === "all" && !debouncedSearch && (
             <EmptyState glyph="📋" title="עדיין לא רכשתם לידים" description="עברו לחנות הלידים כדי לקנות."
-              action={<Link href="/advisor/leads" className="inline-block rounded-full bg-violet-700 text-white px-6 py-3 text-sm font-black">לחנות הלידים ←</Link>} />
+              action={<Link href="/advisor/leads" className="inline-block rounded-full bg-brand-700 text-white px-6 py-3 text-sm font-black">לחנות הלידים ←</Link>} />
           )}
           {!loading && filtered.length === 0 && (stageFilter !== "all" || debouncedSearch) && (
             <EmptyState glyph="🔍" title="אין תוצאות" description="נסו לשנות את החיפוש או הסינון." />
@@ -549,7 +551,7 @@ export default function AdvisorMyLeads() {
       {/* Mobile bottom nav */}
       <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
         <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">ראשי</Link>
-        <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/20 rounded-xl py-2.5">הלידים שלי</Link>
+        <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/20 rounded-xl py-2.5">הלידים שלי</Link>
         <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">שוק</Link>
       </div>
     </>

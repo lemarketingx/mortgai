@@ -576,7 +576,7 @@ export default function Home() {
 
 function CalculatorSection({ data, updateData, analysis, ready, recommendation, trackEvent, eventSentRef, lead, updateLead, submitLead, leadLoading, leadSent, leadError }) {
   return (
-    <section id="eligibility-check" className="bg-gradient-to-b from-slate-50 via-violet-50/40 to-white dark:from-slate-950 dark:via-violet-950/40 dark:to-slate-900 py-16 sm:py-20">
+    <section id="eligibility-check" className="bg-gradient-to-b from-slate-50 via-brand-50/40 to-white dark:from-slate-950 dark:via-brand-950/40 dark:to-slate-900 py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
           eyebrow="בדיקת התאמה"
@@ -635,11 +635,11 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
     <form aria-label="אשף בדיקת זכאות למשכנתא" className="rounded-[34px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-7">
       <div className="mb-5 rounded-2xl bg-slate-100 dark:bg-slate-800 p-3">
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-xs font-black text-violet-700 dark:text-violet-300">שלב {step + 1} מתוך {wizardSteps.length}</p>
+          <p className="text-xs font-black text-brand-700 dark:text-brand-300">שלב {step + 1} מתוך {wizardSteps.length}</p>
           <p className="text-sm font-black text-slate-700 dark:text-slate-300">{wizardSteps[step].title}</p>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-white dark:bg-slate-700">
-          <div className="h-full rounded-full bg-violet-700 transition-all duration-300" style={{ ...PROGRESS_BAR_STYLE, width: `${((step + 1) / wizardSteps.length) * 100}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-l from-brand-700 to-accent-500 transition-all duration-300" style={{ ...PROGRESS_BAR_STYLE, width: `${((step + 1) / wizardSteps.length) * 100}%` }} />
         </div>
       </div>
 
@@ -710,12 +710,12 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
         <ResultSummaryRow label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} warn={ready && analysis.mortgageOnlyRatio > 40} />
         <ResultSummaryRow label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
         <p className="rounded-2xl bg-white dark:bg-slate-900 p-3 text-sm font-bold text-slate-600 dark:text-slate-400">{ready ? recommendation : "השלימו נתונים לקבלת חיווי מלא."}</p>
-        <a href="#lead" className="block rounded-full bg-violet-700 px-5 py-3 text-center text-sm font-black text-white">רוצים להבין איך לשפר? דברו איתנו</a>
+        <a href="#lead" className="block rounded-full bg-brand-700 px-5 py-3 text-center text-sm font-black text-white">רוצים להבין איך לשפר? דברו איתנו</a>
       </div>}
 
       <div className="mt-5 flex gap-3">
         <button type="button" onClick={() => moveStep(step - 1)} disabled={step === 0} className="h-12 flex-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 font-black text-slate-700 dark:text-slate-300 disabled:opacity-50">חזרה</button>
-        <button type="button" onClick={() => moveStep(step + 1)} disabled={step === wizardSteps.length - 1} className="h-12 flex-1 rounded-full bg-violet-700 font-black text-white disabled:opacity-50">המשך</button>
+        <button type="button" onClick={() => moveStep(step + 1)} disabled={step === wizardSteps.length - 1} className="h-12 flex-1 rounded-full bg-brand-700 font-black text-white disabled:opacity-50">המשך</button>
       </div>
     </form>
   );
@@ -725,51 +725,66 @@ function MortgageForm({ data, updateData, analysis, ready, recommendation, track
 /*  LIVE RESULT PANEL                                                   */
 /* ------------------------------------------------------------------ */
 
+const HOME_SCORE_TONE_STOPS = [
+  { min: 65, text: "text-success-600", bar: "bg-success-500" },
+  { min: 40, text: "text-warning-600", bar: "bg-warning-500" },
+  { min: 0,  text: "text-danger-600",  bar: "bg-danger-500" },
+];
+
+function homeScoreTone(ready, score) {
+  if (!ready) return { text: "text-slate-400", bar: "bg-slate-300" };
+  return HOME_SCORE_TONE_STOPS.find((s) => score >= s.min) || HOME_SCORE_TONE_STOPS[HOME_SCORE_TONE_STOPS.length - 1];
+}
+
 function LiveResultPanel({ analysis, ready, recommendation }) {
   const score = ready ? Math.round(analysis.approval) : 0;
+  const tone = homeScoreTone(ready, score);
 
   return (
-    <aside className="rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-700 to-violet-950 p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.28)] sm:p-8">
-      <p className="text-sm font-black text-violet-100">{ready ? "תוצאה מתעדכנת בזמן אמת" : "מלאו נתונים לבדיקה ראשונית"}</p>
-      <div className="mt-6 flex items-end justify-between gap-4">
-        <div>
-          <h3 className="text-2xl font-black">אומדן סיכוי אישור</h3>
-          <p className="mt-2 text-violet-100">{approvalLabel(analysis, ready)}</p>
+    <aside className="overflow-hidden rounded-[34px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[0_24px_70px_rgba(15,23,42,0.10)]">
+      <div className="h-1.5 w-full bg-gradient-to-l from-brand-600 to-accent-500" />
+      <div className="p-6 sm:p-8">
+        <span className="inline-flex rounded-full bg-brand-50 dark:bg-brand-950 px-4 py-1.5 text-xs font-black text-brand-700 dark:text-brand-300">{ready ? "תוצאה מתעדכנת בזמן אמת" : "מלאו נתונים לבדיקה ראשונית"}</span>
+        <div className="mt-6 flex items-end justify-between gap-4">
+          <div>
+            <h3 className="text-2xl font-black text-slate-950 dark:text-white">אומדן סיכוי אישור</h3>
+            <p className="mt-2 text-slate-500 dark:text-slate-400">{approvalLabel(analysis, ready)}</p>
+          </div>
+          <div className="text-left">
+            <span className={`number-display text-5xl font-black ${tone.text}`}>{ready ? `${score}%` : "--"}</span>
+          </div>
         </div>
-        <div className="text-left">
-          <span className="number-display text-5xl font-black">{ready ? `${score}%` : "--"}</span>
+
+        <div className="mt-7 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${tone.bar}`}
+            style={{ width: ready ? `${Math.min(100, Math.max(0, score))}%` : "0%" }}
+          />
         </div>
-      </div>
 
-      <div className="mt-7 h-3 overflow-hidden rounded-full bg-white/15">
-        <div
-          className="h-full rounded-full bg-white transition-all duration-500"
-          style={{ width: ready ? `${Math.min(100, Math.max(0, score))}%` : "0%" }}
-        />
-      </div>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          <LightMetric label="החזר חודשי משוער" value={displayMoney(analysis.monthly, ready)} />
+          <LightMetric label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} />
+          <LightMetric label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
+          <LightMetric label="אחוז מימון LTV" value={displayPercent(analysis.ltv, ready)} />
+        </div>
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        <DarkMetric label="החזר חודשי משוער" value={displayMoney(analysis.monthly, ready)} />
-        <DarkMetric label="יחס החזר" value={displayPercent(analysis.mortgageOnlyRatio, ready)} />
-        <DarkMetric label="יתרה למחיה" value={displayMoney(analysis.afterHousing, ready)} />
-        <DarkMetric label="אחוז מימון LTV" value={displayPercent(analysis.ltv, ready)} />
-      </div>
+        <div className="mt-6 rounded-3xl border-r-4 border-accent-400 bg-brand-50/60 dark:bg-brand-950/30 p-5">
+          <p className="text-sm font-black text-accent-700 dark:text-accent-300">נקודת שיפור מרכזית</p>
+          <p className="mt-2 text-lg font-black text-slate-950 dark:text-white">{ready ? analysis.mainIssue : "הזינו נתונים כדי לקבל חיווי"}</p>
+          <p className="mt-3 leading-7 text-slate-600 dark:text-slate-300">{ready ? recommendation : ""}</p>
+        </div>
 
-      <div className="mt-6 rounded-3xl bg-white/10 p-5 ring-1 ring-white/10">
-        <p className="text-sm font-black text-violet-100">נקודת שיפור מרכזית</p>
-        <p className="mt-2 text-lg font-black">{ready ? analysis.mainIssue : "הזינו נתונים כדי לקבל חיווי"}</p>
-        <p className="mt-3 leading-7 text-violet-50">{ready ? recommendation : ""}</p>
+        <a
+          href="#lead"
+          className="mt-5 block rounded-full bg-brand-700 px-6 py-4 text-center text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-brand-800"
+        >
+          רוצים לשפר את הסיכוי? דברו איתנו
+        </a>
+        <p className="mt-3 text-center text-xs font-bold text-slate-400 dark:text-slate-500">
+          התוצאה היא אומדן ראשוני בלבד ואינה מהווה אישור בנקאי או ייעוץ פיננסי מחייב.
+        </p>
       </div>
-
-      <a
-        href="#lead"
-        className="mt-5 block rounded-full bg-white px-6 py-4 text-center text-base font-black text-violet-800 shadow-lg transition hover:bg-violet-50"
-      >
-        רוצים לשפר את הסיכוי? דברו איתנו
-      </a>
-      <p className="mt-3 text-center text-xs font-bold text-violet-200">
-        התוצאה היא אומדן ראשוני בלבד ואינה מהווה אישור בנקאי או ייעוץ פיננסי מחייב.
-      </p>
     </aside>
   );
 }
@@ -813,7 +828,7 @@ function ResultsSection({ analysis, ready }) {
       </div>
 
       {ready && <details className="mt-6 rounded-[28px] border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-5 open:bg-white dark:open:bg-slate-900 sm:p-7">
-        <summary className="cursor-pointer text-lg font-black text-violet-800 dark:text-violet-300">צפייה בניתוח פיננסי מלא</summary>
+        <summary className="cursor-pointer text-lg font-black text-brand-800 dark:text-brand-300">צפייה בניתוח פיננסי מלא</summary>
         <div className="mt-6 grid gap-3 md:grid-cols-2">
           <DetailRow label="יחס התחייבויות כולל" value={displayPercent(analysis.totalObligationsRatio, ready)} />
           <DetailRow label="יחס שמרני אחרי הוצאות והלוואות" value={displayPercent(analysis.disposableRepaymentRatio, ready)} />
@@ -842,7 +857,7 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
         text="אם יש התאמה, ניתן יהיה להמשיך לבדיקה מקצועית — ללא לחץ, ללא עלות, ללא התחייבות."
       />
       <div className="mt-10 grid items-stretch gap-6 lg:grid-cols-2">
-        <div className="rounded-[34px] bg-gradient-to-br from-violet-50 to-white dark:from-violet-950 dark:to-slate-900 p-7 ring-1 ring-violet-100 dark:ring-violet-800">
+        <div className="rounded-[34px] bg-gradient-to-br from-brand-50 to-white dark:from-brand-950 dark:to-slate-900 p-7 ring-1 ring-brand-100 dark:ring-brand-800">
           <div className="space-y-3">
             {ready ? (
               <>
@@ -853,7 +868,7 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
                 {analysis.mainIssue && (
                   <div className="mt-2 rounded-2xl bg-white dark:bg-slate-800 px-4 py-3 shadow-sm">
                     <p className="text-xs font-black text-slate-500 dark:text-slate-400">הנושא המרכזי לטיפול</p>
-                    <p className="mt-1 font-black text-violet-900 dark:text-violet-300">{analysis.mainIssue}</p>
+                    <p className="mt-1 font-black text-brand-900 dark:text-brand-300">{analysis.mainIssue}</p>
                   </div>
                 )}
               </>
@@ -869,7 +884,7 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
             <li className="flex items-center gap-2"><CheckIcon /><span>פרטיות מלאה ושימוש במידע לצורך חזרה בלבד</span></li>
             <li className="flex items-center gap-2"><CheckIcon /><span>שיחה מקצועית קצרה להבנת הצעד הבא</span></li>
           </ul>
-          <a href="/lead" onClick={onLeadFormLink} className="mt-5 block text-center text-sm font-bold text-violet-700 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-200 hover:underline">
+          <a href="/lead" onClick={onLeadFormLink} className="mt-5 block text-center text-sm font-bold text-brand-700 dark:text-brand-300 hover:text-brand-800 dark:hover:text-brand-200 hover:underline">
             רוצים בדיקה מעמיקה יותר? עברו לטופס המפורט ←
           </a>
         </div>
@@ -919,7 +934,7 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
             />
           </div>
 
-          {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm font-bold text-red-700 dark:text-red-400">{leadError}</p>}
+          {leadError && <p role="alert" className="mt-4 rounded-2xl bg-danger-50 dark:bg-danger-900/20 px-4 py-3 text-sm font-bold text-danger-700 dark:text-danger-400">{leadError}</p>}
 
           <p className="mt-4 text-xs font-semibold text-slate-500 dark:text-slate-400">ככל שתמלאו יותר נתונים, הבדיקה הראשונית תהיה מדויקת יותר.</p>
 
@@ -928,11 +943,11 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
               type="checkbox"
               checked={consent}
               onChange={(e) => setConsent(e.target.checked)}
-              className="mt-0.5 w-4 h-4 accent-violet-600 shrink-0"
+              className="mt-0.5 w-4 h-4 accent-brand-600 shrink-0"
             />
             <span className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-5">
               אני מסכים/ה לשיתוף הפרטים עם יועצי משכנתאות מורשים לצורך קבלת ייעוץ.{" "}
-              <a href="/privacy" className="text-violet-600 dark:text-violet-400 hover:underline">מדיניות פרטיות</a>
+              <a href="/privacy" className="text-brand-600 dark:text-brand-400 hover:underline">מדיניות פרטיות</a>
             </span>
           </label>
           <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-semibold">
@@ -940,23 +955,23 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
           </p>
 
           {leadSent ? (
-            <div className="mt-4 rounded-[28px] border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-6">
+            <div className="mt-4 rounded-[28px] border border-success-200 dark:border-success-800 bg-success-50 dark:bg-success-900/20 p-6">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-800">
-                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-success-100 dark:bg-success-800">
+                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-success-600" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
                 <div>
-                  <p className="font-black text-emerald-800 dark:text-emerald-300">הפנייה נשלחה בהצלחה</p>
-                  <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">יועץ יחזור אליכם בתוך יום עסקים.</p>
+                  <p className="font-black text-success-800 dark:text-success-300">הפנייה נשלחה בהצלחה</p>
+                  <p className="text-sm font-semibold text-success-700 dark:text-success-400">יועץ יחזור אליכם בתוך יום עסקים.</p>
                 </div>
               </div>
               <p className="mt-4 text-sm font-black text-slate-700 dark:text-slate-300">בינתיים — קראו עוד:</p>
               <div className="mt-2 flex flex-wrap gap-3">
-                <a href="/guides" className="inline-flex rounded-full border border-violet-200 dark:border-violet-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-black text-violet-700 dark:text-violet-300 shadow-sm hover:bg-violet-50 dark:hover:bg-slate-700">מדריכי משכנתא ←</a>
-                <a href="/blog" className="inline-flex rounded-full border border-violet-200 dark:border-violet-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-black text-violet-700 dark:text-violet-300 shadow-sm hover:bg-violet-50 dark:hover:bg-slate-700">בלוג משכנתאות ←</a>
-                <a href="/refinance-check" className="inline-flex rounded-full border border-violet-200 dark:border-violet-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-black text-violet-700 dark:text-violet-300 shadow-sm hover:bg-violet-50 dark:hover:bg-slate-700">בדיקת מחזור ←</a>
+                <a href="/guides" className="inline-flex rounded-full border border-brand-200 dark:border-brand-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-black text-brand-700 dark:text-brand-300 shadow-sm hover:bg-brand-50 dark:hover:bg-slate-700">מדריכי משכנתא ←</a>
+                <a href="/blog" className="inline-flex rounded-full border border-brand-200 dark:border-brand-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-black text-brand-700 dark:text-brand-300 shadow-sm hover:bg-brand-50 dark:hover:bg-slate-700">בלוג משכנתאות ←</a>
+                <a href="/refinance-check" className="inline-flex rounded-full border border-brand-200 dark:border-brand-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-black text-brand-700 dark:text-brand-300 shadow-sm hover:bg-brand-50 dark:hover:bg-slate-700">בדיקת מחזור ←</a>
               </div>
             </div>
           ) : (
@@ -964,7 +979,7 @@ function LeadSection({ lead, updateLead, submitLead, leadLoading, leadSent, lead
               <button
                 type="submit"
                 disabled={leadLoading}
-                className="mt-3 min-h-12 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
+                className="mt-3 min-h-12 w-full rounded-full bg-brand-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {leadLoading ? "שולח..." : "שלחו לבדיקה ראשונית"}
               </button>
@@ -1001,11 +1016,11 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
   if (bottomLeadSent) {
     return (
       <section id="bottom-lead" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-        <div className="rounded-[30px] border border-violet-200/70 bg-gradient-to-br from-slate-950 via-violet-950 to-violet-900 p-8 text-center text-white shadow-[0_28px_70px_rgba(46,16,101,0.35)]">
+        <div className="rounded-[30px] border border-brand-200/70 bg-gradient-to-br from-slate-950 via-brand-950 to-brand-900 p-8 text-center text-white shadow-[0_28px_70px_rgba(46,16,101,0.35)]">
           <span className="text-5xl">✓</span>
           <h2 className="mt-4 text-2xl font-black">הבדיקה נשלחה בהצלחה</h2>
-          <p className="mt-2 font-semibold text-violet-100">נחזור אליכם בהקדם עם כיוון ראשוני בהתאם לפרטים שמסרתם.</p>
-          <p className="mt-4 text-xs font-bold text-violet-200">ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי</p>
+          <p className="mt-2 font-semibold text-brand-100">נחזור אליכם בהקדם עם כיוון ראשוני בהתאם לפרטים שמסרתם.</p>
+          <p className="mt-4 text-xs font-bold text-brand-200">ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי</p>
         </div>
       </section>
     );
@@ -1013,15 +1028,15 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
 
   return (
     <section id="bottom-lead" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-      <div className="rounded-[30px] border border-violet-200/70 bg-gradient-to-br from-slate-950 via-violet-950 to-violet-900 p-6 text-white shadow-[0_28px_70px_rgba(46,16,101,0.35)] sm:p-8">
+      <div className="rounded-[30px] border border-brand-200/70 bg-gradient-to-br from-slate-950 via-brand-950 to-brand-900 p-6 text-white shadow-[0_28px_70px_rgba(46,16,101,0.35)] sm:p-8">
 
         {/* Header */}
         <div className="mb-6">
-          <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-black text-violet-200">
+          <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-black text-brand-200">
             בדיקת התאמה ראשונית
           </span>
           <h2 className="mt-3 text-2xl font-black sm:text-3xl">קבלו בדיקת התאמה ראשונית למשכנתא</h2>
-          <p className="mt-2 font-semibold text-violet-100">
+          <p className="mt-2 font-semibold text-brand-100">
             מלאו כמה פרטים בסיסיים ונציג כיוון ראשוני. אם תהיה התאמה, ניתן יהיה להמשיך לבדיקה מקצועית.
           </p>
         </div>
@@ -1030,11 +1045,11 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
 
           {/* Purchase status select — full width */}
           <div className="sm:col-span-2">
-            <label className="mb-1.5 block text-sm font-black text-violet-100">סוג הבדיקה</label>
+            <label className="mb-1.5 block text-sm font-black text-brand-100">סוג הבדיקה</label>
             <select
               value={bottomLead.purchaseStatus}
               onChange={(e) => updateBottomLead("purchaseStatus", e.target.value)}
-              className="h-12 w-full rounded-2xl border border-violet-200 bg-white px-4 text-base font-bold text-slate-950 outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-200 sm:h-14"
+              className="h-12 w-full rounded-2xl border border-brand-200 bg-white px-4 text-base font-bold text-slate-950 outline-none focus:border-brand-300 focus:ring-4 focus:ring-brand-200 sm:h-14"
             >
               {PURCHASE_STATUS_OPTIONS.map(([val, label]) => (
                 <option key={val} value={val}>{label}</option>
@@ -1057,7 +1072,7 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
 
           {/* Existing mortgage toggle */}
           <div>
-            <label className="mb-1.5 block text-sm font-black text-violet-100">יש לכם משכנתא קיימת?</label>
+            <label className="mb-1.5 block text-sm font-black text-brand-100">יש לכם משכנתא קיימת?</label>
             <div className="flex gap-3 pt-1">
               {[["no", "לא"], ["yes", "כן"]].map(([val, label]) => (
                 <button
@@ -1066,7 +1081,7 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
                   onClick={() => updateBottomLead("hasExistingMortgage", val)}
                   className={`h-12 flex-1 rounded-2xl border text-sm font-black transition sm:h-14 ${
                     bottomLead.hasExistingMortgage === val
-                      ? "border-white bg-white text-violet-900"
+                      ? "border-white bg-white text-brand-900"
                       : "border-white/20 bg-white/10 text-white hover:bg-white/20"
                   }`}
                 >
@@ -1088,7 +1103,7 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
 
           {/* Error + submit — full width */}
           {bottomLeadError && (
-            <p role="alert" className="sm:col-span-2 rounded-2xl bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm font-bold text-red-700 dark:text-red-400">
+            <p role="alert" className="sm:col-span-2 rounded-2xl bg-danger-50 dark:bg-danger-900/20 px-4 py-3 text-sm font-bold text-danger-700 dark:text-danger-400">
               {bottomLeadError}
             </p>
           )}
@@ -1098,27 +1113,27 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
               type="checkbox"
               checked={consent}
               onChange={(e) => setConsent(e.target.checked)}
-              className="mt-0.5 w-4 h-4 accent-violet-400 shrink-0"
+              className="mt-0.5 w-4 h-4 accent-brand-400 shrink-0"
             />
-            <span className="text-xs font-bold text-violet-200 leading-5">
+            <span className="text-xs font-bold text-brand-200 leading-5">
               אני מסכים/ה לשיתוף הפרטים עם יועצי משכנתאות מורשים לצורך קבלת ייעוץ.{" "}
-              <a href="/privacy" className="text-violet-300 hover:underline">מדיניות פרטיות</a>
+              <a href="/privacy" className="text-brand-300 hover:underline">מדיניות פרטיות</a>
             </span>
           </label>
-          <p className="sm:col-span-2 text-xs text-violet-300 font-semibold">
+          <p className="sm:col-span-2 text-xs text-brand-300 font-semibold">
             הפרטים שמסרתם עשויים להיות מועברים ליועץ משכנתאות עצמאי שיצור אתכם קשר.
           </p>
 
           <button
             type="submit"
             disabled={bottomLeadLoading}
-            className="sm:col-span-2 min-h-[52px] rounded-full bg-white px-7 py-4 text-base font-black text-violet-900 shadow-[0_14px_34px_rgba(255,255,255,0.15)] transition hover:bg-violet-50 disabled:opacity-70"
+            className="sm:col-span-2 min-h-[52px] rounded-full bg-white px-7 py-4 text-base font-black text-brand-900 shadow-[0_14px_34px_rgba(255,255,255,0.15)] transition hover:bg-brand-50 disabled:opacity-70"
           >
             {bottomLeadLoading ? "שולח..." : "שלחו לבדיקה ראשונית"}
           </button>
         </form>
 
-        <p className="mt-4 text-center text-xs font-bold text-violet-200">
+        <p className="mt-4 text-center text-xs font-bold text-brand-200">
           ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי
         </p>
       </div>
@@ -1132,17 +1147,17 @@ function BottomLeadSection({ bottomLead, updateBottomLead, submitBottomLead, bot
 
 function LeadSuccessState() {
   return (
-    <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-5 text-center">
-      <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-800">
-        <svg viewBox="0 0 24 24" className="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <div className="rounded-2xl border border-success-200 dark:border-success-800 bg-success-50 dark:bg-success-900/20 p-5 text-center">
+      <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-success-100 dark:bg-success-800">
+        <svg viewBox="0 0 24 24" className="h-6 w-6 text-success-600" fill="none" stroke="currentColor" strokeWidth="2.5">
           <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
-      <p className="mt-3 text-base font-black text-emerald-800 dark:text-emerald-300">הפנייה נשלחה!</p>
-      <p className="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-400">יועץ יחזור אליכם בתוך יום עסקים.</p>
+      <p className="mt-3 text-base font-black text-success-800 dark:text-success-300">הפנייה נשלחה!</p>
+      <p className="mt-1 text-sm font-semibold text-success-700 dark:text-success-400">יועץ יחזור אליכם בתוך יום עסקים.</p>
       <div className="mt-4 flex flex-col gap-2">
-        <a href="/guides" className="text-sm font-black text-violet-700 dark:text-violet-300 hover:underline">קראו את מדריכי המשכנתא שלנו ←</a>
-        <a href="/blog" className="text-sm font-black text-violet-700 dark:text-violet-300 hover:underline">בלוג משכנתאות ←</a>
+        <a href="/guides" className="text-sm font-black text-brand-700 dark:text-brand-300 hover:underline">קראו את מדריכי המשכנתא שלנו ←</a>
+        <a href="/blog" className="text-sm font-black text-brand-700 dark:text-brand-300 hover:underline">בלוג משכנתאות ←</a>
       </div>
     </div>
   );
@@ -1156,16 +1171,16 @@ function ResultSummaryRow({ label, value, highlight = false, warn = false }) {
   return (
     <div className="flex items-center justify-between rounded-2xl bg-white dark:bg-slate-800 px-4 py-3 shadow-sm">
       <span className="font-bold text-slate-600 dark:text-slate-400">{label}</span>
-      <span className={`number-display font-black ${highlight ? "text-emerald-700 dark:text-emerald-400" : warn ? "text-amber-700 dark:text-amber-400" : "text-slate-950 dark:text-slate-100"}`}>{value}</span>
+      <span className={`number-display font-black ${highlight ? "text-success-700 dark:text-success-400" : warn ? "text-warning-700 dark:text-warning-400" : "text-slate-950 dark:text-slate-100"}`}>{value}</span>
     </div>
   );
 }
 
-function DarkMetric({ label, value }) {
+function LightMetric({ label, value }) {
   return (
-    <div className="rounded-3xl bg-white/10 p-4 ring-1 ring-white/10">
-      <p className="text-xs font-black text-violet-100">{label}</p>
-      <p className="number-display mt-2 text-xl font-black text-white">{value}</p>
+    <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-4">
+      <p className="text-xs font-black text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="number-display mt-2 text-xl font-black text-slate-950 dark:text-white">{value}</p>
     </div>
   );
 }
@@ -1204,7 +1219,7 @@ function InfoTooltip({ text }) {
         onClick={() => setOpen((current) => !current)}
         onBlur={() => setOpen(false)}
         aria-label="מידע נוסף"
-        className="mr-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] font-black leading-none text-slate-600 dark:text-slate-400 hover:bg-violet-200 dark:hover:bg-violet-800 hover:text-violet-800 dark:hover:text-violet-200"
+        className="mr-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] font-black leading-none text-slate-600 dark:text-slate-400 hover:bg-brand-200 dark:hover:bg-brand-800 hover:text-brand-800 dark:hover:text-brand-200"
       >
         i
       </button>
@@ -1236,7 +1251,7 @@ function MoneyField({ label, value, onChange, helper, tooltip, className = "", c
   const isDark = contrastMode === "dark";
   return (
     <label className={`block ${className}`}>
-      <span className={`text-sm font-black ${isDark ? "text-violet-50" : "text-slate-700 dark:text-slate-300"}`} id={`${fieldId}-label`}>
+      <span className={`text-sm font-black ${isDark ? "text-brand-50" : "text-slate-700 dark:text-slate-300"}`} id={`${fieldId}-label`}>
         {label}
         {tooltip && <InfoTooltip text={tooltip} />}
       </span>
@@ -1249,7 +1264,7 @@ function MoneyField({ label, value, onChange, helper, tooltip, className = "", c
           pattern="[0-9,]*"
           value={displayNumber(value || "")}
           onChange={(event) => onChange(cleanNumber(event.target.value))}
-          className={`h-12 w-full rounded-2xl px-4 pl-10 text-base font-black text-slate-950 dark:text-slate-100 outline-none transition sm:h-14 ${isDark ? "border border-violet-200 bg-white focus:border-violet-300 focus:ring-4 focus:ring-violet-200" : "border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:border-violet-400 dark:focus:border-violet-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"}`}
+          className={`h-12 w-full rounded-2xl px-4 pl-10 text-base font-black text-slate-950 dark:text-slate-100 outline-none transition sm:h-14 ${isDark ? "border border-brand-200 bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-200" : "border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:border-brand-400 dark:focus:border-brand-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900"}`}
         />
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400 dark:text-slate-500">₪</span>
       </span>
@@ -1263,7 +1278,7 @@ function TextField({ label, value, onChange, placeholder = "", required = false,
   const isDark = contrastMode === "dark";
   return (
     <label className={`block ${className}`}>
-      <span className={`text-sm font-black ${isDark ? "text-violet-50" : "text-slate-700 dark:text-slate-300"}`} id={`${fieldId}-label`}>{label}</span>
+      <span className={`text-sm font-black ${isDark ? "text-brand-50" : "text-slate-700 dark:text-slate-300"}`} id={`${fieldId}-label`}>{label}</span>
       <input
         id={fieldId}
         aria-labelledby={`${fieldId}-label`}
@@ -1274,8 +1289,8 @@ function TextField({ label, value, onChange, placeholder = "", required = false,
         inputMode={inputMode}
         onChange={(event) => onChange(event.target.value)}
         className={`mt-2 h-12 w-full rounded-2xl px-4 text-base font-bold outline-none transition sm:h-14 ${isDark
-          ? "border border-violet-200 bg-white text-slate-950 placeholder:text-slate-500 focus:border-violet-300 focus:ring-4 focus:ring-violet-200"
-          : "border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-violet-400 dark:focus:border-violet-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"}`}
+          ? "border border-brand-200 bg-white text-slate-950 placeholder:text-slate-500 focus:border-brand-300 focus:ring-4 focus:ring-brand-200"
+          : "border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-brand-400 dark:focus:border-brand-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900"}`}
       />
     </label>
   );
@@ -1295,7 +1310,7 @@ function NumberField({ label, value, onChange, min, max }) {
         max={max}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-base font-black text-slate-950 dark:text-slate-100 outline-none transition focus:border-violet-400 dark:focus:border-violet-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"
+        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-base font-black text-slate-950 dark:text-slate-100 outline-none transition focus:border-brand-400 dark:focus:border-brand-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900"
       />
     </label>
   );
@@ -1311,7 +1326,7 @@ function SelectField({ label, value, onChange, options, className = "" }) {
         aria-labelledby={`${fieldId}-label`}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-base font-black text-slate-950 dark:text-slate-100 outline-none transition focus:border-violet-400 dark:focus:border-violet-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"
+        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-base font-black text-slate-950 dark:text-slate-100 outline-none transition focus:border-brand-400 dark:focus:border-brand-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900"
       >
         {options.map(([optionValue, label]) => (
           <option key={optionValue} value={optionValue}>
@@ -1329,7 +1344,7 @@ function SelectField({ label, value, onChange, options, className = "" }) {
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-violet-600" fill="none" stroke="currentColor" strokeWidth="3">
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-brand-600" fill="none" stroke="currentColor" strokeWidth="3">
       <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );

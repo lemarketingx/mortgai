@@ -53,7 +53,7 @@ export default function AdvisorForgotPassword() {
                 <p className="text-slate-500 dark:text-slate-400 text-sm leading-6">
                   אם האימייל קיים במערכת, נשלח קישור לאיפוס סיסמה.
                 </p>
-                <Link href="/advisor/login" className="mt-8 inline-block text-sm font-bold text-violet-600 dark:text-violet-400 hover:underline">
+                <Link href="/advisor/login" className="mt-8 inline-block text-sm font-bold text-brand-600 dark:text-brand-400 hover:underline">
                   ← חזרה לכניסה
                 </Link>
               </div>
@@ -72,14 +72,14 @@ export default function AdvisorForgotPassword() {
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); setError(""); }}
                       placeholder="you@example.com"
-                      className="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white dark:bg-slate-800 dark:text-slate-100"
+                      className="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-slate-800 dark:text-slate-100"
                       required
                       autoComplete="email"
                     />
                   </div>
 
                   {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-2xl px-4 py-3 text-sm text-red-700 dark:text-red-400 font-bold">
+                    <div className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-700 rounded-2xl px-4 py-3 text-sm text-danger-700 dark:text-danger-400 font-bold">
                       {error}
                     </div>
                   )}
@@ -87,14 +87,14 @@ export default function AdvisorForgotPassword() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-violet-700 hover:bg-violet-800 disabled:opacity-60 text-white font-black py-3.5 rounded-2xl transition-colors text-sm"
+                    className="w-full bg-brand-700 hover:bg-brand-800 disabled:opacity-60 text-white font-black py-3.5 rounded-2xl transition-colors text-sm"
                   >
                     {loading ? "שולח..." : "שלח קישור לאיפוס סיסמה"}
                   </button>
                 </form>
 
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-6 text-center">
-                  <Link href="/advisor/login" className="text-violet-600 dark:text-violet-400 hover:underline font-bold">
+                  <Link href="/advisor/login" className="text-brand-600 dark:text-brand-400 hover:underline font-bold">
                     ← חזרה לכניסה
                   </Link>
                 </p>

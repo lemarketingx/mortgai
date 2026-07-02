@@ -84,13 +84,13 @@ export default function TermsPage() {
               <h2 className="text-xl font-black text-slate-900 mb-3">9. יצירת קשר</h2>
               <p>
                 לשאלות בנוגע לתנאי השימוש:{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-violet-700 hover:underline">lemarketingx@gmail.com</a>
+                <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">lemarketingx@gmail.com</a>
               </p>
             </section>
           </div>
 
           <div className="mt-12 border-t border-slate-200 pt-6 text-sm text-slate-400">
-            <Link href="/" className="text-violet-700 hover:underline font-bold">← חזרה לעמוד הבית</Link>
+            <Link href="/" className="text-brand-700 hover:underline font-bold">← חזרה לעמוד הבית</Link>
           </div>
         </main>
       </div>

@@ -7,20 +7,20 @@ import { trackEvent } from "../../lib/analytics";
 import BrandLogo from "../../components/BrandLogo";
 
 const CATEGORY_CLASSES = {
-  זכאות: "bg-emerald-100 text-emerald-700",
-  "הון עצמי": "bg-violet-100 text-violet-700",
-  מחזור: "bg-blue-100 text-blue-700",
-  ריביות: "bg-amber-100 text-amber-700",
+  זכאות: "bg-success-100 text-success-700",
+  "הון עצמי": "bg-brand-100 text-brand-700",
+  מחזור: "bg-brand-100 text-brand-700",
+  ריביות: "bg-warning-100 text-warning-700",
   מדריך: "bg-teal-100 text-teal-700",
   גישור: "bg-orange-100 text-orange-700",
   ייעוץ: "bg-indigo-100 text-indigo-700",
   מסלולים: "bg-cyan-100 text-cyan-700",
-  טכנולוגיה: "bg-rose-100 text-rose-700",
+  טכנולוגיה: "bg-danger-100 text-danger-700",
   "יחס החזר": "bg-purple-100 text-purple-700",
 };
 
-const PILL_ACTIVE = "bg-violet-600 text-white border-violet-600";
-const PILL_IDLE = "bg-white text-mort-muted border-slate-200 hover:border-violet-300 hover:text-violet-700";
+const PILL_ACTIVE = "bg-brand-600 text-white border-brand-600";
+const PILL_IDLE = "bg-white text-mort-muted border-slate-200 hover:border-brand-300 hover:text-brand-700";
 
 function CategoryBadge({ category }) {
   const cls = CATEGORY_CLASSES[category] || "bg-slate-100 text-slate-600";
@@ -39,23 +39,23 @@ function ArticleCard({ post }) {
     <Link
       href={`/blog/${post.slug}`}
       onClick={handleClick}
-      className="group flex flex-col bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-violet-300 hover:shadow-soft transition-all"
+      className="group flex flex-col bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-brand-300 hover:shadow-soft transition-all"
     >
       {/* Color accent bar */}
-      <div className="h-1 w-full bg-gradient-to-l from-violet-500 to-indigo-500" />
+      <div className="h-1 w-full bg-gradient-to-l from-brand-500 to-accent-500" />
       <div className="p-5 flex flex-col flex-1">
         <div className="flex items-center justify-between mb-3">
           <CategoryBadge category={post.category} />
           <span className="text-xs text-mort-muted">{post.readingTime} דקות</span>
         </div>
-        <h2 className="text-mort-ink font-black text-base leading-7 mb-2 group-hover:text-violet-700 transition-colors flex-1">
+        <h2 className="text-mort-ink font-black text-base leading-7 mb-2 group-hover:text-brand-700 transition-colors flex-1">
           {post.h1}
         </h2>
         <p className="text-mort-muted text-sm leading-6 line-clamp-2 mb-4">
           {post.excerpt}
         </p>
         <div className="flex items-center justify-between mt-auto">
-          <span className="text-violet-600 text-sm font-bold group-hover:underline">קריאה ←</span>
+          <span className="text-brand-600 text-sm font-bold group-hover:underline">קריאה ←</span>
           <span className="text-xs text-slate-400">
             {new Date(post.publishDate).toLocaleDateString("he-IL", { month: "short", year: "numeric" })}
           </span>
@@ -127,7 +127,7 @@ export default function BlogIndexPage() {
         {/* ── Hero ── */}
         <div className="bg-gradient-to-b from-mort-ink to-slate-800 text-white pt-12 pb-16 px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <p className="text-xs font-black text-violet-400 uppercase tracking-widest mb-4">בלוג</p>
+            <p className="text-xs font-black text-brand-400 uppercase tracking-widest mb-4">בלוג</p>
             <h1 className="text-3xl md:text-5xl font-black mb-4 leading-tight">
               ידע שעובד בשבילכם
             </h1>
@@ -148,7 +148,7 @@ export default function BlogIndexPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="לדוגמה: הון עצמי, אישור עקרוני, יחס החזר..."
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
             />
           </div>
 
@@ -177,7 +177,7 @@ export default function BlogIndexPage() {
           )}
 
           {/* ── Bottom CTA ── */}
-          <div className="mt-14 rounded-2xl bg-gradient-to-l from-violet-600 to-indigo-700 p-8 text-white text-center">
+          <div className="mt-14 rounded-2xl bg-gradient-to-l from-brand-600 to-accent-600 p-8 text-white text-center">
             <h2 className="text-2xl font-black mb-2">מוכנים לבדוק זכאות?</h2>
             <p className="text-slate-200 mb-6 text-sm leading-7">
               השתמשו במחשבון Finzo וקבלו אומדן מהיר של סיכוי האישור, ההחזר החודשי והמסגרת האפשרית.
@@ -185,7 +185,7 @@ export default function BlogIndexPage() {
             <Link
               href="/#eligibility-check"
               onClick={() => trackEvent("blog_cta_click", { location: "blog_index_bottom" }, { source: "blog" })}
-              className="inline-block bg-white text-indigo-700 font-black px-8 py-3 rounded-xl hover:bg-indigo-50 transition-colors text-sm"
+              className="inline-block bg-white text-brand-700 font-black px-8 py-3 rounded-xl hover:bg-brand-50 transition-colors text-sm"
             >
               בדיקת זכאות חינם ←
             </Link>
@@ -193,11 +193,11 @@ export default function BlogIndexPage() {
 
           {/* ── Internal links ── */}
           <div className="mt-8 flex gap-4 flex-wrap justify-center text-sm">
-            <Link href="/guides" className="text-violet-700 hover:underline font-semibold">מדריכי משכנתא</Link>
+            <Link href="/guides" className="text-brand-700 hover:underline font-semibold">מדריכי משכנתא</Link>
             <span className="text-slate-300">·</span>
-            <Link href="/refinance-check" className="text-violet-700 hover:underline font-semibold">בדיקת מחזור משכנתא</Link>
+            <Link href="/refinance-check" className="text-brand-700 hover:underline font-semibold">בדיקת מחזור משכנתא</Link>
             <span className="text-slate-300">·</span>
-            <Link href="/" className="text-violet-700 hover:underline font-semibold">מחשבון זכאות</Link>
+            <Link href="/" className="text-brand-700 hover:underline font-semibold">מחשבון זכאות</Link>
           </div>
         </div>
       </main>

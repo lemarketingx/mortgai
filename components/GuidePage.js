@@ -60,9 +60,9 @@ export default function GuidePage({ guide, allGuides }) {
 
         <main className="max-w-4xl mx-auto px-4 py-10 text-slate-800">
         <nav className="text-sm mb-6">
-          <Link href="/" className="text-blue-700 hover:underline">דף הבית</Link>
+          <Link href="/" className="text-brand-700 hover:underline">דף הבית</Link>
           <span> / </span>
-          <Link href="/guides" className="text-blue-700 hover:underline">מדריכי משכנתא</Link>
+          <Link href="/guides" className="text-brand-700 hover:underline">מדריכי משכנתא</Link>
         </nav>
 
         <h1 className="text-3xl font-bold mb-4">{guide.h1}</h1>
@@ -75,10 +75,10 @@ export default function GuidePage({ guide, allGuides }) {
           </section>
         ))}
 
-        <section className="bg-blue-50 border border-blue-100 rounded-lg p-5 my-10">
+        <section className="bg-brand-50 border border-brand-100 rounded-lg p-5 my-10">
           <h2 className="text-2xl font-semibold mb-2">בדיקת זכאות חינם</h2>
           <p className="mb-4">רוצים אומדן ראשוני לפי הנתונים שלכם? חזרו למחשבון המשכנתא הראשי ובצעו בדיקה תוך דקות.</p>
-          <Link href="/#eligibility-check" onClick={handleGuideCtaClick} className="inline-block bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800">בדיקת זכאות חינם</Link>
+          <Link href="/#eligibility-check" onClick={handleGuideCtaClick} className="inline-block bg-brand-700 text-white px-4 py-2 rounded-md hover:bg-brand-800">בדיקת זכאות חינם</Link>
         </section>
 
         <section className="mb-10">
@@ -98,7 +98,7 @@ export default function GuidePage({ guide, allGuides }) {
           <ul className="list-disc pr-6 space-y-2">
             {relatedGuides.map((related) => (
               <li key={related.path}>
-                <Link href={related.path} className="text-blue-700 hover:underline">{related.h1}</Link>
+                <Link href={related.path} className="text-brand-700 hover:underline">{related.h1}</Link>
               </li>
             ))}
           </ul>

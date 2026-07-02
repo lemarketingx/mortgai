@@ -6,15 +6,15 @@ import { OG_IMAGE_URL, absoluteUrl, articleSchema, breadcrumbSchema, canonicalUr
 import BrandLogo from "./BrandLogo";
 
 const CATEGORY_CLASSES = {
-  זכאות: "bg-emerald-100 text-emerald-700",
-  "הון עצמי": "bg-violet-100 text-violet-700",
-  מחזור: "bg-blue-100 text-blue-700",
-  ריביות: "bg-amber-100 text-amber-700",
+  זכאות: "bg-success-100 text-success-700",
+  "הון עצמי": "bg-brand-100 text-brand-700",
+  מחזור: "bg-brand-100 text-brand-700",
+  ריביות: "bg-warning-100 text-warning-700",
   מדריך: "bg-teal-100 text-teal-700",
   גישור: "bg-orange-100 text-orange-700",
   ייעוץ: "bg-indigo-100 text-indigo-700",
   מסלולים: "bg-cyan-100 text-cyan-700",
-  טכנולוגיה: "bg-rose-100 text-rose-700",
+  טכנולוגיה: "bg-danger-100 text-danger-700",
   "יחס החזר": "bg-purple-100 text-purple-700",
 };
 
@@ -32,7 +32,7 @@ function MidCta({ slug, category }) {
     trackEvent("blog_cta_click", { slug, category }, { source: "blog" });
   }
   return (
-    <div className="my-10 rounded-2xl bg-gradient-to-l from-violet-600 to-indigo-700 p-6 md:p-8 text-white text-right">
+    <div className="my-10 rounded-2xl bg-gradient-to-l from-brand-600 to-accent-600 p-6 md:p-8 text-white text-right">
       <p className="text-sm font-semibold uppercase tracking-widest opacity-80 mb-2">כלי חינמי</p>
       <h3 className="text-xl md:text-2xl font-black mb-2">רוצים לבדוק זכאות למשכנתא?</h3>
       <p className="text-sm md:text-base opacity-90 mb-5 leading-7">
@@ -41,7 +41,7 @@ function MidCta({ slug, category }) {
       <Link
         href="/#eligibility-check"
         onClick={handleClick}
-        className="inline-block bg-white text-indigo-700 font-black px-6 py-3 rounded-xl hover:bg-indigo-50 transition-colors text-sm"
+        className="inline-block bg-white text-brand-700 font-black px-6 py-3 rounded-xl hover:bg-brand-50 transition-colors text-sm"
       >
         בדיקת זכאות חינם ←
       </Link>
@@ -113,7 +113,7 @@ function LeadForm({ slug, category }) {
             onChange={handleChange}
             required
             placeholder="ישראל ישראלי"
-            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
           />
         </div>
         <div>
@@ -125,7 +125,7 @@ function LeadForm({ slug, category }) {
             required
             placeholder="05X-XXXXXXX"
             type="tel"
-            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
           />
         </div>
         <div>
@@ -135,15 +135,15 @@ function LeadForm({ slug, category }) {
             value={form.city}
             onChange={handleChange}
             placeholder="תל אביב"
-            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
           />
         </div>
       </div>
-      {error && <p className="text-red-600 text-sm">{error}</p>}
+      {error && <p className="text-danger-600 text-sm">{error}</p>}
       <button
         type="submit"
         disabled={status === "loading"}
-        className="w-full md:w-auto bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white font-black px-8 py-3 rounded-xl transition-colors text-sm"
+        className="w-full md:w-auto bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-black px-8 py-3 rounded-xl transition-colors text-sm"
       >
         {status === "loading" ? "שולח..." : "לקבלת ייעוץ ראשוני חינם"}
       </button>
@@ -161,7 +161,7 @@ function FaqItem({ q, a }) {
         className="w-full flex items-center justify-between px-5 py-4 text-right bg-white hover:bg-surface-low transition-colors"
       >
         <span className="font-bold text-mort-ink text-sm md:text-base leading-6">{q}</span>
-        <span className={`text-violet-600 text-xl font-light transition-transform ${open ? "rotate-45" : ""}`}>+</span>
+        <span className={`text-brand-600 text-xl font-light transition-transform ${open ? "rotate-45" : ""}`}>+</span>
       </button>
       {open && (
         <div className="px-5 pb-4 text-mort-text text-sm leading-7 bg-surface-low border-t border-slate-100">
@@ -239,14 +239,14 @@ export default function BlogPostPage({ post, relatedPosts }) {
 
       {/* ── Mobile sticky CTA ── */}
       <div className="fixed top-0 inset-x-0 z-50 h-1 bg-slate-200">
-        <div className="h-full bg-violet-600 transition-all" style={{ width: `${scrollProgress}%` }} />
+        <div className="h-full bg-brand-600 transition-all" style={{ width: `${scrollProgress}%` }} />
       </div>
 
       <div className="fixed bottom-0 inset-x-0 z-50 md:hidden bg-white border-t border-slate-200 px-4 py-3 flex gap-3">
         <Link
           href="/#eligibility-check"
           onClick={() => trackEvent("blog_cta_click", { slug: post.slug, category: post.category, location: "mobile_sticky" }, { source: "blog" })}
-          className="flex-1 bg-violet-600 text-white text-sm font-black py-3 rounded-xl text-center"
+          className="flex-1 bg-brand-600 text-white text-sm font-black py-3 rounded-xl text-center"
         >
           בדיקת זכאות חינם
         </Link>
@@ -297,7 +297,7 @@ export default function BlogPostPage({ post, relatedPosts }) {
             <ul className="space-y-2">
               {tableOfContents.map((item) => (
                 <li key={item.id}>
-                  <a href={`#${item.id}`} className="text-sm text-violet-700 hover:underline font-semibold">
+                  <a href={`#${item.id}`} className="text-sm text-brand-700 hover:underline font-semibold">
                     {item.heading}
                   </a>
                 </li>
@@ -312,7 +312,7 @@ export default function BlogPostPage({ post, relatedPosts }) {
           {post.sections.map((section, idx) => (
             <div key={section.heading}>
               <section id={`section-${idx + 1}`} className="mb-8 scroll-mt-20">
-                <h2 className="text-xl md:text-2xl font-black text-mort-ink mb-4 border-r-4 border-violet-500 pr-4">
+                <h2 className="text-xl md:text-2xl font-black text-mort-ink mb-4 border-r-4 border-brand-500 pr-4">
                   {section.heading}
                 </h2>
                 {section.body.map((para, pi) => (
@@ -329,9 +329,9 @@ export default function BlogPostPage({ post, relatedPosts }) {
           <div className="my-8 p-5 bg-surface-low rounded-2xl border border-surface-high">
             <p className="text-xs font-black text-mort-muted uppercase tracking-widest mb-3">קראו גם</p>
             <div className="flex flex-wrap gap-2">
-              <Link href="/guides" className="text-sm text-violet-700 hover:underline font-semibold">מדריכי משכנתא ←</Link>
-              <Link href="/refinance-check" className="text-sm text-violet-700 hover:underline font-semibold">בדיקת מחזור ←</Link>
-              <Link href="/#eligibility-check" className="text-sm text-violet-700 hover:underline font-semibold">מחשבון זכאות ←</Link>
+              <Link href="/guides" className="text-sm text-brand-700 hover:underline font-semibold">מדריכי משכנתא ←</Link>
+              <Link href="/refinance-check" className="text-sm text-brand-700 hover:underline font-semibold">בדיקת מחזור ←</Link>
+              <Link href="/#eligibility-check" className="text-sm text-brand-700 hover:underline font-semibold">מחשבון זכאות ←</Link>
             </div>
           </div>
 
@@ -342,7 +342,7 @@ export default function BlogPostPage({ post, relatedPosts }) {
                 href={`https://wa.me/?text=${encodeURIComponent(`${post.h1} - ${shareUrl}`)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-sm bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full font-bold"
+                className="text-sm bg-success-50 text-success-700 px-4 py-2 rounded-full font-bold hover:bg-success-100 transition-colors"
               >
                 WhatsApp
               </a>
@@ -350,13 +350,13 @@ export default function BlogPostPage({ post, relatedPosts }) {
                 href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-sm bg-blue-50 text-blue-700 px-4 py-2 rounded-full font-bold"
+                className="text-sm bg-brand-50 text-brand-700 px-4 py-2 rounded-full font-bold hover:bg-brand-100 transition-colors"
               >
                 Facebook
               </a>
               <a
                 href={`mailto:?subject=${encodeURIComponent(post.h1)}&body=${encodeURIComponent(shareUrl)}`}
-                className="text-sm bg-slate-100 text-slate-700 px-4 py-2 rounded-full font-bold"
+                className="text-sm bg-brand-50 text-brand-700 px-4 py-2 rounded-full font-bold hover:bg-brand-100 transition-colors"
               >
                 Email
               </a>
@@ -382,10 +382,10 @@ export default function BlogPostPage({ post, relatedPosts }) {
                   <Link
                     key={rel.slug}
                     href={`/blog/${rel.slug}`}
-                    className="block p-4 border border-slate-200 rounded-2xl hover:border-violet-300 hover:shadow-soft transition-all bg-white group"
+                    className="block p-4 border border-slate-200 rounded-2xl hover:border-brand-300 hover:shadow-soft transition-all bg-white group"
                   >
                     <CategoryBadge category={rel.category} />
-                    <p className="text-mort-ink font-bold text-sm mt-2 leading-6 group-hover:text-violet-700 transition-colors">
+                    <p className="text-mort-ink font-bold text-sm mt-2 leading-6 group-hover:text-brand-700 transition-colors">
                       {rel.h1}
                     </p>
                     <p className="text-mort-muted text-xs mt-1">{rel.readingTime} דקות קריאה</p>
@@ -404,15 +404,15 @@ export default function BlogPostPage({ post, relatedPosts }) {
                 target="_blank"
                 rel="nofollow sponsored noopener noreferrer"
                 onClick={() => trackEvent("blog_cta_click", { slug: post.slug, tool: "riseup", location: "affiliate" }, { source: "blog" })}
-                className="flex gap-4 items-start p-5 bg-white border border-slate-200 rounded-2xl hover:border-emerald-300 hover:shadow-soft transition-all group"
+                className="flex gap-4 items-start p-5 bg-white border border-slate-200 rounded-2xl hover:border-success-300 hover:shadow-soft transition-all group"
               >
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 text-lg">💰</div>
+                <div className="w-10 h-10 rounded-xl bg-success-50 flex items-center justify-center shrink-0 text-lg">💰</div>
                 <div>
-                  <p className="font-black text-mort-ink text-sm group-hover:text-emerald-700 transition-colors">RiseUp — ניהול תקציב חכם</p>
+                  <p className="font-black text-mort-ink text-sm group-hover:text-success-700 transition-colors">RiseUp — ניהול תקציב חכם</p>
                   <p className="text-mort-muted text-xs leading-5 mt-1">
                     עוקבים אחרי ההוצאות, מבינים לאן הכסף הולך ומתכוננים נכון לפני לקיחת משכנתא.
                   </p>
-                  <span className="inline-block mt-2 text-xs font-bold text-emerald-600">להתנסות חינם ←</span>
+                  <span className="inline-block mt-2 text-xs font-bold text-success-600">להתנסות חינם ←</span>
                 </div>
               </a>
 
@@ -421,15 +421,15 @@ export default function BlogPostPage({ post, relatedPosts }) {
                 target="_blank"
                 rel="nofollow sponsored noopener noreferrer"
                 onClick={() => trackEvent("blog_cta_click", { slug: post.slug, tool: "ezcount", location: "affiliate" }, { source: "blog" })}
-                className="flex gap-4 items-start p-5 bg-white border border-slate-200 rounded-2xl hover:border-blue-300 hover:shadow-soft transition-all group"
+                className="flex gap-4 items-start p-5 bg-white border border-slate-200 rounded-2xl hover:border-brand-300 hover:shadow-soft transition-all group"
               >
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 text-lg">🧾</div>
+                <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center shrink-0 text-lg">🧾</div>
                 <div>
-                  <p className="font-black text-mort-ink text-sm group-hover:text-blue-700 transition-colors">EZcount — חשבוניות לעצמאים</p>
+                  <p className="font-black text-mort-ink text-sm group-hover:text-brand-700 transition-colors">EZcount — חשבוניות לעצמאים</p>
                   <p className="text-mort-muted text-xs leading-5 mt-1">
                     מנהלים עסק עצמאי? דוחות מסודרים דרך EZcount עוזרים להציג הכנסה יציבה לבנק.
                   </p>
-                  <span className="inline-block mt-2 text-xs font-bold text-blue-600">להתנסות חינם ←</span>
+                  <span className="inline-block mt-2 text-xs font-bold text-brand-600">להתנסות חינם ←</span>
                 </div>
               </a>
             </div>
@@ -438,7 +438,7 @@ export default function BlogPostPage({ post, relatedPosts }) {
           {/* Lead form CTA */}
           <section className="mb-10 bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-soft">
             <div className="mb-6">
-              <p className="text-xs font-black text-violet-600 uppercase tracking-widest mb-2">ייעוץ ראשוני חינמי</p>
+              <p className="text-xs font-black text-brand-600 uppercase tracking-widest mb-2">ייעוץ ראשוני חינמי</p>
               <h2 className="text-xl md:text-2xl font-black text-mort-ink mb-2">רוצים לבדוק זכאות למשכנתא?</h2>
               <p className="text-mort-muted text-sm leading-7">
                 השאירו פרטים ויועץ מטעמנו יחזור אליכם עם בדיקה ראשונית — ללא עלות וללא התחייבות.

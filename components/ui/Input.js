@@ -9,18 +9,18 @@
  */
 
 const INPUT_BASE =
-  "w-full px-[14px] py-3 border rounded-finzo-md bg-finzo-white font-mono text-[15px] text-finzo-ink transition-[border-color,box-shadow] outline-none placeholder:text-finzo-mute disabled:bg-finzo-paper disabled:text-finzo-mute disabled:cursor-not-allowed";
+  "w-full px-[14px] py-3 border rounded-pro-md bg-pro-white font-mono text-[15px] text-pro-ink transition-[border-color,box-shadow] outline-none placeholder:text-pro-mute disabled:bg-pro-paper disabled:text-pro-mute disabled:cursor-not-allowed";
 
 const INPUT_STATES = {
-  default: "border-finzo-line focus:border-finzo-ink focus:ring-2 focus:ring-finzo-cobalt-l",
-  error:   "border-finzo-danger ring-2 ring-finzo-danger/15",
+  default: "border-pro-line focus:border-pro-ink focus:ring-2 focus:ring-pro-cobalt-l",
+  error:   "border-danger-500 ring-2 ring-danger-500/15",
 };
 
 export function FieldLabel({ children, required, htmlFor }) {
   return (
-    <label htmlFor={htmlFor} className="block text-[13px] text-finzo-ink-2 mb-[6px]">
+    <label htmlFor={htmlFor} className="block text-[13px] text-pro-ink-2 mb-[6px]">
       {children}
-      {required && <span className="text-finzo-danger mr-1" aria-hidden="true">*</span>}
+      {required && <span className="text-danger-500 mr-1" aria-hidden="true">*</span>}
     </label>
   );
 }
@@ -28,7 +28,7 @@ export function FieldLabel({ children, required, htmlFor }) {
 export function FieldHelper({ children, error = false }) {
   if (!children) return null;
   return (
-    <p className={`mt-[6px] font-mono text-[11.5px] tracking-[0.04em] ${error ? "text-finzo-danger" : "text-finzo-mute"}`}>
+    <p className={`mt-[6px] font-mono text-[11.5px] tracking-[0.04em] ${error ? "text-danger-500" : "text-pro-mute"}`}>
       {children}
     </p>
   );
@@ -80,14 +80,14 @@ export function MoneyInputFinzo({
   return (
     <div className="grid gap-0">
       {label && <FieldLabel htmlFor={id} required={required}>{label}</FieldLabel>}
-      <div className={`flex items-center border rounded-finzo-md bg-finzo-white transition-[border-color,box-shadow] ${error ? "border-finzo-danger ring-2 ring-finzo-danger/15" : "border-finzo-line focus-within:border-finzo-ink focus-within:ring-2 focus-within:ring-finzo-cobalt-l"}`}>
-        <span className="px-3 font-mono text-[13px] text-finzo-mute select-none shrink-0">₪</span>
+      <div className={`flex items-center border rounded-pro-md bg-pro-white transition-[border-color,box-shadow] ${error ? "border-danger-500 ring-2 ring-danger-500/15" : "border-pro-line focus-within:border-pro-ink focus-within:ring-2 focus-within:ring-pro-cobalt-l"}`}>
+        <span className="px-3 font-mono text-[13px] text-pro-mute select-none shrink-0">₪</span>
         <input
           id={id}
           type="text"
           inputMode="numeric"
           className={[
-            "flex-1 min-w-0 py-3 pl-2 pr-3 font-mono text-[15px] text-finzo-ink bg-transparent outline-none placeholder:text-finzo-mute disabled:text-finzo-mute tabular-nums",
+            "flex-1 min-w-0 py-3 pl-2 pr-3 font-mono text-[15px] text-pro-ink bg-transparent outline-none placeholder:text-pro-mute disabled:text-pro-mute tabular-nums",
             disabled ? "cursor-not-allowed" : "",
             className,
           ].filter(Boolean).join(" ")}

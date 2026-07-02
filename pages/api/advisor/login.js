@@ -28,7 +28,14 @@ export default async function handler(req, res) {
   }
 
   // Authenticate against Supabase Auth
-  const { error: authError, user: authUser } = await supabaseSignIn(email, password);
+  let authResult;
+  try {
+    authResult = await supabaseSignIn(email, password);
+  } catch (e) {
+    console.error("[advisor/login] supabaseSignIn threw:", e?.message);
+    return apiError(res, 503, "AUTH_SERVICE_UNAVAILABLE", "שירות ההתחברות אינו זמין כרגע. נסה שוב בעוד רגע.");
+  }
+  const { error: authError, user: authUser } = authResult;
   if (authError || !authUser?.id) {
     recordRateLimitHit(ip);
     return apiError(res, 401, "INVALID_CREDENTIALS", "אימייל או סיסמה שגויים");

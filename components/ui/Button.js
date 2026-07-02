@@ -19,22 +19,22 @@ function Spinner() {
 }
 
 const BASE =
-  "relative inline-flex items-center justify-center gap-2 font-sans font-medium border border-transparent cursor-pointer select-none whitespace-nowrap transition-[background-color,color,opacity,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-finzo-cobalt focus-visible:ring-offset-2 disabled:opacity-45 disabled:pointer-events-none";
+  "relative inline-flex items-center justify-center gap-2 font-sans font-medium border border-transparent cursor-pointer select-none whitespace-nowrap transition-[background-color,color,opacity,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pro-cobalt focus-visible:ring-offset-2 disabled:opacity-45 disabled:pointer-events-none";
 
 const VARIANTS = {
   cobalt:
-    "bg-finzo-cobalt text-white shadow-e-cobalt hover:bg-finzo-cobalt-d rounded-finzo-pill",
+    "bg-pro-cobalt text-white shadow-pro-primary hover:bg-pro-cobalt-d rounded-pro-pill",
   ink:
-    "bg-finzo-ink text-white hover:bg-finzo-ink-2 rounded-finzo-pill",
+    "bg-pro-ink text-white hover:bg-pro-ink-2 rounded-pro-pill",
   ghost:
-    "bg-transparent text-finzo-ink border-finzo-ink hover:bg-finzo-ink hover:text-white rounded-finzo-pill",
+    "bg-transparent text-pro-ink border-pro-ink hover:bg-pro-ink hover:text-white rounded-pro-pill",
   quiet:
-    "bg-finzo-white text-finzo-ink border-finzo-line hover:bg-finzo-cream rounded-finzo-pill",
+    "bg-pro-white text-pro-ink border-pro-line hover:bg-pro-cream rounded-pro-pill",
 };
 
 const SIZES = {
   default: "px-[18px] py-3 text-[14.5px]",
-  mini:    "px-3 py-[7px] text-[12.5px] rounded-finzo-md",
+  mini:    "px-3 py-[7px] text-[12.5px] rounded-pro-md",
   lg:      "px-6 py-4 text-base",
 };
 

@@ -26,12 +26,12 @@ const PURCHASE_STATUS_LABELS = {
 };
 
 const PURCHASE_STATUS_COLORS = {
-  new_purchase:       "bg-sky-50 text-sky-700 border-sky-200",
-  first_apartment:    "bg-violet-50 text-violet-700 border-violet-200",
+  new_purchase:       "bg-accent-50 text-accent-700 border-accent-200",
+  first_apartment:    "bg-brand-50 text-brand-700 border-brand-200",
   upgrader:           "bg-indigo-50 text-indigo-700 border-indigo-200",
-  investment:         "bg-amber-50 text-amber-700 border-amber-200",
-  refinance:          "bg-blue-50 text-blue-700 border-blue-200",
-  bank_declined:      "bg-rose-50 text-rose-700 border-rose-200",
+  investment:         "bg-warning-50 text-warning-700 border-warning-200",
+  refinance:          "bg-brand-50 text-brand-700 border-brand-200",
+  bank_declined:      "bg-danger-50 text-danger-700 border-danger-200",
   bdi_credit_issue:   "bg-orange-50 text-orange-700 border-orange-200",
   senior_60plus:      "bg-teal-50 text-teal-700 border-teal-200",
   debt_consolidation: "bg-purple-50 text-purple-700 border-purple-200",
@@ -53,8 +53,8 @@ function FinzoScorePanel({ lead }) {
     createdAt:            lead.createdAt || lead.created_at,
     purchaseCount:        0,
   });
-  const scoreColor = pricing.finzoScore >= 70 ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-    : pricing.finzoScore >= 50 ? "text-amber-700 bg-amber-50 border-amber-200"
+  const scoreColor = pricing.finzoScore >= 70 ? "text-success-700 bg-success-50 border-success-200"
+    : pricing.finzoScore >= 50 ? "text-warning-700 bg-warning-50 border-warning-200"
     : "text-slate-600 bg-slate-50 border-slate-200";
   return (
     <div className="mt-2 space-y-1.5">
@@ -171,26 +171,26 @@ function pipelineLabel(stage) { return PIPELINE_STAGE_LABELS[stage] || stage || 
 function pipelineProgress(stage) { return PIPELINE_PROGRESS[stage] ?? 5; }
 
 function qualityColor(q) {
-  if (q === "חם") return "text-emerald-700 bg-emerald-50 border-emerald-200";
-  if (q === "בינוני") return "text-amber-700 bg-amber-50 border-amber-200";
-  if (q === "חלש") return "text-red-700 bg-red-50 border-red-200";
+  if (q === "חם") return "text-success-700 bg-success-50 border-success-200";
+  if (q === "בינוני") return "text-warning-700 bg-warning-50 border-warning-200";
+  if (q === "חלש") return "text-danger-700 bg-danger-50 border-danger-200";
   return "text-slate-600 bg-slate-50 border-slate-200";
 }
 
 function qualityDot(q) {
-  if (q === "חם") return "bg-emerald-500";
-  if (q === "בינוני") return "bg-amber-400";
-  if (q === "חלש") return "bg-red-400";
+  if (q === "חם") return "bg-success-500";
+  if (q === "בינוני") return "bg-warning-400";
+  if (q === "חלש") return "bg-danger-400";
   return "bg-slate-300";
 }
 
 function statusColor(s) {
   const st = s || "חדש";
-  if (st === "חדש") return "text-blue-700 bg-blue-50 border-blue-200";
-  if (st === "נשלח ליועץ") return "text-violet-700 bg-violet-50 border-violet-200";
-  if (st === "בטיפול") return "text-amber-700 bg-amber-50 border-amber-200";
-  if (st === "אושר עקרונית") return "text-emerald-700 bg-emerald-50 border-emerald-200";
-  if (st === "נסגר") return "text-green-900 bg-green-100 border-green-300";
+  if (st === "חדש") return "text-brand-700 bg-brand-50 border-brand-200";
+  if (st === "נשלח ליועץ") return "text-brand-700 bg-brand-50 border-brand-200";
+  if (st === "בטיפול") return "text-warning-700 bg-warning-50 border-warning-200";
+  if (st === "אושר עקרונית") return "text-success-700 bg-success-50 border-success-200";
+  if (st === "נסגר") return "text-success-900 bg-success-100 border-success-300";
   if (st === "לא רלוונטי") return "text-slate-500 bg-slate-100 border-slate-200";
   return "text-slate-600 bg-slate-50 border-slate-200";
 }
@@ -212,7 +212,7 @@ function Input({ label, value, onChange, placeholder, type = "text" }) {
         type={type} value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || label}
-        className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none focus:ring-1 focus:ring-finzo-cobalt/30"
+        className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none focus:ring-1 focus:ring-pro-cobalt/30"
       />
     </Field>
   );
@@ -224,7 +224,7 @@ function Select({ label, value, onChange, options, allowEmpty = false }) {
       <select
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none"
+        className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none"
       >
         {allowEmpty && <option value="">הכל</option>}
         {options.map((o) => <option key={o} value={o}>{o || "הכל"}</option>)}
@@ -235,14 +235,14 @@ function Select({ label, value, onChange, options, allowEmpty = false }) {
 
 function KpiCard({ label, value, sub, color = "default" }) {
   const colors = {
-    default: "bg-white border-finzo-line",
-    blue:    "bg-finzo-cobalt-l/50 border-finzo-cobalt/30",
-    green:   "bg-emerald-50 border-emerald-200",
-    amber:   "bg-amber-50 border-amber-200",
-    red:     "bg-red-50 border-red-200",
+    default: "bg-white border-pro-line",
+    blue:    "bg-pro-cobalt-l/50 border-pro-cobalt/30",
+    green:   "bg-success-50 border-success-200",
+    amber:   "bg-warning-50 border-warning-200",
+    red:     "bg-danger-50 border-danger-200",
   };
   return (
-    <div className={`rounded-2xl border p-4 shadow-e-1 ${colors[color] || colors.default}`}>
+    <div className={`rounded-2xl border p-4 shadow-pro-1 ${colors[color] || colors.default}`}>
       <span className="block text-xs font-bold text-mort-muted">{label}</span>
       <strong className="mt-1 block font-number text-2xl font-black text-mort-ink leading-none">{value}</strong>
       {sub && <span className="mt-1 block text-xs font-bold text-mort-muted">{sub}</span>}
@@ -250,7 +250,7 @@ function KpiCard({ label, value, sub, color = "default" }) {
   );
 }
 
-function ProgressBar({ pct, color = "bg-finzo-cobalt" }) {
+function ProgressBar({ pct, color = "bg-pro-cobalt" }) {
   const safe = Math.max(0, Math.min(100, pct || 0));
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -291,7 +291,7 @@ function SectionHead({ title, count }) {
 
 function Empty({ icon = "○", title, sub, action }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-finzo-line bg-white py-14 text-center shadow-e-1 px-6">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-pro-line bg-white py-14 text-center shadow-pro-1 px-6">
       <span className="text-4xl text-slate-300">{icon}</span>
       <h3 className="mt-3 text-base font-black text-mort-ink">{title}</h3>
       {sub && <p className="mt-1 max-w-sm text-sm font-bold text-mort-muted">{sub}</p>}
@@ -302,18 +302,18 @@ function Empty({ icon = "○", title, sub, action }) {
 
 function TableWrap({ children }) {
   return (
-    <div className="hidden overflow-hidden rounded-2xl border border-finzo-line bg-white shadow-e-1 lg:block">
+    <div className="hidden overflow-hidden rounded-2xl border border-pro-line bg-white shadow-pro-1 lg:block">
       <table className="w-full border-collapse text-sm">{children}</table>
     </div>
   );
 }
 
 function Th({ children, right = true }) {
-  return <th className={`border-b border-finzo-line bg-finzo-paper py-3 px-3 text-xs font-black uppercase tracking-wide text-mort-muted ${right ? "text-right" : "text-center"}`}>{children}</th>;
+  return <th className={`border-b border-pro-line bg-pro-paper py-3 px-3 text-xs font-black uppercase tracking-wide text-mort-muted ${right ? "text-right" : "text-center"}`}>{children}</th>;
 }
 
 function Td({ children, className = "" }) {
-  return <td className={`border-b border-finzo-line py-3 px-3 ${className}`}>{children}</td>;
+  return <td className={`border-b border-pro-line py-3 px-3 ${className}`}>{children}</td>;
 }
 
 // ── Lead editing panel (inline) ───────────────────────────────────────────────
@@ -356,7 +356,7 @@ function LeadEditPanel({ lead, statuses, commissionStatuses, onPatch }) {
         <Select label="סטטוס עמלה" value={lead.commissionStatus || "pending"} options={commissionStatuses} onChange={(v) => onPatch(lead.id, { commissionStatus: v })} />
       </div>
       <textarea
-        className="min-h-20 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none"
+        className="min-h-20 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none"
         defaultValue={lead.internalNotes || ""}
         onBlur={(e) => { if (e.target.value !== (lead.internalNotes || "")) onPatch(lead.id, { internalNotes: e.target.value }); }}
         placeholder="הערות פנימיות לצוות"
@@ -629,33 +629,33 @@ export default function AdminCrm() {
   const hasFilters = query || statusFilter || qualityFilter || priorityFilter || advisorFilter;
 
   const msgClass = messageType === "error"
-    ? "border-red-200 bg-red-50 text-red-800"
+    ? "border-danger-200 bg-danger-50 text-danger-800"
     : messageType === "success"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-      : "border-blue-200 bg-blue-50 text-blue-800";
+      ? "border-success-200 bg-success-50 text-success-800"
+      : "border-brand-200 bg-brand-50 text-brand-800";
 
   // ── Login screen ──────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return (
-      <main dir="rtl" className="flex min-h-screen items-center justify-center bg-finzo-paper px-4 py-12">
-        <Head><title>FINZO Back Office</title><meta name="robots" content="noindex,nofollow" /></Head>
+      <main dir="rtl" className="flex min-h-screen items-center justify-center bg-pro-paper px-4 py-12">
+        <Head><title>FINZO Back Office</title><meta name="robots" content="noindex,nofollow" /><link rel="icon" type="image/png" href="/brand/finzo/finzo-pro-app-icon.png" key="favicon" /></Head>
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
             <div className="mb-4 flex justify-center"><BrandLogo size="sm" withTagline={false} /></div>
-            <h1 className="mt-4 text-3xl font-black text-finzo-ink">Back Office</h1>
+            <h1 className="mt-4 text-3xl font-black text-pro-ink">Back Office</h1>
             <p className="mt-1.5 text-sm font-bold text-mort-muted">מערכת ניהול — גישה מורשית בלבד</p>
           </div>
-          <div className="rounded-3xl border border-finzo-line bg-white p-7 shadow-e-3">
+          <div className="rounded-3xl border border-pro-line bg-white p-7 shadow-pro-3">
             <form className="grid gap-4" onSubmit={login}>
               <div>
                 <label className="mb-1.5 block text-xs font-black text-mort-muted">סיסמת כניסה</label>
                 <input
-                  className="min-h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold text-mort-ink focus:border-finzo-cobalt focus:bg-white focus:outline-none focus:ring-2 focus:ring-finzo-cobalt/20"
+                  className="min-h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold text-mort-ink focus:border-pro-cobalt focus:bg-white focus:outline-none focus:ring-2 focus:ring-pro-cobalt/20"
                   type="password" value={password} onChange={(e) => setPassword(e.target.value)}
                   placeholder="הזן סיסמה" autoComplete="current-password"
                 />
               </div>
-              <button disabled={loading} className="min-h-12 rounded-2xl bg-finzo-ink px-5 py-3 font-black text-white disabled:opacity-60" type="submit">
+              <button disabled={loading} className="min-h-12 rounded-2xl bg-pro-ink px-5 py-3 font-black text-white disabled:opacity-60" type="submit">
                 {loading ? "מתחבר..." : "כניסה למערכת"}
               </button>
             </form>
@@ -675,17 +675,17 @@ export default function AdminCrm() {
   };
 
   return (
-    <div dir="rtl" className="flex min-h-screen bg-finzo-paper text-mort-text">
-      <Head><title>FINZO Back Office</title><meta name="robots" content="noindex,nofollow" /></Head>
+    <div dir="rtl" className="flex min-h-screen bg-pro-paper text-mort-text">
+      <Head><title>FINZO Back Office</title><meta name="robots" content="noindex,nofollow" /><link rel="icon" type="image/png" href="/brand/finzo/finzo-pro-app-icon.png" key="favicon" /></Head>
 
       {/* Mobile overlay */}
       {sidebarOpen && <div className="fixed inset-0 z-20 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
       {/* ── Sidebar ── */}
-      <aside className={`fixed inset-y-0 right-0 z-30 flex w-56 flex-col border-l border-finzo-line bg-white shadow-e-3 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0 lg:shadow-none ${sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}`}>
-        <div className="border-b border-finzo-line px-5 py-4">
+      <aside className={`fixed inset-y-0 right-0 z-30 flex w-56 flex-col border-l border-pro-line bg-white shadow-pro-3 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0 lg:shadow-none ${sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}`}>
+        <div className="border-b border-pro-line px-5 py-4">
           <BrandLogo size="sm" withTagline={false} />
-          <span className="mt-1.5 block text-sm font-black text-finzo-ink">Back Office</span>
+          <span className="mt-1.5 block text-sm font-black text-pro-ink">Back Office</span>
           <span className="mt-0.5 block text-xs font-bold text-mort-muted">מערכת ניהול עסקי</span>
         </div>
 
@@ -700,12 +700,12 @@ export default function AdminCrm() {
                   <button
                     type="button"
                     onClick={() => { setActiveSection(s.id); setSidebarOpen(false); setSelectedIds([]); }}
-                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-black transition-colors ${active ? "bg-finzo-cobalt text-white" : "text-mort-text hover:bg-finzo-paper"}`}
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-black transition-colors ${active ? "bg-pro-cobalt text-white" : "text-mort-text hover:bg-pro-paper"}`}
                   >
                     <span className="w-4 shrink-0 text-center text-sm leading-none">{s.icon}</span>
                     <span className="flex-1 text-right">{s.label}</span>
                     {badge != null && (
-                      <span className={`rounded-full px-1.5 py-0.5 text-xs font-black ${active ? "bg-white/30 text-white" : "bg-finzo-cobalt-l text-finzo-cobalt"}`}>{badge}</span>
+                      <span className={`rounded-full px-1.5 py-0.5 text-xs font-black ${active ? "bg-white/30 text-white" : "bg-pro-cobalt-l text-pro-cobalt"}`}>{badge}</span>
                     )}
                   </button>
                 </li>
@@ -714,9 +714,9 @@ export default function AdminCrm() {
           </ul>
         </nav>
 
-        <div className="border-t border-finzo-line px-5 py-3.5">
+        <div className="border-t border-pro-line px-5 py-3.5">
           <div className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <span className="h-1.5 w-1.5 rounded-full bg-success-400" />
             <span className="text-xs font-bold text-mort-muted">מחובר · מערכת פעילה</span>
           </div>
         </div>
@@ -726,26 +726,26 @@ export default function AdminCrm() {
       <div className="flex min-w-0 flex-1 flex-col">
 
         {/* Top header */}
-        <header className="sticky top-0 z-10 border-b border-finzo-line bg-white/95 backdrop-blur-sm">
+        <header className="sticky top-0 z-10 border-b border-pro-line bg-white/95 backdrop-blur-sm">
           <div className="flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-3">
-              <button type="button" className="rounded-lg border border-finzo-line p-1.5 text-mort-muted lg:hidden" onClick={() => setSidebarOpen(true)}>
+              <button type="button" className="rounded-lg border border-pro-line p-1.5 text-mort-muted lg:hidden" onClick={() => setSidebarOpen(true)}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 3h14M1 8h14M1 13h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
               </button>
               <div>
-                <h1 className="text-sm font-black text-finzo-ink leading-tight">{NAV_SECTIONS.find((s) => s.id === activeSection)?.label || "Back Office"}</h1>
+                <h1 className="text-sm font-black text-pro-ink leading-tight">{NAV_SECTIONS.find((s) => s.id === activeSection)?.label || "Back Office"}</h1>
                 <p className="text-xs font-bold text-mort-muted">FINZO · מערכת ניהול לידים, יועצים ומכירות</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="hidden items-center gap-1.5 rounded-full border border-finzo-line bg-finzo-paper px-3 py-1 sm:flex">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <div className="hidden items-center gap-1.5 rounded-full border border-pro-line bg-pro-paper px-3 py-1 sm:flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-success-400" />
                 <span className="text-xs font-bold text-mort-muted">{leads.length} לידים</span>
               </div>
-              <button onClick={() => { setShowCreateModal(true); setCreateError(""); }} className="rounded-xl bg-finzo-cobalt px-4 py-1.5 text-sm font-black text-white shadow-e-1 hover:bg-finzo-cobalt/90" type="button">
+              <button onClick={() => { setShowCreateModal(true); setCreateError(""); }} className="rounded-xl bg-pro-cobalt px-4 py-1.5 text-sm font-black text-white shadow-pro-1 hover:bg-pro-cobalt/90" type="button">
                 ➕ הוסף ליד
               </button>
-              <button disabled={loading} onClick={() => loadLeads()} className="rounded-xl border border-finzo-line bg-white px-4 py-1.5 text-sm font-black text-mort-ink shadow-e-1 hover:bg-finzo-paper disabled:opacity-60" type="button">
+              <button disabled={loading} onClick={() => loadLeads()} className="rounded-xl border border-pro-line bg-white px-4 py-1.5 text-sm font-black text-mort-ink shadow-pro-1 hover:bg-pro-paper disabled:opacity-60" type="button">
                 {loading ? "טוען..." : "רענון"}
               </button>
             </div>
@@ -784,7 +784,7 @@ export default function AdminCrm() {
 
               {/* Pipeline breakdown + advisor + quality */}
               <div className="grid gap-4 lg:grid-cols-3">
-                <div className="rounded-2xl border border-finzo-line bg-white p-5 shadow-e-1">
+                <div className="rounded-2xl border border-pro-line bg-white p-5 shadow-pro-1">
                   <SectionHead title="בקרת איכות לידים" />
                   <div className="mt-4 grid gap-3">
                     <BarChart label="חם" value={stats.hot} total={stats.total} />
@@ -792,7 +792,7 @@ export default function AdminCrm() {
                     <BarChart label="חלש" value={stats.weak} total={stats.total} />
                   </div>
                 </div>
-                <div className="rounded-2xl border border-finzo-line bg-white p-5 shadow-e-1">
+                <div className="rounded-2xl border border-pro-line bg-white p-5 shadow-pro-1">
                   <SectionHead title="שיוך ליועצים" />
                   <div className="mt-4 grid gap-3">
                     {advisorStats.length
@@ -800,7 +800,7 @@ export default function AdminCrm() {
                       : <p className="text-sm font-bold text-mort-muted">עדיין אין יועצים.</p>}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-finzo-line bg-white p-5 shadow-e-1">
+                <div className="rounded-2xl border border-pro-line bg-white p-5 shadow-pro-1">
                   <SectionHead title="מצב Pipeline" />
                   <div className="mt-4 grid gap-3">
                     <BarChart label="ניהול פעיל" value={stats.open} total={stats.total} />
@@ -811,7 +811,7 @@ export default function AdminCrm() {
               </div>
 
               {/* Revenue preview */}
-              <div className="rounded-2xl border border-finzo-line bg-white p-5 shadow-e-1">
+              <div className="rounded-2xl border border-pro-line bg-white p-5 shadow-pro-1">
                 <SectionHead title="תמצית הכנסות" />
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <KpiCard label="פוטנציאל חנות לידים" value={revenueStats.potentialStore > 0 ? formatILS(revenueStats.potentialStore) : "לא הוגדר"} />
@@ -909,14 +909,14 @@ export default function AdminCrm() {
                     </thead>
                     <tbody>
                       {marketplaceLeads.map((l) => (
-                        <tr key={l.id} className="hover:bg-finzo-paper/60">
+                        <tr key={l.id} className="hover:bg-pro-paper/60">
                           <Td><span className="font-black text-mort-ink">{l.name || "—"}</span></Td>
                           <Td className="text-sm text-mort-muted">{l.city || "—"}</Td>
                           <Td className="font-black text-mort-ink">{l.mortgageAmount ? formatILS(toNumber(l.mortgageAmount)) : "—"}</Td>
                           <Td><Pill color={qualityColor(l.leadQuality || "לא סווג")}>{l.leadQuality || "לא סווג"}</Pill></Td>
-                          <Td>{(() => { const p = computePricing({ hasName: Boolean(l.name), hasPhone: Boolean(l.phone), city: l.city, mortgageAmount: l.mortgageAmount, monthlyIncome: l.monthlyIncome, equityAmount: l.equityAmount, debtLevel: l.debtLevel, purchaseStatus: l.purchaseStatus, requestedContactTime: l.requestedContactTime, hasExistingMortgage: l.hasExistingMortgage, createdAt: l.createdAt, purchaseCount: 0 }); return <span className="text-xs font-black text-violet-700">{p.finzoScore}/100 · {p.quality}</span>; })()}</Td>
-                          <Td className="font-black text-mort-ink">{toNumber(l.storePrice) > 0 ? formatILS(toNumber(l.storePrice)) : (() => { const p = computePricing({ hasName: Boolean(l.name), hasPhone: Boolean(l.phone), city: l.city, mortgageAmount: l.mortgageAmount, monthlyIncome: l.monthlyIncome, equityAmount: l.equityAmount, debtLevel: l.debtLevel, purchaseStatus: l.purchaseStatus, requestedContactTime: l.requestedContactTime, hasExistingMortgage: l.hasExistingMortgage, createdAt: l.createdAt, purchaseCount: 0 }); return <span className="text-emerald-700 font-black">{formatILS(p.regularPrice)}</span>; })()}</Td>
-                          <Td className="font-bold text-mort-muted">{toNumber(l.exclusivePrice) > 0 ? formatILS(toNumber(l.exclusivePrice)) : (() => { const p = computePricing({ hasName: Boolean(l.name), hasPhone: Boolean(l.phone), city: l.city, mortgageAmount: l.mortgageAmount, monthlyIncome: l.monthlyIncome, equityAmount: l.equityAmount, debtLevel: l.debtLevel, purchaseStatus: l.purchaseStatus, requestedContactTime: l.requestedContactTime, hasExistingMortgage: l.hasExistingMortgage, createdAt: l.createdAt, purchaseCount: 0 }); return <span className="text-violet-600 font-black">{formatILS(p.exclusivePrice)}</span>; })()}</Td>
+                          <Td>{(() => { const p = computePricing({ hasName: Boolean(l.name), hasPhone: Boolean(l.phone), city: l.city, mortgageAmount: l.mortgageAmount, monthlyIncome: l.monthlyIncome, equityAmount: l.equityAmount, debtLevel: l.debtLevel, purchaseStatus: l.purchaseStatus, requestedContactTime: l.requestedContactTime, hasExistingMortgage: l.hasExistingMortgage, createdAt: l.createdAt, purchaseCount: 0 }); return <span className="text-xs font-black text-brand-700">{p.finzoScore}/100 · {p.quality}</span>; })()}</Td>
+                          <Td className="font-black text-mort-ink">{toNumber(l.storePrice) > 0 ? formatILS(toNumber(l.storePrice)) : (() => { const p = computePricing({ hasName: Boolean(l.name), hasPhone: Boolean(l.phone), city: l.city, mortgageAmount: l.mortgageAmount, monthlyIncome: l.monthlyIncome, equityAmount: l.equityAmount, debtLevel: l.debtLevel, purchaseStatus: l.purchaseStatus, requestedContactTime: l.requestedContactTime, hasExistingMortgage: l.hasExistingMortgage, createdAt: l.createdAt, purchaseCount: 0 }); return <span className="text-success-700 font-black">{formatILS(p.regularPrice)}</span>; })()}</Td>
+                          <Td className="font-bold text-mort-muted">{toNumber(l.exclusivePrice) > 0 ? formatILS(toNumber(l.exclusivePrice)) : (() => { const p = computePricing({ hasName: Boolean(l.name), hasPhone: Boolean(l.phone), city: l.city, mortgageAmount: l.mortgageAmount, monthlyIncome: l.monthlyIncome, equityAmount: l.equityAmount, debtLevel: l.debtLevel, purchaseStatus: l.purchaseStatus, requestedContactTime: l.requestedContactTime, hasExistingMortgage: l.hasExistingMortgage, createdAt: l.createdAt, purchaseCount: 0 }); return <span className="text-brand-600 font-black">{formatILS(p.exclusivePrice)}</span>; })()}</Td>
                           <Td><span className="text-xs font-bold text-mort-muted">{l.storeStatus || "—"}</span></Td>
                           <Td className="text-sm font-bold text-mort-muted">{l.buyerAdvisorId || "—"}</Td>
                           <Td className="text-xs text-mort-muted">{l.soldAt ? formatDateShort(l.soldAt) : "—"}</Td>
@@ -927,7 +927,7 @@ export default function AdminCrm() {
                   {/* Mobile cards */}
                   <div className="grid gap-3 lg:hidden">
                     {marketplaceLeads.map((l) => (
-                      <div key={l.id} className="rounded-2xl border border-finzo-line bg-white p-4 shadow-e-1">
+                      <div key={l.id} className="rounded-2xl border border-pro-line bg-white p-4 shadow-pro-1">
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <span className="font-black text-mort-ink">{l.name || "—"}</span>
@@ -981,7 +981,7 @@ export default function AdminCrm() {
                       {caseLeads.map((l) => {
                         const progress = l.overallProgressPercent ?? pipelineProgress(l.pipelineStage);
                         return (
-                          <tr key={l.id} className="hover:bg-finzo-paper/60">
+                          <tr key={l.id} className="hover:bg-pro-paper/60">
                             <Td>
                               <span className="block font-black text-mort-ink">{l.name || "—"}</span>
                               <span className="text-xs font-bold text-mort-muted">{l.mortgageType || l.mortgageAmount ? formatILS(toNumber(l.mortgageAmount)) : ""}</span>
@@ -991,7 +991,7 @@ export default function AdminCrm() {
                             </Td>
                             <Td className="w-36">
                               <div className="flex items-center gap-2">
-                                <ProgressBar pct={progress} color={progress >= 90 ? "bg-emerald-500" : progress >= 50 ? "bg-finzo-cobalt" : "bg-amber-400"} />
+                                <ProgressBar pct={progress} color={progress >= 90 ? "bg-success-500" : progress >= 50 ? "bg-pro-cobalt" : "bg-warning-400"} />
                                 <span className="shrink-0 text-xs font-black text-mort-muted">{progress}%</span>
                               </div>
                             </Td>
@@ -1014,7 +1014,7 @@ export default function AdminCrm() {
                     {caseLeads.map((l) => {
                       const progress = l.overallProgressPercent ?? pipelineProgress(l.pipelineStage);
                       return (
-                        <div key={l.id} className="rounded-2xl border border-finzo-line bg-white p-4 shadow-e-1">
+                        <div key={l.id} className="rounded-2xl border border-pro-line bg-white p-4 shadow-pro-1">
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <span className="font-black text-mort-ink">{l.name || "—"}</span>
@@ -1023,7 +1023,7 @@ export default function AdminCrm() {
                             <span className="shrink-0 text-sm font-black text-mort-ink">{progress}%</span>
                           </div>
                           <div className="mt-3">
-                            <ProgressBar pct={progress} color={progress >= 90 ? "bg-emerald-500" : progress >= 50 ? "bg-finzo-cobalt" : "bg-amber-400"} />
+                            <ProgressBar pct={progress} color={progress >= 90 ? "bg-success-500" : progress >= 50 ? "bg-pro-cobalt" : "bg-warning-400"} />
                           </div>
                           <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                             <div><span className="font-bold text-mort-muted">מסמכים: </span><strong>{l.documentsCompletionPercent != null ? `${l.documentsCompletionPercent}%` : "—"}</strong></div>
@@ -1047,14 +1047,14 @@ export default function AdminCrm() {
             <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
               {/* Create form */}
               <div>
-                <div className="rounded-2xl border border-finzo-line bg-white p-5 shadow-e-1">
+                <div className="rounded-2xl border border-pro-line bg-white p-5 shadow-pro-1">
                   <SectionHead title="הוספת יועץ חדש" />
                   <form className="mt-4 grid gap-3" onSubmit={createAdvisor}>
                     <Input label="שם מלא" value={newAdvisor.name} onChange={(v) => setNewAdvisor((c) => ({ ...c, name: v, advisorId: c.advisorId || v }))} />
                     <Input label="טלפון" value={newAdvisor.phone} onChange={(v) => setNewAdvisor((c) => ({ ...c, phone: v }))} />
                     <Input label="אימייל" value={newAdvisor.email} onChange={(v) => setNewAdvisor((c) => ({ ...c, email: v }))} />
                     <Input label="עמלה" value={newAdvisor.commissionAmount} onChange={(v) => setNewAdvisor((c) => ({ ...c, commissionAmount: v }))} />
-                    <button className="min-h-11 rounded-2xl bg-finzo-ink px-5 py-2.5 text-sm font-black text-white disabled:opacity-60" type="submit" disabled={loading}>
+                    <button className="min-h-11 rounded-2xl bg-pro-ink px-5 py-2.5 text-sm font-black text-white disabled:opacity-60" type="submit" disabled={loading}>
                       {loading ? "שומר..." : "הוסף יועץ"}
                     </button>
                   </form>
@@ -1063,7 +1063,7 @@ export default function AdminCrm() {
 
               {/* Advisor list */}
               <div>
-                <div className="rounded-2xl border border-finzo-line bg-white p-5 shadow-e-1">
+                <div className="rounded-2xl border border-pro-line bg-white p-5 shadow-pro-1">
                   <SectionHead title="יועצים פעילים" count={advisors.length} />
                   {advisors.length === 0 ? (
                     <p className="mt-4 text-sm font-bold text-mort-muted">אין יועצים עדיין. הוסף יועץ ראשון.</p>
@@ -1084,11 +1084,11 @@ export default function AdminCrm() {
                           {advisors.map((a) => {
                             const st = advisorStats.find((s) => s.id === advisorId(a));
                             return (
-                              <tr key={advisorId(a)} className="hover:bg-finzo-paper/60">
+                              <tr key={advisorId(a)} className="hover:bg-pro-paper/60">
                                 <Td><span className="font-black text-mort-ink">{advisorName(a)}</span></Td>
                                 <Td className="text-sm font-bold text-mort-muted">{advisorPhone(a) || "—"}</Td>
                                 <Td className="text-sm font-bold text-mort-muted">{advisorEmail(a) || "—"}</Td>
-                                <Td><span className="rounded-full bg-finzo-cobalt-l px-2 py-0.5 text-xs font-black text-finzo-cobalt">{st?.count ?? 0}</span></Td>
+                                <Td><span className="rounded-full bg-pro-cobalt-l px-2 py-0.5 text-xs font-black text-pro-cobalt">{st?.count ?? 0}</span></Td>
                                 <Td className="text-xs font-bold text-mort-muted">{st?.openCount ?? 0}</Td>
                                 <Td className="text-xs font-bold text-mort-muted">{st?.closedCount ?? 0}</Td>
                               </tr>
@@ -1101,12 +1101,12 @@ export default function AdminCrm() {
                         {advisors.map((a) => {
                           const st = advisorStats.find((s) => s.id === advisorId(a));
                           return (
-                            <div key={advisorId(a)} className="rounded-xl border border-finzo-line bg-finzo-paper p-4">
-                              <strong className="block font-black text-finzo-ink">{advisorName(a)}</strong>
+                            <div key={advisorId(a)} className="rounded-xl border border-pro-line bg-pro-paper p-4">
+                              <strong className="block font-black text-pro-ink">{advisorName(a)}</strong>
                               <span className="block text-xs font-bold text-mort-muted">{advisorPhone(a)}</span>
                               <span className="block text-xs font-bold text-mort-muted">{advisorEmail(a)}</span>
                               <div className="mt-2 flex gap-3 text-xs">
-                                <span className="rounded-full bg-finzo-cobalt-l px-2 py-0.5 font-black text-finzo-cobalt">{st?.count ?? 0} לידים</span>
+                                <span className="rounded-full bg-pro-cobalt-l px-2 py-0.5 font-black text-pro-cobalt">{st?.count ?? 0} לידים</span>
                                 <span className="font-bold text-mort-muted">{st?.openCount ?? 0} פתוחים</span>
                                 <span className="font-bold text-mort-muted">{st?.closedCount ?? 0} נסגרו</span>
                               </div>
@@ -1156,14 +1156,14 @@ export default function AdminCrm() {
                     </thead>
                     <tbody>
                       {leads.filter((l) => l.commissionStatus || l.expectedCommission || l.commissionAmount || l.actualCommission).map((l) => (
-                        <tr key={l.id} className="hover:bg-finzo-paper/60">
+                        <tr key={l.id} className="hover:bg-pro-paper/60">
                           <Td><span className="font-black text-mort-ink">{l.name || "—"}</span></Td>
                           <Td className="text-sm font-bold text-mort-muted">{l.assignedAdvisor || l.buyerAdvisorId || "—"}</Td>
                           <Td className="font-black text-mort-ink">{toNumber(l.expectedCommission) > 0 ? formatILS(toNumber(l.expectedCommission)) : "—"}</Td>
                           <Td className="font-black text-mort-ink">{toNumber(l.actualCommission || l.commissionAmount) > 0 ? formatILS(toNumber(l.actualCommission || l.commissionAmount)) : "—"}</Td>
                           <Td>
                             {l.commissionStatus
-                              ? <Pill color={l.commissionStatus === "paid" ? "text-emerald-700 bg-emerald-50 border-emerald-200" : l.commissionStatus === "invoiced" ? "text-amber-700 bg-amber-50 border-amber-200" : "text-slate-600 bg-slate-50 border-slate-200"}>
+                              ? <Pill color={l.commissionStatus === "paid" ? "text-success-700 bg-success-50 border-success-200" : l.commissionStatus === "invoiced" ? "text-warning-700 bg-warning-50 border-warning-200" : "text-slate-600 bg-slate-50 border-slate-200"}>
                                   {COMMISSION_STATUS_LABELS[l.commissionStatus] || l.commissionStatus}
                                 </Pill>
                               : <span className="text-xs text-mort-muted">—</span>}
@@ -1175,14 +1175,14 @@ export default function AdminCrm() {
                   </TableWrap>
                   <div className="grid gap-3 lg:hidden">
                     {leads.filter((l) => l.commissionStatus || l.expectedCommission || l.commissionAmount || l.actualCommission).map((l) => (
-                      <div key={l.id} className="rounded-2xl border border-finzo-line bg-white p-4 shadow-e-1">
+                      <div key={l.id} className="rounded-2xl border border-pro-line bg-white p-4 shadow-pro-1">
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <span className="font-black text-mort-ink">{l.name || "—"}</span>
                             <p className="mt-0.5 text-xs font-bold text-mort-muted">{l.assignedAdvisor || l.buyerAdvisorId || "לא שויך"}</p>
                           </div>
                           {l.commissionStatus && (
-                            <Pill color={l.commissionStatus === "paid" ? "text-emerald-700 bg-emerald-50 border-emerald-200" : "text-slate-600 bg-slate-50 border-slate-200"}>
+                            <Pill color={l.commissionStatus === "paid" ? "text-success-700 bg-success-50 border-success-200" : "text-slate-600 bg-slate-50 border-slate-200"}>
                               {COMMISSION_STATUS_LABELS[l.commissionStatus] || l.commissionStatus}
                             </Pill>
                           )}
@@ -1248,24 +1248,24 @@ function CreateLeadModal({ form, setForm, onSubmit, onClose, saving, error }) {
     purchaseCount: 0,
   };
   const pricing = computePricing(liveInput);
-  const scoreColor = pricing.finzoScore >= 70 ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-    : pricing.finzoScore >= 50 ? "text-amber-700 bg-amber-50 border-amber-200"
+  const scoreColor = pricing.finzoScore >= 70 ? "text-success-700 bg-success-50 border-success-200"
+    : pricing.finzoScore >= 50 ? "text-warning-700 bg-warning-50 border-warning-200"
     : "text-slate-600 bg-slate-50 border-slate-200";
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 px-4 py-8" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div dir="rtl" className="w-full max-w-2xl rounded-3xl border border-finzo-line bg-white shadow-e-3">
+      <div dir="rtl" className="w-full max-w-2xl rounded-3xl border border-pro-line bg-white shadow-pro-3">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-finzo-line px-6 py-4">
+        <div className="flex items-center justify-between border-b border-pro-line px-6 py-4">
           <div>
-            <h2 className="text-base font-black text-finzo-ink">➕ הוספת ליד ידנית</h2>
+            <h2 className="text-base font-black text-pro-ink">➕ הוספת ליד ידנית</h2>
             <p className="text-xs font-bold text-mort-muted">מקור: טלפון / WhatsApp / פייסבוק / הפנייה / אופליין</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg border border-finzo-line px-3 py-1.5 text-sm font-black text-mort-muted hover:bg-finzo-paper">✕</button>
+          <button type="button" onClick={onClose} className="rounded-lg border border-pro-line px-3 py-1.5 text-sm font-black text-mort-muted hover:bg-pro-paper">✕</button>
         </div>
 
         {/* Live FINZO Score preview */}
-        <div className="border-b border-finzo-line bg-finzo-paper/60 px-6 py-3">
+        <div className="border-b border-pro-line bg-pro-paper/60 px-6 py-3">
           <div className="flex flex-wrap items-center gap-3">
             <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-black ${scoreColor}`}>
               FINZO {pricing.finzoScore}/100 · {pricing.quality}
@@ -1289,19 +1289,19 @@ function CreateLeadModal({ form, setForm, onSubmit, onClose, saving, error }) {
             <p className="mb-3 text-xs font-black uppercase tracking-widest text-mort-muted">פרטי לקוח — חובה</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-black text-mort-muted">שם מלא <span className="text-red-500">*</span></label>
+                <label className="mb-1 block text-xs font-black text-mort-muted">שם מלא <span className="text-danger-500">*</span></label>
                 <input value={form.name} onChange={(e) => f("name")(e.target.value)} placeholder="שם הלקוח"
-                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none focus:ring-1 focus:ring-finzo-cobalt/30" />
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none focus:ring-1 focus:ring-pro-cobalt/30" />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-black text-mort-muted">טלפון <span className="text-red-500">*</span></label>
+                <label className="mb-1 block text-xs font-black text-mort-muted">טלפון <span className="text-danger-500">*</span></label>
                 <input value={form.phone} onChange={(e) => f("phone")(e.target.value)} placeholder="05X-XXXXXXX" type="tel"
-                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none focus:ring-1 focus:ring-finzo-cobalt/30" />
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none focus:ring-1 focus:ring-pro-cobalt/30" />
               </div>
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-black text-mort-muted">סוג תיק <span className="text-red-500">*</span></label>
+                <label className="mb-1 block text-xs font-black text-mort-muted">סוג תיק <span className="text-danger-500">*</span></label>
                 <select value={form.purchaseStatus} onChange={(e) => f("purchaseStatus")(e.target.value)}
-                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none">
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none">
                   <option value="">בחר סוג תיק...</option>
                   {Object.entries(PURCHASE_STATUS_LABELS).map(([v, l]) => (
                     <option key={v} value={v}>{l}</option>
@@ -1318,32 +1318,32 @@ function CreateLeadModal({ form, setForm, onSubmit, onClose, saving, error }) {
               <div>
                 <label className="mb-1 block text-xs font-black text-mort-muted">עיר מגורים</label>
                 <input value={form.city} onChange={(e) => f("city")(e.target.value)} placeholder="תל אביב"
-                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-black text-mort-muted">עיר הנכס</label>
                 <input value={form.propertyCity} onChange={(e) => f("propertyCity")(e.target.value)} placeholder="כמו עיר מגורים"
-                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-black text-mort-muted">סכום משכנתא (₪)</label>
                 <input value={form.mortgageAmount} onChange={(e) => f("mortgageAmount")(e.target.value)} placeholder="1,200,000" type="number"
-                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-black text-mort-muted">הון עצמי (₪)</label>
                 <input value={form.equityAmount} onChange={(e) => f("equityAmount")(e.target.value)} placeholder="400,000" type="number"
-                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-black text-mort-muted">הכנסה חודשית (₪)</label>
                 <input value={form.monthlyIncome} onChange={(e) => f("monthlyIncome")(e.target.value)} placeholder="15,000" type="number"
-                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-black text-mort-muted">רמת חוב חודשית (₪)</label>
                 <input value={form.debtLevel} onChange={(e) => f("debtLevel")(e.target.value)} placeholder="3,000" type="number"
-                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none" />
               </div>
             </div>
           </div>
@@ -1355,7 +1355,7 @@ function CreateLeadModal({ form, setForm, onSubmit, onClose, saving, error }) {
               <div>
                 <label className="mb-1 block text-xs font-black text-mort-muted">משכנתא קיימת?</label>
                 <select value={form.hasExistingMortgage} onChange={(e) => f("hasExistingMortgage")(e.target.value)}
-                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none">
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none">
                   <option value="">לא ידוע</option>
                   <option value="yes">כן</option>
                   <option value="no">לא</option>
@@ -1364,7 +1364,7 @@ function CreateLeadModal({ form, setForm, onSubmit, onClose, saving, error }) {
               <div>
                 <label className="mb-1 block text-xs font-black text-mort-muted">זמן חזרה מועדף</label>
                 <input value={form.requestedContactTime} onChange={(e) => f("requestedContactTime")(e.target.value)} placeholder="בוקר / צהריים / ערב"
-                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none" />
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none" />
               </div>
             </div>
           </div>
@@ -1374,16 +1374,16 @@ function CreateLeadModal({ form, setForm, onSubmit, onClose, saving, error }) {
             <p className="mb-3 text-xs font-black uppercase tracking-widest text-mort-muted">מקור ופרסום</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-black text-mort-muted">מקור הליד <span className="text-red-500">*</span></label>
+                <label className="mb-1 block text-xs font-black text-mort-muted">מקור הליד <span className="text-danger-500">*</span></label>
                 <select value={form.source} onChange={(e) => f("source")(e.target.value)}
-                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:outline-none">
+                  className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:outline-none">
                   {SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div className="flex items-end pb-1">
                 <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 w-full">
                   <input type="checkbox" checked={form.publishToStore} onChange={(e) => f("publishToStore")(e.target.checked)}
-                    className="h-4 w-4 rounded accent-violet-600" />
+                    className="h-4 w-4 rounded accent-brand-600" />
                   <div>
                     <span className="block text-sm font-black text-mort-ink">פרסם לחנות הלידים</span>
                     <span className="block text-xs font-bold text-mort-muted">יועצים יוכלו לרכוש ליד זה</span>
@@ -1395,15 +1395,15 @@ function CreateLeadModal({ form, setForm, onSubmit, onClose, saving, error }) {
 
           {/* Error */}
           {error && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{error}</div>
+            <div className="rounded-xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm font-bold text-danger-800">{error}</div>
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 border-t border-finzo-line pt-4">
-            <button type="button" onClick={onClose} disabled={saving} className="rounded-xl border border-finzo-line px-5 py-2.5 text-sm font-black text-mort-ink hover:bg-finzo-paper disabled:opacity-50">
+          <div className="flex justify-end gap-3 border-t border-pro-line pt-4">
+            <button type="button" onClick={onClose} disabled={saving} className="rounded-xl border border-pro-line px-5 py-2.5 text-sm font-black text-mort-ink hover:bg-pro-paper disabled:opacity-50">
               ביטול
             </button>
-            <button type="submit" disabled={saving} className="rounded-xl bg-finzo-ink px-6 py-2.5 text-sm font-black text-white hover:bg-finzo-ink/90 disabled:opacity-60">
+            <button type="submit" disabled={saving} className="rounded-xl bg-pro-ink px-6 py-2.5 text-sm font-black text-white hover:bg-pro-ink/90 disabled:opacity-60">
               {saving ? "שומר..." : "צור ליד"}
             </button>
           </div>
@@ -1430,12 +1430,12 @@ function LeadsView({
   return (
     <div className="grid gap-4">
       {/* Filters */}
-      <div className="rounded-2xl border border-finzo-line bg-white p-4 shadow-e-1">
+      <div className="rounded-2xl border border-pro-line bg-white p-4 shadow-pro-1">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
           <div className="flex-1">
             <label className="mb-1 block text-xs font-black text-mort-muted">חיפוש מרכז</label>
             <input
-              className="min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-mort-ink focus:border-finzo-cobalt focus:bg-white focus:outline-none"
+              className="min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-mort-ink focus:border-pro-cobalt focus:bg-white focus:outline-none"
               value={query} onChange={(e) => setQuery(e.target.value)}
               placeholder="שם, טלפון, עיר, מקור, יועץ..."
             />
@@ -1468,7 +1468,7 @@ function LeadsView({
               </select>
             </div>
             {hasFilters && (
-              <button type="button" onClick={clearFilters} className="min-h-10 self-end rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 hover:bg-red-100">
+              <button type="button" onClick={clearFilters} className="min-h-10 self-end rounded-xl border border-danger-200 bg-danger-50 px-3 py-2 text-sm font-black text-danger-700 hover:bg-danger-100">
                 נקה
               </button>
             )}
@@ -1477,40 +1477,40 @@ function LeadsView({
       </div>
 
       {/* Bulk actions */}
-      <div className="rounded-2xl border border-finzo-line bg-white p-3 shadow-e-1">
+      <div className="rounded-2xl border border-pro-line bg-white p-3 shadow-pro-1">
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 text-sm font-black text-mort-ink">
             <input type="checkbox" checked={leads.length > 0 && selectedIds.length === leads.length} onChange={toggleSelectAll} />
             <span>הכל</span>
           </label>
-          {selectedIds.length > 0 && <span className="rounded-full bg-finzo-cobalt-l px-2 py-0.5 text-xs font-black text-finzo-cobalt">{selectedIds.length} נבחרו</span>}
+          {selectedIds.length > 0 && <span className="rounded-full bg-pro-cobalt-l px-2 py-0.5 text-xs font-black text-pro-cobalt">{selectedIds.length} נבחרו</span>}
           <div className="mr-auto flex flex-wrap gap-1.5">
-            <button type="button" onClick={() => bulkPatch({ leadQuality: "חם", leadPriority: "גבוה" })} disabled={!selectedIds.length} className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-black text-emerald-800 disabled:opacity-40">סמן חם</button>
-            <button type="button" onClick={() => bulkPatch({ followUpStage: "ניסיון 1" })} disabled={!selectedIds.length} className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-black text-amber-800 disabled:opacity-40">מעקב ניסיון 1</button>
+            <button type="button" onClick={() => bulkPatch({ leadQuality: "חם", leadPriority: "גבוה" })} disabled={!selectedIds.length} className="rounded-lg border border-success-200 bg-success-50 px-2.5 py-1.5 text-xs font-black text-success-800 disabled:opacity-40">סמן חם</button>
+            <button type="button" onClick={() => bulkPatch({ followUpStage: "ניסיון 1" })} disabled={!selectedIds.length} className="rounded-lg border border-warning-200 bg-warning-50 px-2.5 py-1.5 text-xs font-black text-warning-800 disabled:opacity-40">מעקב ניסיון 1</button>
             <button type="button" onClick={() => bulkPatch({ leadStatus: "לא רלוונטי", status: "לא רלוונטי" })} disabled={!selectedIds.length} className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-black text-slate-700 disabled:opacity-40">לא רלוונטי</button>
             <div className="flex items-center gap-1">
               <select className="min-h-8 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-mort-ink" value={bulkAdvisorId} onChange={(e) => setBulkAdvisorId(e.target.value)}>
                 <option value="">שיוך ליועץ...</option>
                 {advisors.map((a) => <option key={advisorId(a)} value={advisorId(a)}>{advisorName(a)}</option>)}
               </select>
-              <button type="button" onClick={bulkAssignAdvisor} disabled={!selectedIds.length || !bulkAdvisorId} className="min-h-8 rounded-lg bg-finzo-ink px-2.5 py-1 text-xs font-black text-white disabled:opacity-40">שייך</button>
+              <button type="button" onClick={bulkAssignAdvisor} disabled={!selectedIds.length || !bulkAdvisorId} className="min-h-8 rounded-lg bg-pro-ink px-2.5 py-1 text-xs font-black text-white disabled:opacity-40">שייך</button>
             </div>
-            <button type="button" onClick={bulkDeleteLeads} disabled={!selectedIds.length} className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-black text-red-700 disabled:opacity-40">מחק</button>
+            <button type="button" onClick={bulkDeleteLeads} disabled={!selectedIds.length} className="rounded-lg border border-danger-200 bg-danger-50 px-2.5 py-1.5 text-xs font-black text-danger-700 disabled:opacity-40">מחק</button>
           </div>
         </div>
       </div>
 
       {/* Loading */}
       {loading && allLeads.length === 0 && (
-        <div className="flex items-center justify-center rounded-2xl border border-finzo-line bg-white py-14">
-          <div className="h-7 w-7 animate-spin rounded-full border-2 border-finzo-cobalt border-t-transparent" />
+        <div className="flex items-center justify-center rounded-2xl border border-pro-line bg-white py-14">
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-pro-cobalt border-t-transparent" />
         </div>
       )}
 
       {/* Empty */}
       {!loading && leads.length === 0 && (
         <Empty title={emptyTitle} sub={emptySub}
-          action={hasFilters && <button type="button" onClick={clearFilters} className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-black text-mort-ink hover:bg-slate-100">נקה סינון</button>}
+          action={hasFilters && <button type="button" onClick={clearFilters} className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-black text-mort-ink hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 transition-colors">נקה סינון</button>}
         />
       )}
 
@@ -1540,16 +1540,16 @@ function LeadsView({
               const isExpanded = expandedLeadId === lead.id;
               return (
                 <>
-                  <tr key={lead.id} className={`transition-colors hover:bg-finzo-paper/50 ${selectedIds.includes(lead.id) ? "bg-finzo-cobalt-l/30" : ""}`}>
+                  <tr key={lead.id} className={`transition-colors hover:bg-pro-paper/50 ${selectedIds.includes(lead.id) ? "bg-pro-cobalt-l/30" : ""}`}>
                     <Td className="w-10 text-center">
                       <input type="checkbox" checked={selectedIds.includes(lead.id)} onChange={() => toggleSelected(lead.id)} />
                     </Td>
                     <Td>
                       <span className="block font-black text-mort-ink">{lead.name || "—"}</span>
-                      {isSaving && <span className="text-xs font-bold text-amber-600">שומר...</span>}
+                      {isSaving && <span className="text-xs font-bold text-warning-600">שומר...</span>}
                     </Td>
                     <Td>
-                      <a href={lead.phone ? `tel:${lead.phone}` : undefined} className="font-bold text-finzo-cobalt hover:underline">{lead.phone || "—"}</a>
+                      <a href={lead.phone ? `tel:${lead.phone}` : undefined} className="font-bold text-pro-cobalt hover:underline">{lead.phone || "—"}</a>
                     </Td>
                     <Td className="text-sm font-bold text-mort-muted">{lead.city || lead.propertyCity || "—"}</Td>
                     <Td><PurchaseStatusBadge value={lead.purchaseStatus} /></Td>
@@ -1565,14 +1565,14 @@ function LeadsView({
                     <Td className="text-xs font-bold text-mort-muted">{formatDateShort(lead.createdAt)}</Td>
                     <Td>
                       <div className="flex gap-1.5">
-                        <button type="button" onClick={() => setExpandedLeadId(isExpanded ? null : lead.id)} className="rounded-lg border border-finzo-line bg-finzo-paper px-2.5 py-1 text-xs font-black text-mort-ink hover:bg-finzo-cream">{isExpanded ? "סגור" : "עריכה"}</button>
-                        <button type="button" onClick={() => deleteSingleLead(lead.id)} className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-black text-red-700 hover:bg-red-100">מחק</button>
+                        <button type="button" onClick={() => setExpandedLeadId(isExpanded ? null : lead.id)} className="rounded-lg border border-pro-line bg-pro-paper px-2.5 py-1 text-xs font-black text-mort-ink hover:bg-pro-cream">{isExpanded ? "סגור" : "עריכה"}</button>
+                        <button type="button" onClick={() => deleteSingleLead(lead.id)} className="rounded-lg border border-danger-200 bg-danger-50 px-2.5 py-1 text-xs font-black text-danger-700 hover:bg-danger-100">מחק</button>
                       </div>
                     </Td>
                   </tr>
                   {isExpanded && (
-                    <tr key={`${lead.id}-exp`} className="bg-finzo-paper/40">
-                      <td colSpan={10} className="border-b border-finzo-line">
+                    <tr key={`${lead.id}-exp`} className="bg-pro-paper/40">
+                      <td colSpan={10} className="border-b border-pro-line">
                         <LeadEditPanel lead={lead} statuses={statuses} commissionStatuses={commissionStatuses} onPatch={patchLead} />
                       </td>
                     </tr>
@@ -1593,7 +1593,7 @@ function LeadsView({
             const isSaving = savingId === lead.id;
             const isExpanded = expandedLeadId === lead.id;
             return (
-              <article key={lead.id} className="overflow-hidden rounded-2xl border border-finzo-line bg-white shadow-e-1">
+              <article key={lead.id} className="overflow-hidden rounded-2xl border border-pro-line bg-white shadow-pro-1">
                 <div className="flex items-start gap-2 p-4">
                   <input className="mt-1 shrink-0" type="checkbox" checked={selectedIds.includes(lead.id)} onChange={() => toggleSelected(lead.id)} />
                   <div className="min-w-0 flex-1">
@@ -1601,7 +1601,7 @@ function LeadsView({
                       <span className="font-black text-mort-ink">{lead.name || "ליד"}</span>
                       <Pill color={statusColor(leadStatus)}>{leadStatus}</Pill>
                       <span className="flex items-center gap-1"><span className={`h-1.5 w-1.5 rounded-full ${qualityDot(quality)}`} /><span className="text-xs font-black text-mort-muted">{quality}</span></span>
-                      {isSaving && <span className="text-xs font-bold text-amber-600">שומר...</span>}
+                      {isSaving && <span className="text-xs font-bold text-warning-600">שומר...</span>}
                     </div>
                     <p className="mt-0.5 text-xs font-bold text-mort-muted">{formatDateShort(lead.createdAt)} · {lead.phone || "—"} · {lead.city || "—"}</p>
                     {lead.purchaseStatus && <div className="mt-1"><PurchaseStatusBadge value={lead.purchaseStatus} /></div>}
@@ -1609,13 +1609,13 @@ function LeadsView({
                     {lead.assignedAdvisor && <p className="text-xs font-bold text-mort-muted">יועץ: {lead.assignedAdvisor}</p>}
                   </div>
                   <div className="flex shrink-0 gap-1.5">
-                    {lead.phone && <a href={`tel:${lead.phone}`} className="rounded-lg border border-finzo-line bg-finzo-paper px-2 py-1 text-xs font-black text-mort-ink">חיוג</a>}
-                    <button type="button" onClick={() => setExpandedLeadId(isExpanded ? null : lead.id)} className="rounded-lg border border-finzo-line bg-finzo-paper px-2 py-1 text-xs font-black text-mort-ink">{isExpanded ? "סגור" : "עריכה"}</button>
-                    <button type="button" onClick={() => deleteSingleLead(lead.id)} className="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs font-black text-red-700">מחק</button>
+                    {lead.phone && <a href={`tel:${lead.phone}`} className="rounded-lg border border-pro-line bg-pro-paper px-2 py-1 text-xs font-black text-mort-ink">חיוג</a>}
+                    <button type="button" onClick={() => setExpandedLeadId(isExpanded ? null : lead.id)} className="rounded-lg border border-pro-line bg-pro-paper px-2 py-1 text-xs font-black text-mort-ink">{isExpanded ? "סגור" : "עריכה"}</button>
+                    <button type="button" onClick={() => deleteSingleLead(lead.id)} className="rounded-lg border border-danger-200 bg-danger-50 px-2 py-1 text-xs font-black text-danger-700">מחק</button>
                   </div>
                 </div>
                 {isExpanded && (
-                  <div className="border-t border-finzo-line">
+                  <div className="border-t border-pro-line">
                     <LeadEditPanel lead={lead} statuses={statuses} commissionStatuses={commissionStatuses} onPatch={patchLead} />
                   </div>
                 )}

@@ -26,7 +26,7 @@ export default function UnlockPage() {
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2.5">
             <BrandLogo mode="dark" size="md" withTagline={false} />
-            <span className="text-sm font-black text-violet-400 bg-violet-400/10 border border-violet-400/30 px-2.5 py-0.5 rounded-full">
+            <span className="text-sm font-black text-brand-400 bg-brand-400/10 border border-brand-400/30 px-2.5 py-0.5 rounded-full">
               Beta
             </span>
           </div>
@@ -35,11 +35,11 @@ export default function UnlockPage() {
         {/* Card */}
         <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden">
           {/* Card header */}
-          <div className="bg-gradient-to-l from-violet-700 to-violet-900 px-7 py-6">
+          <div className="bg-gradient-to-l from-brand-700 to-brand-900 px-7 py-6">
             <h1 className="text-lg font-black text-white leading-snug">
               FINZO נמצאת בשדרוג
             </h1>
-            <p className="mt-1.5 text-sm font-medium text-violet-200 leading-relaxed">
+            <p className="mt-1.5 text-sm font-medium text-brand-200 leading-relaxed">
               המערכת נמצאת כעת בשיפור ובבדיקות לפני השקה.
               הכניסה זמנית למורשים בלבד.
             </p>
@@ -64,25 +64,25 @@ export default function UnlockPage() {
                 autoFocus
                 required
                 placeholder="הזינו סיסמת כניסה"
-                className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white placeholder-slate-400"
+                className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white placeholder-slate-400"
               />
             </div>
 
             {hasError && (
-              <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-bold text-red-700">
+              <div className="rounded-2xl bg-danger-50 border border-danger-200 px-4 py-3 text-sm font-bold text-danger-700">
                 סיסמה שגויה
               </div>
             )}
 
             {isMisconfigured && (
-              <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-bold text-red-700">
+              <div className="rounded-2xl bg-danger-50 border border-danger-200 px-4 py-3 text-sm font-bold text-danger-700">
                 שגיאת הגדרות שרת — לא ניתן לאמת סיסמה כעת
               </div>
             )}
 
             <button
               type="submit"
-              className="w-full bg-violet-700 hover:bg-violet-800 active:bg-violet-900 text-white font-black py-3.5 rounded-2xl transition-colors text-sm"
+              className="w-full bg-brand-700 hover:bg-brand-800 active:bg-brand-900 text-white font-black py-3.5 rounded-2xl transition-colors text-sm"
             >
               כניסה
             </button>

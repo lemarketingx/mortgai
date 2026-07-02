@@ -71,7 +71,7 @@ export default function AdvisorResetPassword() {
                 <div className="text-5xl mb-4">✅</div>
                 <h1 className="text-xl font-black text-slate-950 dark:text-slate-100 mb-3">הסיסמה עודכנה בהצלחה</h1>
                 <p className="text-slate-500 dark:text-slate-400 text-sm leading-6">כעת תוכלו להתחבר עם הסיסמה החדשה שלכם.</p>
-                <Link href="/advisor/login" className="mt-8 inline-block w-full text-center bg-violet-700 hover:bg-violet-800 text-white font-black py-3.5 rounded-2xl transition-colors text-sm">
+                <Link href="/advisor/login" className="mt-8 inline-block w-full text-center bg-brand-700 hover:bg-brand-800 text-white font-black py-3.5 rounded-2xl transition-colors text-sm">
                   כניסה למערכת
                 </Link>
               </div>
@@ -82,7 +82,7 @@ export default function AdvisorResetPassword() {
                 <p className="text-slate-500 dark:text-slate-400 text-sm leading-6 mb-6">
                   הקישור אינו תקין או שפג תוקפו. אנא בקשו קישור שחזור חדש.
                 </p>
-                <Link href="/advisor/forgot-password" className="inline-block w-full text-center bg-violet-700 hover:bg-violet-800 text-white font-black py-3.5 rounded-2xl transition-colors text-sm">
+                <Link href="/advisor/forgot-password" className="inline-block w-full text-center bg-brand-700 hover:bg-brand-800 text-white font-black py-3.5 rounded-2xl transition-colors text-sm">
                   בקשת קישור חדש
                 </Link>
               </div>
@@ -101,7 +101,7 @@ export default function AdvisorResetPassword() {
                       value={password}
                       onChange={(e) => { setPassword(e.target.value); setError(""); }}
                       placeholder="לפחות 8 תווים"
-                      className="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white dark:bg-slate-800 dark:text-slate-100"
+                      className="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-slate-800 dark:text-slate-100"
                       required
                       autoComplete="new-password"
                     />
@@ -114,14 +114,14 @@ export default function AdvisorResetPassword() {
                       value={confirm}
                       onChange={(e) => { setConfirm(e.target.value); setError(""); }}
                       placeholder="הזינו שוב את הסיסמה"
-                      className="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white dark:bg-slate-800 dark:text-slate-100"
+                      className="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-slate-800 dark:text-slate-100"
                       required
                       autoComplete="new-password"
                     />
                   </div>
 
                   {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-2xl px-4 py-3 text-sm text-red-700 dark:text-red-400 font-bold">
+                    <div className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-700 rounded-2xl px-4 py-3 text-sm text-danger-700 dark:text-danger-400 font-bold">
                       {error}
                     </div>
                   )}
@@ -129,14 +129,14 @@ export default function AdvisorResetPassword() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-violet-700 hover:bg-violet-800 disabled:opacity-60 text-white font-black py-3.5 rounded-2xl transition-colors text-sm"
+                    className="w-full bg-brand-700 hover:bg-brand-800 disabled:opacity-60 text-white font-black py-3.5 rounded-2xl transition-colors text-sm"
                   >
                     {loading ? "שומר..." : "עדכון סיסמה"}
                   </button>
                 </form>
 
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-6 text-center">
-                  <Link href="/advisor/login" className="text-violet-600 dark:text-violet-400 hover:underline font-bold">
+                  <Link href="/advisor/login" className="text-brand-600 dark:text-brand-400 hover:underline font-bold">
                     ← חזרה לכניסה
                   </Link>
                 </p>

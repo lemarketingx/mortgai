@@ -102,7 +102,7 @@ export default function AdvisorProfile() {
     );
   }
 
-  const inputCls = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-300 bg-white dark:bg-slate-800 dark:text-slate-100";
+  const inputCls = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 bg-white dark:bg-slate-800 dark:text-slate-100";
 
   return (
     <>
@@ -122,16 +122,16 @@ export default function AdvisorProfile() {
             </Link>
             <h1 className="text-xl font-black text-slate-950 dark:text-slate-100 flex-1">פרופיל יועץ</h1>
             {savedFlash && (
-              <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+              <span className="text-xs font-black text-success-600 dark:text-success-400">
                 {syncStatus === "synced" ? "נשמר וסונכרן ✓" : syncStatus === "local" ? "נשמר מקומית ✓" : "נשמר ✓"}
               </span>
             )}
           </div>
 
           {/* Sync notice */}
-          <div className="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3">
+          <div className="flex items-start gap-3 bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800 rounded-xl px-4 py-3">
             <span className="text-base shrink-0">☁️</span>
-            <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+            <p className="text-xs font-bold text-success-800 dark:text-success-300">
               פרטי הפרופיל מסונכרנים עם הפלטפורמה ונשמרים גם מקומית לגישה מהירה.
             </p>
           </div>
@@ -213,7 +213,7 @@ export default function AdvisorProfile() {
                       onClick={() => toggleSpecialty(s.key)}
                       className={`rounded-xl px-3 py-3 text-sm font-black border text-right transition-all flex items-center gap-2 ${
                         selected
-                          ? "bg-violet-50 dark:bg-violet-900/20 border-violet-300 dark:border-violet-700 text-violet-800 dark:text-violet-300"
+                          ? "bg-brand-50 dark:bg-brand-900/20 border-brand-300 dark:border-brand-700 text-brand-800 dark:text-brand-300"
                           : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
                       }`}>
                       <span className={`text-lg shrink-0 transition-transform ${selected ? "scale-110" : ""}`}>
@@ -229,7 +229,7 @@ export default function AdvisorProfile() {
 
           {/* ── CTA ─────────────────────────────────────────────────────────── */}
           <button type="button" onClick={handleSave} disabled={syncing}
-            className={`w-full rounded-2xl bg-violet-700 text-white font-black py-3.5 text-sm hover:bg-violet-800 active:bg-violet-900 transition-colors ${syncing ? "opacity-60" : ""}`}>
+            className={`w-full rounded-2xl bg-brand-700 text-white font-black py-3.5 text-sm hover:bg-brand-800 active:bg-brand-900 transition-colors ${syncing ? "opacity-60" : ""}`}>
             {syncing ? "שומר ומסנכרן..." : "שמור פרופיל"}
           </button>
 

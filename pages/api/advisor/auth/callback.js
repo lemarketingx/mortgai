@@ -31,7 +31,14 @@ export default async function handler(req, res) {
   }
 
   // Exchange PKCE code for Supabase user
-  const { error: exchError, user: authUser } = await supabaseExchangePkce(code, codeVerifier);
+  let exchResult;
+  try {
+    exchResult = await supabaseExchangePkce(code, codeVerifier);
+  } catch (e) {
+    console.error("[oauth/callback] supabaseExchangePkce threw:", e?.message);
+    return res.redirect("/advisor/login?error=oauth_failed");
+  }
+  const { error: exchError, user: authUser } = exchResult;
   if (exchError || !authUser?.id) {
     console.error("[oauth/callback] exchange failed:", exchError);
     return res.redirect("/advisor/login?error=oauth_failed");

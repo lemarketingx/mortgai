@@ -52,7 +52,7 @@ export default function AccessibilityPage() {
               <h2 className="text-xl font-black text-slate-900 mb-3">דיווח על בעיית נגישות</h2>
               <p>
                 אם נתקלתם בבעיה כלשהי בגישה לתכנים באתר, נשמח לקבל פנייה לכתובת:{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-violet-700 hover:underline">lemarketingx@gmail.com</a>
+                <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">lemarketingx@gmail.com</a>
               </p>
               <p className="mt-2">
                 נחזור אליכם בהקדם ונעשה כמיטב יכולתנו לסייע.
@@ -62,7 +62,7 @@ export default function AccessibilityPage() {
           </div>
 
           <div className="mt-12 border-t border-slate-200 pt-6 text-sm text-slate-400">
-            <Link href="/" className="text-violet-700 hover:underline font-bold">← חזרה לעמוד הבית</Link>
+            <Link href="/" className="text-brand-700 hover:underline font-bold">← חזרה לעמוד הבית</Link>
           </div>
         </main>
       </div>

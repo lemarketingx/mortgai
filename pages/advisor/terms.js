@@ -22,7 +22,7 @@ export default function AdvisorTermsPage() {
           <h1 className="text-3xl font-black text-slate-900 sm:text-4xl">תנאי שימוש — FINZO PRO</h1>
           <p className="mt-2 text-sm text-slate-500">עדכון אחרון: ינואר 2026 | מיועד ליועצי משכנתאות בלבד</p>
 
-          <div className="mt-6 rounded-2xl bg-amber-50 border border-amber-200 px-5 py-4 text-sm font-bold text-amber-800">
+          <div className="mt-6 rounded-2xl bg-warning-50 border border-warning-200 px-5 py-4 text-sm font-bold text-warning-800">
             קריאת מסמך זה וקבלתו הינה תנאי הכרחי לשימוש בפלטפורמת FINZO PRO ולרכישת לידים.
           </div>
 
@@ -40,7 +40,7 @@ export default function AdvisorTermsPage() {
               <p className="mb-3">
                 ליד נחשב תקין אם הפרטים שנמסרו על ידי הלקוח תואמים לנתונים בפלטפורמה. FINZO אינה מתחייבת לכך שכל ליד יגיע לעסקה.
               </p>
-              <p className="font-bold text-slate-900 mb-2">הדברים הבאים <span className="text-red-700">אינם</span> מהווים עילה להחזר, זיכוי או החלפת ליד:</p>
+              <p className="font-bold text-slate-900 mb-2">הדברים הבאים <span className="text-danger-700">אינם</span> מהווים עילה להחזר, זיכוי או החלפת ליד:</p>
               <ul className="list-disc list-inside space-y-1 mr-4 text-slate-700">
                 <li>הלקוח אינו עונה לשיחות או להודעות</li>
                 <li>הלקוח שינה את דעתו או אינו מעוניין עוד בייעוץ</li>
@@ -100,14 +100,14 @@ export default function AdvisorTermsPage() {
               <h2 className="text-xl font-black text-slate-900 mb-3">7. יצירת קשר</h2>
               <p>
                 לשאלות:{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-violet-700 hover:underline">lemarketingx@gmail.com</a>
+                <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">lemarketingx@gmail.com</a>
               </p>
             </section>
           </div>
 
           <div className="mt-12 border-t border-slate-200 pt-6 flex flex-wrap gap-4 text-sm">
-            <Link href="/advisor/register" className="text-violet-700 hover:underline font-bold">← הרשמה כיועץ</Link>
-            <Link href="/advisor/login" className="text-violet-700 hover:underline font-bold">כניסה לפורטל</Link>
+            <Link href="/advisor/register" className="text-brand-700 hover:underline font-bold">← הרשמה כיועץ</Link>
+            <Link href="/advisor/login" className="text-brand-700 hover:underline font-bold">כניסה לפורטל</Link>
             <Link href="/" className="text-slate-400 hover:underline font-bold">חזרה לעמוד הבית</Link>
           </div>
         </main>

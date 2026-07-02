@@ -4,6 +4,7 @@ import { getClientIp, checkRateLimit, recordRateLimitHit } from "../../lib/rateL
 const COOKIE_NAME = "finzo_access";
 const TOKEN_SUFFIX = ":finzo-access-v1";
 const MAX_AGE = 7 * 24 * 60 * 60;
+const IS_DEV = process.env.NODE_ENV !== "production";
 
 function deriveToken(password) {
   return createHash("sha256").update(password + TOKEN_SUFFIX).digest("hex");
@@ -36,7 +37,7 @@ export default function handler(req, res) {
   const sitePassword = process.env.SITE_LOCK_PASSWORD;
   const next = safeNext(req.body?.next);
 
-  console.log("[unlock] lockEnabled:", lockEnabled, "passwordEnvExists:", !!sitePassword);
+  if (IS_DEV) console.log("[unlock] lockEnabled:", lockEnabled, "passwordEnvExists:", !!sitePassword);
 
   // Lock disabled — let them through
   if (!lockEnabled) {
@@ -72,6 +73,6 @@ export default function handler(req, res) {
     "Set-Cookie",
     `${COOKIE_NAME}=${token}; Path=/; Max-Age=${MAX_AGE}; HttpOnly; SameSite=Lax${secure}`
   );
-  console.log("[unlock] cookieSet: true");
+  if (IS_DEV) console.log("[unlock] cookieSet: true");
   return res.redirect(302, next);
 }

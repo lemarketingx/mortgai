@@ -29,7 +29,7 @@ export default function PrivacyPage() {
               <p>
                 FINZO הוא שירות דיגיטלי המופעל על ידי <strong>ל.א.ה שיווק</strong> (להלן: "החברה", "אנחנו").
                 ניתן ליצור איתנו קשר בכתובת:{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-violet-700 hover:underline">lemarketingx@gmail.com</a>.
+                <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">lemarketingx@gmail.com</a>.
               </p>
             </section>
 
@@ -77,7 +77,7 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-black text-slate-900 mb-3">6. מחיקת מידע</h2>
               <p>
                 ניתן לפנות אלינו בבקשה למחיקת המידע שלכם בכתובת{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-violet-700 hover:underline">lemarketingx@gmail.com</a>.
+                <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">lemarketingx@gmail.com</a>.
                 נטפל בבקשה בהקדם ובהתאם להוראות הדין.
               </p>
             </section>
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
               <p>
                 בעצם מסירת פרטיכם אתם מסכימים לקבל יצירת קשר מחברת ל.א.ה שיווק ו/או מיועצים מורשים לצורך מתן שירות.
                 ניתן לבקש הפסקת פנייה שיווקית בכל עת באמצעות פנייה ל-{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-violet-700 hover:underline">lemarketingx@gmail.com</a>.
+                <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">lemarketingx@gmail.com</a>.
               </p>
             </section>
 
@@ -95,7 +95,7 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-black text-slate-900 mb-3">8. עוגיות (Cookies)</h2>
               <p>
                 האתר עשוי להשתמש בעוגיות לצורך שיפור חוויית המשתמש ואנליטיקה.
-                ראו את <Link href="/cookies" className="text-violet-700 hover:underline">מדיניות העוגיות</Link> לפרטים נוספים.
+                ראו את <Link href="/cookies" className="text-brand-700 hover:underline">מדיניות העוגיות</Link> לפרטים נוספים.
               </p>
             </section>
 
@@ -110,13 +110,13 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-black text-slate-900 mb-3">10. יצירת קשר</h2>
               <p>
                 לכל שאלה בנושא פרטיות, פנו אלינו:{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-violet-700 hover:underline">lemarketingx@gmail.com</a>
+                <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">lemarketingx@gmail.com</a>
               </p>
             </section>
           </div>
 
           <div className="mt-12 border-t border-slate-200 pt-6 text-sm text-slate-400">
-            <Link href="/" className="text-violet-700 hover:underline font-bold">← חזרה לעמוד הבית</Link>
+            <Link href="/" className="text-brand-700 hover:underline font-bold">← חזרה לעמוד הבית</Link>
           </div>
         </main>
       </div>

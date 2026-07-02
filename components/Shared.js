@@ -12,8 +12,8 @@ export function MoneyInput({ label, helper, value, onChange, placeholder = "0", 
   return (
     <label className="grid min-w-0 gap-2">
       <span className="text-sm font-black text-mort-muted">{label}{required ? " *" : ""}</span>
-      <div className="flex min-h-12 overflow-hidden rounded-2xl border border-slate-200 bg-white ring-emerald-200 transition focus-within:ring-4">
-        <span className="grid w-14 shrink-0 place-items-center bg-emerald-50 font-black text-emerald-700">₪</span>
+      <div className="flex min-h-12 overflow-hidden rounded-2xl border border-slate-200 bg-white ring-brand-200 transition focus-within:ring-4">
+        <span className="grid w-14 shrink-0 place-items-center bg-brand-50 font-black text-brand-700">₪</span>
         <input
           className="min-w-0 flex-1 px-4 py-3 text-lg font-black text-mort-ink outline-none"
           inputMode="numeric"
@@ -38,7 +38,7 @@ export function ActionCard({ title, text }) {
         <p className="mt-1 font-bold leading-6 text-mort-muted">{text}</p>
         </div>
       </div>
-      <span className="mt-4 block rounded-2xl bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-800">פעולה מומלצת לבדיקה</span>
+      <span className="mt-4 block rounded-2xl bg-success-50 px-3 py-2 text-xs font-black text-success-800">פעולה מומלצת לבדיקה</span>
     </article>
   );
 }

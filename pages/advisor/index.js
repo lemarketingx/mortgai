@@ -17,56 +17,56 @@ const PIPELINE_GROUPS = [
     key: "new",
     label: "ליד חדש",
     stages: new Set(["new_lead", "contacted"]),
-    color: "bg-violet-500",
+    color: "bg-brand-400",
     linkStage: "new_lead",
   },
   {
     key: "docs",
     label: "מסמכים",
     stages: new Set(["documents_requested", "waiting_documents", "documents_received"]),
-    color: "bg-amber-500",
+    color: "bg-brand-600",
     linkStage: "waiting_documents",
   },
   {
     key: "eligibility",
     label: "בדיקת זכאות",
     stages: new Set(["eligibility_review"]),
-    color: "bg-sky-500",
+    color: "bg-warning-400",
     linkStage: "eligibility_review",
   },
   {
     key: "appraisal",
     label: 'שמאות / עו"ד',
     stages: new Set(["appraisal_ordered", "appraisal_completed", "lawyer_review"]),
-    color: "bg-cyan-500",
+    color: "bg-warning-600",
     linkStage: "appraisal_ordered",
   },
   {
     key: "bank",
     label: "הגשה לבנק",
     stages: new Set(["submitted_to_bank", "principle_approval", "bank_negotiation", "selected_track"]),
-    color: "bg-blue-500",
+    color: "bg-accent-500",
     linkStage: "submitted_to_bank",
   },
   {
     key: "signing",
     label: "חתימות",
     stages: new Set(["signing_scheduled", "signed"]),
-    color: "bg-emerald-500",
+    color: "bg-success-400",
     linkStage: "signing_scheduled",
   },
   {
     key: "funds",
     label: "שחרור כספים",
     stages: new Set(["collateral_completion", "funds_released"]),
-    color: "bg-green-500",
+    color: "bg-success-500",
     linkStage: "collateral_completion",
   },
   {
     key: "done",
     label: "הושלם",
     stages: new Set(["closed_won"]),
-    color: "bg-green-600",
+    color: "bg-success-700",
     linkStage: "closed_won",
   },
 ];
@@ -78,10 +78,10 @@ const STAGE_TO_GROUP = new Map(
 
 // ─── Attention item tag styles ────────────────────────────────────────────────
 const TAG_META = {
-  danger:  { tag: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800",   dot: "bg-rose-500" },
-  warning: { tag: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800", dot: "bg-amber-500" },
-  docs:    { tag: "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",  dot: "bg-amber-400" },
-  stale:   { tag: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800",        dot: "bg-sky-400" },
+  danger:  { tag: "bg-danger-100 text-danger-700 border-danger-200 dark:bg-danger-900/40 dark:text-danger-300 dark:border-danger-800",   dot: "bg-danger-500" },
+  warning: { tag: "bg-warning-100 text-warning-800 border-warning-200 dark:bg-warning-900/40 dark:text-warning-300 dark:border-warning-800", dot: "bg-warning-500" },
+  docs:    { tag: "bg-warning-50 text-warning-600 border-warning-100 dark:bg-warning-900/30 dark:text-warning-400 dark:border-warning-800",  dot: "bg-warning-400" },
+  stale:   { tag: "bg-accent-50 text-accent-700 border-accent-200 dark:bg-accent-900/30 dark:text-accent-400 dark:border-accent-800",        dot: "bg-accent-400" },
   low:     { tag: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700", dot: "bg-slate-400" },
 };
 
@@ -252,19 +252,19 @@ function TodayTaskItem({ item }) {
       href={item.overdue ? `/advisor/lead/${item.lead.id}?tab=activity` : `/advisor/lead/${item.lead.id}`}
       className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors rounded-xl border ${
         item.overdue
-          ? "border-rose-200 dark:border-rose-800 bg-rose-50/30 dark:bg-rose-900/20"
+          ? "border-danger-200 dark:border-danger-800 bg-danger-50/30 dark:bg-danger-900/20"
           : "border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/60"
       }`}
     >
       <div className="min-w-0 flex-1">
         <p className="text-sm font-black text-slate-900 dark:text-slate-100 truncate">{item.lead.name || "—"}</p>
-        <p className="text-xs font-bold text-violet-600 dark:text-violet-400 truncate">{item.task}</p>
+        <p className="text-xs font-bold text-brand-600 dark:text-brand-400 truncate">{item.task}</p>
       </div>
       <div className="shrink-0 text-left flex flex-col items-end gap-0.5">
         <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full">
           {getPipelineStageLabel(getStage(item.lead))}
         </span>
-        <span className={`text-[11px] font-bold ${item.overdue ? "text-rose-600 dark:text-rose-400" : "text-slate-400 dark:text-slate-500"}`}>
+        <span className={`text-[11px] font-bold ${item.overdue ? "text-danger-600 dark:text-danger-400" : "text-slate-400 dark:text-slate-500"}`}>
           {item.overdue ? "⚠ באיחור" : "פתח תיק →"}
         </span>
       </div>
@@ -663,14 +663,14 @@ export default function AdvisorDashboard() {
         <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
           <AdvisorHeader active="/advisor" urgentItems={[]} />
           <div className="max-w-6xl mx-auto px-4 py-16 flex flex-col items-center text-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-3xl">📋</div>
+            <div className="w-16 h-16 rounded-2xl bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center text-3xl">📋</div>
             <h2 className="text-xl font-black text-slate-950 dark:text-slate-50">עדיין אין לך לידים פעילים</h2>
             <p className="text-sm font-bold text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
               כאן יוצגו הלידים שנרכשו מ-FINZO ושויכו אליך. עבור לשוק הלידים כדי לרכוש את הליד הראשון שלך.
             </p>
             <Link
               href="/advisor/leads"
-              className="mt-2 inline-block rounded-2xl bg-violet-700 dark:bg-violet-600 text-white font-black py-3 px-8 text-sm hover:bg-violet-800 dark:hover:bg-violet-700 transition-colors"
+              className="mt-2 inline-block rounded-2xl bg-brand-700 dark:bg-brand-600 text-white font-black py-3 px-8 text-sm hover:bg-brand-800 dark:hover:bg-brand-700 transition-colors"
             >
               עבור לשוק הלידים ←
             </Link>
@@ -681,7 +681,7 @@ export default function AdvisorDashboard() {
 
           {/* Mobile bottom nav */}
           <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
-            <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 rounded-xl py-2.5">ראשי</Link>
+            <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 rounded-xl py-2.5">ראשי</Link>
             <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
             <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">שוק</Link>
           </div>
@@ -704,20 +704,20 @@ export default function AdvisorDashboard() {
         <div className="max-w-6xl mx-auto px-4 lg:px-6 py-5 space-y-5">
 
           {/* ── Welcome / context banner ──────────────────────────────────── */}
-          <div className="flex items-start justify-between gap-3 rounded-2xl bg-gradient-to-l from-violet-50 dark:from-violet-950/40 to-white dark:to-slate-900 border border-violet-100 dark:border-violet-900/50 px-5 py-4">
+          <div className="flex items-start justify-between gap-3 rounded-2xl bg-gradient-to-l from-brand-50 dark:from-brand-950/40 to-white dark:to-slate-900 border border-brand-100 dark:border-brand-900/50 px-5 py-4">
             <div className="min-w-0">
               <h1 className="text-base font-black text-slate-950 dark:text-slate-50 mb-0.5">
                 {advisorName ? `שלום, ${advisorName}` : "שלום, ברוך הבא למרכז העבודה"}
               </h1>
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed">
                 {!loading && attentionItems.length > 0
-                  ? <span className="text-rose-600 dark:text-rose-400">{attentionItems.length} לידים דורשים טיפול — בדקו את רשימת הדחוף למטה.</span>
+                  ? <span className="text-danger-600 dark:text-danger-400">{attentionItems.length} לידים דורשים טיפול — בדקו את רשימת הדחוף למטה.</span>
                   : "כל התיקים תקינים. עברו לשוק הלידים לרכוש לידים חדשים."}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Link href="/advisor/leads"
-                className="text-xs font-bold text-violet-700 dark:text-violet-400 hover:text-violet-900 dark:hover:text-violet-300 px-3 py-1.5 bg-violet-50 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-800 rounded-lg transition-colors hidden sm:block">
+                className="text-xs font-bold text-brand-700 dark:text-brand-400 hover:text-brand-900 dark:hover:text-brand-300 px-3 py-1.5 bg-brand-50 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800 rounded-lg transition-colors hidden sm:block">
                 שוק לידים →
               </Link>
               <Link href="/advisor/settings"
@@ -729,13 +729,13 @@ export default function AdvisorDashboard() {
 
           {/* ── Pricing profile warning ────────────────────────────────── */}
           {pricingLoaded && !hasPricingProfile && !loading && leads.length > 0 && (
-            <div className="flex items-center gap-3 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-5 py-3.5">
+            <div className="flex items-center gap-3 rounded-2xl bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 px-5 py-3.5">
               <span className="text-lg shrink-0">⚠️</span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-black text-amber-800 dark:text-amber-200">הגדר מודל עמלות כדי להפעיל תחזיות הכנסה</p>
-                <p className="text-xs font-bold text-amber-600 dark:text-amber-400 mt-0.5">תחזיות הכנסה, ROI ועמלות צפויות מושבתים ללא מודל עמלה מוגדר.</p>
+                <p className="text-sm font-black text-warning-800 dark:text-warning-200">הגדר מודל עמלות כדי להפעיל תחזיות הכנסה</p>
+                <p className="text-xs font-bold text-warning-600 dark:text-warning-400 mt-0.5">תחזיות הכנסה, ROI ועמלות צפויות מושבתים ללא מודל עמלה מוגדר.</p>
               </div>
-              <Link href="/advisor/settings" className="shrink-0 text-xs font-black text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-800/50 border border-amber-300 dark:border-amber-700 px-3 py-1.5 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-800 transition-colors">
+              <Link href="/advisor/settings" className="shrink-0 text-xs font-black text-warning-800 dark:text-warning-200 bg-warning-100 dark:bg-warning-800/50 border border-warning-300 dark:border-warning-700 px-3 py-1.5 rounded-lg hover:bg-warning-200 dark:hover:bg-warning-800 transition-colors">
                 הגדרות →
               </Link>
             </div>
@@ -745,13 +745,13 @@ export default function AdvisorDashboard() {
           <div className="flex flex-wrap items-center gap-2">
             {DATE_PRESETS.map(p => (
               <button key={p.key} onClick={() => setDateRange(p.key)}
-                className={`text-xs font-black px-3 py-1.5 rounded-lg border transition-colors ${dateRange === p.key ? "bg-violet-100 dark:bg-violet-900/30 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-300" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"}`}>
+                className={`text-xs font-black px-3 py-1.5 rounded-lg border transition-colors ${dateRange === p.key ? "bg-brand-100 dark:bg-brand-900/30 border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-300" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"}`}>
                 {p.label}
               </button>
             ))}
             {allBanks.length > 1 && (
               <select value={bankFilter} onChange={e => setBankFilter(e.target.value)}
-                className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-400 mr-auto">
+                className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-brand-400 mr-auto">
                 <option value="all">כל הבנקים</option>
                 {allBanks.filter(b => b !== "all").map(b => <option key={b} value={b}>{b}</option>)}
               </select>
@@ -777,8 +777,8 @@ export default function AdvisorDashboard() {
               <KpiCard label="אחוז המרה" value={`${conversionRate}%`} />
               <KpiCard label='סה"כ משכנתאות' value={formatILS(totalMortgageAmount)} />
               <KpiCard label="ממוצע שווי נכס" value={formatILS(avgPropertyValue)} />
-              <div className="bg-white dark:bg-slate-900 border border-violet-200 dark:border-violet-800 rounded-xl p-4">
-                <p className="text-[11px] font-bold text-violet-600 dark:text-violet-400 mb-1">הבנק המוביל בסגירות</p>
+              <div className="bg-white dark:bg-slate-900 border border-brand-200 dark:border-brand-800 rounded-xl p-4">
+                <p className="text-[11px] font-bold text-brand-600 dark:text-brand-400 mb-1">הבנק המוביל בסגירות</p>
                 {topBank.name ? (
                   <>
                     <p className="text-2xl font-black tabular-nums text-slate-900 dark:text-slate-100">{topBank.name}</p>
@@ -838,7 +838,7 @@ export default function AdvisorDashboard() {
                         <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-16 shrink-0 text-right tabular-nums">{month}</span>
                         <div className="flex-1 h-5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-violet-500 dark:bg-violet-600 transition-all duration-500"
+                            className="h-full rounded-full bg-brand-500 dark:bg-brand-600 transition-all duration-500"
                             style={{ width: `${Math.max(6, (count / monthlyMax) * 100)}%` }}
                           />
                         </div>
@@ -877,7 +877,7 @@ export default function AdvisorDashboard() {
                           return (
                             <tr key={lead.id} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
                               <td className="px-4 py-2.5">
-                                <Link href={`/advisor/lead/${lead.id}`} className="font-black text-slate-900 dark:text-slate-100 hover:text-violet-700 dark:hover:text-violet-400 transition-colors">
+                                <Link href={`/advisor/lead/${lead.id}`} className="font-black text-slate-900 dark:text-slate-100 hover:text-brand-700 dark:hover:text-brand-400 transition-colors">
                                   {lead.name || "—"}
                                 </Link>
                               </td>
@@ -885,18 +885,18 @@ export default function AdvisorDashboard() {
                                 {getPipelineStageLabel(getStage(lead))}
                               </td>
                               <td className="px-4 py-2.5">
-                                <span className={`text-xs font-black tabular-nums ${daysSince !== null && daysSince >= 7 ? "text-rose-600 dark:text-rose-400" : "text-slate-600 dark:text-slate-400"}`}>
+                                <span className={`text-xs font-black tabular-nums ${daysSince !== null && daysSince >= 7 ? "text-danger-600 dark:text-danger-400" : "text-slate-600 dark:text-slate-400"}`}>
                                   {daysSince !== null ? daysSince : "—"}
                                 </span>
                               </td>
                               <td className="px-4 py-2.5">
-                                <span className={`text-xs font-black tabular-nums ${missingDocs > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-400 dark:text-slate-500"}`}>
+                                <span className={`text-xs font-black tabular-nums ${missingDocs > 0 ? "text-warning-600 dark:text-warning-400" : "text-slate-400 dark:text-slate-500"}`}>
                                   {missingDocs}
                                 </span>
                               </td>
                               <td className="px-4 py-2.5">
                                 {overdue ? (
-                                  <span className="text-[11px] font-black text-rose-600 dark:text-rose-400">באיחור</span>
+                                  <span className="text-[11px] font-black text-danger-600 dark:text-danger-400">באיחור</span>
                                 ) : lead.nextAction ? (
                                   <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate max-w-[120px] inline-block">{lead.nextAction}</span>
                                 ) : (
@@ -926,7 +926,7 @@ export default function AdvisorDashboard() {
                         <div key={item.stage} className="flex items-center gap-3">
                           <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-24 shrink-0 text-right truncate">{item.label}</span>
                           <div className="flex-1 h-5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full bg-violet-500 dark:bg-violet-600 transition-all duration-500" style={{ width: `${pct}%` }} />
+                            <div className="h-full rounded-full bg-brand-500 dark:bg-brand-600 transition-all duration-500" style={{ width: `${pct}%` }} />
                           </div>
                           <span className="text-xs font-black tabular-nums text-slate-700 dark:text-slate-300 w-6 text-left shrink-0">{item.count}</span>
                         </div>
@@ -979,8 +979,8 @@ export default function AdvisorDashboard() {
                     {heatLevelAnalytics.map(({ label, count }) => {
                       const total = filteredLeads.length || 1;
                       const pct = Math.round((count / total) * 100);
-                      const color = label === "Hot" ? "bg-rose-500" : label === "Warm" ? "bg-amber-500" : "bg-sky-500";
-                      const textColor = label === "Hot" ? "text-rose-600 dark:text-rose-400" : label === "Warm" ? "text-amber-600 dark:text-amber-400" : "text-sky-600 dark:text-sky-400";
+                      const color = label === "Hot" ? "bg-danger-500" : label === "Warm" ? "bg-warning-500" : "bg-accent-500";
+                      const textColor = label === "Hot" ? "text-danger-600 dark:text-danger-400" : label === "Warm" ? "text-warning-600 dark:text-warning-400" : "text-accent-600 dark:text-accent-400";
                       return (
                         <div key={label} className="flex items-center gap-3">
                           <span className={`text-xs font-black w-12 shrink-0 text-right ${textColor}`}>{label}</span>
@@ -1019,11 +1019,11 @@ export default function AdvisorDashboard() {
                             <td className="px-4 py-2.5 font-black text-slate-900 dark:text-slate-100">{row.bank}</td>
                             <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.total}</td>
                             <td className="px-4 py-2.5 text-xs font-black tabular-nums text-slate-700 dark:text-slate-300">{row.approved}</td>
-                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-emerald-600 dark:text-emerald-400">{row.closed}</td>
+                            <td className="px-4 py-2.5 text-xs font-black tabular-nums text-success-600 dark:text-success-400">{row.closed}</td>
                             <td className="px-4 py-2.5">
                               <div className="flex items-center gap-2">
                                 <div className="w-12 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                  <div className="h-full rounded-full bg-violet-500" style={{ width: `${row.conversionRate}%` }} />
+                                  <div className="h-full rounded-full bg-brand-500" style={{ width: `${row.conversionRate}%` }} />
                                 </div>
                                 <span className="text-xs font-black tabular-nums text-slate-600 dark:text-slate-400">{row.conversionRate}%</span>
                               </div>
@@ -1067,7 +1067,7 @@ export default function AdvisorDashboard() {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                           <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">ROI%</p>
-                          <p className={`text-xl font-black tabular-nums ${roi >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>{roi}%</p>
+                          <p className={`text-xl font-black tabular-nums ${roi >= 0 ? "text-success-600 dark:text-success-400" : "text-danger-600 dark:text-danger-400"}`}>{roi}%</p>
                         </div>
                         <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                           <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">CAC (עלות רכישת לקוח)</p>
@@ -1087,7 +1087,7 @@ export default function AdvisorDashboard() {
                         </div>
                         <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                           <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">אחוז אישור בנק</p>
-                          <p className="text-xl font-black tabular-nums text-violet-600 dark:text-violet-400">{bankConversion}%</p>
+                          <p className="text-xl font-black tabular-nums text-brand-600 dark:text-brand-400">{bankConversion}%</p>
                         </div>
                       </div>
                     );
@@ -1161,23 +1161,23 @@ export default function AdvisorDashboard() {
                     return (
                       <div className="space-y-4">
                         <div className={`grid ${hasPricingProfile ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"} gap-3`}>
-                          <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-100 dark:border-violet-800">
-                            <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400">צפי סגירה החודש</p>
-                            <p className="text-2xl font-black tabular-nums text-violet-700 dark:text-violet-300">{expectedClose.length}</p>
+                          <div className="p-3 bg-brand-50 dark:bg-brand-900/20 rounded-xl border border-brand-100 dark:border-brand-800">
+                            <p className="text-[10px] font-bold text-brand-600 dark:text-brand-400">צפי סגירה החודש</p>
+                            <p className="text-2xl font-black tabular-nums text-brand-700 dark:text-brand-300">{expectedClose.length}</p>
                           </div>
-                          <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
-                            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Pipeline משוקלל</p>
-                            <p className="text-2xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{formatILS(Math.round(weightedPipeline))}</p>
+                          <div className="p-3 bg-success-50 dark:bg-success-900/20 rounded-xl border border-success-100 dark:border-success-800">
+                            <p className="text-[10px] font-bold text-success-600 dark:text-success-400">Pipeline משוקלל</p>
+                            <p className="text-2xl font-black tabular-nums text-success-700 dark:text-success-300">{formatILS(Math.round(weightedPipeline))}</p>
                           </div>
                           {hasPricingProfile && (
                             <>
-                              <div className="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl border border-sky-100 dark:border-sky-800">
-                                <p className="text-[10px] font-bold text-sky-600 dark:text-sky-400">הכנסה צפויה</p>
-                                <p className="text-2xl font-black tabular-nums text-sky-700 dark:text-sky-300">{formatILS(Math.round(estimatedRevenue))}</p>
+                              <div className="p-3 bg-accent-50 dark:bg-accent-900/20 rounded-xl border border-accent-100 dark:border-accent-800">
+                                <p className="text-[10px] font-bold text-accent-600 dark:text-accent-400">הכנסה צפויה</p>
+                                <p className="text-2xl font-black tabular-nums text-accent-700 dark:text-accent-300">{formatILS(Math.round(estimatedRevenue))}</p>
                               </div>
-                              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
-                                <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">עמלות צפויות</p>
-                                <p className="text-2xl font-black tabular-nums text-amber-700 dark:text-amber-300">{formatILS(Math.round(estimatedRevenue))}</p>
+                              <div className="p-3 bg-warning-50 dark:bg-warning-900/20 rounded-xl border border-warning-100 dark:border-warning-800">
+                                <p className="text-[10px] font-bold text-warning-600 dark:text-warning-400">עמלות צפויות</p>
+                                <p className="text-2xl font-black tabular-nums text-warning-700 dark:text-warning-300">{formatILS(Math.round(estimatedRevenue))}</p>
                               </div>
                             </>
                           )}
@@ -1211,17 +1211,17 @@ export default function AdvisorDashboard() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
-                      <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">עמלות בפועל</p>
-                      <p className="text-xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{formatILS(commissionData.actual || 0)}</p>
+                    <div className="p-3 bg-success-50 dark:bg-success-900/20 rounded-xl border border-success-100 dark:border-success-800">
+                      <p className="text-[10px] font-bold text-success-600 dark:text-success-400">עמלות בפועל</p>
+                      <p className="text-xl font-black tabular-nums text-success-700 dark:text-success-300">{formatILS(commissionData.actual || 0)}</p>
                     </div>
-                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
-                      <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">עמלות צפויות</p>
-                      <p className="text-xl font-black tabular-nums text-amber-700 dark:text-amber-300">{formatILS(commissionData.forecast || 0)}</p>
+                    <div className="p-3 bg-warning-50 dark:bg-warning-900/20 rounded-xl border border-warning-100 dark:border-warning-800">
+                      <p className="text-[10px] font-bold text-warning-600 dark:text-warning-400">עמלות צפויות</p>
+                      <p className="text-xl font-black tabular-nums text-warning-700 dark:text-warning-300">{formatILS(commissionData.forecast || 0)}</p>
                     </div>
-                    <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-100 dark:border-violet-800">
-                      <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400">תיקים פעילים</p>
-                      <p className="text-xl font-black tabular-nums text-violet-700 dark:text-violet-300">{commissionData.forecastCount || 0}</p>
+                    <div className="p-3 bg-brand-50 dark:bg-brand-900/20 rounded-xl border border-brand-100 dark:border-brand-800">
+                      <p className="text-[10px] font-bold text-brand-600 dark:text-brand-400">תיקים פעילים</p>
+                      <p className="text-xl font-black tabular-nums text-brand-700 dark:text-brand-300">{commissionData.forecastCount || 0}</p>
                     </div>
                     <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
                       <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">עסקאות שולמו</p>
@@ -1259,7 +1259,7 @@ export default function AdvisorDashboard() {
                             <td className="px-4 py-2.5">
                               <div className="flex items-center gap-2">
                                 <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                  <div className="h-full rounded-full bg-violet-500" style={{ width: `${row.pct}%` }} />
+                                  <div className="h-full rounded-full bg-brand-500" style={{ width: `${row.pct}%` }} />
                                 </div>
                                 <span className="text-xs font-black tabular-nums text-slate-600 dark:text-slate-400">{row.pct}%</span>
                               </div>
@@ -1283,14 +1283,14 @@ export default function AdvisorDashboard() {
                     <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">
                       דורש טיפול
                       {!loading && attentionItems.length > 0 && (
-                        <span className="mr-2 text-[11px] font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 rounded-full px-2 py-0.5 align-middle">{attentionItems.length}</span>
+                        <span className="mr-2 text-[11px] font-black text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/30 rounded-full px-2 py-0.5 align-middle">{attentionItems.length}</span>
                       )}
                     </h2>
                     <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
                       לידים עם פעולות באיחור, מסמכים חסרים או ללא מעקב
                     </p>
                   </div>
-                  <Link href="/advisor/my-leads" className="text-xs font-black text-violet-600 dark:text-violet-400 hover:underline shrink-0">
+                  <Link href="/advisor/my-leads" className="text-xs font-black text-brand-600 dark:text-brand-400 hover:underline shrink-0">
                     כל הלידים →
                   </Link>
                 </div>
@@ -1375,26 +1375,26 @@ export default function AdvisorDashboard() {
                   <h2 className="text-sm font-black text-slate-950 dark:text-slate-50 mb-3">עמלות</h2>
                   {commissionData ? (
                     <div className="space-y-2">
-                      <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl px-3 py-3">
-                        <p className="text-[11px] font-black text-violet-500 dark:text-violet-400 mb-0.5">עמלות צפויות (forecast)</p>
-                        <p className="text-2xl font-black text-violet-700 dark:text-violet-300 tabular-nums">
+                      <div className="bg-brand-50 dark:bg-brand-900/20 rounded-xl px-3 py-3">
+                        <p className="text-[11px] font-black text-brand-500 dark:text-brand-400 mb-0.5">עמלות צפויות (forecast)</p>
+                        <p className="text-2xl font-black text-brand-700 dark:text-brand-300 tabular-nums">
                           ₪{commissionData.forecast.toLocaleString("he-IL", { maximumFractionDigits: 0 })}
                         </p>
-                        <p className="text-[10px] font-bold text-violet-400 dark:text-violet-500 mt-0.5">{commissionData.forecastCount} תיקים פעילים</p>
+                        <p className="text-[10px] font-bold text-brand-400 dark:text-brand-500 mt-0.5">{commissionData.forecastCount} תיקים פעילים</p>
                       </div>
-                      <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl px-3 py-3">
-                        <p className="text-[11px] font-black text-emerald-500 dark:text-emerald-400 mb-0.5">עמלות בפועל (שולמו)</p>
-                        <p className="text-2xl font-black text-emerald-700 dark:text-emerald-300 tabular-nums">
+                      <div className="bg-success-50 dark:bg-success-900/20 rounded-xl px-3 py-3">
+                        <p className="text-[11px] font-black text-success-500 dark:text-success-400 mb-0.5">עמלות בפועל (שולמו)</p>
+                        <p className="text-2xl font-black text-success-700 dark:text-success-300 tabular-nums">
                           ₪{commissionData.actual.toLocaleString("he-IL", { maximumFractionDigits: 0 })}
                         </p>
-                        <p className="text-[10px] font-bold text-emerald-400 dark:text-emerald-500 mt-0.5">{commissionData.actualCount} תיקים שולמו</p>
+                        <p className="text-[10px] font-bold text-success-400 dark:text-success-500 mt-0.5">{commissionData.actualCount} תיקים שולמו</p>
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl px-3 py-4 text-center">
-                      <p className="text-sm font-black text-amber-700 dark:text-amber-200 mb-1">לא הוגדר מודל עמלה</p>
-                      <p className="text-xs font-bold text-amber-500 dark:text-amber-400 mb-3">הגדר מודל עמלה בהגדרות כדי לראות תחזית</p>
-                      <Link href="/advisor/settings" className="text-xs font-black text-violet-700 dark:text-violet-400 hover:underline">
+                    <div className="bg-warning-50 dark:bg-warning-900/20 rounded-xl px-3 py-4 text-center">
+                      <p className="text-sm font-black text-warning-700 dark:text-warning-200 mb-1">לא הוגדר מודל עמלה</p>
+                      <p className="text-xs font-bold text-warning-500 dark:text-warning-400 mb-3">הגדר מודל עמלה בהגדרות כדי לראות תחזית</p>
+                      <Link href="/advisor/settings" className="text-xs font-black text-brand-700 dark:text-brand-400 hover:underline">
                         הגדר עכשיו →
                       </Link>
                     </div>
@@ -1407,27 +1407,27 @@ export default function AdvisorDashboard() {
                 <h2 className="text-sm font-black text-slate-950 dark:text-slate-50 mb-3">פעולות מהירות</h2>
                 <div className="space-y-2">
                   <Link href="/advisor/leads"
-                    className="flex items-center gap-3 rounded-xl bg-violet-700 dark:bg-violet-600 text-white px-4 py-3 text-sm font-black hover:bg-violet-800 dark:hover:bg-violet-700 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-brand-700 dark:bg-brand-600 text-white px-4 py-3 text-sm font-black hover:bg-brand-800 dark:hover:bg-brand-700 transition-colors">
                     <span className="shrink-0">🏪</span>
                     <span>שוק הלידים של FINZO</span>
                   </Link>
                   <Link href="/advisor/my-leads"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 px-4 py-3 text-sm font-black hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors">
                     <span className="shrink-0">📋</span>
                     <span>כל הלידים שלי</span>
                   </Link>
                   <Link href="/advisor/calendar"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 px-4 py-3 text-sm font-black hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors">
                     <span className="shrink-0">📅</span>
                     <span>יומן ולוח שנה</span>
                   </Link>
                   <Link href="/"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 px-4 py-3 text-sm font-black hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors">
                     <span className="shrink-0">🧮</span>
                     <span>מחשבון זכאות</span>
                   </Link>
                   <Link href="/refinance-check"
-                    className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-3 text-sm font-black hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    className="flex items-center gap-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 px-4 py-3 text-sm font-black hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors">
                     <span className="shrink-0">🔄</span>
                     <span>מחשבון מחזור</span>
                   </Link>
@@ -1444,16 +1444,16 @@ export default function AdvisorDashboard() {
         {/* Dev-only debug panel */}
         {isDebugEnabled && !loading && debugLeadRows.length > 0 && (
           <details className="max-w-6xl mx-auto px-4 lg:px-6 my-4">
-            <summary className="cursor-pointer text-xs font-black text-rose-500 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg px-4 py-2 select-none">
+            <summary className="cursor-pointer text-xs font-black text-danger-500 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg px-4 py-2 select-none">
               Dashboard Debug ({debugLeadRows.length} leads)
             </summary>
-            <div className="mt-2 bg-slate-950 text-green-400 rounded-xl p-4 overflow-x-auto text-[11px] font-mono leading-relaxed">
-              <p className="text-amber-400 mb-2 font-bold">Pipeline Summary:</p>
+            <div className="mt-2 bg-slate-950 text-success-400 rounded-xl p-4 overflow-x-auto text-[11px] font-mono leading-relaxed">
+              <p className="text-warning-400 mb-2 font-bold">Pipeline Summary:</p>
               <p>Weighted Pipeline: {formatILS(debugLeadRows.reduce((s, r) => s + r.weightedContribution, 0))}</p>
               <p>Expected Close (advanced stages): {debugLeadRows.filter(r => r.expectedCloseIncluded).length}</p>
               <p>Unique Resolved Banks: {[...new Set(debugLeadRows.map(r => r.resolvedBank))].join(", ")}</p>
               <p>Has Pricing Profile: {String(hasPricingProfile)}</p>
-              <p className="text-amber-400 mt-3 mb-2 font-bold">Per-Lead Breakdown:</p>
+              <p className="text-warning-400 mt-3 mb-2 font-bold">Per-Lead Breakdown:</p>
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="text-slate-400 text-left border-b border-slate-700">
@@ -1487,11 +1487,11 @@ export default function AdvisorDashboard() {
                       <td className="px-1 py-0.5">{r.assignedBank || <span className="text-slate-600">—</span>}</td>
                       <td className="px-1 py-0.5">{r.bankName || <span className="text-slate-600">—</span>}</td>
                       <td className="px-1 py-0.5">{r.bankerBank || <span className="text-slate-600">—</span>}</td>
-                      <td className="px-1 py-0.5 text-yellow-400">{r.resolvedBank}</td>
+                      <td className="px-1 py-0.5 text-warning-400">{r.resolvedBank}</td>
                       <td className="px-1 py-0.5 tabular-nums">{r.heatScore}</td>
                       <td className="px-1 py-0.5 tabular-nums">{r.probability}</td>
-                      <td className="px-1 py-0.5 tabular-nums text-emerald-400">{r.weightedContribution.toLocaleString()}</td>
-                      <td className="px-1 py-0.5">{r.expectedCloseIncluded ? <span className="text-emerald-400">yes</span> : <span className="text-slate-600">no</span>}</td>
+                      <td className="px-1 py-0.5 tabular-nums text-success-400">{r.weightedContribution.toLocaleString()}</td>
+                      <td className="px-1 py-0.5">{r.expectedCloseIncluded ? <span className="text-success-400">yes</span> : <span className="text-slate-600">no</span>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1502,7 +1502,7 @@ export default function AdvisorDashboard() {
 
         {/* Mobile bottom nav */}
         <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
-          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 rounded-xl py-2.5">ראשי</Link>
+          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 rounded-xl py-2.5">ראשי</Link>
           <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
           <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">שוק</Link>
         </div>

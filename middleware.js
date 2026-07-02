@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 const COOKIE_NAME = "finzo_access";
 const TOKEN_SUFFIX = ":finzo-access-v1";
+const IS_DEV = process.env.NODE_ENV !== "production";
 
 // Paths that always bypass the lock
 const BYPASS_PREFIXES = [
@@ -24,7 +25,7 @@ export async function middleware(request) {
   const lockEnabled =
     process.env.SITE_LOCK_ENABLED === "true" ||
     process.env.SITE_LOCK_ENABLE === "true";
-  console.log("[site-lock] lockEnabled:", lockEnabled);
+  if (IS_DEV) console.log("[site-lock] lockEnabled:", lockEnabled);
   if (!lockEnabled) return NextResponse.next();
 
   const { pathname } = request.nextUrl;
@@ -34,13 +35,13 @@ export async function middleware(request) {
   }
 
   const password = process.env.SITE_LOCK_PASSWORD;
-  console.log("[site-lock] passwordEnvExists:", !!password);
+  if (IS_DEV) console.log("[site-lock] passwordEnvExists:", !!password);
   if (!password) return NextResponse.next();
 
   const expected = await deriveToken(password);
   const cookie = request.cookies.get(COOKIE_NAME)?.value;
   const cookieValid = cookie === expected;
-  console.log("[site-lock] cookieValid:", cookieValid);
+  if (IS_DEV) console.log("[site-lock] cookieValid:", cookieValid);
 
   if (cookieValid) return NextResponse.next();
 

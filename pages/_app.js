@@ -110,20 +110,14 @@ export default function App({ Component, pageProps }) {
       <Head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="theme-color" content="#2C5BFF" />
+        <meta name="theme-color" content="#7B3DFF" />
         <meta name="format-detection" content="telephone=no" />
         <meta httpEquiv="content-language" content="he-IL" />
         <meta property="og:locale" content="he_IL" />
+        <link rel="icon" type="image/png" href="/brand/finzo/finzo-app-icon.png" key="favicon" />
         {process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? (
           <meta name="google-site-verification" content={process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION} />
         ) : null}
-        {/* FINZO Design System fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Heebo:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
       </Head>
 
       <Script id="finzo-dark-mode-init" strategy="beforeInteractive">

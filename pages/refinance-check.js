@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { useMemo, useRef, useState } from "react";
 import { useTheme } from "./_app";
+import BrandLogo from "../components/BrandLogo";
 import { cleanNumber, displayNumber, formatILS, formatPct, toNumber } from "../lib/format";
 import { monthlyPayment } from "../lib/mortgage";
 import {
@@ -400,7 +401,7 @@ export default function RefinanceCheck() {
       <Header />
       <Hero />
 
-      <section id="calculator" className="bg-gradient-to-b from-white via-violet-50/35 to-white dark:from-slate-900 dark:via-violet-950/20 dark:to-slate-900 py-20">
+      <section id="calculator" className="bg-gradient-to-b from-white via-brand-50/35 to-white dark:from-slate-900 dark:via-brand-950/20 dark:to-slate-900 py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <SectionHeader
             eyebrow="בדיקת מחזור"
@@ -509,19 +510,20 @@ export default function RefinanceCheck() {
 }
 
 function Header() {
+  const { dark } = useTheme();
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <a href="/" className="flex items-center gap-2.5">
-          <span className="text-lg font-black text-slate-950 dark:text-white">FINZO</span>
-          <span className="text-[11px] font-black text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-950 border border-violet-200 dark:border-slate-800 px-2 py-0.5 rounded-full">בדיקת מחזור משכנתא</span>
+          <BrandLogo mode={dark ? "dark" : "light"} size="sm" withTagline={false} />
+          <span className="text-[11px] font-black text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-950 border border-brand-200 dark:border-slate-800 px-2 py-0.5 rounded-full">בדיקת מחזור משכנתא</span>
         </a>
         <nav aria-label="ניווט ראשי" className="hidden items-center gap-6 text-sm font-bold text-slate-600 dark:text-slate-400 lg:flex">
           {navLinks.map(([label, href]) => (
-            <a key={href} href={href} className="transition hover:text-violet-700">{label}</a>
+            <a key={href} href={href} className="transition hover:text-brand-700">{label}</a>
           ))}
         </nav>
-        <a href="#calculator" className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-violet-800">
+        <a href="#calculator" className="rounded-full bg-brand-700 px-5 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition hover:bg-brand-800">
           בדיקה חינם
         </a>
       </div>
@@ -535,7 +537,7 @@ function Hero() {
       <div className="absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,0.18),transparent_45%)]" />
       <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-2">
         <div className="mx-auto max-w-2xl text-center lg:text-right">
-          <span className="inline-flex rounded-full border border-violet-200 dark:border-slate-800 bg-violet-50 dark:bg-violet-950 px-4 py-2 text-sm font-black text-violet-800 dark:text-violet-300">מחזור משכנתא</span>
+          <span className="inline-flex rounded-full border border-brand-200 dark:border-slate-800 bg-brand-50 dark:bg-brand-950 px-4 py-2 text-sm font-black text-brand-800 dark:text-brand-300">מחזור משכנתא</span>
           <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-slate-950 dark:text-white sm:text-5xl lg:text-6xl">
             בדיקת כדאיות למחזור משכנתא
           </h1>
@@ -543,10 +545,10 @@ function Hero() {
             הזינו כמה נתונים בסיסיים וקבלו אומדן חיסכון חודשי, חיסכון ריבית, נקודת איזון והאם כדאי להתקדם לבדיקה מקצועית ראשונית.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-            <a href="#calculator" className="rounded-full bg-violet-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-violet-800">
+            <a href="#calculator" className="rounded-full bg-brand-700 px-8 py-4 text-center text-base font-black text-white shadow-[0_18px_44px_rgba(109,40,217,0.32)] transition hover:-translate-y-0.5 hover:bg-brand-800">
               בדקו מחזור עכשיו
             </a>
-            <a href="/" className="rounded-full border border-violet-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-4 text-center text-base font-black text-violet-800 dark:text-violet-300 shadow-sm transition hover:border-violet-300 hover:bg-violet-50">
+            <a href="/" className="rounded-full border border-brand-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-4 text-center text-base font-black text-brand-800 dark:text-brand-300 shadow-sm transition hover:border-brand-300 hover:bg-brand-50">
               מחשבון רכישה
             </a>
           </div>
@@ -561,8 +563,8 @@ function Hero() {
 function Illustration() {
   return (
     <div className="relative mx-auto w-full max-w-lg">
-      <div className="absolute -inset-6 rounded-[56px] bg-violet-200/30 blur-3xl" />
-      <div className="relative rounded-[44px] border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-white via-slate-50 to-violet-50 dark:from-slate-900 dark:via-slate-800 dark:to-violet-950 p-8 shadow-[0_28px_80px_rgba(15,23,42,0.12)]">
+      <div className="absolute -inset-6 rounded-[56px] bg-brand-200/30 blur-3xl" />
+      <div className="relative rounded-[44px] border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-white via-slate-50 to-brand-50 dark:from-slate-900 dark:via-slate-800 dark:to-brand-950 p-8 shadow-[0_28px_80px_rgba(15,23,42,0.12)]">
         <div className="rounded-[32px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
           <p className="text-sm font-black text-slate-500 dark:text-slate-400">אומדן מחזור</p>
           <div className="mt-5 space-y-4">
@@ -570,8 +572,8 @@ function Illustration() {
             <Line label="החזר חדש" width="68%" purple />
             <Line label="חיסכון נטו" width="74%" />
           </div>
-          <div className="mt-6 rounded-3xl bg-violet-700 p-5 text-white">
-            <p className="text-sm font-black text-violet-100">נקודת איזון</p>
+          <div className="mt-6 rounded-3xl bg-brand-700 p-5 text-white">
+            <p className="text-sm font-black text-brand-100">נקודת איזון</p>
             <p className="mt-2 text-3xl font-black">בדיקה מהירה</p>
           </div>
         </div>
@@ -584,7 +586,7 @@ function Line({ label, width, purple = false }) {
   return (
     <div>
       <div className="flex justify-between text-sm font-black text-slate-500 dark:text-slate-400"><span>{label}</span><span>{width}</span></div>
-      <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className={`h-full rounded-full ${purple ? "bg-violet-600" : "bg-slate-300"}`} style={{ width }} /></div>
+      <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className={`h-full rounded-full ${purple ? "bg-brand-600" : "bg-slate-300"}`} style={{ width }} /></div>
     </div>
   );
 }
@@ -592,7 +594,7 @@ function Line({ label, width, purple = false }) {
 function SectionHeader({ eyebrow, title, text }) {
   return (
     <div className="mx-auto max-w-3xl text-center">
-      <span className="inline-flex rounded-full bg-violet-50 dark:bg-violet-950 px-4 py-2 text-sm font-black text-violet-700 dark:text-violet-300">{eyebrow}</span>
+      <span className="inline-flex rounded-full bg-brand-50 dark:bg-brand-950 px-4 py-2 text-sm font-black text-brand-700 dark:text-brand-300">{eyebrow}</span>
       <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950 dark:text-white sm:text-4xl">{title}</h2>
       <p className="mt-4 text-lg leading-8 text-slate-600 dark:text-slate-400">{text}</p>
     </div>
@@ -615,7 +617,7 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-950 px-4 py-4 text-sm font-black text-violet-800 dark:text-violet-300 transition hover:bg-violet-100 disabled:opacity-50"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-brand-300 dark:border-brand-700 bg-brand-50 dark:bg-brand-950 px-4 py-4 text-sm font-black text-brand-800 dark:text-brand-300 transition hover:bg-brand-100 disabled:opacity-50"
           >
             <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {pdfConfirmed ? "העלה דוח אחר" : "לחצו להעלאת PDF"}
@@ -631,31 +633,31 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
         />
 
         {pdfState.status === "loading" && (
-          <div className="mt-3 rounded-2xl bg-violet-50 dark:bg-violet-950 px-4 py-4 text-center text-sm font-black text-violet-800 dark:text-violet-300 animate-pulse">
+          <div className="mt-3 rounded-2xl bg-brand-50 dark:bg-brand-950 px-4 py-4 text-center text-sm font-black text-brand-800 dark:text-brand-300 animate-pulse">
             מעבד את ה-PDF...
           </div>
         )}
 
         {pdfState.status === "error" && (
-          <div className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold leading-6 text-red-700">
+          <div className="mt-3 rounded-2xl bg-danger-50 px-4 py-3 text-sm font-bold leading-6 text-danger-700">
             {pdfState.message}
-            <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-2 block text-sm font-black text-red-800 underline">נסה שנית</button>
+            <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-2 block text-sm font-black text-danger-800 underline">נסה שנית</button>
           </div>
         )}
 
         {pdfState.status === "confirm" && pdfState.fields && (
-          <div className="mt-3 rounded-2xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 p-4">
-            <p className="text-sm font-black text-violet-900 dark:text-violet-200">{pdfState.message}</p>
-            <p className="mt-1 text-xs font-semibold text-violet-700 dark:text-violet-300">בדקו את הנתונים לפני אישור — ערכים שגויים ישפיעו על התוצאה.</p>
+          <div className="mt-3 rounded-2xl border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-950 p-4">
+            <p className="text-sm font-black text-brand-900 dark:text-brand-200">{pdfState.message}</p>
+            <p className="mt-1 text-xs font-semibold text-brand-700 dark:text-brand-300">בדקו את הנתונים לפני אישור — ערכים שגויים ישפיעו על התוצאה.</p>
             <ul className="mt-3 space-y-1 text-sm font-bold text-slate-800 dark:text-slate-200">
-              {pdfState.fields.balance != null && <li>יתרה לסילוק: <span className="text-violet-900">{formatILS(pdfState.fields.balance)}</span></li>}
-              {pdfState.fields.currentPayment != null && <li>החזר חודשי: <span className="text-violet-900">{formatILS(pdfState.fields.currentPayment)}</span></li>}
-              {pdfState.fields.remainingYears != null && <li>שנים שנותרו: <span className="text-violet-900">{pdfState.fields.remainingYears}</span></li>}
-              {pdfState.fields.currentRate != null && <li>ריבית קיימת: <span className="text-violet-900">{pdfState.fields.currentRate}%</span></li>}
-              {pdfState.fields.refinanceCost != null && <li>עלות מחזור: <span className="text-violet-900">{formatILS(pdfState.fields.refinanceCost)}</span></li>}
+              {pdfState.fields.balance != null && <li>יתרה לסילוק: <span className="text-brand-900">{formatILS(pdfState.fields.balance)}</span></li>}
+              {pdfState.fields.currentPayment != null && <li>החזר חודשי: <span className="text-brand-900">{formatILS(pdfState.fields.currentPayment)}</span></li>}
+              {pdfState.fields.remainingYears != null && <li>שנים שנותרו: <span className="text-brand-900">{pdfState.fields.remainingYears}</span></li>}
+              {pdfState.fields.currentRate != null && <li>ריבית קיימת: <span className="text-brand-900">{pdfState.fields.currentRate}%</span></li>}
+              {pdfState.fields.refinanceCost != null && <li>עלות מחזור: <span className="text-brand-900">{formatILS(pdfState.fields.refinanceCost)}</span></li>}
             </ul>
             <div className="mt-4 flex gap-3">
-              <button type="button" onClick={onPdfApply} className="flex-1 rounded-full bg-violet-700 px-4 py-2 text-sm font-black text-white transition hover:bg-violet-800">
+              <button type="button" onClick={onPdfApply} className="flex-1 rounded-full bg-brand-700 px-4 py-2 text-sm font-black text-white transition hover:bg-brand-800">
                 אשר ומלא אוטומטית
               </button>
               <button type="button" onClick={() => onPdfCancel()} className="rounded-full border border-slate-200 dark:border-slate-800 px-4 py-2 text-sm font-black text-slate-700 dark:text-slate-300 transition hover:bg-slate-50">
@@ -666,7 +668,7 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
         )}
 
         {pdfState.status === "done" && (
-          <div className="mt-3 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-sm font-bold text-emerald-800 dark:text-emerald-300">
+          <div className="mt-3 rounded-2xl bg-success-50 dark:bg-success-900/20 px-4 py-3 text-sm font-bold text-success-800 dark:text-success-300">
             הנתונים מה-PDF מולאו בטופס. בדקו ועדכנו לפי הצורך.
           </div>
         )}
@@ -689,33 +691,57 @@ function ManualForm({ data, update, pdfState, pdfConfirmed, onPdfUpload, onPdfAp
   );
 }
 
+const SCORE_TONE = {
+  good:    { text: "text-success-600", bar: "bg-success-500" },
+  mid:     { text: "text-warning-600", bar: "bg-warning-500" },
+  low:     { text: "text-danger-600",  bar: "bg-danger-500" },
+  neutral: { text: "text-slate-400",   bar: "bg-slate-300" },
+};
+
+const RISK_BADGE = {
+  "גבוהה":  "bg-danger-50 text-danger-700 border border-danger-200",
+  "בינונית": "bg-warning-50 text-warning-700 border border-warning-200",
+  "נמוכה":  "bg-success-50 text-success-700 border border-success-200",
+};
+
+function scoreTone(result) {
+  if (!result.hasRequiredInputs) return SCORE_TONE.neutral;
+  if (result.score >= 65) return SCORE_TONE.good;
+  if (result.score >= 40) return SCORE_TONE.mid;
+  return SCORE_TONE.low;
+}
+
 function ResultPanel({ result }) {
+  const tone = scoreTone(result);
   return (
-    <aside className="rounded-[34px] border border-violet-100 bg-gradient-to-br from-violet-700 to-violet-950 p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.28)] sm:p-8">
-      <p className="text-sm font-black text-violet-100">תוצאה בזמן אמת</p>
-      <div className="mt-6 flex items-end justify-between gap-4">
-        <div>
-          <h3 className="text-2xl font-black">ציון כדאיות למחזור</h3>
-          <p className="mt-2 text-violet-100">{result.recommendation}</p>
+    <aside className="overflow-hidden rounded-[34px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[0_24px_70px_rgba(15,23,42,0.10)]">
+      <div className="h-1.5 w-full bg-gradient-to-l from-brand-600 to-accent-500" />
+      <div className="p-6 sm:p-8">
+        <span className="inline-flex rounded-full bg-brand-50 dark:bg-brand-950 px-4 py-1.5 text-xs font-black text-brand-700 dark:text-brand-300">תוצאה בזמן אמת</span>
+        <div className="mt-6 flex items-end justify-between gap-4">
+          <div>
+            <h3 className="text-2xl font-black text-slate-950 dark:text-white">ציון כדאיות למחזור</h3>
+            <p className="mt-2 text-slate-500 dark:text-slate-400">{result.recommendation}</p>
+          </div>
+          <span className={`number-display text-5xl font-black ${tone.text}`}>{result.hasRequiredInputs ? result.score : "--"}</span>
         </div>
-        <span className="number-display text-5xl font-black">{result.hasRequiredInputs ? result.score : "--"}</span>
+        <div className="mt-7 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <div className={`h-full rounded-full transition-all duration-500 ${tone.bar}`} style={{ width: `${result.score}%` }} />
+        </div>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          <LightMetric label="חיסכון חודשי" value={result.hasRequiredInputs ? formatILS(result.monthlySavings) : "--"} />
+          <LightMetric label="חיסכון נטו" value={result.hasRequiredInputs ? formatILS(result.netSavings) : "--"} />
+          <LightMetric label="החזר חדש" value={result.hasRequiredInputs ? formatILS(result.newPayment) : "--"} />
+          <LightMetric label="רמת סיכון" badge={RISK_BADGE[result.risk]} value={result.risk} />
+        </div>
+        <div className="mt-6 rounded-3xl border-r-4 border-accent-400 bg-brand-50/60 dark:bg-brand-950/30 p-5">
+          <p className="text-sm font-black text-accent-700 dark:text-accent-300">הסבר</p>
+          <p className="mt-2 leading-7 text-slate-600 dark:text-slate-300">{result.recommendationText}</p>
+        </div>
+        <a href="#lead" className="mt-6 block rounded-full bg-brand-700 px-6 py-4 text-center text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-brand-800">
+          בדיקה עם יועץ
+        </a>
       </div>
-      <div className="mt-7 h-3 overflow-hidden rounded-full bg-white/15">
-        <div className="h-full rounded-full bg-white transition-all duration-500" style={{ width: `${result.score}%` }} />
-      </div>
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        <DarkMetric label="חיסכון חודשי" value={result.hasRequiredInputs ? formatILS(result.monthlySavings) : "--"} />
-        <DarkMetric label="חיסכון נטו" value={result.hasRequiredInputs ? formatILS(result.netSavings) : "--"} />
-        <DarkMetric label="החזר חדש" value={result.hasRequiredInputs ? formatILS(result.newPayment) : "--"} />
-        <DarkMetric label="רמת סיכון" value={result.risk} />
-      </div>
-      <div className="mt-6 rounded-3xl bg-white/10 p-5 ring-1 ring-white/10">
-        <p className="text-sm font-black text-violet-100">הסבר</p>
-        <p className="mt-2 leading-7 text-violet-50">{result.recommendationText}</p>
-      </div>
-      <a href="#lead" className="mt-6 block rounded-full bg-white px-6 py-4 text-center text-base font-black text-violet-800 shadow-lg transition hover:bg-violet-50">
-        בדיקה עם יועץ
-      </a>
     </aside>
   );
 }
@@ -730,9 +756,9 @@ const CONTACT_TIME_OPTIONS = [
 
 function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, leadError, successRef, consent, setConsent }) {
   return (
-    <section id="lead" className="mt-10 grid items-stretch gap-6 rounded-[34px] border border-violet-100 dark:border-slate-800 bg-gradient-to-br from-violet-50 to-white dark:from-slate-900 dark:to-slate-900 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] lg:grid-cols-2">
+    <section id="lead" className="mt-10 grid items-stretch gap-6 rounded-[34px] border border-brand-100 dark:border-slate-800 bg-gradient-to-br from-brand-50 to-white dark:from-slate-900 dark:to-slate-900 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] lg:grid-cols-2">
       <div>
-        <span className="inline-flex rounded-full bg-white dark:bg-slate-800 px-4 py-2 text-sm font-black text-violet-800 dark:text-violet-300 shadow-sm">בדיקה ראשונית</span>
+        <span className="inline-flex rounded-full bg-white dark:bg-slate-800 px-4 py-2 text-sm font-black text-brand-800 dark:text-brand-300 shadow-sm">בדיקה ראשונית</span>
         <h2 className="mt-5 text-3xl font-black leading-tight text-slate-950 dark:text-white">קבלו בדיקת מחזור ראשונית</h2>
         <p className="mt-4 leading-8 text-slate-600 dark:text-slate-400">
           מלאו את פרטי המשכנתא הקיימת ונציג כיוון ראשוני. אם יש פוטנציאל, ניתן יהיה להמשיך לבדיקה מקצועית.
@@ -748,9 +774,9 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
 
       <form onSubmit={submitLead} aria-busy={leadLoading ? "true" : "false"} className="rounded-[28px] bg-white dark:bg-slate-900 p-5 shadow-sm">
         {/* Classification chip — read-only, confirms lead type to user */}
-        <div className="mb-4 flex items-center gap-2 rounded-2xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 px-4 py-3">
-          <span className="text-[11px] font-black text-blue-500 uppercase tracking-wider">סוג הבדיקה</span>
-          <span className="text-sm font-black text-blue-900 dark:text-blue-200">🔄 מחזור משכנתא</span>
+        <div className="mb-4 flex items-center gap-2 rounded-2xl border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-900/20 px-4 py-3">
+          <span className="text-[11px] font-black text-brand-500 uppercase tracking-wider">סוג הבדיקה</span>
+          <span className="text-sm font-black text-brand-900 dark:text-brand-200">🔄 מחזור משכנתא</span>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField label="שם מלא" value={lead.name} onChange={(value) => setLead({ ...lead, name: value })} autoComplete="name" />
@@ -777,7 +803,7 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
               <select
                 value={lead.requestedContactTime}
                 onChange={(e) => setLead({ ...lead, requestedContactTime: e.target.value })}
-                className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-base font-bold text-slate-950 dark:text-white outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"
+                className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-base font-bold text-slate-950 dark:text-white outline-none transition focus:border-brand-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900"
               >
                 {CONTACT_TIME_OPTIONS.map(({ value, label }) => (
                   <option key={value} value={value}>{label}</option>
@@ -786,24 +812,24 @@ function AdvisorCta({ result, lead, setLead, submitLead, leadLoading, leadSent, 
             </label>
           </div>
         </div>
-        {leadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm font-bold text-red-700 dark:text-red-300">{leadError}</p>}
-        {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-4 text-center text-sm font-black text-emerald-800 dark:text-emerald-300">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
+        {leadError && <p role="alert" className="mt-4 rounded-2xl bg-danger-50 dark:bg-danger-900/20 px-4 py-3 text-sm font-bold text-danger-700 dark:text-danger-300">{leadError}</p>}
+        {leadSent && <p ref={successRef} role="status" className="mt-4 rounded-2xl bg-success-50 dark:bg-success-900/20 px-4 py-4 text-center text-sm font-black text-success-800 dark:text-success-300">הפנייה נשלחה בהצלחה. נחזור אליכם בהקדם.</p>}
         <label className="mt-4 flex items-start gap-3 cursor-pointer">
           <input
             type="checkbox"
             checked={consent}
             onChange={(e) => setConsent(e.target.checked)}
-            className="mt-0.5 w-4 h-4 accent-violet-600 shrink-0"
+            className="mt-0.5 w-4 h-4 accent-brand-600 shrink-0"
           />
           <span className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-5">
             אני מסכים/ה לשיתוף הפרטים עם יועצי משכנתאות מורשים לצורך קבלת ייעוץ.{" "}
-            <a href="/privacy" className="text-violet-600 hover:underline">מדיניות פרטיות</a>
+            <a href="/privacy" className="text-brand-600 hover:underline">מדיניות פרטיות</a>
           </span>
         </label>
         <p className="mt-1 text-xs text-slate-400 dark:text-slate-500 font-semibold">
           הפרטים שמסרתם עשויים להיות מועברים ליועץ משכנתאות עצמאי שיצור אתכם קשר.
         </p>
-        <button type="submit" disabled={leadLoading || leadSent} className="mt-4 w-full rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70">
+        <button type="submit" disabled={leadLoading || leadSent} className="mt-4 w-full rounded-full bg-brand-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-70">
           {leadLoading ? "שולח..." : leadSent ? "נשלח בהצלחה" : "שלחו לבדיקה ראשונית"}
         </button>
         <p className="mt-3 text-center text-xs font-bold text-slate-400 dark:text-slate-500">ללא התחייבות · הנתונים משמשים לאומדן ראשוני בלבד · אין מדובר באישור בנקאי</p>
@@ -826,7 +852,7 @@ function MetricCard({ label, value, note }) {
 
 function ComparisonColumn({ title, rows, highlighted = false }) {
   return (
-    <article className={`rounded-[30px] border p-6 shadow-sm ${highlighted ? "border-violet-200 dark:border-violet-800 bg-violet-50/70 dark:bg-violet-950/40" : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"}`}>
+    <article className={`rounded-[30px] border p-6 shadow-sm ${highlighted ? "border-brand-200 dark:border-brand-800 bg-brand-50/70 dark:bg-brand-950/40" : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"}`}>
       <h3 className="text-2xl font-black text-slate-950 dark:text-white">{title}</h3>
       <div className="mt-5 grid gap-3">
         {rows.map(([label, value]) => (
@@ -850,13 +876,13 @@ function ScenarioCard({ scenario, active }) {
         <div className="mt-5 rounded-2xl bg-slate-50 dark:bg-slate-950 p-4">
           <p className="text-sm font-black text-slate-500 dark:text-slate-400">החזר בתרחיש</p>
           <p className="number-display mt-1 text-2xl font-black text-slate-950 dark:text-white">{active ? formatILS(scenario.payment) : "--"}</p>
-          <p className={`mt-2 text-sm font-black ${positive ? "text-emerald-700" : "text-amber-700"}`}>
+          <p className={`mt-2 text-sm font-black ${positive ? "text-success-700" : "text-warning-700"}`}>
             שינוי חודשי: {active ? formatILS(scenario.monthlyChange) : "--"}
           </p>
           <p className="mt-2 text-sm font-bold text-slate-600 dark:text-slate-400">סך ריבית משוער: {active ? formatILS(scenario.totalInterest) : "--"}</p>
         </div>
       </div>
-      <p className="mt-4 rounded-2xl bg-violet-50 dark:bg-violet-950 px-4 py-3 text-sm font-bold text-violet-900 dark:text-violet-300">
+      <p className="mt-4 rounded-2xl bg-brand-50 dark:bg-brand-950 px-4 py-3 text-sm font-bold text-brand-900 dark:text-brand-300">
         {active ? `${formatPct(scenario.rate)} ל-${scenario.years} שנים · ${scenario.riskExplanation}` : "ממתין לנתונים"}
       </p>
     </article>
@@ -892,7 +918,7 @@ function MoneyField({ label, value, onChange, helper }) {
           inputMode="numeric"
           value={displayNumber(value)}
           onChange={(event) => onChange(cleanNumber(event.target.value))}
-          className="h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 pl-10 text-base font-black text-slate-950 dark:text-white outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"
+          className="h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 pl-10 text-base font-black text-slate-950 dark:text-white outline-none transition focus:border-brand-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900"
         />
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400 dark:text-slate-500">₪</span>
       </span>
@@ -903,17 +929,17 @@ function MoneyField({ label, value, onChange, helper }) {
 
 function MobileStickyCta() {
   return (
-    <div className="mobile-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-violet-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 pt-3 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
+    <div className="mobile-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-brand-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 pt-3 shadow-[0_-16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
       <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
         <a
           href="#calculator"
-          className="rounded-full bg-violet-700 px-4 py-3 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(109,40,217,0.28)]"
+          className="rounded-full bg-brand-700 px-4 py-3 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(109,40,217,0.28)]"
         >
           בדיקת מחזור
         </a>
         <a
           href="#lead"
-          className="rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 px-4 py-3 text-center text-sm font-black text-violet-800 dark:text-violet-300"
+          className="rounded-full border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-950 px-4 py-3 text-center text-sm font-black text-brand-800 dark:text-brand-300"
         >
           חזרה מיועץ
         </a>
@@ -931,7 +957,7 @@ function TextField({ label, value, onChange, placeholder = "", autoComplete }) {
         placeholder={placeholder}
         autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-base font-bold text-slate-950 dark:text-white outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"
+        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-base font-bold text-slate-950 dark:text-white outline-none transition focus:border-brand-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900"
       />
     </label>
   );
@@ -947,7 +973,7 @@ function NumberField({ label, value, onChange }) {
         max="30"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-base font-black text-slate-950 dark:text-white outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"
+        className="mt-2 h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-base font-black text-slate-950 dark:text-white outline-none transition focus:border-brand-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900"
       />
     </label>
   );
@@ -962,7 +988,7 @@ function RateField({ label, value, onChange }) {
           inputMode="decimal"
           value={String(value || "").replace(/[^\d.]/g, "")}
           onChange={(event) => onChange(cleanNumber(event.target.value, true))}
-          className="h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 pl-10 text-base font-black text-slate-950 dark:text-white outline-none transition focus:border-violet-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900"
+          className="h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 pl-10 text-base font-black text-slate-950 dark:text-white outline-none transition focus:border-brand-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900"
         />
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400 dark:text-slate-500">%</span>
       </span>
@@ -970,11 +996,15 @@ function RateField({ label, value, onChange }) {
   );
 }
 
-function DarkMetric({ label, value }) {
+function LightMetric({ label, value, badge }) {
   return (
-    <div className="rounded-3xl bg-white/10 p-4 ring-1 ring-white/10">
-      <p className="text-xs font-black text-violet-100">{label}</p>
-      <p className="number-display mt-2 text-xl font-black text-white">{value}</p>
+    <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-4">
+      <p className="text-xs font-black text-slate-500 dark:text-slate-400">{label}</p>
+      {badge ? (
+        <span className={`number-display mt-2 inline-block rounded-full px-3 py-1 text-sm font-black ${badge}`}>{value}</span>
+      ) : (
+        <p className="number-display mt-2 text-xl font-black text-slate-950 dark:text-white">{value}</p>
+      )}
     </div>
   );
 }

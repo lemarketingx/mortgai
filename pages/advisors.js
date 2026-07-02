@@ -139,7 +139,7 @@ function SampleLeadCard() {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm max-w-sm w-full">
       <div className="flex items-center justify-between mb-4">
-        <span className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full border bg-emerald-100 text-emerald-700 border-emerald-300">
+        <span className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full border bg-success-100 text-success-700 border-success-300">
           🔥 ליד חם
         </span>
         <span className="text-xs font-bold text-slate-400">📍 תל אביב</span>
@@ -167,10 +167,10 @@ function SampleLeadCard() {
           <span>סיכוי אישור (אומדן)</span><span>78%</span>
         </div>
         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div className="h-full rounded-full bg-emerald-500" style={{ width: "78%" }} />
+          <div className="h-full rounded-full bg-success-500" style={{ width: "78%" }} />
         </div>
       </div>
-      <div className="rounded-xl bg-violet-50 border border-violet-100 px-3 py-2 mb-4 text-xs font-bold text-violet-700">
+      <div className="rounded-xl bg-brand-50 border border-brand-100 px-3 py-2 mb-4 text-xs font-bold text-brand-700">
         בסיס ראשוני טוב לבדיקה
       </div>
       <div className="rounded-xl bg-slate-100 px-3 py-2 flex items-center gap-2 mb-4">
@@ -178,12 +178,12 @@ function SampleLeadCard() {
         <p className="text-xs font-bold text-slate-500">שם וטלפון מוסתרים לפני רכישה</p>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <button className="text-xs font-black px-3 py-2.5 rounded-full border border-violet-200 bg-violet-50 text-violet-800 cursor-default">
-          <span className="block text-xs font-bold text-violet-400 mb-0.5">ליד רגיל</span>
+        <button className="text-xs font-black px-3 py-2.5 rounded-full border border-brand-200 bg-brand-50 text-brand-800 cursor-default">
+          <span className="block text-xs font-bold text-brand-400 mb-0.5">ליד רגיל</span>
           מחיר לפי תמחור
         </button>
-        <button className="text-xs font-black px-3 py-2.5 rounded-full bg-violet-700 text-white cursor-default">
-          <span className="block text-xs font-bold text-violet-300 mb-0.5">בלעדי</span>
+        <button className="text-xs font-black px-3 py-2.5 rounded-full bg-brand-700 text-white cursor-default">
+          <span className="block text-xs font-bold text-brand-300 mb-0.5">בלעדי</span>
           מחיר לפי תמחור
         </button>
       </div>
@@ -202,7 +202,7 @@ function FaqItem({ item }) {
         aria-expanded={open}
       >
         <span className="text-base font-black text-slate-950">{item.q}</span>
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-violet-50 text-lg font-black text-violet-700">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-50 text-lg font-black text-brand-700">
           {open ? "−" : "+"}
         </span>
       </button>
@@ -235,7 +235,7 @@ export default function FinzoProLanding() {
               <Link href="/advisor/login" className="text-sm font-bold text-slate-300 hover:text-white transition-colors hidden sm:block">
                 כניסה ליועצים
               </Link>
-              <Link href="/advisor/register" className="rounded-full bg-violet-600 hover:bg-violet-500 px-5 py-2.5 text-sm font-black text-white transition-colors">
+              <Link href="/advisor/register" className="rounded-full bg-brand-600 hover:bg-brand-500 px-5 py-2.5 text-sm font-black text-white transition-colors">
                 הצטרפות
               </Link>
             </div>
@@ -246,18 +246,18 @@ export default function FinzoProLanding() {
         <section className="relative overflow-hidden bg-slate-950 pb-24 pt-20 text-white">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(139,92,246,0.25),transparent_60%)]" />
           <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-700/60 bg-violet-900/40 px-4 py-2 text-sm font-black text-violet-300 mb-8">
-              <span className="h-2 w-2 rounded-full bg-violet-400 animate-pulse" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-brand-700/60 bg-brand-900/40 px-4 py-2 text-sm font-black text-brand-300 mb-8">
+              <span className="h-2 w-2 rounded-full bg-brand-400 animate-pulse" />
               ליועצי משכנתאות בלבד
             </div>
             <div className="mb-5 flex flex-wrap justify-center gap-2 text-sm font-black">
-              <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-3 py-1 text-emerald-300">לידים מדורגים לפי איכות</span>
+              <span className="rounded-full bg-success-500/20 border border-success-500/40 px-3 py-1 text-success-300">לידים מדורגים לפי איכות</span>
               <span className="text-slate-600">+</span>
-              <span className="rounded-full bg-violet-500/20 border border-violet-500/40 px-3 py-1 text-violet-300">CRM אישי לניהול תיקי משכנתא</span>
+              <span className="rounded-full bg-brand-500/20 border border-brand-500/40 px-3 py-1 text-brand-300">CRM אישי לניהול תיקי משכנתא</span>
             </div>
             <h1 className="text-4xl font-black leading-tight tracking-tight sm:text-5xl">
               לידים מדורגים ומערכת עבודה אחת
-              <span className="mt-2 block text-violet-300">
+              <span className="mt-2 block text-brand-300">
                 לניהול הלקוח עד הסגירה
               </span>
             </h1>
@@ -265,7 +265,7 @@ export default function FinzoProLanding() {
               FINZO PRO מחברת בין לידים שעברו בדיקה ראשונית לבין סביבת CRM אישית לניהול סטטוס, מסמכים, בנקאים והמשך טיפול.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link href="/advisor/register" className="rounded-full bg-violet-600 hover:bg-violet-500 px-9 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.4)] transition hover:-translate-y-0.5">
+              <Link href="/advisor/register" className="rounded-full bg-brand-600 hover:bg-brand-500 px-9 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.4)] transition hover:-translate-y-0.5">
                 הצטרפות ליועצים
               </Link>
               <Link href="/advisor/login" className="rounded-full border border-white/20 bg-white/10 hover:bg-white/15 px-9 py-4 text-base font-black text-white transition">
@@ -282,7 +282,7 @@ export default function FinzoProLanding() {
         <section className="border-b border-slate-100 bg-slate-50 py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto mb-12 max-w-2xl text-center">
-              <span className="inline-block rounded-full bg-red-50 px-4 py-2 text-sm font-black text-red-600">
+              <span className="inline-block rounded-full bg-danger-50 px-4 py-2 text-sm font-black text-danger-600">
                 הבעיה
               </span>
               <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
@@ -307,7 +307,7 @@ export default function FinzoProLanding() {
         <section className="py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto mb-12 max-w-2xl text-center">
-              <span className="inline-block rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+              <span className="inline-block rounded-full bg-brand-50 px-4 py-2 text-sm font-black text-brand-700">
                 הפתרון
               </span>
               <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
@@ -335,7 +335,7 @@ export default function FinzoProLanding() {
         <section className="border-y border-slate-100 bg-slate-50 py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto mb-12 max-w-2xl text-center">
-              <span className="inline-block rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+              <span className="inline-block rounded-full bg-brand-50 px-4 py-2 text-sm font-black text-brand-700">
                 איך זה עובד
               </span>
               <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
@@ -347,7 +347,7 @@ export default function FinzoProLanding() {
               <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
                 {HOW_IT_WORKS.map((step) => (
                   <div key={step.n} className="relative bg-white rounded-2xl border border-slate-200 p-5 shadow-sm text-center">
-                    <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-full bg-violet-700 text-sm font-black text-white">
+                    <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-full bg-brand-700 text-sm font-black text-white">
                       {step.n}
                     </div>
                     <h3 className="text-sm font-black text-slate-950 leading-snug">{step.title}</h3>
@@ -364,7 +364,7 @@ export default function FinzoProLanding() {
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="grid items-center gap-12 lg:grid-cols-2">
               <div>
-                <span className="inline-block rounded-full bg-violet-900/60 border border-violet-700/60 px-4 py-2 text-sm font-black text-violet-300">
+                <span className="inline-block rounded-full bg-brand-900/60 border border-brand-700/60 px-4 py-2 text-sm font-black text-brand-300">
                   Preview לפני רכישה
                 </span>
                 <h2 className="mt-6 text-3xl font-black leading-tight sm:text-4xl">
@@ -376,7 +376,7 @@ export default function FinzoProLanding() {
                 <ul className="mt-7 space-y-3">
                   {["עיר ואזור", "סכום משכנתא ומחיר נכס", "הון עצמי", "הכנסה חודשית", "ציון אישור (אומדן)", "בעיה / נקודה מרכזית"].map((item) => (
                     <li key={item} className="flex items-center gap-3 text-slate-200">
-                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-black">✓</span>
+                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-success-500/20 text-success-400 text-xs font-black">✓</span>
                       <span className="font-bold">{item}</span>
                     </li>
                   ))}
@@ -397,7 +397,7 @@ export default function FinzoProLanding() {
         <section className="py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto mb-12 max-w-2xl text-center">
-              <span className="inline-block rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+              <span className="inline-block rounded-full bg-brand-50 px-4 py-2 text-sm font-black text-brand-700">
                 יתרונות
               </span>
               <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
@@ -420,7 +420,7 @@ export default function FinzoProLanding() {
         <section className="border-y border-slate-100 bg-slate-950 py-20 text-white">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto mb-12 max-w-2xl text-center">
-              <span className="inline-block rounded-full border border-violet-700/60 bg-violet-900/40 px-4 py-2 text-sm font-black text-violet-300">
+              <span className="inline-block rounded-full border border-brand-700/60 bg-brand-900/40 px-4 py-2 text-sm font-black text-brand-300">
                 לא רק לידים
               </span>
               <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
@@ -433,7 +433,7 @@ export default function FinzoProLanding() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {CRM_FEATURES.map((feature) => (
                 <div key={feature} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-violet-500/20 text-xs font-black text-violet-400">✓</span>
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-500/20 text-xs font-black text-brand-400">✓</span>
                   <span className="text-sm font-bold text-slate-200">{feature}</span>
                 </div>
               ))}
@@ -445,7 +445,7 @@ export default function FinzoProLanding() {
         <section className="py-20 bg-white">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto mb-12 max-w-2xl text-center">
-              <span className="inline-block rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+              <span className="inline-block rounded-full bg-brand-50 px-4 py-2 text-sm font-black text-brand-700">
                 סביבת העבודה
               </span>
               <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
@@ -461,9 +461,9 @@ export default function FinzoProLanding() {
               <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 <div className="bg-slate-950 px-4 pt-4 pb-0">
                   <div className="flex items-center gap-1.5 mb-3">
-                    <span className="h-2.5 w-2.5 rounded-full bg-red-400/60" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-amber-400/60" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/60" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-danger-400/60" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-warning-400/60" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-success-400/60" />
                     <span className="mr-auto text-xs font-bold text-slate-500">דשבורד</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 mb-3">
@@ -476,7 +476,7 @@ export default function FinzoProLanding() {
                   </div>
                   <div className="rounded-t-xl bg-slate-800/50 px-3 py-2.5 h-12 flex items-end gap-1">
                     {[3,5,4,7,6,8,5].map((h, i) => (
-                      <div key={i} className="flex-1 rounded-sm bg-violet-500/60" style={{ height: `${h * 5}px` }} />
+                      <div key={i} className="flex-1 rounded-sm bg-brand-500/60" style={{ height: `${h * 5}px` }} />
                     ))}
                   </div>
                 </div>
@@ -491,7 +491,7 @@ export default function FinzoProLanding() {
               <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 <div className="bg-slate-50 border-b border-slate-100 px-4 py-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-black text-emerald-700">🔥 ליד חם</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-success-100 px-2.5 py-0.5 text-xs font-black text-success-700">🔥 ליד חם</span>
                     <span className="text-xs text-slate-400 font-bold">📍 תל אביב</span>
                   </div>
                   <div className="space-y-1.5">
@@ -509,7 +509,7 @@ export default function FinzoProLanding() {
                     </div>
                     <div className="flex gap-2 items-center">
                       <span className="text-xs font-bold text-slate-500 w-20 shrink-0">סטטוס</span>
-                      <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-black text-violet-700">בטיפול</span>
+                      <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-black text-brand-700">בטיפול</span>
                     </div>
                   </div>
                 </div>
@@ -532,7 +532,7 @@ export default function FinzoProLanding() {
                       { name: "אישור עקרוני", done: false },
                     ].map((doc) => (
                       <div key={doc.name} className="flex items-center gap-2">
-                        <span className={`grid h-4 w-4 shrink-0 place-items-center rounded text-xs font-black ${doc.done ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-400"}`}>
+                        <span className={`grid h-4 w-4 shrink-0 place-items-center rounded text-xs font-black ${doc.done ? "bg-success-100 text-success-600" : "bg-slate-200 text-slate-400"}`}>
                           {doc.done ? "✓" : "○"}
                         </span>
                         <span className={`text-xs font-bold ${doc.done ? "text-slate-700" : "text-slate-400"}`}>{doc.name}</span>
@@ -540,7 +540,7 @@ export default function FinzoProLanding() {
                     ))}
                   </div>
                   <div className="mt-2.5 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-emerald-400" style={{ width: "50%" }} />
+                    <div className="h-full rounded-full bg-success-400" style={{ width: "50%" }} />
                   </div>
                 </div>
                 <div className="p-4">
@@ -584,7 +584,7 @@ export default function FinzoProLanding() {
         <section className="py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto mb-12 max-w-2xl text-center">
-              <span className="inline-block rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+              <span className="inline-block rounded-full bg-brand-50 px-4 py-2 text-sm font-black text-brand-700">
                 דירוג לידים
               </span>
               <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
@@ -600,8 +600,8 @@ export default function FinzoProLanding() {
                   <div className="mb-4 flex items-center gap-3">
                     <span className="text-2xl">{tier.badge}</span>
                     <span className={`inline-block rounded-full px-3 py-1 text-sm font-black ${
-                      tier.color === "emerald" ? "bg-emerald-100 text-emerald-700" :
-                      tier.color === "amber" ? "bg-amber-100 text-amber-700" :
+                      tier.color === "emerald" ? "bg-success-100 text-success-700" :
+                      tier.color === "amber" ? "bg-warning-100 text-warning-700" :
                       "bg-slate-100 text-slate-700"
                     }`}>{tier.label}</span>
                   </div>
@@ -616,7 +616,7 @@ export default function FinzoProLanding() {
         <section className="border-y border-slate-100 bg-slate-50 py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto mb-12 max-w-2xl text-center">
-              <span className="inline-block rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+              <span className="inline-block rounded-full bg-brand-50 px-4 py-2 text-sm font-black text-brand-700">
                 סוגי לידים
               </span>
               <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
@@ -639,7 +639,7 @@ export default function FinzoProLanding() {
         <section className="py-20">
           <div className="mx-auto max-w-4xl px-4 sm:px-6">
             <div className="mx-auto mb-12 max-w-2xl text-center">
-              <span className="inline-block rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+              <span className="inline-block rounded-full bg-brand-50 px-4 py-2 text-sm font-black text-brand-700">
                 מודל תשלום
               </span>
               <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
@@ -652,7 +652,7 @@ export default function FinzoProLanding() {
             <div className="grid gap-4 sm:grid-cols-2">
               {PRICING_POINTS.map((p) => (
                 <div key={p.title} className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-violet-100 text-sm font-black text-violet-700">{p.icon}</span>
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-100 text-sm font-black text-brand-700">{p.icon}</span>
                   <div>
                     <h3 className="font-black text-slate-950">{p.title}</h3>
                     <p className="mt-1 text-sm leading-6 text-slate-600">{p.body}</p>
@@ -660,9 +660,9 @@ export default function FinzoProLanding() {
                 </div>
               ))}
             </div>
-            <div className="mt-8 rounded-2xl border border-violet-200 bg-violet-50 p-6 text-center">
-              <p className="font-black text-violet-900">מחירי הלידים מוצגים בפורטל לפני כל רכישה.</p>
-              <p className="mt-1 text-sm text-violet-700">לפרטים נוספים — צרו קשר דרך טופס הצטרפות.</p>
+            <div className="mt-8 rounded-2xl border border-brand-200 bg-brand-50 p-6 text-center">
+              <p className="font-black text-brand-900">מחירי הלידים מוצגים בפורטל לפני כל רכישה.</p>
+              <p className="mt-1 text-sm text-brand-700">לפרטים נוספים — צרו קשר דרך טופס הצטרפות.</p>
             </div>
           </div>
         </section>
@@ -671,7 +671,7 @@ export default function FinzoProLanding() {
         <section className="border-y border-slate-100 bg-slate-50 py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto mb-12 max-w-2xl text-center">
-              <span className="inline-block rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+              <span className="inline-block rounded-full bg-brand-50 px-4 py-2 text-sm font-black text-brand-700">
                 שקיפות ואמון
               </span>
               <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
@@ -696,7 +696,7 @@ export default function FinzoProLanding() {
         <section className="py-20">
           <div className="mx-auto max-w-3xl px-4 sm:px-6">
             <div className="mb-12 text-center">
-              <span className="inline-block rounded-full bg-violet-50 px-4 py-2 text-sm font-black text-violet-700">
+              <span className="inline-block rounded-full bg-brand-50 px-4 py-2 text-sm font-black text-brand-700">
                 שאלות נפוצות
               </span>
               <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
@@ -714,9 +714,9 @@ export default function FinzoProLanding() {
         {/* ── 11. Final CTA ─────────────────────────────────────────────── */}
         <section className="bg-slate-950 py-24 text-white">
           <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-700/60 bg-violet-900/40 px-4 py-2 text-sm font-black text-violet-300 mb-8">
+            <div className="inline-flex items-center gap-2 rounded-full border border-brand-700/60 bg-brand-900/40 px-4 py-2 text-sm font-black text-brand-300 mb-8">
               <span className="text-xl font-black text-white">FINZO</span>
-              <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs font-black text-white">PRO</span>
+              <span className="rounded-full bg-brand-600 px-2 py-0.5 text-xs font-black text-white">PRO</span>
             </div>
             <h2 className="text-3xl font-black leading-tight sm:text-5xl">
               מערכת עבודה מלאה — לא רק לידים
@@ -725,7 +725,7 @@ export default function FinzoProLanding() {
               הצטרפו ל־FINZO PRO וקבלו לידים מדורגים לפי איכות, CRM אישי לניהול תיקים, ומערכת עבודה שמרכזת את הטיפול בלקוח במקום אחד.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link href="/advisor/register" className="rounded-full bg-violet-600 hover:bg-violet-500 px-10 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.4)] transition hover:-translate-y-0.5">
+              <Link href="/advisor/register" className="rounded-full bg-brand-600 hover:bg-brand-500 px-10 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.4)] transition hover:-translate-y-0.5">
                 הצטרפות ליועצים
               </Link>
               <Link href="/advisor/login" className="rounded-full border border-white/20 bg-white/10 hover:bg-white/15 px-10 py-4 text-base font-black text-white transition">
@@ -742,7 +742,7 @@ export default function FinzoProLanding() {
         <footer className="border-t border-slate-800 bg-slate-950 py-8 text-center text-xs text-slate-600">
           <p>
             <span className="font-black text-white">FINZO</span>
-            <span className="rounded-full bg-violet-600 px-1.5 py-0.5 text-xs font-black text-white mr-1.5">PRO</span>
+            <span className="rounded-full bg-brand-600 px-1.5 py-0.5 text-xs font-black text-white mr-1.5">PRO</span>
             — פלטפורמת לידים ליועצי משכנתאות | מערכת זו מיועדת ליועצים מקצועיים בלבד
           </p>
         </footer>

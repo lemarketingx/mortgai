@@ -97,7 +97,7 @@ function MoneyField({ label, value, onChange, placeholder, hint }) {
       {hint && <span className="mb-1 block text-[11px] text-slate-400 dark:text-slate-500">{hint}</span>}
       <span className="relative block">
         <input inputMode="numeric" value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || "0"}
-          className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-3 pl-10 pr-4 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-violet-500" />
+          className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-3 pl-10 pr-4 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-brand-500" />
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">₪</span>
       </span>
     </label>
@@ -109,7 +109,7 @@ function TextField({ label, value, onChange, placeholder, type = "text", inputMo
     <label className={`block ${className}`}>
       <span className="mb-1 block text-xs font-black text-slate-500 dark:text-slate-400">{label}</span>
       <input type={type} inputMode={inputMode} value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || label}
-        className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-violet-500" />
+        className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-brand-500" />
     </label>
   );
 }
@@ -119,7 +119,7 @@ function SelectField({ label, value, onChange, options, className = "" }) {
     <label className={`block ${className}`}>
       <span className="mb-1 block text-xs font-black text-slate-500 dark:text-slate-400">{label}</span>
       <select value={value || ""} onChange={(e) => onChange(e.target.value)}
-        className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-violet-500">
+        className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-brand-500">
         {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
     </label>
@@ -132,10 +132,10 @@ function ProgressBar({ step, total }) {
     <div className="mb-6">
       <div className="flex justify-between items-center mb-2">
         <span className="text-xs font-bold text-slate-500 dark:text-slate-400">שלב {step} מתוך {total}</span>
-        <span className="text-xs font-bold text-violet-600">{pct}%</span>
+        <span className="text-xs font-bold text-brand-600">{pct}%</span>
       </div>
       <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-        <div className="h-full rounded-full bg-violet-600 transition-all duration-500" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-brand-600 transition-all duration-500" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -335,7 +335,7 @@ export default function LeadPage() {
 
             <ProgressBar step={step} total={TOTAL_STEPS} />
 
-            <span className="inline-flex rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950 px-4 py-2 text-sm font-black text-violet-800 dark:text-violet-300">
+            <span className="inline-flex rounded-full border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-950 px-4 py-2 text-sm font-black text-brand-800 dark:text-brand-300">
               בדיקת זכאות ראשונית
             </span>
             <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">{STEP_TITLES[step - 1]}</h1>
@@ -390,51 +390,51 @@ export default function LeadPage() {
                   <span className="mb-1 block text-xs font-black text-slate-500 dark:text-slate-400">הערות נוספות (אופציונלי)</span>
                   <textarea value={lead.notes} onChange={(e) => update("notes", e.target.value)}
                     placeholder="מידע נוסף שחשוב שנדע"
-                    rows={3} className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-violet-500" />
+                    rows={3} className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-brand-500" />
                 </label>
                 <label className="mt-2 flex items-start gap-3 cursor-pointer sm:col-span-2">
                   <input type="checkbox" checked={lead.consentAdvisorContact}
                     onChange={(e) => update("consentAdvisorContact", e.target.checked)}
-                    className="mt-0.5 w-4 h-4 accent-violet-600 shrink-0" />
+                    className="mt-0.5 w-4 h-4 accent-brand-600 shrink-0" />
                   <span className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-5">
                     אני מסכים/ה לשיתוף הפרטים עם יועצי משכנתאות מורשים לצורך קבלת ייעוץ.{" "}
-                    <a href="/privacy" className="text-violet-600 hover:underline">מדיניות פרטיות</a>
+                    <a href="/privacy" className="text-brand-600 hover:underline">מדיניות פרטיות</a>
                   </span>
                 </label>
               </div>
             )}
 
             {error && (
-              <p role="alert" className="mt-4 rounded-2xl bg-red-50 dark:bg-red-950 px-4 py-3 text-sm font-bold text-red-700 dark:text-red-300">{error}</p>
+              <p role="alert" className="mt-4 rounded-2xl bg-danger-50 dark:bg-danger-950 px-4 py-3 text-sm font-bold text-danger-700 dark:text-danger-300">{error}</p>
             )}
 
             {sent && (
-              <div role="status" className="mt-4 rounded-[28px] border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 p-6 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900">
-                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <div role="status" className="mt-4 rounded-[28px] border border-success-200 dark:border-success-800 bg-success-50 dark:bg-success-950 p-6 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success-100 dark:bg-success-900">
+                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <p className="mt-3 text-xl font-black text-emerald-800 dark:text-emerald-200">הפנייה נשלחה בהצלחה</p>
-                <p className="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">נבדוק את הנתונים ונחזור אליכם בהקדם.</p>
+                <p className="mt-3 text-xl font-black text-success-800 dark:text-success-200">הפנייה נשלחה בהצלחה</p>
+                <p className="mt-1 text-sm font-semibold text-success-700 dark:text-success-300">נבדוק את הנתונים ונחזור אליכם בהקדם.</p>
               </div>
             )}
 
             <div className="mt-6 flex gap-3">
               {step > 1 && (
                 <button type="button" onClick={goBack}
-                  className="min-h-12 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-7 py-3 text-sm font-black text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                  className="min-h-12 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-7 py-3 text-sm font-black text-slate-700 dark:text-slate-300 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:hover:border-brand-700 dark:hover:bg-brand-900/20 dark:hover:text-brand-300 transition">
                   חזרה
                 </button>
               )}
               {step < TOTAL_STEPS ? (
                 <button type="button" onClick={goNext}
-                  className="min-h-12 flex-1 rounded-full bg-violet-700 px-7 py-3 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800">
+                  className="min-h-12 flex-1 rounded-full bg-brand-700 px-7 py-3 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-brand-800">
                   המשך
                 </button>
               ) : (
                 <button type="submit" disabled={loading || sent}
-                  className="min-h-12 flex-1 rounded-full bg-violet-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70">
+                  className="min-h-12 flex-1 rounded-full bg-brand-700 px-7 py-4 text-base font-black text-white shadow-[0_16px_40px_rgba(109,40,217,0.25)] transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-70">
                   {loading ? "שולח..." : sent ? "נשלח בהצלחה" : "שליחת פנייה"}
                 </button>
               )}
