@@ -2,7 +2,7 @@ import { Html, Head, Main, NextScript } from "next/document";
 
 export default function Document() {
   return (
-    <Html>
+    <Html lang="he" dir="rtl">
       <Head>
         {/* FINZO Design System fonts — belongs in _document, not next/head in _app,
             so the stylesheet is emitted once per request instead of on every route change. */}
