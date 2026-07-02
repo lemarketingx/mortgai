@@ -2,6 +2,8 @@ import { COMMISSION_STATUSES, LEAD_STATUSES, LeadStoreError, deleteLead, getSupa
 import { hasAdminSession } from "../../../lib/adminAuth";
 import { adminLeadBulkPatchSchema, adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
 
+const IS_DEV = process.env.NODE_ENV !== "production";
+
 function apiError(res, status, code, message, details = "") {
   return res.status(status).json({ error: code, message, details });
 }
@@ -16,12 +18,12 @@ function storeError(res, error, fallbackCode) {
 
 export default async function handler(req, res) {
   try {
-    console.log("[admin.leads] token/session validation start");
+    if (IS_DEV) console.log("[admin.leads] token/session validation start");
     if (!hasAdminSession(req)) {
       console.error("[admin.leads] token/session validation failed: missing/expired session");
       return apiError(res, 401, "ADMIN_AUTH_REQUIRED", "Admin session cookie is missing or expired");
     }
-    console.log("[admin.leads] token/session validation success");
+    if (IS_DEV) console.log("[admin.leads] token/session validation success");
   } catch (error) {
     console.error("[admin.leads] token/session validation crash", error);
     return apiError(res, 500, "ADMIN_AUTH_NOT_CONFIGURED", error.message || "ADMIN_SESSION_SECRET is missing");
@@ -29,16 +31,16 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
-      console.log("[admin.leads] leads select start");
+      if (IS_DEV) console.log("[admin.leads] leads select start");
       const leads = await readLeads();
-      console.log("[admin.leads] leads select success", { count: Array.isArray(leads) ? leads.length : -1 });
+      if (IS_DEV) console.log("[admin.leads] leads select success", { count: Array.isArray(leads) ? leads.length : -1 });
 
       let advisors = [];
       try {
-        console.log("[admin.leads] advisors select start");
+        if (IS_DEV) console.log("[admin.leads] advisors select start");
         const advisorsResult = await readAdvisors();
         advisors = Array.isArray(advisorsResult) ? advisorsResult : [];
-        console.log("[admin.leads] advisors select success", { count: advisors.length });
+        if (IS_DEV) console.log("[admin.leads] advisors select success", { count: advisors.length });
       } catch (advisorError) {
         console.error("[admin.leads] advisors select failed; returning leads without advisors", {
           message: advisorError?.message,
@@ -48,10 +50,10 @@ export default async function handler(req, res) {
         });
       }
 
-      console.log("[admin.leads] merge/mapping logic start");
+      if (IS_DEV) console.log("[admin.leads] merge/mapping logic start");
       const safeLeads = Array.isArray(leads) ? leads : [];
       const safeAdvisors = Array.isArray(advisors) ? advisors : [];
-      console.log("[admin.leads] merge/mapping logic success", {
+      if (IS_DEV) console.log("[admin.leads] merge/mapping logic success", {
         leadsCount: safeLeads.length,
         advisorsCount: safeAdvisors.length,
       });

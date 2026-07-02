@@ -94,12 +94,6 @@ export default async function handler(req, res) {
     },
   };
 
-  console.log("[lead-api] pre-validation consent", {
-    raw_camel: rawLead.consentAdvisorContact,
-    raw_snake: rawLead.consent_advisor_contact,
-    normalized: bodyWithUtm.lead?.consentAdvisorContact,
-  });
-
   const parsed = publicLeadSchema.safeParse(bodyWithUtm);
   if (!parsed.success) {
     const validation = validationErrorPayload(parsed.error);
@@ -145,11 +139,6 @@ export default async function handler(req, res) {
   const scoreResult = calculateLeadScore(scoringInput);
 
   // Consent is mandatory — no consent means never sellable, regardless of score
-  console.log("[lead-api] consent debug", {
-    rawConsent: req.body?.lead?.consentAdvisorContact,
-    parsedConsent: parsed.data.lead?.consentAdvisorContact,
-    scoringInputConsent: scoringInput.consentAdvisorContact,
-  });
   const consentGiven = Boolean(scoringInput.consentAdvisorContact);
   const isSellable = scoreResult.isSellable && consentGiven;
 
