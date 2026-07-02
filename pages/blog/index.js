@@ -4,6 +4,7 @@ import Link from "next/link";
 import { blogPosts } from "../../lib/blogPosts";
 import { OG_IMAGE_URL, breadcrumbSchema, canonicalUrl, stringifyJsonLd } from "../../lib/seo";
 import { trackEvent } from "../../lib/analytics";
+import BrandLogo from "../../components/BrandLogo";
 
 const CATEGORY_CLASSES = {
   זכאות: "bg-emerald-100 text-emerald-700",
@@ -111,10 +112,22 @@ export default function BlogIndexPage() {
       </Head>
 
       <main dir="rtl">
+        {/* ── Header ── */}
+        <header className="border-b border-white/10 bg-mort-ink px-4 py-4">
+          <div className="mx-auto flex max-w-4xl items-center justify-between">
+            <Link href="/" className="inline-flex items-center">
+              <BrandLogo mode="dark" size="sm" withTagline={false} />
+            </Link>
+            <Link href="/" className="text-sm font-bold text-slate-300 hover:text-white transition-colors">
+              דף הבית
+            </Link>
+          </div>
+        </header>
+
         {/* ── Hero ── */}
         <div className="bg-gradient-to-b from-mort-ink to-slate-800 text-white pt-12 pb-16 px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <p className="text-xs font-black text-violet-400 uppercase tracking-widest mb-4">Finzo · בלוג</p>
+            <p className="text-xs font-black text-violet-400 uppercase tracking-widest mb-4">בלוג</p>
             <h1 className="text-3xl md:text-5xl font-black mb-4 leading-tight">
               ידע שעובד בשבילכם
             </h1>

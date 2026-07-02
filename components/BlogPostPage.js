@@ -3,6 +3,7 @@ import Link from "next/link";
 import Head from "next/head";
 import { trackEvent } from "../lib/analytics";
 import { OG_IMAGE_URL, absoluteUrl, articleSchema, breadcrumbSchema, canonicalUrl, faqSchema, stringifyJsonLd } from "../lib/seo";
+import BrandLogo from "./BrandLogo";
 
 const CATEGORY_CLASSES = {
   זכאות: "bg-emerald-100 text-emerald-700",
@@ -259,6 +260,15 @@ export default function BlogPostPage({ post, relatedPosts }) {
       </div>
 
       <main className="pb-28 md:pb-10" dir="rtl">
+        {/* ── Header ── */}
+        <header className="border-b border-white/10 bg-mort-ink px-4 py-4">
+          <div className="mx-auto flex max-w-3xl items-center">
+            <Link href="/" className="inline-flex items-center">
+              <BrandLogo mode="dark" size="sm" withTagline={false} />
+            </Link>
+          </div>
+        </header>
+
         {/* ── Article header ── */}
         <div className="bg-gradient-to-b from-mort-ink to-slate-800 text-white pt-8 pb-12 px-4">
           <div className="max-w-3xl mx-auto">

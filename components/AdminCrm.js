@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useEffect, useMemo, useState } from "react";
 import { formatILS } from "../lib/format";
 import { computePricing } from "../lib/leadScoring";
+import BrandLogo from "./BrandLogo";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -640,7 +641,7 @@ export default function AdminCrm() {
         <Head><title>FINZO Back Office</title><meta name="robots" content="noindex,nofollow" /></Head>
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
-            <span className="inline-block rounded-full border border-finzo-line bg-white px-4 py-1 text-xs font-black tracking-widest text-finzo-cobalt uppercase">FINZO</span>
+            <div className="mb-4 flex justify-center"><BrandLogo size="sm" withTagline={false} /></div>
             <h1 className="mt-4 text-3xl font-black text-finzo-ink">Back Office</h1>
             <p className="mt-1.5 text-sm font-bold text-mort-muted">מערכת ניהול — גישה מורשית בלבד</p>
           </div>
@@ -683,8 +684,8 @@ export default function AdminCrm() {
       {/* ── Sidebar ── */}
       <aside className={`fixed inset-y-0 right-0 z-30 flex w-56 flex-col border-l border-finzo-line bg-white shadow-e-3 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0 lg:shadow-none ${sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}`}>
         <div className="border-b border-finzo-line px-5 py-4">
-          <span className="block text-xs font-black tracking-widest text-finzo-cobalt uppercase">FINZO</span>
-          <span className="mt-0.5 block text-sm font-black text-finzo-ink">Back Office</span>
+          <BrandLogo size="sm" withTagline={false} />
+          <span className="mt-1.5 block text-sm font-black text-finzo-ink">Back Office</span>
           <span className="mt-0.5 block text-xs font-bold text-mort-muted">מערכת ניהול עסקי</span>
         </div>
 
