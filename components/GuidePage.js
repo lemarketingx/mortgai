@@ -2,6 +2,7 @@ import Link from "next/link";
 import Head from "next/head";
 import { absoluteUrl, breadcrumbSchema, canonicalUrl, faqSchema, stringifyJsonLd, webPageSchema } from "../lib/seo";
 import { trackEvent } from "../lib/analytics";
+import BrandLogo from "./BrandLogo";
 
 export default function GuidePage({ guide, allGuides }) {
   function handleGuideCtaClick() {
@@ -50,7 +51,14 @@ export default function GuidePage({ guide, allGuides }) {
         />
       </Head>
 
-      <main className="max-w-4xl mx-auto px-4 py-10 text-slate-800" dir="rtl">
+      <div dir="rtl" className="min-h-screen bg-white">
+        <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
+          <div className="mx-auto flex max-w-4xl items-center">
+            <Link href="/" className="inline-flex items-center"><BrandLogo size="sm" withTagline={false} /></Link>
+          </div>
+        </header>
+
+        <main className="max-w-4xl mx-auto px-4 py-10 text-slate-800">
         <nav className="text-sm mb-6">
           <Link href="/" className="text-blue-700 hover:underline">דף הבית</Link>
           <span> / </span>
@@ -97,7 +105,8 @@ export default function GuidePage({ guide, allGuides }) {
         </section>
 
         <p className="text-sm text-slate-600 border-t pt-4">{disclaimer}</p>
-      </main>
+        </main>
+      </div>
     </>
   );
 }

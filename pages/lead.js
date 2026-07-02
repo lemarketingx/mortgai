@@ -1,7 +1,10 @@
 import Head from "next/head";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cleanNumber } from "../lib/format";
 import { ToastContainer, useToast } from "../components/ui/Toast";
+import BrandLogo from "../components/BrandLogo";
+import { useTheme } from "./_app";
 
 const STORAGE_KEY = "finzo_lead_draft";
 const PREFILL_KEY = "finzo_calc_prefill";
@@ -139,6 +142,7 @@ function ProgressBar({ step, total }) {
 }
 
 export default function LeadPage() {
+  const { dark } = useTheme();
   const [step, setStep] = useState(1);
   const [lead, setLead] = useState(initialLead);
   const [loading, setLoading] = useState(false);
@@ -310,13 +314,21 @@ export default function LeadPage() {
   }
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-8 text-slate-950 dark:text-slate-100 sm:px-6 lg:px-8">
+    <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-8 text-slate-950 dark:text-slate-100">
       <Head>
         <title>בדיקת זכאות מורחבת למשכנתא</title>
         <meta name="robots" content="noindex,nofollow" />
       </Head>
 
-      <section className="mx-auto max-w-5xl">
+      <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 sm:px-6">
+        <div className="mx-auto max-w-5xl">
+          <Link href="/" className="inline-flex items-center">
+            <BrandLogo mode={dark ? "dark" : "light"} size="sm" withTagline={false} />
+          </Link>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-5xl px-4 pt-8 sm:px-6 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
           <form onSubmit={submit} aria-busy={loading ? "true" : "false"}
             className="rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xl sm:p-8">
