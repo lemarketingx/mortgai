@@ -45,7 +45,14 @@ export default async function handler(req, res) {
   }
 
   // Create Supabase Auth user (email_confirm: true → instant access, no verification email)
-  const { error: authError, user: authUser } = await supabaseAdminCreateUser(email, password);
+  let createResult;
+  try {
+    createResult = await supabaseAdminCreateUser(email, password);
+  } catch (e) {
+    console.error("[advisor/register] supabaseAdminCreateUser threw:", e?.message);
+    return err(res, 503, "AUTH_SERVICE_UNAVAILABLE", "שירות ההרשמה אינו זמין כרגע. נסה שוב בעוד רגע.");
+  }
+  const { error: authError, user: authUser } = createResult;
   if (authError || !authUser?.id) {
     const msg = authError || "יצירת חשבון נכשלה";
     if (msg.toLowerCase().includes("already") || msg.toLowerCase().includes("duplicate")) {

@@ -117,13 +117,6 @@ export default function App({ Component, pageProps }) {
         {process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? (
           <meta name="google-site-verification" content={process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION} />
         ) : null}
-        {/* FINZO Design System fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Heebo:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
       </Head>
 
       <Script id="finzo-dark-mode-init" strategy="beforeInteractive">
