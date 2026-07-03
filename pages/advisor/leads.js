@@ -484,7 +484,12 @@ export default function AdvisorLeadsStore() {
       });
       const data = await response.json();
       if (!response.ok) {
-        setError(data.message || "הרכישה נכשלה. נסו שוב.");
+        if (data.error === "LEAD_ALREADY_SOLD" || data.error === "ALREADY_PURCHASED_BY_ADVISOR") {
+          setError(data.message || "ליד זה נמכר לפני רגע על ידי יועץ אחר.");
+          setLeads((items) => items.filter((lead) => lead.id !== leadId));
+        } else {
+          setError(data.message || "הרכישה נכשלה. נסו שוב.");
+        }
         return { ok: false };
       }
       const purchased = leads.find((lead) => lead.id === leadId) || null;
