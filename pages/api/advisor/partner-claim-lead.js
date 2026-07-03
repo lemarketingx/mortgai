@@ -1,4 +1,4 @@
-import { LeadStoreError, createLeadPurchase, readAdvisors, readLeads, updateLead } from "../../../lib/leadsStore";
+import { LeadStoreError, createLeadPurchase, readAdvisors, readLeads, lockLeadForPurchase } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 
 function apiError(res, status, code, message, details = "") {
@@ -28,28 +28,35 @@ export default async function handler(req, res) {
     const lead = leads.find((l) => l.id === leadId);
     if (!lead) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
 
-    const storeStatus = String(lead.storeStatus || "available");
-    if (storeStatus !== "available") {
+    const locked = await lockLeadForPurchase(leadId, {
+      buyerAdvisorId: session.advisorId,
+      storeStatus: "claimed_by_partner",
+    });
+
+    if (!locked) {
       return apiError(res, 409, "LEAD_NOT_AVAILABLE", "Lead is not available for partner claim");
     }
 
-    const now = new Date().toISOString();
-    const updated = await updateLead(leadId, {
-      storeStatus: "claimed_by_partner",
-      buyerAdvisorId: session.advisorId,
-      soldAt: now,
-    });
-    if (!updated) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
+    let purchase;
+    try {
+      purchase = await createLeadPurchase({
+        leadId,
+        advisorId: session.advisorId,
+        purchaseType: "partner_claim",
+        price: 0,
+        isExclusive: true,
+      });
+    } catch (error) {
+      console.error("[partner-claim] locked_lead_purchase_insert_failed", {
+        leadId,
+        advisorId: session.advisorId,
+        errorCode: error?.code || "",
+        message: error?.message || String(error),
+      });
+      throw error;
+    }
 
-    const purchase = await createLeadPurchase({
-      leadId,
-      advisorId: session.advisorId,
-      purchaseType: "partner_claim",
-      price: 0,
-      isExclusive: true,
-    });
-
-    return res.status(200).json({ ok: true, purchase });
+    return res.status(200).json({ ok: true, purchase, lead: locked });
   } catch (error) {
     if (error instanceof LeadStoreError) {
       if (error.code === "TABLE_MISSING") {

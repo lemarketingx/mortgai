@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds, claimLeadForPurchase, updateLead } from "../../../lib/leadsStore";
+import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds, lockLeadForPurchase } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { checkIdempotencyKey, createIdempotencyKey, completeIdempotencyKey, failIdempotencyKey } from "../../../lib/idempotencyStore";
 import { createNotification } from "../../../lib/notificationsStore";
@@ -24,8 +24,8 @@ export default async function handler(req, res) {
 
   const existing = await checkIdempotencyKey(idempotencyKey);
   if (existing) {
-    if (existing.status === "completed" && existing.response_json) {
-      return res.status(200).json(existing.response_json);
+    if (existing.status === "completed") {
+      return apiError(res, 409, "ALREADY_PURCHASED_BY_ADVISOR", "הליד כבר נרכש על ידך. ניתן למצוא אותו באזור 'הלידים שלי'.");
     }
     if (existing.status === "processing") {
       return apiError(res, 409, "PURCHASE_IN_PROGRESS", "הרכישה כבר בתהליך. אנא המתן.");
@@ -39,24 +39,24 @@ export default async function handler(req, res) {
     requestHash,
   });
 
-  if (idemRecord && idemRecord.status === "completed" && idemRecord.response_json) {
-    return res.status(200).json(idemRecord.response_json);
+  if (idemRecord && idemRecord.status === "completed") {
+    return apiError(res, 409, "ALREADY_PURCHASED_BY_ADVISOR", "הליד כבר נרכש על ידך. ניתן למצוא אותו באזור 'הלידים שלי'.");
   }
 
   try {
+    const ownedIds = await readAdvisorPurchasedLeadIds(session.advisorId);
+    if (ownedIds.has(leadId)) {
+      await failIdempotencyKey(idempotencyKey);
+      return apiError(res, 409, "ALREADY_PURCHASED_BY_ADVISOR", "הליד כבר נרכש על ידך. ניתן למצוא אותו באזור 'הלידים שלי'.");
+    }
+
     const storeLeads = await readStoreLeads();
     const lead = storeLeads.find((l) => l.id === leadId);
 
     // readStoreLeads() already filters by isSellable=true AND storeStatus='available'
     if (!lead) {
       await failIdempotencyKey(idempotencyKey);
-      return apiError(res, 404, "LEAD_NOT_AVAILABLE", "הליד אינו זמין לרכישה.");
-    }
-
-    const ownedIds = await readAdvisorPurchasedLeadIds(session.advisorId);
-    if (ownedIds.has(leadId)) {
-      await failIdempotencyKey(idempotencyKey);
-      return apiError(res, 409, "ALREADY_PURCHASED_BY_ADVISOR", "הליד כבר נרכש על ידך. ניתן למצוא אותו באזור 'הלידים שלי'.");
+      return apiError(res, 409, "LEAD_ALREADY_SOLD", "הליד כבר נמכר ואינו זמין לרכישה.");
     }
 
     // Price comes exclusively from DB (price_at_creation set at lead creation time).
@@ -67,17 +67,16 @@ export default async function handler(req, res) {
       return apiError(res, 409, "LEAD_NOT_PRICED", "הליד אינו מתומחר ואינו זמין לרכישה.");
     }
 
-    // Atomic claim: PATCH with store_status=eq.available + is_sellable=eq.true +
-    // or=(buyer_advisor_id.is.null,buyer_advisor_id.eq.) so concurrent requests cannot
-    // both succeed. Returns null if no row matched (race lost or already sold).
-    const claimed = await claimLeadForPurchase(leadId, session.advisorId);
-    if (!claimed) {
+    const locked = await lockLeadForPurchase(leadId, {
+      buyerAdvisorId: session.advisorId,
+      storeStatus: "sold",
+      requireSellable: true,
+    });
+    if (!locked) {
       await failIdempotencyKey(idempotencyKey);
       return apiError(res, 409, "LEAD_ALREADY_SOLD", "הליד כבר נמכר ואינו זמין לרכישה.");
     }
 
-    // Create the purchase record. If this fails, roll back the claim so the lead
-    // doesn't get permanently stuck in 'sold' without a matching purchase record.
     let purchase;
     try {
       purchase = await createLeadPurchase({
@@ -85,30 +84,30 @@ export default async function handler(req, res) {
         advisorId: session.advisorId,
         purchaseType: "regular",
         price,
-        isExclusive: false,
+        isExclusive: true,
       });
     } catch (purchaseError) {
-      // Best-effort rollback: restore lead to available so it can be purchased again
-      try {
-        await updateLead(leadId, { storeStatus: "available", soldAt: "", buyerAdvisorId: "" });
-      } catch (rollbackError) {
-        console.error("[purchase-lead] rollback failed — lead stuck as sold", { leadId, error: rollbackError?.message });
-      }
+      console.error("[lead-purchase] locked_lead_purchase_insert_failed", {
+        leadId,
+        advisorId: session.advisorId,
+        errorCode: purchaseError?.code || "",
+        message: purchaseError?.message || String(purchaseError),
+      });
       throw purchaseError;
     }
 
     createNotification({
       advisorId: session.advisorId,
       type: "lead_purchase",
-      title: `ליד חדש נרכש: ${lead.name || "ללא שם"}`,
-      message: `הליד ${lead.name || ""} מ-${lead.city || "לא ידוע"} נוסף לתיקים שלך`,
+      title: `ליד חדש נרכש: ${locked.name || "ללא שם"}`,
+      message: `הליד ${locked.name || ""} מ-${locked.city || "לא ידוע"} נוסף לתיקים שלך`,
       entityType: "lead",
       entityId: leadId,
       priority: "high",
       dedupeKey: `lead_purchase:${leadId}`,
     }).catch(() => {});
 
-    const responseJson = { ok: true, purchase };
+    const responseJson = { ok: true, purchase, lead: locked };
     await completeIdempotencyKey(idempotencyKey, responseJson);
     return res.status(200).json(responseJson);
   } catch (error) {
