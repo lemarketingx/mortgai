@@ -132,7 +132,7 @@ function openWaPhone(phone) {
 }
 
 // ─── Lead Card — memoized so it only re-renders when lead data changes ────────
-const MyLeadCard = memo(function MyLeadCard({ lead }) {
+const MyLeadCard = memo(function MyLeadCard({ lead, onClientNotInterested, isClosing }) {
   const stage = getStage(lead);
   const stageBadge = STAGE_BADGE[stage] || "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800";
   const score = Math.round(Number(lead.approvalScore || lead.estimatedApprovalResult) || 0);
@@ -194,7 +194,7 @@ const MyLeadCard = memo(function MyLeadCard({ lead }) {
         <span className="text-xs font-black text-slate-500 dark:text-slate-400 tabular-nums">{overall}%</span>
       </div>
       {/* Hebrew action buttons */}
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-2 gap-1.5">
         {lead.phone
           ? <a href={`tel:${lead.phone}`} className="text-center text-xs font-black rounded-lg py-2 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 active:bg-brand-100">התקשר</a>
           : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500">התקשר</button>}
@@ -202,13 +202,23 @@ const MyLeadCard = memo(function MyLeadCard({ lead }) {
           ? <button type="button" onClick={() => openWaPhone(lead.phone)} className="text-center text-xs font-black rounded-lg py-2 bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300 active:bg-success-100">וואטסאפ</button>
           : <button disabled className="text-center text-xs font-black rounded-lg py-2 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500">וואטסאפ</button>}
         <Link href={`/advisor/lead/${lead.id}`} className="text-center text-xs font-black rounded-lg py-2 bg-brand-700 text-white active:bg-brand-900">פתח תיק</Link>
+        {!isClosedPipelineStage(stage) && (
+          <button
+            type="button"
+            onClick={() => onClientNotInterested?.(lead)}
+            disabled={isClosing}
+            className="text-center text-xs font-black rounded-lg py-2 bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-300 active:bg-danger-100 disabled:opacity-50"
+          >
+            {isClosing ? "שומר..." : "לקוח לא מעוניין"}
+          </button>
+        )}
       </div>
     </article>
   );
 });
 
 // ─── List View row — memoized ─────────────────────────────────────────────────
-const LeadListRow = memo(function LeadListRow({ lead }) {
+const LeadListRow = memo(function LeadListRow({ lead, onClientNotInterested, isClosing }) {
   const stage = getStage(lead);
   const si = getStageIndex(lead);
   const overall = Number(lead.overallProgressPercent ?? calculateOverallMortgageProgress(lead)) || 0;
@@ -246,13 +256,23 @@ const LeadListRow = memo(function LeadListRow({ lead }) {
           {lead.phone && <a href={`tel:${lead.phone}`} className="text-[11px] font-black px-2 py-1 rounded-lg bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 active:bg-brand-100 whitespace-nowrap">התקשר</a>}
           {lead.phone && <button type="button" onClick={() => openWaPhone(lead.phone)} className="text-[11px] font-black px-2 py-1 rounded-lg bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300 active:bg-success-100 whitespace-nowrap">וואטסאפ</button>}
           <Link href={`/advisor/lead/${lead.id}`} className="text-[11px] font-black px-2 py-1 rounded-lg bg-brand-700 text-white active:bg-brand-900 whitespace-nowrap">פתח תיק</Link>
+          {!isClosedPipelineStage(stage) && (
+            <button
+              type="button"
+              onClick={() => onClientNotInterested?.(lead)}
+              disabled={isClosing}
+              className="text-[11px] font-black px-2 py-1 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-300 active:bg-danger-100 whitespace-nowrap disabled:opacity-50"
+            >
+              {isClosing ? "שומר..." : "לקוח לא מעוניין"}
+            </button>
+          )}
         </div>
       </td>
     </tr>
   );
 });
 
-function LeadListView({ leads }) {
+function LeadListView({ leads, onClientNotInterested, closingLeadId }) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
       <div className="overflow-x-auto">
@@ -265,7 +285,14 @@ function LeadListView({ leads }) {
             </tr>
           </thead>
           <tbody>
-            {leads.map((lead) => <LeadListRow key={lead.id} lead={lead} />)}
+            {leads.map((lead) => (
+              <LeadListRow
+                key={lead.id}
+                lead={lead}
+                onClientNotInterested={onClientNotInterested}
+                isClosing={closingLeadId === lead.id}
+              />
+            ))}
           </tbody>
         </table>
         {leads.length === 0 && <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm font-bold">אין לידים</div>}
@@ -275,7 +302,7 @@ function LeadListView({ leads }) {
 }
 
 // ─── Kanban View — memoized, O(1) stage lookup via Set ────────────────────────
-const KanbanView = memo(function KanbanView({ leads }) {
+const KanbanView = memo(function KanbanView({ leads, onClientNotInterested, closingLeadId }) {
   const groups = useMemo(() =>
     KANBAN_GROUPS.map((g) => ({
       ...g,
@@ -298,7 +325,14 @@ const KanbanView = memo(function KanbanView({ leads }) {
             <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
           </div>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {group.leads.map((lead) => <MyLeadCard key={lead.id} lead={lead} />)}
+            {group.leads.map((lead) => (
+              <MyLeadCard
+                key={lead.id}
+                lead={lead}
+                onClientNotInterested={onClientNotInterested}
+                isClosing={closingLeadId === lead.id}
+              />
+            ))}
           </div>
         </div>
       ))}
@@ -311,7 +345,14 @@ const KanbanView = memo(function KanbanView({ leads }) {
             <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
           </div>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {closedLost.map((lead) => <MyLeadCard key={lead.id} lead={lead} />)}
+            {closedLost.map((lead) => (
+              <MyLeadCard
+                key={lead.id}
+                lead={lead}
+                onClientNotInterested={onClientNotInterested}
+                isClosing={closingLeadId === lead.id}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -332,6 +373,7 @@ export default function AdvisorMyLeads() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const searchTimerRef = useRef(null);
   const [stageFilter, setStageFilter] = useState("all");
+  const [closingLeadId, setClosingLeadId] = useState("");
 
   useEffect(() => {
     // Restore URL stage filter
@@ -362,6 +404,42 @@ export default function AdvisorMyLeads() {
     const j = await r.json();
     setLeads(j.leads || []);
     setLoading(false);
+  }
+
+  async function markClientNotInterested(lead) {
+    if (!lead?.id) return;
+    if (!window.confirm("לסמן את הליד כ\"לקוח לא מעוניין\"?")) return;
+    const now = new Date().toISOString();
+    setClosingLeadId(lead.id);
+    setError("");
+    try {
+      const r = await fetch("/api/advisor/my-leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: lead.id,
+          changes: {
+            pipelineStage: "closed_lost",
+            leadStatus: "closed_lost",
+            status: "closed_lost",
+            followUpStage: "נסגר",
+            nextAction: "",
+            nextActionAt: "",
+            lastActivityAt: now,
+            stageUpdatedAt: now,
+          },
+        }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 401) { window.location.href = "/advisor/login"; return; }
+      if (!r.ok) throw new Error(j.message || "לא ניתן לעדכן את הליד.");
+      if (j.lead) setLeads((cur) => cur.map((item) => (item.id === lead.id ? j.lead : item)));
+      setStageFilter("lost");
+    } catch (err) {
+      setError(err.message || "לא ניתן לעדכן את הליד.");
+    } finally {
+      setClosingLeadId("");
+    }
   }
 
   function handleSearchChange(e) {
@@ -537,13 +615,20 @@ export default function AdvisorMyLeads() {
             <EmptyState glyph="🔍" title="אין תוצאות" description="נסו לשנות את החיפוש או הסינון." />
           )}
 
-          {!loading && filtered.length > 0 && view === "kanban" && <KanbanView leads={filtered} />}
+          {!loading && filtered.length > 0 && view === "kanban" && <KanbanView leads={filtered} onClientNotInterested={markClientNotInterested} closingLeadId={closingLeadId} />}
           {!loading && filtered.length > 0 && view === "cards" && (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((lead) => <MyLeadCard key={lead.id} lead={lead} />)}
+              {filtered.map((lead) => (
+                <MyLeadCard
+                  key={lead.id}
+                  lead={lead}
+                  onClientNotInterested={markClientNotInterested}
+                  isClosing={closingLeadId === lead.id}
+                />
+              ))}
             </div>
           )}
-          {!loading && filtered.length > 0 && view === "list" && <LeadListView leads={filtered} />}
+          {!loading && filtered.length > 0 && view === "list" && <LeadListView leads={filtered} onClientNotInterested={markClientNotInterested} closingLeadId={closingLeadId} />}
 
         </div>
       </main>
