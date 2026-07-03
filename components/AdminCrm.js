@@ -557,35 +557,65 @@ export default function AdminCrm() {
     setBulkAdvisorId("");
   }
 
-  async function deleteSingleLead(id) {
-    if (!window.confirm("האם למחוק את הליד לצמיתות?")) return;
-    setSavingId(id);
+  function buildArchiveChanges(lead = {}) {
+    const now = new Date().toISOString();
+    return {
+      pipelineStage: "closed_lost",
+      leadStatus: "closed_lost",
+      status: "closed_lost",
+      followUpStage: "נסגר",
+      lastActivityAt: now,
+      stageUpdatedAt: now,
+      nextAction: "",
+      nextActionAt: "",
+      ...(lead.storeStatus === "sold" ? {} : { storeStatus: "hidden" }),
+    };
+  }
+
+  async function archiveSingleLead(lead) {
+    if (!lead?.id) return;
+    if (!window.confirm("להעביר את הליד לארכיון?")) return;
+    setSavingId(lead.id);
     showMessage("", "info");
     try {
-      const res = await fetch("/api/admin/leads", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+      const res = await fetch("/api/admin/leads", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: lead.id, changes: buildArchiveChanges(lead) }) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(getAdminErrorMessage(json.error, json.message));
-      setLeads((cur) => cur.filter((l) => l.id !== id));
-      setSelectedIds((cur) => cur.filter((i) => i !== id));
-      showMessage("הליד נמחק.", "success");
-    } catch (err) { showMessage(err.message || "מחיקה נכשלה.", "error"); }
+      if (json.lead) setLeads((cur) => cur.map((l) => (l.id === lead.id ? json.lead : l)));
+      setSelectedIds((cur) => cur.filter((i) => i !== lead.id));
+      showMessage("הליד הועבר לארכיון.", "success");
+    } catch (err) { showMessage(err.message || "העברה לארכיון נכשלה.", "error"); }
     finally { setSavingId(""); }
   }
 
-  async function bulkDeleteLeads() {
+  async function bulkArchiveLeads() {
     if (!selectedIds.length) { showMessage("בחר לפחות ליד אחד.", "error"); return; }
-    if (!window.confirm("האם למחוק את הלידים לצמיתות?")) return;
+    if (!window.confirm(`להעביר ${selectedIds.length} לידים לארכיון?`)) return;
     setLoading(true);
     showMessage("", "info");
     try {
-      const res = await fetch("/api/admin/leads", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids: selectedIds }) });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(getAdminErrorMessage(json.error, json.message));
-      const set = new Set(selectedIds);
-      setLeads((cur) => cur.filter((l) => !set.has(l.id)));
+      const selectedSet = new Set(selectedIds);
+      const selectedLeads = leads.filter((lead) => selectedSet.has(lead.id));
+      const results = await Promise.allSettled(selectedLeads.map((lead) =>
+        fetch("/api/admin/leads", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: lead.id, changes: buildArchiveChanges(lead) }),
+        }).then(async (res) => {
+          const json = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(getAdminErrorMessage(json.error, json.message));
+          return json.lead;
+        })
+      ));
+      const updated = results.filter((result) => result.status === "fulfilled" && result.value).map((result) => result.value);
+      const failed = results.length - updated.length;
+      if (updated.length) {
+        const updatedById = new Map(updated.map((lead) => [lead.id, lead]));
+        setLeads((cur) => cur.map((lead) => updatedById.get(lead.id) || lead));
+      }
       setSelectedIds([]);
-      showMessage(`נמחקו ${json.deleted || 0} לידים.${json.failed ? ` נכשלו ${json.failed}.` : ""}`, "success");
-    } catch (err) { showMessage(err.message || "מחיקה מרוכזת נכשלה.", "error"); }
+      showMessage(`הועברו ${updated.length} לידים לארכיון.${failed ? ` נכשלו ${failed}.` : ""}`, failed ? "error" : "success");
+    } catch (err) { showMessage(err.message || "העברה מרוכזת לארכיון נכשלה.", "error"); }
     finally { setLoading(false); }
   }
 
@@ -844,7 +874,7 @@ export default function AdminCrm() {
               bulkAdvisorId={bulkAdvisorId} setBulkAdvisorId={setBulkAdvisorId}
               savingId={savingId} expandedLeadId={expandedLeadId} setExpandedLeadId={setExpandedLeadId}
               patchLead={patchLead} bulkPatch={bulkPatch} bulkAssignAdvisor={bulkAssignAdvisor}
-              bulkDeleteLeads={bulkDeleteLeads} deleteSingleLead={deleteSingleLead}
+              bulkDeleteLeads={bulkArchiveLeads} deleteSingleLead={archiveSingleLead}
               emptyTitle="אין לידים חדשים"
               emptySub="לידים חדשים שטרם טופלו יופיעו כאן."
             />
@@ -871,7 +901,7 @@ export default function AdminCrm() {
               bulkAdvisorId={bulkAdvisorId} setBulkAdvisorId={setBulkAdvisorId}
               savingId={savingId} expandedLeadId={expandedLeadId} setExpandedLeadId={setExpandedLeadId}
               patchLead={patchLead} bulkPatch={bulkPatch} bulkAssignAdvisor={bulkAssignAdvisor}
-              bulkDeleteLeads={bulkDeleteLeads} deleteSingleLead={deleteSingleLead}
+              bulkDeleteLeads={bulkArchiveLeads} deleteSingleLead={archiveSingleLead}
               emptyTitle="אין לידים"
               emptySub="הלידים שנכנסים מהפורמים יופיעו כאן."
             />
@@ -1487,7 +1517,7 @@ function LeadsView({
           <div className="mr-auto flex flex-wrap gap-1.5">
             <button type="button" onClick={() => bulkPatch({ leadQuality: "חם", leadPriority: "גבוה" })} disabled={!selectedIds.length} className="rounded-lg border border-success-200 bg-success-50 px-2.5 py-1.5 text-xs font-black text-success-800 disabled:opacity-40">סמן חם</button>
             <button type="button" onClick={() => bulkPatch({ followUpStage: "ניסיון 1" })} disabled={!selectedIds.length} className="rounded-lg border border-warning-200 bg-warning-50 px-2.5 py-1.5 text-xs font-black text-warning-800 disabled:opacity-40">מעקב ניסיון 1</button>
-            <button type="button" onClick={() => bulkPatch({ leadStatus: "לא רלוונטי", status: "לא רלוונטי" })} disabled={!selectedIds.length} className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-black text-slate-700 disabled:opacity-40">לא רלוונטי</button>
+            <button type="button" onClick={bulkDeleteLeads} disabled={!selectedIds.length} className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-black text-slate-700 disabled:opacity-40">לא רלוונטי</button>
             <div className="flex items-center gap-1">
               <select className="min-h-8 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-mort-ink" value={bulkAdvisorId} onChange={(e) => setBulkAdvisorId(e.target.value)}>
                 <option value="">שיוך ליועץ...</option>
@@ -1495,7 +1525,7 @@ function LeadsView({
               </select>
               <button type="button" onClick={bulkAssignAdvisor} disabled={!selectedIds.length || !bulkAdvisorId} className="min-h-8 rounded-lg bg-pro-ink px-2.5 py-1 text-xs font-black text-white disabled:opacity-40">שייך</button>
             </div>
-            <button type="button" onClick={bulkDeleteLeads} disabled={!selectedIds.length} className="rounded-lg border border-danger-200 bg-danger-50 px-2.5 py-1.5 text-xs font-black text-danger-700 disabled:opacity-40">מחק</button>
+            <button type="button" onClick={bulkDeleteLeads} disabled={!selectedIds.length} className="rounded-lg border border-danger-200 bg-danger-50 px-2.5 py-1.5 text-xs font-black text-danger-700 disabled:opacity-40">ארכיון</button>
           </div>
         </div>
       </div>
@@ -1566,7 +1596,7 @@ function LeadsView({
                     <Td>
                       <div className="flex gap-1.5">
                         <button type="button" onClick={() => setExpandedLeadId(isExpanded ? null : lead.id)} className="rounded-lg border border-pro-line bg-pro-paper px-2.5 py-1 text-xs font-black text-mort-ink hover:bg-pro-cream">{isExpanded ? "סגור" : "עריכה"}</button>
-                        <button type="button" onClick={() => deleteSingleLead(lead.id)} className="rounded-lg border border-danger-200 bg-danger-50 px-2.5 py-1 text-xs font-black text-danger-700 hover:bg-danger-100">מחק</button>
+                        <button type="button" onClick={() => deleteSingleLead(lead)} className="rounded-lg border border-danger-200 bg-danger-50 px-2.5 py-1 text-xs font-black text-danger-700 hover:bg-danger-100">ארכיון</button>
                       </div>
                     </Td>
                   </tr>
@@ -1611,7 +1641,7 @@ function LeadsView({
                   <div className="flex shrink-0 gap-1.5">
                     {lead.phone && <a href={`tel:${lead.phone}`} className="rounded-lg border border-pro-line bg-pro-paper px-2 py-1 text-xs font-black text-mort-ink">חיוג</a>}
                     <button type="button" onClick={() => setExpandedLeadId(isExpanded ? null : lead.id)} className="rounded-lg border border-pro-line bg-pro-paper px-2 py-1 text-xs font-black text-mort-ink">{isExpanded ? "סגור" : "עריכה"}</button>
-                    <button type="button" onClick={() => deleteSingleLead(lead.id)} className="rounded-lg border border-danger-200 bg-danger-50 px-2 py-1 text-xs font-black text-danger-700">מחק</button>
+                    <button type="button" onClick={() => deleteSingleLead(lead)} className="rounded-lg border border-danger-200 bg-danger-50 px-2 py-1 text-xs font-black text-danger-700">ארכיון</button>
                   </div>
                 </div>
                 {isExpanded && (
