@@ -45,6 +45,13 @@ function safeValidationIssues(error) {
   }));
 }
 
+function leadQualityFromScore(score) {
+  const value = Number(score) || 0;
+  if (value >= 76) return "חם";
+  if (value >= 41) return "בינוני";
+  return "חלש";
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -137,6 +144,7 @@ export default async function handler(req, res) {
     createdAt:             parsed.data.lead?.createdAt || new Date().toISOString(),
   };
   const scoreResult = calculateLeadScore(scoringInput);
+  const leadQuality = leadQualityFromScore(scoreResult.score);
 
   // Consent is mandatory — no consent means never sellable, regardless of score
   const consentGiven = Boolean(scoringInput.consentAdvisorContact);
@@ -150,6 +158,7 @@ export default async function handler(req, res) {
       leadScore:          scoreResult.score,
       leadScoreTier:      scoreResult.tier,
       leadScoreBreakdown: scoreResult.breakdown,
+      leadQuality,
       priceAtCreation:    isSellable ? scoreResult.price : 0,
       scoreVersion:       scoreResult.version,
       isSellable,
