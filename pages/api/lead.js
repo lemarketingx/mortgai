@@ -2,6 +2,7 @@ import { createLead } from "../../lib/leadsStore";
 import { publicLeadSchema, validationErrorPayload } from "../../lib/validation";
 import { checkRateLimit, getClientIp, recordRateLimitHit } from "../../lib/rateLimit";
 import { sendLeadNotification, sendMarketplaceLeadNotificationToAdvisors } from "../../lib/email";
+import { waitUntil } from "@vercel/functions";
 import { calculateLeadScore } from "../../lib/leadScoring";
 
 function normalizeLeadFields(raw = {}) {
@@ -225,14 +226,20 @@ export default async function handler(req, res) {
     });
   }
 
-  // Fire-and-forget email notification — never block or fail the response
-  sendLeadNotification(savedLead).catch((err) =>
-    console.error("[lead-api] email notification threw", err?.message || err)
+  // Fire-and-forget email notification — never block or fail the response.
+  // waitUntil keeps the serverless function alive to finish this after the
+  // response is sent, instead of risking the runtime freezing it mid-flight.
+  waitUntil(
+    sendLeadNotification(savedLead).catch((err) =>
+      console.error("[lead-api] email notification threw", err?.message || err)
+    )
   );
 
   // Fire-and-forget advisor marketplace notification — never block or fail the response
-  sendMarketplaceLeadNotificationToAdvisors(savedLead).catch((err) =>
-    console.error("[lead-api] advisor marketplace notification threw", err?.message || err)
+  waitUntil(
+    sendMarketplaceLeadNotificationToAdvisors(savedLead).catch((err) =>
+      console.error("[lead-api] advisor marketplace notification threw", err?.message || err)
+    )
   );
 
   return res.status(200).json({ ok: true, success: true, lead: savedLead, localOnly });
