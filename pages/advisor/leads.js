@@ -4,6 +4,21 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { KpiTile, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
 import { calculateLeadPriceSync as calculateLeadPrice, getPriceLabel } from "../../lib/leadPricing";
+import {
+  HomeIcon,
+  RefreshIcon,
+  TrendingUpIcon,
+  BuildingIcon,
+  AlertTriangleIcon,
+  UserIcon,
+  CreditCardIcon,
+  ClipboardIcon,
+  MapPinIcon,
+  StoreIcon,
+  StarIcon,
+  StarFilledIcon,
+  CheckCircleIcon,
+} from "../../components/icons";
 
 const FIXED_LEAD_PRICE = 0; // unused — price comes from priceAtCreation
 const FAVORITES_KEY = "finzo_lead_favorites";
@@ -22,14 +37,14 @@ const PURCHASE_STATUS_LABELS = {
 };
 
 const DEPARTMENTS = [
-  { key: "first_apartment", label: "🏠 דירה ראשונה", types: ["first_apartment"] },
-  { key: "refinance", label: "🔄 מחזור משכנתא", types: ["refinance"] },
-  { key: "upgrader", label: "📈 משפרי דיור", types: ["upgrader"] },
-  { key: "investment", label: "🏢 השקעה / דירה שנייה", types: ["investment", "new_purchase"] },
-  { key: "bank_issues", label: "⚠️ מסורבי בנק ו-BDI", types: ["bank_declined", "bdi_credit_issue"] },
-  { key: "senior_60plus", label: "👴 גיל 60+", types: ["senior_60plus"] },
-  { key: "debt", label: "💳 איחוד הלוואות", types: ["debt_consolidation"] },
-  { key: "general", label: "📋 כללי", types: ["general", ""] },
+  { key: "first_apartment", label: "דירה ראשונה", icon: HomeIcon, types: ["first_apartment"] },
+  { key: "refinance", label: "מחזור משכנתא", icon: RefreshIcon, types: ["refinance"] },
+  { key: "upgrader", label: "משפרי דיור", icon: TrendingUpIcon, types: ["upgrader"] },
+  { key: "investment", label: "השקעה / דירה שנייה", icon: BuildingIcon, types: ["investment", "new_purchase"] },
+  { key: "bank_issues", label: "מסורבי בנק ו-BDI", icon: AlertTriangleIcon, types: ["bank_declined", "bdi_credit_issue"] },
+  { key: "senior_60plus", label: "גיל 60+", icon: UserIcon, types: ["senior_60plus"] },
+  { key: "debt", label: "איחוד הלוואות", icon: CreditCardIcon, types: ["debt_consolidation"] },
+  { key: "general", label: "כללי", icon: ClipboardIcon, types: ["general", ""] },
 ];
 
 const PRICE_RANGES = [
@@ -210,7 +225,7 @@ function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
       </div>
       <div className="px-4 pt-4 pb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {label && <InfoBox label="סוג תיק" value={label} />}
-        {lead?.city && <InfoBox label="עיר" value={`📍 ${lead.city}`} />}
+        {lead?.city && <InfoBox label="עיר" value={lead.city} />}
         {lead?.mortgageAmount > 0 && <InfoBox label="משכנתא" value={formatILS(lead.mortgageAmount)} />}
         <InfoBox label="סוג רכישה · שעה" value={`${typeLabel} · ${now}`} />
         {quality && <InfoBox label="איכות ליד" value={quality} />}
@@ -267,13 +282,17 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isFavorite, onToggleFavor
               </span>
             )}
             {isSold && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400 border-danger-200 dark:border-danger-800">נמכר</span>}
-            {(lead._purchased || alreadyOwnedByMe) && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-success-100 dark:bg-success-900/20 text-success-800 dark:text-success-300 border-success-200 dark:border-success-800">נרכש ✓</span>}
+            {(lead._purchased || alreadyOwnedByMe) && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full border bg-success-100 dark:bg-success-900/20 text-success-800 dark:text-success-300 border-success-200 dark:border-success-800">
+                <CheckCircleIcon size={10} strokeWidth={2.5} /> נרכש
+              </span>
+            )}
           </div>
           <MarketplaceTags lead={lead} />
         </div>
         <div className="flex items-start gap-2 shrink-0">
-          <button onClick={() => onToggleFavorite?.(lead.id)} className={`text-lg leading-none mt-0.5 transition-colors ${isFavorite ? "text-warning-500" : "text-slate-300 dark:text-slate-600 hover:text-warning-400"}`} aria-label={isFavorite ? "הסר ממועדפים" : "הוסף למועדפים"}>
-            {isFavorite ? "★" : "☆"}
+          <button onClick={() => onToggleFavorite?.(lead.id)} className={`mt-0.5 transition-colors ${isFavorite ? "text-warning-500" : "text-slate-300 dark:text-slate-600 hover:text-warning-400"}`} aria-label={isFavorite ? "הסר ממועדפים" : "הוסף למועדפים"}>
+            {isFavorite ? <StarFilledIcon size={17} /> : <StarIcon size={17} />}
           </button>
           <div className="text-start">
             <p className="text-xl font-black text-slate-950 dark:text-slate-100 tabular-nums leading-none">{formatPrice(lead.priceAtCreation || lead.storePrice)}</p>
@@ -283,7 +302,12 @@ function LeadStoreCard({ lead, onPurchase, purchasing, isFavorite, onToggleFavor
       </div>
 
       <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
-        {lead.city && <span className="text-xs font-bold text-slate-500 dark:text-slate-400">📍 {lead.city}</span>}
+        {lead.city && (
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400">
+            <MapPinIcon size={12} />
+            {lead.city}
+          </span>
+        )}
         {lead.createdAt && <AgeBadge createdAt={lead.createdAt} />}
       </div>
 
@@ -366,10 +390,13 @@ function DepartmentSection({ dept, leads, onPurchase, purchasing, favorites, onT
     <section className="mb-6">
       <button onClick={() => setCollapsed((value) => !value)} className="w-full flex items-center justify-between gap-3 mb-3 group">
         <div className="flex items-center gap-2">
+          {dept.icon && <dept.icon size={16} className="text-brand-600 dark:text-brand-400 shrink-0" />}
           <h2 className="text-base font-black text-slate-800 dark:text-slate-200 group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors">{dept.label}</h2>
           <span className="text-xs font-black text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-0.5 tabular-nums">{leads.length}</span>
         </div>
-        <span className="text-slate-400 dark:text-slate-500 font-black text-sm">{collapsed ? "▼" : "▲"}</span>
+        <span className="text-slate-400 dark:text-slate-500 transition-transform" style={{ transform: collapsed ? "rotate(0deg)" : "rotate(180deg)" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+        </span>
       </button>
       {!collapsed && (
         <div className="grid gap-3 md:grid-cols-2">
@@ -639,7 +666,7 @@ export default function AdvisorLeadsStore() {
 
           {!loading && filtered.length === 0 && (
             <EmptyState
-              glyph="🏪"
+              icon={StoreIcon}
               title={hasFilters ? "אין לידים התואמים את הסינון" : "אין לידים זמינים כרגע"}
               description={hasFilters ? "נסו לשנות או לנקות את הסינון." : "לידים חדשים מתווספים לאחר שמשתמשים ממלאים את מחשבון הזכאות."}
             />

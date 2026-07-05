@@ -63,12 +63,12 @@ export function Eyebrow({ children, className = "" }) {
   );
 }
 
-/** Empty state — glyph + serif headline + 1-line copy + optional CTA */
-export function EmptyState({ glyph, title, description, action }) {
+/** Empty state — icon + serif headline + 1-line copy + optional CTA */
+export function EmptyState({ icon: Icon, glyph, title, description, action }) {
   return (
     <div className="flex flex-col items-center text-center p-14 bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-700 rounded-pro-lg">
-      <div className="w-14 h-14 rounded-pro-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 grid place-items-center font-serif font-bold text-2xl mb-[18px]">
-        {glyph}
+      <div className="w-14 h-14 rounded-pro-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 grid place-items-center mb-[18px]">
+        {Icon ? <Icon size={24} strokeWidth={1.7} /> : glyph}
       </div>
       <h4 className="font-serif text-[20px] mb-[6px] text-slate-900 dark:text-slate-100">{title}</h4>
       <p className="text-[14px] text-slate-600 dark:text-slate-400 max-w-[340px]">{description}</p>

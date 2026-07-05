@@ -4,6 +4,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { formatILS } from "../../lib/format";
 import { KpiTile, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import { ClipboardIcon, SearchIcon, CheckCircleIcon } from "../../components/icons";
 import {
   PIPELINE_STAGES,
   getPipelineStageLabel,
@@ -160,7 +161,9 @@ const MyLeadCard = memo(function MyLeadCard({ lead, onClientNotInterested, isClo
           </span>
         )}
         {isRecentlyPurchased && (
-          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-success-100 dark:bg-success-900/20 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800 whitespace-nowrap">נרכש לאחרונה ✓</span>
+          <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-success-100 dark:bg-success-900/20 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800 whitespace-nowrap">
+            <CheckCircleIcon size={10} strokeWidth={2.5} /> נרכש לאחרונה
+          </span>
         )}
         {badges.slice(0, 2).map((badge) => (
           <span key={badge} className={`text-[11px] font-black px-2 py-0.5 rounded-full ${badge === "דחוף" ? "bg-danger-100 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400" : "bg-warning-100 dark:bg-warning-900/20 text-warning-700 dark:text-warning-300"}`}>{badge}</span>
@@ -527,7 +530,7 @@ export default function AdvisorMyLeads() {
   return (
     <>
       <Head><title>הלידים שלי | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
-      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <AdvisorHeader active="/advisor/my-leads" />
         <div className="max-w-[92rem] mx-auto px-4 lg:px-6 py-4">
 
@@ -572,9 +575,9 @@ export default function AdvisorMyLeads() {
               <option value="status">שלב</option>
             </select>
             <div className="flex rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shrink-0">
-              <button onClick={() => { const csv = leadsToCSV(sorted); downloadCSV(csv, `finzo-leads-${new Date().toISOString().slice(0,10)}.csv`); }}
+              <button onClick={() => { const csv = leadsToCSV(filtered); downloadCSV(csv, `finzo-leads-${new Date().toISOString().slice(0,10)}.csv`); }}
                 className="px-3 py-2 text-xs font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">CSV</button>
-              <button onClick={() => { const xml = leadsToExcelXML(sorted); downloadExcel(xml, `finzo-leads-${new Date().toISOString().slice(0,10)}.xls`); }}
+              <button onClick={() => { const xml = leadsToExcelXML(filtered); downloadExcel(xml, `finzo-leads-${new Date().toISOString().slice(0,10)}.xls`); }}
                 className="px-3 py-2 text-xs font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors border-r border-slate-200 dark:border-slate-800">Excel</button>
             </div>
           </div>
@@ -608,11 +611,11 @@ export default function AdvisorMyLeads() {
           )}
 
           {!loading && filtered.length === 0 && stageFilter === "all" && !debouncedSearch && (
-            <EmptyState glyph="📋" title="עדיין לא רכשתם לידים" description="עברו לחנות הלידים כדי לקנות."
+            <EmptyState icon={ClipboardIcon} title="עדיין לא רכשתם לידים" description="עברו לחנות הלידים כדי לקנות."
               action={<Link href="/advisor/leads" className="inline-block rounded-full bg-brand-700 text-white px-6 py-3 text-sm font-black">לחנות הלידים ←</Link>} />
           )}
           {!loading && filtered.length === 0 && (stageFilter !== "all" || debouncedSearch) && (
-            <EmptyState glyph="🔍" title="אין תוצאות" description="נסו לשנות את החיפוש או הסינון." />
+            <EmptyState icon={SearchIcon} title="אין תוצאות" description="נסו לשנות את החיפוש או הסינון." />
           )}
 
           {!loading && filtered.length > 0 && view === "kanban" && <KanbanView leads={filtered} onClientNotInterested={markClientNotInterested} closingLeadId={closingLeadId} />}
@@ -632,13 +635,6 @@ export default function AdvisorMyLeads() {
 
         </div>
       </main>
-
-      {/* Mobile bottom nav */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
-        <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">ראשי</Link>
-        <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/20 rounded-xl py-2.5">הלידים שלי</Link>
-        <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">שוק</Link>
-      </div>
     </>
   );
 }

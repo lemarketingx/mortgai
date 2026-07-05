@@ -3,6 +3,15 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
 import { BANK_LIST } from "../../lib/bankerDirectory";
+import {
+  PlusIcon,
+  SearchIcon,
+  LandmarkIcon,
+  PhoneIcon,
+  MessageIcon,
+  MailIcon,
+  EditIcon,
+} from "../../components/icons";
 
 const BANK_NAMES = BANK_LIST.map((b) => b.name);
 
@@ -292,7 +301,7 @@ export default function BankersPage() {
               onClick={startAdd}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-700 text-white text-sm font-black hover:bg-brand-800 transition-colors"
             >
-              + הוסף בנקאי
+              <PlusIcon size={14} /> הוסף בנקאי
             </button>
           </div>
 
@@ -306,13 +315,16 @@ export default function BankersPage() {
         {/* Search & filters */}
         <div className="max-w-4xl mx-auto px-4 mb-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-3 flex flex-wrap gap-2 items-center">
-            <input
-              type="text"
-              className="flex-1 min-w-[160px] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
-              placeholder="🔍 חיפוש בנקאי..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <div className="relative flex-1 min-w-[160px]">
+              <SearchIcon size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+              <input
+                type="text"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl pr-9 pl-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
+                placeholder="חיפוש בנקאי..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
             <select
               className="border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-300 dark:bg-slate-800 dark:text-slate-200"
               value={filterBank}
@@ -371,16 +383,20 @@ export default function BankersPage() {
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-10 text-center">
               {bankers.length === 0 ? (
                 <>
-                  <p className="text-3xl mb-3">🏦</p>
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                    <LandmarkIcon size={22} strokeWidth={1.8} />
+                  </div>
                   <p className="text-sm font-black text-slate-700 dark:text-slate-300 mb-1">ספר הבנקאים ריק</p>
                   <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-4">הוסף בנקאים ותוכל לבחור אותם בתוך תיקי לקוח</p>
-                  <button type="button" onClick={startAdd} className="px-4 py-2.5 rounded-xl bg-brand-700 text-white text-sm font-black">
-                    + הוסף בנקאי ראשון
+                  <button type="button" onClick={startAdd} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand-700 text-white text-sm font-black">
+                    <PlusIcon size={14} /> הוסף בנקאי ראשון
                   </button>
                 </>
               ) : (
                 <>
-                  <p className="text-2xl mb-2">🔍</p>
+                  <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                    <SearchIcon size={18} strokeWidth={1.8} />
+                  </div>
                   <p className="text-sm font-black text-slate-500 dark:text-slate-400">אין תוצאות לחיפוש זה</p>
                 </>
               )}
@@ -413,14 +429,14 @@ export default function BankersPage() {
                         {banker.phone && (
                           <div className="flex items-center gap-1">
                             <a href={`tel:${banker.phone}`} className="font-bold text-slate-600 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300">{banker.phone}</a>
-                            <a href={`tel:${banker.phone}`} className="px-1.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 font-black text-[10px]">☎</a>
-                            <a href={`https://wa.me/${banker.phone.replace(/[^\d]/g, "").replace(/^0/, "972")}`} target="_blank" rel="noopener noreferrer" className="px-1.5 py-0.5 rounded-md bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300 font-black text-[10px]">💬</a>
+                            <a href={`tel:${banker.phone}`} className="flex items-center px-1.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300"><PhoneIcon size={11} /></a>
+                            <a href={`https://wa.me/${banker.phone.replace(/[^\d]/g, "").replace(/^0/, "972")}`} target="_blank" rel="noopener noreferrer" className="flex items-center px-1.5 py-0.5 rounded-md bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300"><MessageIcon size={11} /></a>
                           </div>
                         )}
                         {banker.email && (
                           <div className="flex items-center gap-1">
                             <a href={`mailto:${banker.email}`} className="font-bold text-slate-600 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300 truncate max-w-[180px]">{banker.email}</a>
-                            <a href={`mailto:${banker.email}`} className="px-1.5 py-0.5 rounded-md bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 font-black text-[10px]">✉</a>
+                            <a href={`mailto:${banker.email}`} className="flex items-center px-1.5 py-0.5 rounded-md bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300"><MailIcon size={11} /></a>
                           </div>
                         )}
                       </div>
@@ -437,9 +453,9 @@ export default function BankersPage() {
                       <button
                         type="button"
                         onClick={() => startEdit(banker)}
-                        className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                       >
-                        ✏ ערוך
+                        <EditIcon size={12} /> ערוך
                       </button>
                       <button
                         type="button"

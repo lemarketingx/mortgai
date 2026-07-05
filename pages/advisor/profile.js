@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import { CloudIcon, CheckCircleIcon, CircleIcon } from "../../components/icons";
 
 const PROFILE_KEY = "finzo_advisor_profile_v1";
 
@@ -110,7 +111,7 @@ export default function AdvisorProfile() {
         <title>פרופיל יועץ | FINZO PRO</title>
         <meta name="robots" content="noindex,nofollow" />
       </Head>
-      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <AdvisorHeader active="/advisor/settings" />
 
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
@@ -122,15 +123,16 @@ export default function AdvisorProfile() {
             </Link>
             <h1 className="text-xl font-black text-slate-950 dark:text-slate-100 flex-1">פרופיל יועץ</h1>
             {savedFlash && (
-              <span className="text-xs font-black text-success-600 dark:text-success-400">
-                {syncStatus === "synced" ? "נשמר וסונכרן ✓" : syncStatus === "local" ? "נשמר מקומית ✓" : "נשמר ✓"}
+              <span className="inline-flex items-center gap-1 text-xs font-black text-success-600 dark:text-success-400">
+                <CheckCircleIcon size={12} />
+                {syncStatus === "synced" ? "נשמר וסונכרן" : syncStatus === "local" ? "נשמר מקומית" : "נשמר"}
               </span>
             )}
           </div>
 
           {/* Sync notice */}
           <div className="flex items-start gap-3 bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800 rounded-xl px-4 py-3">
-            <span className="text-base shrink-0">☁️</span>
+            <span className="shrink-0 text-success-600 dark:text-success-400"><CloudIcon size={16} /></span>
             <p className="text-xs font-bold text-success-800 dark:text-success-300">
               פרטי הפרופיל מסונכרנים עם הפלטפורמה ונשמרים גם מקומית לגישה מהירה.
             </p>
@@ -216,8 +218,8 @@ export default function AdvisorProfile() {
                           ? "bg-brand-50 dark:bg-brand-900/20 border-brand-300 dark:border-brand-700 text-brand-800 dark:text-brand-300"
                           : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
                       }`}>
-                      <span className={`text-lg shrink-0 transition-transform ${selected ? "scale-110" : ""}`}>
-                        {selected ? "✓" : "○"}
+                      <span className={`shrink-0 transition-transform ${selected ? "scale-110" : ""}`}>
+                        {selected ? <CheckCircleIcon size={16} /> : <CircleIcon size={16} />}
                       </span>
                       <span>{s.label}</span>
                     </button>
@@ -233,13 +235,6 @@ export default function AdvisorProfile() {
             {syncing ? "שומר ומסנכרן..." : "שמור פרופיל"}
           </button>
 
-        </div>
-
-        {/* Mobile bottom nav */}
-        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
-          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">ראשי</Link>
-          <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
-          <Link href="/advisor/settings" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הגדרות</Link>
         </div>
       </main>
     </>

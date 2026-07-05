@@ -2,6 +2,16 @@ import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import {
+  DollarSignIcon,
+  PercentIcon,
+  ZapIcon,
+  ClipboardIcon,
+  ColumnsIcon,
+  GridIcon,
+  ListIcon,
+  CheckCircleIcon,
+} from "../../components/icons";
 
 const PREFS_KEY = "finzo_prefs_v1";
 
@@ -28,10 +38,10 @@ function Toggle({ checked, onChange, label }) {
 }
 
 const PRICING_MODEL_OPTIONS = [
-  { value: "fixed",        label: "עמלה קבועה",     icon: "💰" },
-  { value: "percent",      label: "אחוז מהמשכנתא",  icon: "%" },
-  { value: "hybrid",       label: "בסיס + אחוז",    icon: "⚡" },
-  { value: "by_lead_type", label: "לפי סוג תיק",    icon: "📋" },
+  { value: "fixed",        label: "עמלה קבועה",     icon: DollarSignIcon },
+  { value: "percent",      label: "אחוז מהמשכנתא",  icon: PercentIcon },
+  { value: "hybrid",       label: "בסיס + אחוז",    icon: ZapIcon },
+  { value: "by_lead_type", label: "לפי סוג תיק",    icon: ClipboardIcon },
 ];
 
 const LEAD_TYPE_OPTIONS = ["רכישה", "מחזור", "משפר דיור", "בנייה עצמית", "default"];
@@ -156,7 +166,7 @@ function PricingSettings() {
                   ? "bg-brand-700 text-white border-brand-700 shadow-sm"
                   : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
               }`}>
-              <span className="text-base">{opt.icon}</span>
+              <opt.icon size={16} />
               <span>{opt.label}</span>
             </button>
           ))}
@@ -228,7 +238,11 @@ function PricingSettings() {
       {model && (
         <div className="px-5 py-4 space-y-2">
           {error && <p className="text-xs font-bold text-danger-600">{error}</p>}
-          {saved && <p className="text-xs font-bold text-success-600 animate-pulse">מודל העמלה נשמר בהצלחה ✓</p>}
+          {saved && (
+            <p className="inline-flex items-center gap-1 text-xs font-bold text-success-600 animate-pulse">
+              <CheckCircleIcon size={12} /> מודל העמלה נשמר בהצלחה
+            </p>
+          )}
           <button type="button" onClick={handleSave} disabled={saving}
             className="w-full rounded-xl bg-brand-700 text-white font-black py-3 text-sm hover:bg-brand-800 transition-colors disabled:opacity-50">
             {saving ? "שומר..." : "שמור מודל עמלה"}
@@ -296,9 +310,9 @@ export default function AdvisorSettings() {
   }
 
   const VIEW_OPTIONS = [
-    { value: "kanban",  label: "קנבן",     icon: "⊞" },
-    { value: "cards",   label: "כרטיסים",  icon: "▤" },
-    { value: "list",    label: "רשימה",    icon: "≡" },
+    { value: "kanban",  label: "קנבן",     icon: ColumnsIcon },
+    { value: "cards",   label: "כרטיסים",  icon: GridIcon },
+    { value: "list",    label: "רשימה",    icon: ListIcon },
   ];
 
   const SORT_OPTIONS = [
@@ -314,7 +328,7 @@ export default function AdvisorSettings() {
         <title>הגדרות | FINZO PRO</title>
         <meta name="robots" content="noindex,nofollow" />
       </Head>
-      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <AdvisorHeader active="/advisor/settings" />
 
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
@@ -322,7 +336,11 @@ export default function AdvisorSettings() {
           {/* Page header */}
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-black text-slate-950 dark:text-slate-100">הגדרות</h1>
-            {savedFlash && <span className="text-xs font-black text-success-600 dark:text-success-400 animate-pulse">נשמר ✓</span>}
+            {savedFlash && (
+              <span className="inline-flex items-center gap-1 text-xs font-black text-success-600 dark:text-success-400 animate-pulse">
+                <CheckCircleIcon size={12} /> נשמר
+              </span>
+            )}
           </div>
 
           {/* ── תצוגה ──────────────────────────────────────────────────────── */}
@@ -348,7 +366,7 @@ export default function AdvisorSettings() {
                             ? "bg-brand-700 text-white border-brand-700 shadow-sm"
                             : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
                         }`}>
-                        <span className="text-base">{opt.icon}</span>
+                        <opt.icon size={16} />
                         <span>{opt.label}</span>
                       </button>
                     );
@@ -445,13 +463,6 @@ export default function AdvisorSettings() {
             <PricingSettings />
           </section>
 
-        </div>
-
-        {/* Mobile bottom nav */}
-        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
-          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">ראשי</Link>
-          <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
-          <Link href="/advisor/settings" className="flex-1 text-center text-xs font-black text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/20 rounded-xl py-2.5">הגדרות</Link>
         </div>
       </main>
     </>

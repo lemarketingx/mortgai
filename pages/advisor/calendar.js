@@ -1,7 +1,7 @@
 import Head from "next/head";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import { CalendarIcon } from "../../components/icons";
 
 // ─── Google Calendar helpers ────────────────────────────────────────────────
 function toGoogleCalendarUrl(event) {
@@ -279,7 +279,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
               className="rounded-xl border border-accent-200 dark:border-accent-800 bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-400 font-bold px-3 py-2.5 text-sm hover:bg-accent-100 dark:hover:bg-accent-900/40 transition disabled:opacity-50 flex items-center gap-1"
               title="שמור והוסף ליומן Google"
             >
-              📅 Google
+              <CalendarIcon size={13} /> Google
             </button>
             {isEdit && onDelete && (
               <button
@@ -652,7 +652,7 @@ export default function CalendarPage() {
       </Head>
       <AdvisorHeader active="/advisor/calendar" />
 
-      <main className="max-w-7xl mx-auto px-4 py-6 pb-28 md:pb-8">
+      <main className="max-w-7xl mx-auto px-4 py-6">
         {/* Top bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
@@ -680,7 +680,7 @@ export default function CalendarPage() {
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-xs font-black hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-40"
               title="ייצוא ל-Google Calendar / Apple Calendar"
             >
-              📅 ייצוא .ics
+              <CalendarIcon size={13} /> ייצוא .ics
             </button>
             <button
               onClick={() => openAddModal(currentDate)}
@@ -726,13 +726,6 @@ export default function CalendarPage() {
           saving={saving}
         />
       )}
-
-      {/* Mobile bottom nav */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
-        <Link href="/advisor" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">ראשי</Link>
-        <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
-        <Link href="/advisor/leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">שוק</Link>
-      </div>
     </div>
   );
 }

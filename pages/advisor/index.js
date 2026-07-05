@@ -4,6 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
 import { formatILS } from "../../lib/format";
 import {
+  ClipboardIcon,
+  StoreIcon,
+  CalendarIcon,
+  CalculatorIcon,
+  RefreshIcon,
+  SettingsIcon,
+  AlertTriangleIcon,
+  CheckCircleIcon,
+} from "../../components/icons";
+import {
   getPipelineStageLabel,
   isClosedPipelineStage,
   normalizePipelineStage,
@@ -264,8 +274,8 @@ function TodayTaskItem({ item }) {
         <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full">
           {getPipelineStageLabel(getStage(item.lead))}
         </span>
-        <span className={`text-[11px] font-bold ${item.overdue ? "text-danger-600 dark:text-danger-400" : "text-slate-400 dark:text-slate-500"}`}>
-          {item.overdue ? "⚠ באיחור" : "פתח תיק →"}
+        <span className={`inline-flex items-center gap-1 text-[11px] font-bold ${item.overdue ? "text-danger-600 dark:text-danger-400" : "text-slate-400 dark:text-slate-500"}`}>
+          {item.overdue ? <><AlertTriangleIcon size={11} /> באיחור</> : "פתח תיק →"}
         </span>
       </div>
     </Link>
@@ -300,10 +310,14 @@ function SectionSkeleton({ rows = 3 }) {
   );
 }
 
-function EmptySection({ icon, title, sub }) {
+function EmptySection({ icon: Icon, title, sub }) {
   return (
     <div className="px-5 py-8 text-center">
-      <p className="text-2xl mb-2">{icon}</p>
+      {Icon && (
+        <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500">
+          <Icon size={18} strokeWidth={1.8} />
+        </div>
+      )}
       <p className="text-sm font-black text-slate-700 dark:text-slate-300">{title}</p>
       {sub && <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-1">{sub}</p>}
     </div>
@@ -660,10 +674,12 @@ export default function AdvisorDashboard() {
     return (
       <>
         <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
-        <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
+        <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950">
           <AdvisorHeader active="/advisor" urgentItems={[]} />
           <div className="max-w-6xl mx-auto px-4 py-16 flex flex-col items-center text-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center text-3xl">📋</div>
+            <div className="w-16 h-16 rounded-2xl bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center text-brand-600 dark:text-brand-400">
+              <ClipboardIcon size={28} strokeWidth={1.8} />
+            </div>
             <h2 className="text-xl font-black text-slate-950 dark:text-slate-50">עדיין אין לך לידים פעילים</h2>
             <p className="text-sm font-bold text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
               כאן יוצגו הלידים שנרכשו מ-FINZO ושויכו אליך. עבור לשוק הלידים כדי לרכוש את הליד הראשון שלך.
@@ -678,13 +694,6 @@ export default function AdvisorDashboard() {
               לא ניתן ליצור לידים ידנית. כל הלידים מגיעים דרך FINZO.
             </p>
           </div>
-
-          {/* Mobile bottom nav */}
-          <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
-            <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 rounded-xl py-2.5">ראשי</Link>
-            <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
-            <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">שוק</Link>
-          </div>
         </main>
       </>
     );
@@ -696,7 +705,7 @@ export default function AdvisorDashboard() {
   return (
     <>
       <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
-      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <AdvisorHeader active="/advisor" urgentItems={attentionItems} notificationCount={unreadCount} notifications={notifications} onMarkAllRead={() => {
           fetch("/api/advisor/notifications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "readAll" }) }).then(() => { setUnreadCount(0); setNotifications(n => n.map(x => ({ ...x, readAt: new Date().toISOString() }))); }).catch(() => {});
         }} />
@@ -721,8 +730,8 @@ export default function AdvisorDashboard() {
                 שוק לידים →
               </Link>
               <Link href="/advisor/settings"
-                className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors hidden sm:block">
-                ⚙
+                className="flex items-center text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors hidden sm:block">
+                <SettingsIcon size={14} />
               </Link>
             </div>
           </div>
@@ -730,7 +739,7 @@ export default function AdvisorDashboard() {
           {/* ── Pricing profile warning ────────────────────────────────── */}
           {pricingLoaded && !hasPricingProfile && !loading && leads.length > 0 && (
             <div className="flex items-center gap-3 rounded-2xl bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 px-5 py-3.5">
-              <span className="text-lg shrink-0">⚠️</span>
+              <span className="shrink-0 text-warning-600 dark:text-warning-400"><AlertTriangleIcon size={18} /></span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-black text-warning-800 dark:text-warning-200">הגדר מודל עמלות כדי להפעיל תחזיות הכנסה</p>
                 <p className="text-xs font-bold text-warning-600 dark:text-warning-400 mt-0.5">תחזיות הכנסה, ROI ועמלות צפויות מושבתים ללא מודל עמלה מוגדר.</p>
@@ -1306,7 +1315,7 @@ export default function AdvisorDashboard() {
                       )
                     : (
                         <EmptySection
-                          icon="✅"
+                          icon={CheckCircleIcon}
                           title="כל התיקים תקינים"
                           sub="לא נמצאו פעולות באיחור או מסמכים חסרים"
                         />
@@ -1341,7 +1350,7 @@ export default function AdvisorDashboard() {
                       )
                     : (
                         <EmptySection
-                          icon="🗓"
+                          icon={CalendarIcon}
                           title="אין משימות מוגדרות להיום"
                           sub={<>פתחו תיק ליד והגדירו <strong>פעולה הבאה</strong> עם תאריך מעקב</>}
                         />
@@ -1408,27 +1417,27 @@ export default function AdvisorDashboard() {
                 <div className="space-y-2">
                   <Link href="/advisor/leads"
                     className="flex items-center gap-3 rounded-xl bg-brand-700 dark:bg-brand-600 text-white px-4 py-3 text-sm font-black hover:bg-brand-800 dark:hover:bg-brand-700 transition-colors">
-                    <span className="shrink-0">🏪</span>
+                    <span className="shrink-0"><StoreIcon size={16} /></span>
                     <span>שוק הלידים של FINZO</span>
                   </Link>
                   <Link href="/advisor/my-leads"
                     className="flex items-center gap-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 px-4 py-3 text-sm font-black hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors">
-                    <span className="shrink-0">📋</span>
+                    <span className="shrink-0"><ClipboardIcon size={16} /></span>
                     <span>כל הלידים שלי</span>
                   </Link>
                   <Link href="/advisor/calendar"
                     className="flex items-center gap-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 px-4 py-3 text-sm font-black hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors">
-                    <span className="shrink-0">📅</span>
+                    <span className="shrink-0"><CalendarIcon size={16} /></span>
                     <span>יומן ולוח שנה</span>
                   </Link>
                   <Link href="/"
                     className="flex items-center gap-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 px-4 py-3 text-sm font-black hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors">
-                    <span className="shrink-0">🧮</span>
+                    <span className="shrink-0"><CalculatorIcon size={16} /></span>
                     <span>מחשבון זכאות</span>
                   </Link>
                   <Link href="/refinance-check"
                     className="flex items-center gap-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 px-4 py-3 text-sm font-black hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors">
-                    <span className="shrink-0">🔄</span>
+                    <span className="shrink-0"><RefreshIcon size={16} /></span>
                     <span>מחשבון מחזור</span>
                   </Link>
                 </div>
@@ -1499,13 +1508,6 @@ export default function AdvisorDashboard() {
             </div>
           </details>
         )}
-
-        {/* Mobile bottom nav */}
-        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex gap-2">
-          <Link href="/advisor"          className="flex-1 text-center text-xs font-black text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 rounded-xl py-2.5">ראשי</Link>
-          <Link href="/advisor/my-leads" className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">הלידים שלי</Link>
-          <Link href="/advisor/leads"    className="flex-1 text-center text-xs font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl py-2.5">שוק</Link>
-        </div>
       </main>
     </>
   );
