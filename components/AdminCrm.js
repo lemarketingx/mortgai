@@ -572,6 +572,30 @@ export default function AdminCrm() {
     };
   }
 
+  function buildResendSummary({ admin, marketplace } = {}) {
+    const adminPart = admin?.ok ? "מייל אדמין נשלח." : "מייל אדמין לא נשלח.";
+    let marketplacePart;
+    if (marketplace?.ok) marketplacePart = `מייל יועצים נשלח ל-${marketplace.sent} יועצים.`;
+    else if (marketplace?.reason === "not_marketplace_available") marketplacePart = "הליד אינו זמין בשוק הלידים, לא נשלח מייל יועצים.";
+    else if (marketplace?.reason === "no_recipients") marketplacePart = "לא נמצאו יועצים פעילים לשליחה.";
+    else marketplacePart = "מייל יועצים לא נשלח.";
+    return `${adminPart} ${marketplacePart}`;
+  }
+
+  async function resendLeadNotification(lead) {
+    if (!lead?.id) return;
+    if (!window.confirm("לשלוח שוב את מיילי ההתראה על הליד?")) return;
+    setSavingId(lead.id);
+    showMessage("", "info");
+    try {
+      const res = await fetch("/api/admin/resend-lead-notification", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: lead.id }) });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(getAdminErrorMessage(json.error, json.message));
+      showMessage(buildResendSummary(json), json.ok ? "success" : "error");
+    } catch (err) { showMessage(err.message || "שליחת ההתראה נכשלה.", "error"); }
+    finally { setSavingId(""); }
+  }
+
   async function archiveSingleLead(lead) {
     if (!lead?.id) return;
     if (!window.confirm("להעביר את הליד לארכיון?")) return;
@@ -875,6 +899,7 @@ export default function AdminCrm() {
               savingId={savingId} expandedLeadId={expandedLeadId} setExpandedLeadId={setExpandedLeadId}
               patchLead={patchLead} bulkPatch={bulkPatch} bulkAssignAdvisor={bulkAssignAdvisor}
               bulkDeleteLeads={bulkArchiveLeads} deleteSingleLead={archiveSingleLead}
+              resendNotification={resendLeadNotification}
               emptyTitle="אין לידים חדשים"
               emptySub="לידים חדשים שטרם טופלו יופיעו כאן."
             />
@@ -902,6 +927,7 @@ export default function AdminCrm() {
               savingId={savingId} expandedLeadId={expandedLeadId} setExpandedLeadId={setExpandedLeadId}
               patchLead={patchLead} bulkPatch={bulkPatch} bulkAssignAdvisor={bulkAssignAdvisor}
               bulkDeleteLeads={bulkArchiveLeads} deleteSingleLead={archiveSingleLead}
+              resendNotification={resendLeadNotification}
               emptyTitle="אין לידים"
               emptySub="הלידים שנכנסים מהפורמים יופיעו כאן."
             />
@@ -1455,6 +1481,7 @@ function LeadsView({
   bulkAdvisorId, setBulkAdvisorId,
   savingId, expandedLeadId, setExpandedLeadId,
   patchLead, bulkPatch, bulkAssignAdvisor, bulkDeleteLeads, deleteSingleLead,
+  resendNotification,
   emptyTitle, emptySub,
 }) {
   return (
@@ -1596,6 +1623,7 @@ function LeadsView({
                     <Td>
                       <div className="flex gap-1.5">
                         <button type="button" onClick={() => setExpandedLeadId(isExpanded ? null : lead.id)} className="rounded-lg border border-pro-line bg-pro-paper px-2.5 py-1 text-xs font-black text-mort-ink hover:bg-pro-cream">{isExpanded ? "סגור" : "עריכה"}</button>
+                        <button type="button" disabled={isSaving} onClick={() => resendNotification(lead)} className="rounded-lg border border-pro-cobalt/30 bg-pro-cobalt-l/20 px-2.5 py-1 text-xs font-black text-pro-cobalt hover:bg-pro-cobalt-l/40 disabled:opacity-40">שלח מייל</button>
                         <button type="button" onClick={() => deleteSingleLead(lead)} className="rounded-lg border border-danger-200 bg-danger-50 px-2.5 py-1 text-xs font-black text-danger-700 hover:bg-danger-100">ארכיון</button>
                       </div>
                     </Td>
@@ -1641,6 +1669,7 @@ function LeadsView({
                   <div className="flex shrink-0 gap-1.5">
                     {lead.phone && <a href={`tel:${lead.phone}`} className="rounded-lg border border-pro-line bg-pro-paper px-2 py-1 text-xs font-black text-mort-ink">חיוג</a>}
                     <button type="button" onClick={() => setExpandedLeadId(isExpanded ? null : lead.id)} className="rounded-lg border border-pro-line bg-pro-paper px-2 py-1 text-xs font-black text-mort-ink">{isExpanded ? "סגור" : "עריכה"}</button>
+                    <button type="button" disabled={isSaving} onClick={() => resendNotification(lead)} className="rounded-lg border border-pro-cobalt/30 bg-pro-cobalt-l/20 px-2 py-1 text-xs font-black text-pro-cobalt disabled:opacity-40">שלח מייל</button>
                     <button type="button" onClick={() => deleteSingleLead(lead)} className="rounded-lg border border-danger-200 bg-danger-50 px-2 py-1 text-xs font-black text-danger-700">ארכיון</button>
                   </div>
                 </div>
