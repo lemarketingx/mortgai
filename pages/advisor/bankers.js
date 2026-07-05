@@ -11,6 +11,7 @@ import {
   MessageIcon,
   MailIcon,
   EditIcon,
+  XIcon,
 } from "../../components/icons";
 
 const BANK_NAMES = BANK_LIST.map((b) => b.name);
@@ -352,7 +353,7 @@ export default function BankersPage() {
                 <h2 className="text-sm font-black text-slate-950 dark:text-slate-100">
                   {editingId ? "עריכת בנקאי" : "הוספת בנקאי חדש"}
                 </h2>
-                <button type="button" onClick={() => setShowAdd(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-black text-xl leading-none">×</button>
+                <button type="button" onClick={() => setShowAdd(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"><XIcon size={18} /></button>
               </div>
               <form onSubmit={submitForm} className="p-5">
                 <BankerFormFields form={form} onChange={updateForm} />

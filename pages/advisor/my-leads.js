@@ -4,7 +4,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { formatILS } from "../../lib/format";
 import { KpiTile, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
-import { ClipboardIcon, SearchIcon, CheckCircleIcon } from "../../components/icons";
+import { ClipboardIcon, SearchIcon, CheckCircleIcon, XIcon } from "../../components/icons";
 import {
   PIPELINE_STAGES,
   getPipelineStageLabel,
@@ -596,7 +596,7 @@ export default function AdvisorMyLeads() {
           {error && (
             <div className="mb-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl px-4 py-3 text-sm text-danger-700 dark:text-danger-400 font-bold flex justify-between">
               <span>{error}</span>
-              <button onClick={() => setError("")} className="text-danger-400 dark:text-danger-500 font-black">×</button>
+              <button onClick={() => setError("")} className="text-danger-400 dark:text-danger-500"><XIcon size={16} /></button>
             </div>
           )}
 

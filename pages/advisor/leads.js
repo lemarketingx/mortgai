@@ -18,6 +18,7 @@ import {
   StarIcon,
   StarFilledIcon,
   CheckCircleIcon,
+  XIcon,
 } from "../../components/icons";
 
 const FIXED_LEAD_PRICE = 0; // unused — price comes from priceAtCreation
@@ -159,7 +160,12 @@ function FinzoScoreExplanation({ lead, score }) {
         onClick={() => setOpen((value) => !value)}
         className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-right"
       >
-        <span className="text-[10px] font-black text-slate-500 dark:text-slate-400">הסבר ציון FINZO ↕</span>
+        <span className="inline-flex items-center gap-1 text-[10px] font-black text-slate-500 dark:text-slate-400">
+          הסבר ציון FINZO
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? "rotate(180deg)" : "none" }}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </span>
         <span className="text-[10px] font-black text-brand-700 dark:text-brand-300">{score}/100</span>
       </button>
       {open && (
@@ -221,7 +227,7 @@ function PurchaseSuccessPanel({ lead, purchaseType, leadId, onClose }) {
     <div className="mb-6 rounded-2xl border border-success-300 dark:border-success-800 bg-gradient-to-br from-success-50 dark:from-success-900/20 to-white dark:to-slate-900 shadow-md overflow-hidden">
       <div className="flex items-center justify-between gap-3 bg-success-600 px-4 py-3">
         <span className="text-sm font-black text-white">הליד נרכש בהצלחה ונוסף ל'הלקוחות שלי'</span>
-        <button onClick={onClose} className="text-success-200 hover:text-white font-black text-lg leading-none shrink-0">×</button>
+        <button onClick={onClose} className="text-success-200 hover:text-white shrink-0"><XIcon size={18} /></button>
       </div>
       <div className="px-4 pt-4 pb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {label && <InfoBox label="סוג תיק" value={label} />}
@@ -615,7 +621,11 @@ export default function AdvisorLeadsStore() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 mb-5 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-black text-slate-700 dark:text-slate-300">סינון לידים</p>
-              {hasFilters && <button onClick={clearFilters} className="text-[10px] font-black text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 transition-colors">נקה סינון ×</button>}
+              {hasFilters && (
+                <button onClick={clearFilters} className="inline-flex items-center gap-1 text-[10px] font-black text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 transition-colors">
+                  נקה סינון <XIcon size={10} />
+                </button>
+              )}
             </div>
             <div className="flex flex-wrap gap-2">
               <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-brand-400">
@@ -645,7 +655,7 @@ export default function AdvisorLeadsStore() {
           {error && (
             <div className="mb-4 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl px-4 py-3 text-sm text-danger-700 dark:text-danger-400 font-bold flex items-center justify-between gap-3">
               <span>{error}</span>
-              <button onClick={() => setError("")} className="text-danger-400 dark:text-danger-500 hover:text-danger-600 dark:hover:text-danger-400 font-black text-lg leading-none">×</button>
+              <button onClick={() => setError("")} className="text-danger-400 dark:text-danger-500 hover:text-danger-600 dark:hover:text-danger-400"><XIcon size={16} /></button>
             </div>
           )}
 
