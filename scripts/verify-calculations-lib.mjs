@@ -145,7 +145,10 @@ console.log("\n── Refinance engine (lib) ──");
 
   check("prime track → no prepayment penalty", M.calculateEarlyPaymentPenalty(800000, 5, 120, "prime").penalty === 0);
   const pen = M.calculateEarlyPaymentPenalty(800000, 4.8, 240, "standard");
-  check("standard penalty = P·r·min(m,18)·0.6", pen.penalty === Math.round(800000 * (4.8 / 100 / 12) * 18 * 0.6));
+  check("legacy penalty (no marketRate) = P·r·min(m,18)·0.6", pen.penalty === Math.round(800000 * (4.8 / 100 / 12) * 18 * 0.6));
+  const penGap = M.calculateEarlyPaymentPenalty(800000, 4.8, 240, "standard", 3.8);
+  check("penalty with marketRate uses the 1% rate gap", penGap.penalty === Math.round(800000 * (1 / 100 / 12) * 18 * 0.6) && penGap.rateGap === 1);
+  check("marketRate above loan rate → zero penalty", M.calculateEarlyPaymentPenalty(800000, 4.0, 240, "standard", 5.0).penalty === 0);
 
   const cpi = M.calculateCpiEffect(1000000, 2.5, 10);
   check("CPI factor = 1.025^10", approx(cpi.factor, Math.pow(1.025, 10), 1e-9));
@@ -157,13 +160,10 @@ console.log("\n── Refinance engine (lib) ──");
   check("refi new payment matches Spitzer", approx(rec.newMonthly, wantNew, 1));
   check("monthlySavings = diff", approx(rec.monthlySavings, rec.currentMonthly - rec.newMonthly, 0.001));
   check("totalSavings = currentTotal − newTotal", rec.totalSavings === rec.currentTotal - rec.newTotal);
-  // KNOWN ISSUE (QA finding C-3, docs/QA_CALC_PDF_2026-07-06.md): the penalty
-  // heuristic uses the full loan rate instead of the rate differential, which
-  // inflates refinanceCosts and pushes break-even past 48 months — so a case
-  // with ~₪88k net savings currently returns "לא מומלץ". This check documents
-  // the current behavior; flip it to the commented expectation once C-3 is fixed.
-  check("1.3% rate drop currently returns לא מומלץ (documented issue C-3)", rec.recommendation === "לא מומלץ");
-  // check("1.3% rate drop → recommended", rec.recommendation === "מומלץ מאוד" || rec.recommendation === "כדאי לבדוק");
+  // C-3 fixed: penalty now uses the rate differential (5.5%→4.2% = 1.3% gap),
+  // so a case with ~₪122k net savings is recommended instead of "לא מומלץ".
+  check("penalty inside recommendation uses rate gap", rec.penalty === Math.round(900000 * (1.3 / 100 / 12) * 18 * 0.6));
+  check("1.3% rate drop → recommended", rec.recommendation === "מומלץ מאוד" || rec.recommendation === "כדאי לבדוק");
 
   const worse = M.refinanceRecommendation({ principal: 900000, rate: 4.0, remainingYears: 18, trackType: "standard" }, { newRate: 5.0 });
   check("higher new rate → לא מומלץ", worse.recommendation === "לא מומלץ");
