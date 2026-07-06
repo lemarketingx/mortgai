@@ -38,6 +38,7 @@ const PRICE_RANGES = [
   { label: "עד ₪100", max: 100 },
   { label: "עד ₪200", max: 200 },
   { label: "עד ₪300", max: 300 },
+  { label: "עד ₪350", max: 350 },
 ];
 
 const AGE_RANGES = [
@@ -129,9 +130,9 @@ function FinzoScoreExplanation({ lead, score }) {
   const equityRatio = _price > 0 && _equity > 0
     ? (_equity / _price) * 100
     : null;
-  const repaymentRatio = lead.monthlyIncome > 0 && lead.estimatedPayment > 0
+  const repaymentRatio = lead.repaymentRatio ?? (lead.monthlyIncome > 0 && lead.estimatedPayment > 0
     ? (Number(lead.estimatedPayment) / Number(lead.monthlyIncome)) * 100
-    : lead.repaymentRatio;
+    : null);
   const filteredBullets = (lead.pricingBullets || []).filter((item) => {
     const text = String(item || "");
     return !text.includes("מחיר") && !text.includes("הנחה") && !text.includes("בלעדי") && !text.includes("רגיל") && !text.includes("₪");
@@ -395,7 +396,7 @@ function AnonymousSnapshot({ lead }) {
     <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-3 space-y-2">
       <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">תצוגה מקדימה אנונימית</p>
       <div className="grid grid-cols-2 gap-2 text-xs">
-        {lead.employmentStatus && <InfoBox label="סוג הכנסה" value={lead.employmentStatus === "שכיר" ? "שכיר" : "עצמאי"} />}
+        {lead.employmentStatus && <InfoBox label="סוג הכנסה" value={lead.employmentStatus} />}
         {equityPct !== null && <InfoBox label="הון עצמי" value={`${equityPct}%`} />}
         {ltvPct !== null && <InfoBox label="אחוז מימון" value={`${ltvPct}%`} />}
         {lead.creditComplexity && <InfoBox label="מורכבות" value={lead.creditComplexity} />}
@@ -421,6 +422,8 @@ export default function AdvisorLeadsStore() {
   const [filterMaxDays, setFilterMaxDays] = useState(Infinity);
   const [favorites, setFavorites] = useState(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [sortBy, setSortBy] = useState("newest");
+  const [lastRefreshed, setLastRefreshed] = useState(null);
 
   useEffect(() => {
     try {
@@ -453,23 +456,39 @@ export default function AdvisorLeadsStore() {
     });
   }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // Marketplace freshness: another advisor buying a lead should disappear
+    // here within a minute, not on the next manual refresh.
+    const timer = setInterval(() => load({ background: true }), 60_000);
+    return () => clearInterval(timer);
+  }, []);
 
-  async function load() {
-    setLoading(true);
-    const response = await fetch("/api/advisor/store-leads");
-    if (response.status === 401) {
-      window.location.href = "/advisor/login";
-      return;
+  async function load({ background = false } = {}) {
+    if (!background) setLoading(true);
+    try {
+      const response = await fetch("/api/advisor/store-leads");
+      if (response.status === 401) {
+        window.location.href = "/advisor/login";
+        return;
+      }
+      if (!response.ok) {
+        if (!background) setError("שגיאה בטעינת הלידים. נסו לרענן.");
+        return;
+      }
+      const data = await response.json();
+      setLeads((prev) => {
+        const next = data.leads || [];
+        // keep local "purchased just now" flags across background refreshes
+        const purchased = new Set(prev.filter((l) => l._purchased).map((l) => l.id));
+        return next.map((l) => (purchased.has(l.id) ? { ...l, _purchased: true } : l));
+      });
+      setLastRefreshed(new Date());
+    } catch {
+      if (!background) setError("שגיאת רשת בטעינת הלידים. נסו לרענן.");
+    } finally {
+      if (!background) setLoading(false);
     }
-    if (!response.ok) {
-      setError("שגיאה בטעינת הלידים. נסו לרענן.");
-      setLoading(false);
-      return;
-    }
-    const data = await response.json();
-    setLeads(data.leads || []);
-    setLoading(false);
   }
 
   async function purchase(leadId, purchaseType) {
@@ -512,7 +531,7 @@ export default function AdvisorLeadsStore() {
   }, [leads]);
 
   const filtered = useMemo(() => {
-    return leads.filter((lead) => {
+    const base = leads.filter((lead) => {
       if (filterDept !== "all") {
         const dept = DEPARTMENTS.find((item) => item.key === filterDept);
         if (dept && !dept.types.includes(lead.purchaseStatus || "")) return false;
@@ -524,7 +543,13 @@ export default function AdvisorLeadsStore() {
       if (showFavoritesOnly && !favorites.has(lead.id)) return false;
       return true;
     });
-  }, [leads, filterDept, filterQuality, filterPriceMax, filterCity, filterMaxDays, showFavoritesOnly, favorites]);
+    const price = (l) => Number(l.priceAtCreation || l.storePrice || 0);
+    const score = (l) => Number(l.finzoScore ?? l.approvalScore ?? 0);
+    if (sortBy === "price_asc")  return [...base].sort((a, b) => price(a) - price(b));
+    if (sortBy === "price_desc") return [...base].sort((a, b) => price(b) - price(a));
+    if (sortBy === "score")      return [...base].sort((a, b) => score(b) - score(a));
+    return [...base].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  }, [leads, filterDept, filterQuality, filterPriceMax, filterCity, filterMaxDays, showFavoritesOnly, favorites, sortBy]);
 
   const qualityLevels = useMemo(() => {
     const unique = new Set(leads.map((lead) => lead.computedQuality || lead.leadQuality).filter(Boolean));
@@ -608,6 +633,16 @@ export default function AdvisorLeadsStore() {
               <select value={filterMaxDays === Infinity ? "Infinity" : String(filterMaxDays)} onChange={(e) => setFilterMaxDays(e.target.value === "Infinity" ? Infinity : Number(e.target.value))} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-brand-400">
                 {AGE_RANGES.map((range) => <option key={range.label} value={range.maxDays === Infinity ? "Infinity" : String(range.maxDays)}>{range.label}</option>)}
               </select>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-brand-400">
+                <option value="newest">מיון: חדש ביותר</option>
+                <option value="price_asc">מיון: מחיר ↑</option>
+                <option value="price_desc">מיון: מחיר ↓</option>
+                <option value="score">מיון: ציון FINZO</option>
+              </select>
+              <button onClick={() => load()} title={lastRefreshed ? `עודכן ${lastRefreshed.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}` : "רענון"}
+                className="text-xs font-black border rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-brand-300 transition-colors">
+                ⟳ רענון
+              </button>
               <button onClick={() => setShowFavoritesOnly(v => !v)}
                 className={`text-xs font-black border rounded-xl px-3 py-1.5 transition-colors ${showFavoritesOnly ? "bg-brand-100 dark:bg-brand-900/30 border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-300" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"}`}>
                 {showFavoritesOnly ? "מועדפים בלבד" : "מועדפים"} ({favorites.size})

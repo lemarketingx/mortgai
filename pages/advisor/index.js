@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
 import { formatILS } from "../../lib/format";
 import {
+  PIPELINE_STAGES,
   getPipelineStageLabel,
   isClosedPipelineStage,
   normalizePipelineStage,
@@ -363,6 +364,7 @@ function calcCommission(profile, lead) {
 export default function AdvisorDashboard() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [advisorName, setAdvisorName] = useState("");
   const [dateRange, setDateRange] = useState("all");
   const [bankFilter, setBankFilter] = useState("all");
@@ -389,10 +391,11 @@ export default function AdvisorDashboard() {
     fetch("/api/advisor/my-leads")
       .then((r) => {
         if (r.status === 401) { window.location.href = "/advisor/login"; return null; }
-        return r.ok ? r.json() : { leads: [] };
+        if (!r.ok) { setLoadError(true); return { leads: [] }; }
+        return r.json();
       })
       .then((j) => { if (j) { setLeads(j.leads || []); setLoading(false); } })
-      .catch(() => setLoading(false));
+      .catch(() => { setLoadError(true); setLoading(false); });
     fetch("/api/advisor/commissions?stats=true").then(r => r.ok ? r.json() : null).then(d => { if (d?.stats) setCommissionStats(d.stats); }).catch(() => {});
     fetch("/api/advisor/notifications?limit=5").then(r => r.ok ? r.json() : null).then(d => { if (d) { setNotifications(d.notifications || []); setUnreadCount(d.unreadCount || 0); } }).catch(() => {});
   }, []);
@@ -561,14 +564,18 @@ export default function AdvisorDashboard() {
   }, [filteredLeads]);
 
   const funnelData = useMemo(() => {
-    const stages = ["new_lead", "documents_requested", "eligibility_review", "submitted_to_bank", "principle_approval", "signed", "closed_won"];
+    // Position every lead on the FULL pipeline order, then count how many
+    // reached each milestone — a lead in waiting_documents has still passed
+    // "ליד חדש" and counts there (the old version dropped 12 of 19 stages).
+    const milestones = ["new_lead", "documents_requested", "eligibility_review", "submitted_to_bank", "principle_approval", "signed", "closed_won"];
     const labels = ["ליד חדש", "מסמכים", "בדיקת זכאות", "הגשה לבנק", "אישור עקרוני", "חתימה", "הושלם"];
-    return stages.map((stage, i) => {
-      const count = filteredLeads.filter(l => {
-        const idx = stages.indexOf(getStage(l));
-        return idx >= i;
-      }).length;
-      return { stage, label: labels[i], count };
+    const order = PIPELINE_STAGES.filter((st) => st !== "closed_lost");
+    const positions = filteredLeads
+      .map((l) => order.indexOf(getStage(l)))
+      .filter((idx) => idx >= 0);
+    return milestones.map((stage, i) => {
+      const milestoneIdx = order.indexOf(stage);
+      return { stage, label: labels[i], count: positions.filter((idx) => idx >= milestoneIdx).length };
     });
   }, [filteredLeads]);
 
@@ -654,6 +661,29 @@ export default function AdvisorDashboard() {
       };
     });
   }, [leads]);
+
+  // ── Load-error state — never masquerade a server failure as "no leads" ──────
+  if (!loading && loadError) {
+    return (
+      <>
+        <Head><title>לוח בקרה | FINZO PRO</title><meta name="robots" content="noindex,nofollow" /></Head>
+        <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 md:pb-0">
+          <AdvisorHeader active="/advisor" urgentItems={[]} />
+          <div className="max-w-6xl mx-auto px-4 py-16 flex flex-col items-center text-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-danger-100 dark:bg-danger-900/40 flex items-center justify-center text-3xl">⚠️</div>
+            <h2 className="text-xl font-black text-slate-950 dark:text-slate-50">שגיאה בטעינת הלידים</h2>
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
+              לא הצלחנו לטעון את התיקים שלך כרגע. הנתונים שלך במקומם — נסו לרענן את הדף בעוד רגע.
+            </p>
+            <button type="button" onClick={() => window.location.reload()}
+              className="mt-2 inline-block rounded-2xl bg-brand-700 dark:bg-brand-600 text-white font-black py-3 px-8 text-sm hover:bg-brand-800 dark:hover:bg-brand-700 transition-colors">
+              רענון הדף
+            </button>
+          </div>
+        </main>
+      </>
+    );
+  }
 
   // ── Empty state — advisor has no leads yet ───────────────────────────────────
   if (!loading && leads.length === 0) {
@@ -1049,7 +1079,9 @@ export default function AdvisorDashboard() {
                     const totalRevenue = commissionData.actual;
                     const avgDealSize = closedWon > 0 ? Math.round(completed.reduce((s, l) => s + (Number(l.mortgageAmount) || 0), 0) / closedWon) : 0;
                     const avgCommission = closedWon > 0 ? Math.round(totalRevenue / closedWon) : 0;
-                    const cac = closedWon > 0 ? Math.round((totalLeads * 150) / closedWon) : 0;
+                    // Real acquisition cost: what was actually paid for these leads
+                    const totalSpend = filteredLeads.reduce((sum, l) => sum + (Number(l.purchasePrice) || 0), 0);
+                    const cac = closedWon > 0 ? Math.round(totalSpend / closedWon) : 0;
                     const revenuePerLead = totalLeads > 0 ? Math.round(totalRevenue / totalLeads) : 0;
                     const roi = cac > 0 ? Math.round(((revenuePerLead - cac) / cac) * 100) : 0;
                     const bankConversion = (() => {
@@ -1170,16 +1202,10 @@ export default function AdvisorDashboard() {
                             <p className="text-2xl font-black tabular-nums text-success-700 dark:text-success-300">{formatILS(Math.round(weightedPipeline))}</p>
                           </div>
                           {hasPricingProfile && (
-                            <>
-                              <div className="p-3 bg-accent-50 dark:bg-accent-900/20 rounded-xl border border-accent-100 dark:border-accent-800">
-                                <p className="text-[10px] font-bold text-accent-600 dark:text-accent-400">הכנסה צפויה</p>
-                                <p className="text-2xl font-black tabular-nums text-accent-700 dark:text-accent-300">{formatILS(Math.round(estimatedRevenue))}</p>
-                              </div>
-                              <div className="p-3 bg-warning-50 dark:bg-warning-900/20 rounded-xl border border-warning-100 dark:border-warning-800">
-                                <p className="text-[10px] font-bold text-warning-600 dark:text-warning-400">עמלות צפויות</p>
-                                <p className="text-2xl font-black tabular-nums text-warning-700 dark:text-warning-300">{formatILS(Math.round(estimatedRevenue))}</p>
-                              </div>
-                            </>
+                            <div className="p-3 bg-accent-50 dark:bg-accent-900/20 rounded-xl border border-accent-100 dark:border-accent-800 col-span-2">
+                              <p className="text-[10px] font-bold text-accent-600 dark:text-accent-400">עמלות צפויות (משוקלל לפי סיכוי סגירה)</p>
+                              <p className="text-2xl font-black tabular-nums text-accent-700 dark:text-accent-300">{formatILS(Math.round(estimatedRevenue))}</p>
+                            </div>
                           )}
                         </div>
                         {expectedClose.length > 0 && (
