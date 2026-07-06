@@ -18,7 +18,8 @@ export default function handler(req, res) {
   }
 
   const ip = getClientIp(req);
-  const limit = checkLoginRateLimit(ip);
+  const RATE_OPTS = { scope: "admin-login" };
+  const limit = checkLoginRateLimit(ip, RATE_OPTS);
   if (!limit.allowed) {
     res.setHeader("Retry-After", String(Math.ceil((limit.resetAt - Date.now()) / 1000)));
     return res.status(429).json({
@@ -35,12 +36,12 @@ export default function handler(req, res) {
 
   const password = String(req.body?.password || "").trim();
   if (!isAdminPassword(password)) {
-    recordFailedLogin(ip);
+    recordFailedLogin(ip, RATE_OPTS);
     return res.status(401).json({ error: "INVALID_PASSWORD" });
   }
 
   try {
-    clearLoginRateLimit(ip);
+    clearLoginRateLimit(ip, RATE_OPTS);
     res.setHeader("Set-Cookie", createAdminSessionCookie());
     return res.status(200).json({ ok: true });
   } catch (error) {

@@ -7,7 +7,8 @@
     "build": "next build",
     "build:webpack": "next build --webpack",
     "start": "next start",
-    "validate": "node scripts/validate-calculations.mjs"
+    "validate": "node scripts/validate-calculations.mjs",
+    "verify:qa-fixes": "node scripts/verify-qa-fixes.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
