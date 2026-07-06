@@ -8,6 +8,7 @@
     "build:webpack": "next build --webpack",
     "start": "next start",
     "validate": "node scripts/validate-calculations.mjs",
+    "validate:lib": "node scripts/verify-calculations-lib.mjs",
     "verify:qa-fixes": "node scripts/verify-qa-fixes.mjs"
   },
   "dependencies": {
