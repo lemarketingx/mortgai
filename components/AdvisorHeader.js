@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "../pages/_app";
+import { getCachedJson, setCachedJson } from "../lib/clientFetchCache";
 import BrandLogo from "./BrandLogo";
 
 const PROFILE_KEY = "finzo_advisor_profile_v1";
@@ -111,6 +112,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
     fetch("/api/advisor/notifications")
       .then((r) => r.ok ? r.json() : { notifications: [] })
       .then((j) => {
+        setCachedJson("/api/advisor/notifications", j);
         const items = j.notifications || [];
         setNotifications(items);
         setUnreadCount(items.filter((n) => !n.isRead).length);
@@ -120,7 +122,17 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
   }, []);
 
   useEffect(() => {
-    fetchNotifications();
+    // Show the last-known notifications instantly on screen change; the
+    // 60s poll keeps them fresh without refetching on every navigation.
+    const cached = getCachedJson("/api/advisor/notifications", 60 * 1000);
+    if (cached) {
+      const items = cached.notifications || [];
+      setNotifications(items);
+      setUnreadCount(items.filter((n) => !n.isRead).length);
+      setNotifLoaded(true);
+    } else {
+      fetchNotifications();
+    }
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
@@ -150,6 +162,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
     }).then(() => {
       setNotifications((prev) => prev.map((n) => n.id === notifId ? { ...n, isRead: true, readAt: new Date().toISOString() } : n));
       setUnreadCount((c) => Math.max(0, c - 1));
+      fetchNotifications();
     }).catch(() => {});
   }
 
@@ -161,6 +174,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
     }).then(() => {
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true, readAt: new Date().toISOString() })));
       setUnreadCount(0);
+      fetchNotifications();
     }).catch(() => {});
   }
 

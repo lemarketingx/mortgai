@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { formatILS } from "../../lib/format";
+import { getCachedJson, setCachedJson, invalidateCache } from "../../lib/clientFetchCache";
 import { KpiTile, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
 import {
@@ -420,15 +421,19 @@ export default function AdvisorMyLeads() {
   useEffect(() => () => clearTimeout(searchTimerRef.current), []);
 
   async function load() {
-    setLoading(true);
+    // Show the cached list instantly, then refresh in the background
+    const cached = getCachedJson("/api/advisor/my-leads");
+    if (cached) setLeads(cached.leads || []);
+    else setLoading(true);
     try {
       const r = await fetch("/api/advisor/my-leads");
       if (r.status === 401) { window.location.href = "/advisor/login"; return; }
-      if (!r.ok) { setError("שגיאה בטעינת הלידים."); return; }
+      if (!r.ok) { if (!cached) setError("שגיאה בטעינת הלידים."); return; }
       const j = await r.json();
+      setCachedJson("/api/advisor/my-leads", j);
       setLeads(j.leads || []);
     } catch {
-      setError("שגיאת רשת בטעינת הלידים. נסו לרענן.");
+      if (!cached) setError("שגיאת רשת בטעינת הלידים. נסו לרענן.");
     } finally {
       setLoading(false);
     }
@@ -461,6 +466,7 @@ export default function AdvisorMyLeads() {
       const j = await r.json().catch(() => ({}));
       if (r.status === 401) { window.location.href = "/advisor/login"; return; }
       if (!r.ok) throw new Error(j.message || "לא ניתן לעדכן את הליד.");
+      invalidateCache("/api/advisor/my-leads");
       if (j.lead) setLeads((cur) => cur.map((item) => (item.id === lead.id ? j.lead : item)));
       setStageFilter("lost");
     } catch (err) {
@@ -482,6 +488,7 @@ export default function AdvisorMyLeads() {
       });
       if (r.status === 401) { window.location.href = "/advisor/login"; return; }
       if (!r.ok) throw new Error();
+      invalidateCache("/api/advisor/my-leads");
       const j = await r.json().catch(() => ({}));
       if (j.lead) setLeads((cur) => cur.map((l) => (l.id === leadId ? j.lead : l)));
     } catch {

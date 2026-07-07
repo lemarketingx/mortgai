@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import { getCachedJson, setCachedJson } from "../../lib/clientFetchCache";
 import { formatILS } from "../../lib/format";
 import {
   PIPELINE_STAGES,
@@ -388,19 +389,30 @@ export default function AdvisorDashboard() {
   // Fetch all advisor leads from /api/advisor/my-leads
   // This endpoint only returns leads that were purchased/assigned from FINZO.
   useEffect(() => {
+    // Render last-known data instantly, then refresh in the background
+    const cachedLeads = getCachedJson("/api/advisor/my-leads");
+    if (cachedLeads) { setLeads(cachedLeads.leads || []); setLoading(false); }
     fetch("/api/advisor/my-leads")
       .then((r) => {
         if (r.status === 401) { window.location.href = "/advisor/login"; return null; }
-        if (!r.ok) { setLoadError(true); return { leads: [] }; }
+        if (!r.ok) { if (!cachedLeads) setLoadError(true); return null; }
         return r.json();
       })
-      .then((j) => { if (j) { setLeads(j.leads || []); setLoading(false); } })
-      .catch(() => { setLoadError(true); setLoading(false); });
-    fetch("/api/advisor/commissions?stats=true").then(r => r.ok ? r.json() : null).then(d => { if (d?.stats) setCommissionStats(d.stats); }).catch(() => {});
-    fetch("/api/advisor/notifications?limit=5").then(r => r.ok ? r.json() : null).then(d => { if (d) { setNotifications(d.notifications || []); setUnreadCount(d.unreadCount || 0); } }).catch(() => {});
+      .then((j) => { if (j) { setCachedJson("/api/advisor/my-leads", j); setLeads(j.leads || []); } setLoading(false); })
+      .catch(() => { if (!cachedLeads) setLoadError(true); setLoading(false); });
+
+    const cachedComm = getCachedJson("/api/advisor/commissions?stats=true");
+    if (cachedComm?.stats) setCommissionStats(cachedComm.stats);
+    fetch("/api/advisor/commissions?stats=true").then(r => r.ok ? r.json() : null).then(d => { if (d?.stats) { setCachedJson("/api/advisor/commissions?stats=true", d); setCommissionStats(d.stats); } }).catch(() => {});
+
+    const cachedNotif = getCachedJson("/api/advisor/notifications?limit=5", 60 * 1000);
+    if (cachedNotif) { setNotifications(cachedNotif.notifications || []); setUnreadCount(cachedNotif.unreadCount || 0); }
+    fetch("/api/advisor/notifications?limit=5").then(r => r.ok ? r.json() : null).then(d => { if (d) { setCachedJson("/api/advisor/notifications?limit=5", d); setNotifications(d.notifications || []); setUnreadCount(d.unreadCount || 0); } }).catch(() => {});
   }, []);
 
   useEffect(() => {
+    const cachedPricing = getCachedJson("/api/advisor/pricing");
+    if (cachedPricing) { setPricingProfile(cachedPricing.profile); setPricingLoaded(true); }
     fetch("/api/advisor/pricing")
       .then((r) => {
         if (!r.ok) {
@@ -410,6 +422,7 @@ export default function AdvisorDashboard() {
         return r.json();
       })
       .then((j) => {
+        if (j.profile !== undefined) setCachedJson("/api/advisor/pricing", j);
         if (isDebugEnabled) console.log("[dashboard] pricingProfile:", j.profile ? j.profile.pricingModel : "null");
         setPricingProfile(j.profile);
         setPricingLoaded(true);
