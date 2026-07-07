@@ -14,7 +14,7 @@
  */
 
 import { getAdvisorSession } from "../../../lib/advisorAuth";
-import { readMyLeads } from "../../../lib/leadsStore";
+import { readMyLead } from "../../../lib/leadsStore";
 import { readAdvisorBankers, createCaseBanker, readCaseBankers, updateCaseBanker, deleteCaseBanker } from "../../../lib/bankerStore";
 import { createActivity } from "../../../lib/activitiesStore";
 
@@ -24,8 +24,7 @@ function apiError(res, status, code, message) {
 
 async function verifyLeadOwnership(res, advisorId, leadId) {
   try {
-    const leads = await readMyLeads(advisorId);
-    const lead = leads.find((l) => l.id === leadId);
+    const lead = await readMyLead(advisorId, leadId);
     if (lead) return lead;
     apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found in your purchased leads");
     return null;

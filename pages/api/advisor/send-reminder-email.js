@@ -14,7 +14,7 @@
  */
 
 import { getAdvisorSession } from "../../../lib/advisorAuth";
-import { LeadStoreError, readMyLeads } from "../../../lib/leadsStore";
+import { LeadStoreError, readMyLead } from "../../../lib/leadsStore";
 import { getReminderForLead, recordReminderSent } from "../../../lib/documentReminderEngine";
 import { sendDocumentReminderEmail } from "../../../lib/email";
 
@@ -45,8 +45,7 @@ export default async function handler(req, res) {
   // Verify advisor owns this lead
   let lead;
   try {
-    const leads = await readMyLeads(session.advisorId);
-    lead = leads.find((l) => l.id === leadId);
+    lead = await readMyLead(session.advisorId, leadId);
   } catch (err) {
     const status = err instanceof LeadStoreError && err.code === "SUPABASE_ENV_MISSING" ? 503 : 502;
     return apiError(res, status, err?.code || "LEAD_ACCESS_FAILED", "Unable to verify lead ownership");

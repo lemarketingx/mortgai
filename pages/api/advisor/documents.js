@@ -1,6 +1,6 @@
 import { createActivity } from "../../../lib/activitiesStore";
 import { createDocument, readDocuments, updateDocument } from "../../../lib/activitiesStore";
-import { LeadStoreError, readMyLeads, updateLead } from "../../../lib/leadsStore";
+import { LeadStoreError, readMyLead, updateLead } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import {
   buildDocumentChecklist,
@@ -16,8 +16,7 @@ function apiError(res, status, code, message) {
 
 async function findOwnedLead(res, advisorId, leadId) {
   try {
-    const leads = await readMyLeads(advisorId);
-    const lead = leads.find((item) => item.id === leadId);
+    const lead = await readMyLead(advisorId, leadId);
     if (lead) return lead;
     apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found in your purchased leads");
     return null;

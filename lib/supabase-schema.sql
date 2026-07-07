@@ -160,6 +160,7 @@ CREATE INDEX IF NOT EXISTS leads_buyer_advisor_idx ON leads (buyer_advisor_id);
 CREATE INDEX IF NOT EXISTS leads_lead_score_idx    ON leads (lead_score DESC);
 CREATE INDEX IF NOT EXISTS leads_is_sellable_idx   ON leads (is_sellable);
 CREATE INDEX IF NOT EXISTS leads_score_tier_idx    ON leads (lead_score_tier);
+CREATE INDEX IF NOT EXISTS leads_assigned_advisor_idx ON leads (assigned_advisor_id);
 
 -- Row Level Security
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
