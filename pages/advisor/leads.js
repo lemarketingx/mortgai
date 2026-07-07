@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { KpiTile, Skeleton, EmptyState } from "../../components/ui";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import { getCachedJson, setCachedJson, invalidateCache } from "../../lib/clientFetchCache";
 import { calculateLeadPriceSync as calculateLeadPrice, getPriceLabel } from "../../lib/leadPricing";
 
 const FIXED_LEAD_PRICE = 0; // unused — price comes from priceAtCreation
@@ -465,7 +466,10 @@ export default function AdvisorLeadsStore() {
   }, []);
 
   async function load({ background = false } = {}) {
-    if (!background) setLoading(true);
+    // Short TTL — availability changes as other advisors buy leads
+    const cached = background ? null : getCachedJson("/api/advisor/store-leads", 60 * 1000);
+    if (cached) setLeads(cached.leads || []);
+    else if (!background) setLoading(true);
     try {
       const response = await fetch("/api/advisor/store-leads");
       if (response.status === 401) {
@@ -477,6 +481,7 @@ export default function AdvisorLeadsStore() {
         return;
       }
       const data = await response.json();
+      setCachedJson("/api/advisor/store-leads", data);
       setLeads((prev) => {
         const next = data.leads || [];
         // keep local "purchased just now" flags across background refreshes
@@ -511,6 +516,9 @@ export default function AdvisorLeadsStore() {
         }
         return { ok: false };
       }
+      // A purchase changes both the marketplace and the advisor's lead list
+      invalidateCache("/api/advisor/store-leads");
+      invalidateCache("/api/advisor/my-leads");
       const purchased = leads.find((lead) => lead.id === leadId) || null;
       setSuccessId(leadId);
       setSuccessLead(purchased);

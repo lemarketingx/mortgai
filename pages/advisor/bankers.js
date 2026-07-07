@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import { getCachedJson, setCachedJson, invalidateCache } from "../../lib/clientFetchCache";
 import { BANK_LIST } from "../../lib/bankerDirectory";
 
 const BANK_NAMES = BANK_LIST.map((b) => b.name);
@@ -140,11 +141,19 @@ export default function BankersPage() {
   }, [showInactive]);
 
   async function loadBankers() {
-    setLoading(true);
+    const url = `/api/advisor/bankers${showInactive ? "?includeInactive=1" : ""}`;
+    const cached = getCachedJson(url);
+    if (cached) {
+      setBankers(Array.isArray(cached.bankers) ? cached.bankers : []);
+      setCaseStats(cached.caseStats && typeof cached.caseStats === "object" ? cached.caseStats : {});
+    } else {
+      setLoading(true);
+    }
     try {
-      const r = await fetch(`/api/advisor/bankers${showInactive ? "?includeInactive=1" : ""}`);
+      const r = await fetch(url);
       if (r.ok) {
         const j = await r.json();
+        setCachedJson(url, j);
         setBankers(Array.isArray(j.bankers) ? j.bankers : []);
         setCaseStats(j.caseStats && typeof j.caseStats === "object" ? j.caseStats : {});
       }
@@ -199,6 +208,7 @@ export default function BankersPage() {
         });
         if (r.ok) {
           const j = await r.json();
+          invalidateCache("/api/advisor/bankers");
           setBankers((prev) => prev.map((b) => b.id === editingId ? j.banker : b));
           flash("פרטי הבנקאי עודכנו ✓");
           setShowAdd(false);
@@ -213,6 +223,7 @@ export default function BankersPage() {
         });
         if (r.ok) {
           const j = await r.json();
+          invalidateCache("/api/advisor/bankers");
           setBankers((prev) => [j.banker, ...prev]);
           flash("בנקאי נוסף ✓");
           setShowAdd(false);
@@ -233,6 +244,7 @@ export default function BankersPage() {
     });
     if (r.ok) {
       const j = await r.json();
+      invalidateCache("/api/advisor/bankers");
       setBankers((prev) => prev.map((b) => b.id === banker.id ? j.banker : b).filter((b) => showInactive || b.is_active));
       flash(banker.is_active ? "בנקאי הושבת" : "בנקאי הופעל ✓");
     }
@@ -248,6 +260,7 @@ export default function BankersPage() {
         body: JSON.stringify({ id: banker.id }),
       });
       if (r.ok) {
+        invalidateCache("/api/advisor/bankers");
         setBankers((prev) => prev.filter((b) => b.id !== banker.id));
         flash("בנקאי נמחק");
       } else {

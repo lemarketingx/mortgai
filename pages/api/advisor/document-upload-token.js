@@ -1,6 +1,6 @@
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { createUploadToken, getActiveTokenForLead, revokeToken } from "../../../lib/documentUploadTokens";
-import { LeadStoreError, readMyLeads } from "../../../lib/leadsStore";
+import { LeadStoreError, readMyLead } from "../../../lib/leadsStore";
 
 function apiError(res, status, code, message) {
   return res.status(status).json({ error: code, message });
@@ -8,8 +8,7 @@ function apiError(res, status, code, message) {
 
 async function findOwnedLead(res, advisorId, leadId) {
   try {
-    const leads = await readMyLeads(advisorId);
-    const lead = leads.find((l) => l.id === leadId);
+    const lead = await readMyLead(advisorId, leadId);
     if (lead) return lead;
     apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found in your purchased leads");
     return null;

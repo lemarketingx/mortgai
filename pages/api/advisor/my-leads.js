@@ -1,4 +1,4 @@
-import { LeadStoreError, readMyLeads, updateLead } from "../../../lib/leadsStore";
+import { LeadStoreError, readMyLead, readMyLeads, updateLead } from "../../../lib/leadsStore";
 import { createActivity } from "../../../lib/activitiesStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
@@ -70,14 +70,15 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
-      const leads = await readMyLeads(session.advisorId);
       const { leadId } = req.query;
       if (leadId) {
-        const lead = leads.find((l) => l.id === leadId);
+        // Single-lead request: skip loading the advisor's whole list
+        const lead = await readMyLead(session.advisorId, leadId);
         if (!lead) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
         const { source: _s, leadSource: _ls, ...safeFields } = lead;
         return res.status(200).json({ lead: safeFields });
       }
+      const leads = await readMyLeads(session.advisorId);
       generateBackgroundNotifications(session.advisorId, leads);
 
       if (process.env.NODE_ENV !== "production") {
@@ -118,8 +119,7 @@ export default async function handler(req, res) {
 
     const { id, changes } = parsed.data;
     try {
-      const leads = await readMyLeads(session.advisorId);
-      const lead = leads.find((l) => l.id === id);
+      const lead = await readMyLead(session.advisorId, id);
       if (!lead) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found in your purchased leads");
 
       const now = new Date().toISOString();

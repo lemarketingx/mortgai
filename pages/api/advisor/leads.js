@@ -1,4 +1,4 @@
-import { LeadStoreError, readLeads, updateLead } from "../../../lib/leadsStore";
+import { LeadStoreError, readLeadById, readLeadsByAssignedAdvisor, updateLead } from "../../../lib/leadsStore";
 import { createActivity } from "../../../lib/activitiesStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { adminLeadPatchSchema, validationErrorPayload } from "../../../lib/validation";
@@ -25,10 +25,8 @@ export default async function handler(req, res) {
 
     if (req.method === "GET") {
       try {
-        const leads = await readLeads();
-        return res.status(200).json({
-          leads: leads.filter((l) => l.assignedAdvisorId === session.advisorId),
-        });
+        const leads = await readLeadsByAssignedAdvisor(session.advisorId);
+        return res.status(200).json({ leads });
       } catch (error) {
         return storeError(res, error, "LEADS_READ_FAILED");
       }
@@ -41,9 +39,8 @@ export default async function handler(req, res) {
       }
 
       const { id, changes } = parsed.data;
-      const leads = await readLeads();
-      const lead = leads.find((l) => l.id === id && l.assignedAdvisorId === session.advisorId);
-      if (!lead) {
+      const lead = await readLeadById(id);
+      if (!lead || lead.assignedAdvisorId !== session.advisorId) {
         return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
       }
 

@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
+import { getCachedJson, setCachedJson } from "../../lib/clientFetchCache";
 
 // ─── Google Calendar helpers ────────────────────────────────────────────────
 function toGoogleCalendarUrl(event) {
@@ -555,9 +556,11 @@ export default function CalendarPage() {
   // Load the advisor's leads once — for linking events to leads and for
   // showing lead follow-up dates (nextActionAt / followUpDate) on the calendar.
   useEffect(() => {
+    const cached = getCachedJson("/api/advisor/my-leads");
+    if (cached) setMyLeads(cached.leads || []);
     fetch("/api/advisor/my-leads")
-      .then((r) => (r.ok ? r.json() : { leads: [] }))
-      .then((j) => setMyLeads(j.leads || []))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j) { setCachedJson("/api/advisor/my-leads", j); setMyLeads(j.leads || []); } })
       .catch(() => {});
   }, []);
 

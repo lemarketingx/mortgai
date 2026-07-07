@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatILS } from "../../../lib/format";
+import { getCachedJson, invalidateCache } from "../../../lib/clientFetchCache";
 import { generateLeadPdf } from "../../../lib/generateLeadPdf";
 import AdvisorHeader from "../../../components/AdvisorHeader";
 import { useTheme } from "../../_app";
@@ -516,6 +517,18 @@ export default function LeadDetailPage() {
 
   useEffect(() => {
     if (!id) return;
+    // Instant paint: if the lead is in the cached my-leads list (user came
+    // from the dashboard/list), render it immediately while everything loads.
+    const cachedList = getCachedJson("/api/advisor/my-leads");
+    const cachedLead = cachedList?.leads?.find?.((l) => l.id === id);
+    if (cachedLead) {
+      setLead(cachedLead);
+      setNotes(cachedLead.internalNotes || "");
+      setNextActionText(cachedLead.nextAction || "");
+      setNextActionDate(cachedLead.nextActionAt?.slice(0, 10) || "");
+      setBankSubmissionStatus(cachedLead.bankSubmissionStatus || "not_submitted");
+      setLoading(false);
+    }
     // The lead itself is the only load-blocking call. Auxiliary data
     // (activities, documents, bankers, tasks...) degrades to empty on failure
     // instead of ejecting the advisor from a perfectly good case (QA AD-3).
@@ -538,7 +551,12 @@ export default function LeadDetailPage() {
     ]).then(([leadsData, actData, docsData, tokenData, reminderData, bankersData, caseBankersData, tasksData]) => {
       if (!leadsData) return; // redirected to login
       const found = leadsData.lead || (leadsData.leads || []).find((l) => l.id === id);
-      if (!found) { setLoadFailed(leadsData._networkError ? "network" : "not_found"); setLoading(false); return; }
+      if (!found) {
+        // A transient network error shouldn't eject a case already painted from cache
+        if (!(cachedLead && leadsData._networkError)) setLoadFailed(leadsData._networkError ? "network" : "not_found");
+        setLoading(false);
+        return;
+      }
       setLead(found);
       setNotes(found.internalNotes || "");
       setNextActionText(found.nextAction || "");
@@ -606,6 +624,7 @@ export default function LeadDetailPage() {
   }
 
   function touchLead(changes) {
+    invalidateCache("/api/advisor/my-leads");
     fetch("/api/advisor/my-leads", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -622,6 +641,7 @@ export default function LeadDetailPage() {
     });
     if (r.ok) {
       const j = await r.json();
+      invalidateCache("/api/advisor/my-leads");
       setLead((prev) => ({ ...prev, ...j.lead }));
       if (activityTitle) pushActivity(activityTitle, activityType);
       showSaved();

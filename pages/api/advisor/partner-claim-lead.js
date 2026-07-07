@@ -1,4 +1,4 @@
-import { LeadStoreError, createLeadPurchase, readAdvisors, readLeads, lockLeadForPurchase } from "../../../lib/leadsStore";
+import { LeadStoreError, createLeadPurchase, readAdvisors, readLeadById, lockLeadForPurchase } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 
 function apiError(res, status, code, message, details = "") {
@@ -24,8 +24,7 @@ export default async function handler(req, res) {
     if (!advisor) return apiError(res, 404, "ADVISOR_NOT_FOUND", "Advisor profile not found");
     if (!isPartnerAdvisor(advisor)) return apiError(res, 403, "PARTNER_ONLY", "Partner advisor access required");
 
-    const leads = await readLeads();
-    const lead = leads.find((l) => l.id === leadId);
+    const lead = await readLeadById(leadId);
     if (!lead) return apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found");
 
     const locked = await lockLeadForPurchase(leadId, {

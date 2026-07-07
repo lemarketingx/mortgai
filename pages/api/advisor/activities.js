@@ -1,5 +1,5 @@
 import { createActivity, readActivities } from "../../../lib/activitiesStore";
-import { LeadStoreError, readMyLeads } from "../../../lib/leadsStore";
+import { LeadStoreError, readMyLead } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 
 function apiError(res, status, code, message) {
@@ -8,8 +8,7 @@ function apiError(res, status, code, message) {
 
 async function assertOwnsLead(res, advisorId, leadId) {
   try {
-    const leads = await readMyLeads(advisorId);
-    if (leads.some((lead) => lead.id === leadId)) return true;
+    if (await readMyLead(advisorId, leadId)) return true;
     apiError(res, 404, "LEAD_NOT_FOUND", "Lead not found in your purchased leads");
     return false;
   } catch (error) {
