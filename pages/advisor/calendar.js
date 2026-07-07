@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import AdvisorHeader from "../../components/AdvisorHeader";
 import { getCachedJson, setCachedJson } from "../../lib/clientFetchCache";
+import { getJewishHolidays } from "../../lib/jewishHolidays";
 
 // ─── Google Calendar helpers ────────────────────────────────────────────────
 function toGoogleCalendarUrl(event) {
@@ -75,6 +76,7 @@ const EVENT_TYPES = {
   reminder: { label: "תזכורת", dot: "bg-accent-500", pill: "bg-accent-100 text-accent-700 dark:bg-accent-900/40 dark:text-accent-300" },
   bank_followup: { label: "מעקב בנק", dot: "bg-success-500", pill: "bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300" },
   lead_followup: { label: "מעקב ליד", dot: "bg-danger-400", pill: "bg-danger-50 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300 border border-dashed border-danger-200 dark:border-danger-800" },
+  holiday: { label: "חג", dot: "bg-brand-300", pill: "bg-brand-50 text-brand-600 dark:bg-brand-900/20 dark:text-brand-300 border border-brand-200 dark:border-brand-800" },
 };
 
 // ─── Date helpers ────────────────────────────────────────────────────────────
@@ -469,7 +471,7 @@ function WeekView({ weekStart, events, today, onDayClick }) {
             <div className="space-y-1">
               {dayEvents.map((ev) => (
                 <div key={ev.id} className={`text-xs font-bold px-2 py-1 rounded-lg truncate ${EVENT_TYPES[ev.eventType]?.pill || "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"}`}>
-                  <span className="text-slate-400 dark:text-slate-500 ml-1">{formatTime(ev.startAt)}</span>
+                  {!ev.allDay && <span className="text-slate-400 dark:text-slate-500 ml-1">{formatTime(ev.startAt)}</span>}
                   {ev.title}
                 </div>
               ))}
@@ -484,7 +486,10 @@ function WeekView({ weekStart, events, today, onDayClick }) {
 // ─── Day View ────────────────────────────────────────────────────────────────
 function DayView({ date, events, onAddClick, onEventClick }) {
   const dateKey = toDateKey(date);
-  const dayEvents = events.filter((ev) => ev.startAt.slice(0, 10) === dateKey);
+  const allEvents = events.filter((ev) => ev.startAt.slice(0, 10) === dateKey);
+  // All-day items (holidays) render as a banner strip, not in an hour slot
+  const allDayEvents = allEvents.filter((ev) => ev.allDay);
+  const dayEvents = allEvents.filter((ev) => !ev.allDay);
   // Default working window 07:00–20:00, expanded to include any event outside it
   const eventHours = dayEvents.map((ev) => new Date(ev.startAt).getHours());
   const firstHour = Math.min(7, ...eventHours);
@@ -511,6 +516,15 @@ function DayView({ date, events, onAddClick, onEventClick }) {
           <PlusIcon /> הוספה
         </button>
       </div>
+      {allDayEvents.length > 0 && (
+        <div className="flex flex-wrap gap-2 px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-brand-50/50 dark:bg-brand-900/10">
+          {allDayEvents.map((ev) => (
+            <span key={ev.id} className={`text-xs font-bold px-2.5 py-1 rounded-lg ${EVENT_TYPES[ev.eventType]?.pill || "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"}`}>
+              {ev.title}
+            </span>
+          ))}
+        </div>
+      )}
       <div className="divide-y divide-slate-100 dark:divide-slate-800">
         {hours.map((h) => {
           const hourEvents = getEventsForHour(h);
@@ -603,6 +617,22 @@ export default function CalendarPage() {
     return { from: toDateKey(currentDate), to: toDateKey(currentDate) };
   }, [view, year, month, weekStart, currentDate]);
 
+  // Jewish + Israeli holidays for the visible range — computed locally from
+  // the Hebrew calendar, so they update automatically for any year shown.
+  const holidayEvents = useMemo(
+    () =>
+      getJewishHolidays(fetchRange.from, fetchRange.to).map((h) => ({
+        id: `holiday-${h.dateKey}-${h.title}`,
+        title: h.title,
+        eventType: "holiday",
+        startAt: `${h.dateKey}T00:00`,
+        endAt: null,
+        readOnly: true,
+        allDay: true,
+      })),
+    [fetchRange.from, fetchRange.to]
+  );
+
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
@@ -648,14 +678,18 @@ export default function CalendarPage() {
       window.location.href = ev.leadHref;
       return;
     }
+    if (ev.readOnly) return; // holidays and other read-only items aren't editable
     setEditEvent(ev);
     setModalDate(null);
     setSaveError("");
     setModalOpen(true);
   }
 
-  // Manual events + lead follow-ups, merged for all views
-  const displayEvents = useMemo(() => [...events, ...leadFollowUpEvents], [events, leadFollowUpEvents]);
+  // Holidays first so they render at the top of each day cell
+  const displayEvents = useMemo(
+    () => [...holidayEvents, ...events, ...leadFollowUpEvents],
+    [holidayEvents, events, leadFollowUpEvents]
+  );
 
   async function handleSave(payload, addToGoogle = false) {
     setSaving(true);
