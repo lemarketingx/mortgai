@@ -84,7 +84,7 @@ export default function TermsPage() {
               <h2 className="text-xl font-black text-slate-900 mb-3">9. יצירת קשר</h2>
               <p>
                 לשאלות בנוגע לתנאי השימוש:{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">lemarketingx@gmail.com</a>
+                <a href="mailto:support@finzo.co.il" className="text-brand-700 hover:underline">support@finzo.co.il</a>
               </p>
             </section>
           </div>

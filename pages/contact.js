@@ -11,7 +11,7 @@ const INQUIRY_TYPES = [
   { value: "accessibility", label: "בעיית נגישות" },
 ];
 
-const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "lemarketingx@gmail.com";
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@finzo.co.il";
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", type: "", message: "" });

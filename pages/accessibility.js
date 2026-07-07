@@ -5,7 +5,7 @@ import BrandLogo from "../components/BrandLogo";
 // Accessibility coordinator ("רכז נגישות") — required by IS 5568 / Israeli
 // accessibility regulations. Configurable via env so the branded support
 // address and phone can be set without a code change.
-const A11Y_EMAIL = process.env.NEXT_PUBLIC_A11Y_EMAIL || process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "lemarketingx@gmail.com";
+const A11Y_EMAIL = process.env.NEXT_PUBLIC_A11Y_EMAIL || process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@finzo.co.il";
 const A11Y_PHONE = process.env.NEXT_PUBLIC_A11Y_PHONE || "";
 const A11Y_UPDATED = "יולי 2026";
 
