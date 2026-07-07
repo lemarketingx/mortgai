@@ -16,6 +16,7 @@ import {
   createAdvisorBanker,
   deleteAdvisorBanker,
   readAdvisorBankers,
+  readCaseBankerStatsForAdvisor,
   updateAdvisorBanker,
 } from "../../../lib/bankerStore";
 
@@ -32,8 +33,11 @@ export default async function handler(req, res) {
   // ── GET ───────────────────────────────────────────────────────────────────
   if (req.method === "GET") {
     const includeInactive = req.query.includeInactive === "1" || req.query.includeInactive === "true";
-    const bankers = await readAdvisorBankers(advisorId, { includeInactive });
-    return res.status(200).json({ bankers });
+    const [bankers, caseStats] = await Promise.all([
+      readAdvisorBankers(advisorId, { includeInactive }),
+      readCaseBankerStatsForAdvisor(advisorId),
+    ]);
+    return res.status(200).json({ bankers, caseStats });
   }
 
   // ── POST ──────────────────────────────────────────────────────────────────

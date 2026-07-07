@@ -65,13 +65,13 @@ const PREFS_KEY = "finzo_prefs_v1";
 
 // Pre-build Sets for O(1) stage membership lookup in kanban grouping
 const KANBAN_GROUPS = [
-  { key: "new_lead",    label: "ליד חדש",     color: "bg-brand-400",  stageSet: new Set(["new_lead"]) },
-  { key: "contacted",  label: "נוצר קשר",     color: "bg-brand-600",  stageSet: new Set(["contacted"]) },
-  { key: "documents",  label: "מסמכים",        color: "bg-warning-400",   stageSet: new Set(["documents_requested","waiting_documents","documents_received"]) },
-  { key: "eligibility",label: "בדיקת זכאות",  color: "bg-warning-600",     stageSet: new Set(["eligibility_review","appraisal_ordered","appraisal_completed"]) },
-  { key: "bank",       label: "בנק",           color: "bg-accent-500",    stageSet: new Set(["lawyer_review","submitted_to_bank","principle_approval","bank_negotiation","selected_track"]) },
-  { key: "signing",    label: "חתימות",        color: "bg-success-500", stageSet: new Set(["signing_scheduled","signed","collateral_completion","funds_released"]) },
-  { key: "closed",     label: "נסגר",          color: "bg-success-600",   stageSet: new Set(["closed_won"]) },
+  { key: "new_lead",    label: "ליד חדש",     color: "bg-brand-400",  dropStage: "new_lead",            stageSet: new Set(["new_lead"]) },
+  { key: "contacted",  label: "נוצר קשר",     color: "bg-brand-600",  dropStage: "contacted",           stageSet: new Set(["contacted"]) },
+  { key: "documents",  label: "מסמכים",        color: "bg-warning-400", dropStage: "documents_requested", stageSet: new Set(["documents_requested","waiting_documents","documents_received"]) },
+  { key: "eligibility",label: "בדיקת זכאות",  color: "bg-warning-600", dropStage: "eligibility_review",  stageSet: new Set(["eligibility_review","appraisal_ordered","appraisal_completed"]) },
+  { key: "bank",       label: "בנק",           color: "bg-accent-500",  dropStage: "submitted_to_bank",   stageSet: new Set(["lawyer_review","submitted_to_bank","principle_approval","bank_negotiation","selected_track"]) },
+  { key: "signing",    label: "חתימות",        color: "bg-success-500", dropStage: "signing_scheduled",   stageSet: new Set(["signing_scheduled","signed","collateral_completion","funds_released"]) },
+  { key: "closed",     label: "נסגר",          color: "bg-success-600", dropStage: "closed_won",          stageSet: new Set(["closed_won"]) },
 ];
 
 const DAY_MS = 864e5;
@@ -302,13 +302,21 @@ function LeadListView({ leads, onClientNotInterested, closingLeadId }) {
 }
 
 // ─── Kanban View — memoized, O(1) stage lookup via Set ────────────────────────
-const KanbanView = memo(function KanbanView({ leads, onClientNotInterested, closingLeadId }) {
+const KanbanView = memo(function KanbanView({ leads, onClientNotInterested, closingLeadId, onStageChange }) {
+  const [dragOverKey, setDragOverKey] = useState(null);
   const groups = useMemo(() =>
     KANBAN_GROUPS.map((g) => ({
       ...g,
       leads: leads.filter((l) => g.stageSet.has(normalizePipelineStage(l.pipelineStage || l.leadStatus))),
-    })).filter((g) => g.leads.length > 0),
+    })),
   [leads]);
+
+  function handleDrop(e, group) {
+    e.preventDefault();
+    setDragOverKey(null);
+    const leadId = e.dataTransfer.getData("text/finzo-lead-id");
+    if (leadId) onStageChange?.(leadId, group.dropStage);
+  }
 
   const closedLost = useMemo(() =>
     leads.filter((l) => normalizePipelineStage(l.pipelineStage || l.leadStatus) === "closed_lost"),
@@ -317,21 +325,36 @@ const KanbanView = memo(function KanbanView({ leads, onClientNotInterested, clos
   return (
     <div className="space-y-6">
       {groups.map((group) => (
-        <div key={group.key}>
+        <div
+          key={group.key}
+          onDragOver={(e) => { e.preventDefault(); setDragOverKey(group.key); }}
+          onDragLeave={() => setDragOverKey((k) => (k === group.key ? null : k))}
+          onDrop={(e) => handleDrop(e, group)}
+          className={`rounded-2xl transition-colors ${dragOverKey === group.key ? "bg-brand-50/70 dark:bg-brand-900/20 ring-2 ring-brand-300 dark:ring-brand-700 p-2 -m-2" : ""}`}
+        >
           <div className="flex items-center gap-3 mb-2">
             <div className={`h-3 w-3 rounded-full shrink-0 ${group.color}`} />
             <h3 className="text-sm font-black text-slate-800 dark:text-slate-200">{group.label}</h3>
             <span className="text-xs font-black text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-0.5">{group.leads.length}</span>
             <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
           </div>
+          {group.leads.length === 0 && (
+            <p className="text-[11px] font-bold text-slate-300 dark:text-slate-600 mb-3 pr-6">גררו לכאן כרטיס כדי להעביר לשלב זה</p>
+          )}
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {group.leads.map((lead) => (
-              <MyLeadCard
+              <div
                 key={lead.id}
-                lead={lead}
-                onClientNotInterested={onClientNotInterested}
-                isClosing={closingLeadId === lead.id}
-              />
+                draggable
+                onDragStart={(e) => e.dataTransfer.setData("text/finzo-lead-id", lead.id)}
+                className="cursor-grab active:cursor-grabbing"
+              >
+                <MyLeadCard
+                  lead={lead}
+                  onClientNotInterested={onClientNotInterested}
+                  isClosing={closingLeadId === lead.id}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -386,7 +409,7 @@ export default function AdvisorMyLeads() {
       if (raw) {
         const p = JSON.parse(raw);
         if (p.defaultView && ["kanban", "cards", "list"].includes(p.defaultView)) setView(p.defaultView);
-        if (p.defaultSort && ["priority", "newest", "amount", "status"].includes(p.defaultSort)) setSortBy(p.defaultSort);
+        if (p.defaultSort && ["purchased", "priority", "newest", "amount", "status"].includes(p.defaultSort)) setSortBy(p.defaultSort);
       }
     } catch {}
   }, []);
@@ -398,12 +421,17 @@ export default function AdvisorMyLeads() {
 
   async function load() {
     setLoading(true);
-    const r = await fetch("/api/advisor/my-leads");
-    if (r.status === 401) { window.location.href = "/advisor/login"; return; }
-    if (!r.ok) { setError("שגיאה בטעינת הלידים."); setLoading(false); return; }
-    const j = await r.json();
-    setLeads(j.leads || []);
-    setLoading(false);
+    try {
+      const r = await fetch("/api/advisor/my-leads");
+      if (r.status === 401) { window.location.href = "/advisor/login"; return; }
+      if (!r.ok) { setError("שגיאה בטעינת הלידים."); return; }
+      const j = await r.json();
+      setLeads(j.leads || []);
+    } catch {
+      setError("שגיאת רשת בטעינת הלידים. נסו לרענן.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function markClientNotInterested(lead) {
@@ -439,6 +467,26 @@ export default function AdvisorMyLeads() {
       setError(err.message || "לא ניתן לעדכן את הליד.");
     } finally {
       setClosingLeadId("");
+    }
+  }
+
+  async function changeLeadStage(leadId, stage) {
+    const prev = leads;
+    const now = new Date().toISOString();
+    setLeads((cur) => cur.map((l) => (l.id === leadId ? { ...l, pipelineStage: stage, stageUpdatedAt: now } : l)));
+    try {
+      const r = await fetch("/api/advisor/my-leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: leadId, changes: { pipelineStage: stage, stageUpdatedAt: now, lastActivityAt: now } }),
+      });
+      if (r.status === 401) { window.location.href = "/advisor/login"; return; }
+      if (!r.ok) throw new Error();
+      const j = await r.json().catch(() => ({}));
+      if (j.lead) setLeads((cur) => cur.map((l) => (l.id === leadId ? j.lead : l)));
+    } catch {
+      setLeads(prev);
+      setError("עדכון השלב נכשל — הכרטיס הוחזר למקומו.");
     }
   }
 
@@ -572,9 +620,9 @@ export default function AdvisorMyLeads() {
               <option value="status">שלב</option>
             </select>
             <div className="flex rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shrink-0">
-              <button onClick={() => { const csv = leadsToCSV(sorted); downloadCSV(csv, `finzo-leads-${new Date().toISOString().slice(0,10)}.csv`); }}
+              <button onClick={() => { const csv = leadsToCSV(filtered); downloadCSV(csv, `finzo-leads-${new Date().toISOString().slice(0,10)}.csv`); }}
                 className="px-3 py-2 text-xs font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">CSV</button>
-              <button onClick={() => { const xml = leadsToExcelXML(sorted); downloadExcel(xml, `finzo-leads-${new Date().toISOString().slice(0,10)}.xls`); }}
+              <button onClick={() => { const xml = leadsToExcelXML(filtered); downloadExcel(xml, `finzo-leads-${new Date().toISOString().slice(0,10)}.xls`); }}
                 className="px-3 py-2 text-xs font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors border-r border-slate-200 dark:border-slate-800">Excel</button>
             </div>
           </div>
@@ -615,7 +663,7 @@ export default function AdvisorMyLeads() {
             <EmptyState glyph="🔍" title="אין תוצאות" description="נסו לשנות את החיפוש או הסינון." />
           )}
 
-          {!loading && filtered.length > 0 && view === "kanban" && <KanbanView leads={filtered} onClientNotInterested={markClientNotInterested} closingLeadId={closingLeadId} />}
+          {!loading && filtered.length > 0 && view === "kanban" && <KanbanView leads={filtered} onClientNotInterested={markClientNotInterested} closingLeadId={closingLeadId} onStageChange={changeLeadStage} />}
           {!loading && filtered.length > 0 && view === "cards" && (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {filtered.map((lead) => (

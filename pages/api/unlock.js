@@ -51,7 +51,8 @@ export default function handler(req, res) {
   }
 
   const ip = getClientIp(req);
-  const { allowed } = checkRateLimit(ip, { limit: 10, windowMs: 15 * 60 * 1000 });
+  const RATE_OPTS = { scope: "unlock", limit: 10, windowMs: 15 * 60 * 1000 };
+  const { allowed } = checkRateLimit(ip, RATE_OPTS);
   if (!allowed) {
     const errorUrl = `/unlock?error=3${next !== "/" ? `&next=${encodeURIComponent(next)}` : ""}`;
     return res.redirect(302, errorUrl);
@@ -61,7 +62,7 @@ export default function handler(req, res) {
   const passwordMatch = !!submitted && safeStringCompare(submitted, sitePassword);
 
   if (!passwordMatch) {
-    recordRateLimitHit(ip);
+    recordRateLimitHit(ip, RATE_OPTS);
     const errorUrl = `/unlock?error=1${next !== "/" ? `&next=${encodeURIComponent(next)}` : ""}`;
     return res.redirect(302, errorUrl);
   }

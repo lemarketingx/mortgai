@@ -77,7 +77,10 @@ function formatMonths(months) {
 function calculateRefinance(data) {
   const balance = toNumber(data.balance);
   const enteredCurrentPayment = toNumber(data.currentPayment);
-  const remainingYears = Math.min(30, Math.max(1, toNumber(data.remainingYears) || 0));
+  // Years must actually be entered — the clamp below turns an empty field into
+  // 1 year, which used to silently show absurd results (QA finding C-2).
+  const remainingYearsInput = toNumber(data.remainingYears);
+  const remainingYears = Math.min(30, Math.max(1, remainingYearsInput || 0));
   const currentRate = Number(data.currentRate) || 0;
   const newRate = Number(data.newRate) || 0;
   const refinanceCost = toNumber(data.refinanceCost) || 0;
@@ -85,7 +88,7 @@ function calculateRefinance(data) {
   const expenses = toNumber(data.expenses);
   const loans = toNumber(data.loans);
   const months = remainingYears * 12;
-  const hasRequiredInputs = balance > 0 && currentRate > 0 && remainingYears > 0 && newRate > 0;
+  const hasRequiredInputs = balance > 0 && currentRate > 0 && remainingYearsInput > 0 && newRate > 0;
 
   const calculatedCurrentPayment = hasRequiredInputs ? monthlyPayment(balance, currentRate, remainingYears) : 0;
   const currentPayment = enteredCurrentPayment || calculatedCurrentPayment;
@@ -202,6 +205,9 @@ function calculateRefinance(data) {
     currentPayment,
     calculatedCurrentPayment,
     enteredCurrentPayment,
+    income,
+    expenses,
+    loans,
     remainingYears,
     months,
     currentRate,
@@ -246,6 +252,10 @@ export default function RefinanceCheck() {
     if (!file) return;
     if (!file.name.toLowerCase().endsWith(".pdf")) {
       setPdfState({ status: "error", message: "יש להעלות קובץ PDF בלבד.", fields: null });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setPdfState({ status: "error", message: "הקובץ גדול מדי. גודל מקסימלי: 10MB.", fields: null });
       return;
     }
     setPdfState({ status: "loading", message: "מעבד את ה-PDF...", fields: null });
@@ -317,8 +327,8 @@ export default function RefinanceCheck() {
       propertyCity: lead.city.trim(),
       city: lead.city.trim(),
       mortgageAmount: cleanNumber(lead.mortgageAmount) || String(result.balance || ""),
-      monthlyIncome: cleanNumber(lead.income) || String(result.income || ""),
-      debtLevel: cleanNumber(lead.loans) || "",
+      monthlyIncome: cleanNumber(lead.income) || (result.income ? String(result.income) : ""),
+      debtLevel: cleanNumber(lead.loans) || (result.loans ? String(result.loans) : ""),
       requestedContactTime: lead.requestedContactTime,
       purchaseStatus: "refinance",
       hasExistingMortgage: "yes",

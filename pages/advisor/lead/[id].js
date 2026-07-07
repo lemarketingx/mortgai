@@ -468,6 +468,7 @@ export default function LeadDetailPage() {
   const isNewPurchase = router.query.newPurchase === "1";
 
   const [lead, setLead] = useState(null);
+  const [loadFailed, setLoadFailed] = useState("");
   const [activities, setActivities] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -476,16 +477,14 @@ export default function LeadDetailPage() {
   const [notes, setNotes] = useState("");
   const [nextActionText, setNextActionText] = useState("");
   const [nextActionDate, setNextActionDate] = useState("");
-  // Support ?tab= deep-link from dashboard attention items
-  const initialTab = (() => {
-    if (typeof window !== "undefined") {
-      const p = new URLSearchParams(window.location.search).get("tab");
-      const valid = ["docs", "bank", "activity", "notes", "appraisal", "legal", "signing", "collateral", "audit", "tasks"];
-      if (p && valid.includes(p)) return p;
-    }
-    return "docs";
-  })();
-  const [tab, setTab] = useState(initialTab);
+  const [tab, setTab] = useState("docs");
+  // Support ?tab= deep-link from dashboard attention items.
+  // Read in an effect so server and client render the same initial markup.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get("tab");
+    const valid = ["docs", "bank", "activity", "notes", "appraisal", "legal", "signing", "collateral", "audit", "tasks"];
+    if (p && valid.includes(p)) setTab(p);
+  }, []);
   const [showWaTemplates, setShowWaTemplates] = useState(false);
   const [msg, setMsg] = useState({ text: "", ok: true });
   const [activeAction, setActiveAction] = useState(null);
@@ -493,6 +492,8 @@ export default function LeadDetailPage() {
   const [tasks, setTasks] = useState([]);
   const [waMessage, setWaMessage] = useState("");
   const [reminderPriority, setReminderPriority] = useState("normal");
+  const [nextActionTime, setNextActionTime] = useState("");
+  const [reminderNote, setReminderNote] = useState("");
   const { dark } = useTheme();
 
   // Upload-link & reminder state
@@ -515,18 +516,29 @@ export default function LeadDetailPage() {
 
   useEffect(() => {
     if (!id) return;
+    // The lead itself is the only load-blocking call. Auxiliary data
+    // (activities, documents, bankers, tasks...) degrades to empty on failure
+    // instead of ejecting the advisor from a perfectly good case (QA AD-3).
+    const aux = (url, fallback) =>
+      fetch(url).then((r) => (r.ok ? r.json() : fallback)).catch(() => fallback);
     Promise.all([
-      fetch(`/api/advisor/my-leads?leadId=${id}`).then((r) => r.ok ? r.json() : { lead: null }),
-      fetch(`/api/advisor/activities?leadId=${id}`).then((r) => r.ok ? r.json() : { activities: [] }),
-      fetch(`/api/advisor/documents?leadId=${id}`).then((r) => r.ok ? r.json() : { documents: [] }),
-      fetch(`/api/advisor/document-upload-token?leadId=${id}`).then((r) => r.ok ? r.json() : { token: null, uploadUrl: null }),
-      fetch(`/api/advisor/document-reminders?leadId=${id}`).then((r) => r.ok ? r.json() : { reminder: null }),
-      fetch("/api/advisor/bankers").then((r) => r.ok ? r.json() : { bankers: [] }),
-      fetch(`/api/advisor/case-bankers?leadId=${id}`).then((r) => r.ok ? r.json() : { caseBankers: [] }),
-      fetch(`/api/advisor/tasks?leadId=${id}`).then((r) => r.ok ? r.json() : { tasks: [] }),
+      fetch(`/api/advisor/my-leads?leadId=${id}`)
+        .then((r) => {
+          if (r.status === 401) { window.location.href = "/advisor/login"; return null; }
+          return r.ok ? r.json() : { lead: null };
+        })
+        .catch(() => ({ lead: null, _networkError: true })),
+      aux(`/api/advisor/activities?leadId=${id}`, { activities: [] }),
+      aux(`/api/advisor/documents?leadId=${id}`, { documents: [] }),
+      aux(`/api/advisor/document-upload-token?leadId=${id}`, { token: null, uploadUrl: null }),
+      aux(`/api/advisor/document-reminders?leadId=${id}`, { reminder: null }),
+      aux("/api/advisor/bankers", { bankers: [] }),
+      aux(`/api/advisor/case-bankers?leadId=${id}`, { caseBankers: [] }),
+      aux(`/api/advisor/tasks?leadId=${id}`, { tasks: [] }),
     ]).then(([leadsData, actData, docsData, tokenData, reminderData, bankersData, caseBankersData, tasksData]) => {
+      if (!leadsData) return; // redirected to login
       const found = leadsData.lead || (leadsData.leads || []).find((l) => l.id === id);
-      if (!found) { router.push("/advisor/my-leads"); return; }
+      if (!found) { setLoadFailed(leadsData._networkError ? "network" : "not_found"); setLoading(false); return; }
       setLead(found);
       setNotes(found.internalNotes || "");
       setNextActionText(found.nextAction || "");
@@ -548,7 +560,7 @@ export default function LeadDetailPage() {
       const loadedTasks = Array.isArray(tasksData.tasks) ? tasksData.tasks : [];
       setTasks(loadedTasks.map(t => ({ id: t.id, text: t.title, done: t.completed || t.status === "completed", priority: t.priority, dueDate: t.dueDate })));
       setLoading(false);
-    }).catch(() => { setLoading(false); router.push("/advisor/my-leads"); });
+    }).catch(() => { setLoadFailed("network"); setLoading(false); });
   }, [id]);
 
   function showSaved() {
@@ -982,7 +994,30 @@ export default function LeadDetailPage() {
       </main>
     );
   }
-  if (!lead) return null;
+  if (!lead) {
+    return (
+      <main dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950">
+        <AdvisorHeader active="/advisor/my-leads" />
+        <div className="max-w-lg mx-auto px-4 py-16 text-center">
+          <p className="text-3xl mb-3">{loadFailed === "network" ? "⚠️" : "🔍"}</p>
+          <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 mb-2">
+            {loadFailed === "network" ? "שגיאה בטעינת התיק" : "התיק לא נמצא"}
+          </h2>
+          <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-6">
+            {loadFailed === "network"
+              ? "בעיית תקשורת זמנית — הנתונים שלך במקומם. נסו לרענן."
+              : "ייתכן שהקישור שגוי או שהליד אינו משויך אליך."}
+          </p>
+          <div className="flex justify-center gap-2">
+            {loadFailed === "network" && (
+              <button type="button" onClick={() => window.location.reload()} className="rounded-full bg-brand-700 text-white px-6 py-2.5 text-sm font-black hover:bg-brand-800 transition-colors">רענון</button>
+            )}
+            <Link href="/advisor/my-leads" className="rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-2.5 text-sm font-black text-slate-700 dark:text-slate-300">← לכל הלידים</Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   function handleActionClick(key) {
     if (key === "call") {
@@ -994,7 +1029,7 @@ export default function LeadDetailPage() {
       return;
     }
     if (key === "email") {
-      const email = lead.advisorEmail || lead.email;
+      const email = lead.email || lead.advisorEmail;
       if (email) {
         window.location.href = `mailto:${email}`;
         pushActivity("נשלח מייל", "email_opened");
@@ -1180,14 +1215,15 @@ export default function LeadDetailPage() {
                         <input type="date"
                           className={`w-full border rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 ${isOverdue(nextActionDate) ? "border-danger-300 dark:border-danger-700" : "border-slate-200 dark:border-slate-700"}`}
                           value={nextActionDate}
-                          onChange={(e) => { setNextActionDate(e.target.value); debouncedPatch("nextActionDate", { nextActionAt: e.target.value }, undefined, "reminder_set"); }}
+                          onChange={(e) => { setNextActionDate(e.target.value); debouncedPatch("nextActionDate", { nextActionAt: nextActionTime && e.target.value ? `${e.target.value}T${nextActionTime}` : e.target.value }, undefined, "reminder_set"); }}
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">שעה</label>
                         <input type="time"
                           className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
-                          placeholder="--:--"
+                          value={nextActionTime}
+                          onChange={(e) => { setNextActionTime(e.target.value); if (nextActionDate) debouncedPatch("nextActionDate", { nextActionAt: e.target.value ? `${nextActionDate}T${e.target.value}` : nextActionDate }, undefined, "reminder_set"); }}
                         />
                       </div>
                     </div>
@@ -1208,9 +1244,16 @@ export default function LeadDetailPage() {
                     <div>
                       <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">הערה פנימית</label>
                       <textarea className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm resize-y min-h-[60px] outline-none focus:ring-2 focus:ring-brand-500/30"
+                        value={reminderNote} onChange={(e) => setReminderNote(e.target.value)}
                         placeholder="הערה לתזכורת..." />
                     </div>
-                    <button type="button" onClick={() => { debouncedPatch("nextAction", { nextAction: nextActionText, nextActionAt: nextActionDate }, nextActionText ? `תזכורת: ${nextActionText}` : "תזכורת נשמרה", "reminder_set"); }}
+                    <button type="button" onClick={() => {
+                      const at = nextActionTime && nextActionDate ? `${nextActionDate}T${nextActionTime}` : nextActionDate;
+                      const priorityHe = reminderPriority === "normal" ? "רגיל" : "גבוה";
+                      const title = [nextActionText ? `תזכורת: ${nextActionText}` : "תזכורת נשמרה", reminderNote ? `— ${reminderNote}` : ""].filter(Boolean).join(" ");
+                      debouncedPatch("nextAction", { nextAction: nextActionText, nextActionAt: at, leadPriority: priorityHe }, title, "reminder_set");
+                      setReminderNote("");
+                    }}
                       className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white py-3 text-sm font-semibold transition-colors">
                       שמור תזכורת
                     </button>

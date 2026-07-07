@@ -7,12 +7,15 @@
     "build": "next build",
     "build:webpack": "next build --webpack",
     "start": "next start",
-    "validate": "node scripts/validate-calculations.mjs"
+    "validate": "node scripts/validate-calculations.mjs",
+    "validate:lib": "node scripts/verify-calculations-lib.mjs",
+    "verify:qa-fixes": "node scripts/verify-qa-fixes.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
     "@vercel/functions": "^3.7.5",
     "next": "15.5.15",
+    "pdfjs-dist": "^6.1.200",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "zod": "^4.4.3"

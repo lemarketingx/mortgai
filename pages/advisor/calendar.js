@@ -17,6 +17,15 @@ function toGoogleCalendarUrl(event) {
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
+// RFC 5545: backslash, semicolon, comma and newline must be escaped in text values
+function escapeICSText(value) {
+  return String(value || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\r?\n/g, "\\n");
+}
+
 function generateICS(events) {
   const lines = [
     "BEGIN:VCALENDAR",
@@ -30,8 +39,8 @@ function generateICS(events) {
     lines.push("BEGIN:VEVENT");
     lines.push(`DTSTART;TZID=Asia/Jerusalem:${start}`);
     lines.push(`DTEND;TZID=Asia/Jerusalem:${end}`);
-    lines.push(`SUMMARY:${(ev.title || "").replace(/\n/g, "\\n")}`);
-    if (ev.description) lines.push(`DESCRIPTION:${ev.description.replace(/\n/g, "\\n")}`);
+    lines.push(`SUMMARY:${escapeICSText(ev.title)}`);
+    if (ev.description) lines.push(`DESCRIPTION:${escapeICSText(ev.description)}`);
     lines.push(`UID:${ev.id}@finzo.co.il`);
     lines.push("END:VEVENT");
   }
@@ -64,6 +73,7 @@ const EVENT_TYPES = {
   task: { label: "משימה", dot: "bg-warning-500", pill: "bg-warning-100 text-warning-700 dark:bg-warning-900/40 dark:text-warning-300" },
   reminder: { label: "תזכורת", dot: "bg-accent-500", pill: "bg-accent-100 text-accent-700 dark:bg-accent-900/40 dark:text-accent-300" },
   bank_followup: { label: "מעקב בנק", dot: "bg-success-500", pill: "bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300" },
+  lead_followup: { label: "מעקב ליד", dot: "bg-danger-400", pill: "bg-danger-50 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300 border border-dashed border-danger-200 dark:border-danger-800" },
 };
 
 // ─── Date helpers ────────────────────────────────────────────────────────────
@@ -149,7 +159,7 @@ function TrashIcon() {
 }
 
 // ─── Add/Edit Modal ──────────────────────────────────────────────────────────
-function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
+function EventModal({ event, initialDate, onClose, onSave, onDelete, saving, leads = [], error = "" }) {
   const isEdit = Boolean(event);
   const [title, setTitle] = useState(event ? event.title : "");
   const [date, setDate] = useState(event ? event.startAt.slice(0, 10) : initialDate || toDateKey(new Date()));
@@ -157,6 +167,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
   const [endTime, setEndTime] = useState(event && event.endAt ? event.endAt.slice(11, 16) : "10:00");
   const [eventType, setEventType] = useState(event ? event.eventType : "meeting");
   const [notes, setNotes] = useState(event ? event.description || "" : "");
+  const [leadId, setLeadId] = useState(event ? event.leadId || "" : "");
 
   function buildPayload() {
     if (!title.trim()) return null;
@@ -166,6 +177,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
       endAt: `${date}T${endTime}:00`,
       eventType,
       description: notes.trim() || undefined,
+      leadId: leadId || null,
     };
   }
 
@@ -255,6 +267,19 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
               ))}
             </div>
           </div>
+          {leads.length > 0 && (
+            <div>
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">שיוך לליד (אופציונלי)</label>
+              <select
+                value={leadId}
+                onChange={(e) => setLeadId(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-brand-500"
+              >
+                <option value="">ללא שיוך</option>
+                {leads.map((l) => <option key={l.id} value={l.id}>{l.name || l.id}</option>)}
+              </select>
+            </div>
+          )}
           <div>
             <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">הערות</label>
             <textarea
@@ -264,6 +289,9 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving }) {
               className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-brand-500 resize-none"
             />
           </div>
+          {error && (
+            <p role="alert" className="rounded-xl bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 px-3 py-2 text-xs font-bold text-danger-700 dark:text-danger-300">{error}</p>
+          )}
           <div className="flex gap-2 pt-2">
             <button
               type="submit"
@@ -454,9 +482,13 @@ function WeekView({ weekStart, events, today, onDayClick }) {
 
 // ─── Day View ────────────────────────────────────────────────────────────────
 function DayView({ date, events, onAddClick, onEventClick }) {
-  const hours = Array.from({ length: 14 }, (_, i) => i + 7); // 07:00–20:00
   const dateKey = toDateKey(date);
   const dayEvents = events.filter((ev) => ev.startAt.slice(0, 10) === dateKey);
+  // Default working window 07:00–20:00, expanded to include any event outside it
+  const eventHours = dayEvents.map((ev) => new Date(ev.startAt).getHours());
+  const firstHour = Math.min(7, ...eventHours);
+  const lastHour = Math.max(20, ...eventHours);
+  const hours = Array.from({ length: lastHour - firstHour + 1 }, (_, i) => i + firstHour);
 
   function getEventsForHour(h) {
     return dayEvents.filter((ev) => {
@@ -517,6 +549,39 @@ export default function CalendarPage() {
   const [editEvent, setEditEvent] = useState(null);
   const [modalDate, setModalDate] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [myLeads, setMyLeads] = useState([]);
+
+  // Load the advisor's leads once — for linking events to leads and for
+  // showing lead follow-up dates (nextActionAt / followUpDate) on the calendar.
+  useEffect(() => {
+    fetch("/api/advisor/my-leads")
+      .then((r) => (r.ok ? r.json() : { leads: [] }))
+      .then((j) => setMyLeads(j.leads || []))
+      .catch(() => {});
+  }, []);
+
+  // Lead follow-ups rendered as read-only calendar items
+  const leadFollowUpEvents = useMemo(() => {
+    const items = [];
+    for (const l of myLeads) {
+      const due = l.nextActionAt || l.followUpDate;
+      if (!due) continue;
+      const dateKey = String(due).slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) continue;
+      const hasTime = String(due).length > 10;
+      items.push({
+        id: `lead-${l.id}`,
+        title: `מעקב: ${l.name || "ליד"}${l.nextAction ? ` — ${l.nextAction}` : ""}`,
+        eventType: "lead_followup",
+        startAt: hasTime ? String(due).slice(0, 16) : `${dateKey}T09:00`,
+        endAt: null,
+        readOnly: true,
+        leadHref: `/advisor/lead/${l.id}`,
+      });
+    }
+    return items;
+  }, [myLeads]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -569,23 +634,34 @@ export default function CalendarPage() {
 
   function openAddModal(date) {
     setEditEvent(null);
+    setSaveError("");
     setModalDate(date ? toDateKey(date) : toDateKey(currentDate));
     setModalOpen(true);
   }
 
   function openEditModal(ev) {
+    // Lead follow-ups are managed on the lead page — clicking navigates there
+    if (ev.readOnly && ev.leadHref) {
+      window.location.href = ev.leadHref;
+      return;
+    }
     setEditEvent(ev);
     setModalDate(null);
+    setSaveError("");
     setModalOpen(true);
   }
 
+  // Manual events + lead follow-ups, merged for all views
+  const displayEvents = useMemo(() => [...events, ...leadFollowUpEvents], [events, leadFollowUpEvents]);
+
   async function handleSave(payload, addToGoogle = false) {
     setSaving(true);
+    setSaveError("");
     try {
       if (editEvent) {
         await apiFetch(`/api/advisor/calendar`, {
           method: "PATCH",
-          body: JSON.stringify({ id: editEvent.id, ...payload }),
+          body: JSON.stringify({ eventId: editEvent.id, ...payload }),
         });
       } else {
         await apiFetch(`/api/advisor/calendar`, {
@@ -601,7 +677,7 @@ export default function CalendarPage() {
       setEditEvent(null);
       await fetchEvents();
     } catch (_) {
-      // silent
+      setSaveError("השמירה נכשלה. בדקו את החיבור ונסו שוב.");
     } finally {
       setSaving(false);
     }
@@ -610,16 +686,16 @@ export default function CalendarPage() {
   async function handleDelete() {
     if (!editEvent) return;
     setSaving(true);
+    setSaveError("");
     try {
-      await apiFetch(`/api/advisor/calendar`, {
+      await apiFetch(`/api/advisor/calendar?eventId=${encodeURIComponent(editEvent.id)}`, {
         method: "DELETE",
-        body: JSON.stringify({ id: editEvent.id }),
       });
       setModalOpen(false);
       setEditEvent(null);
       await fetchEvents();
     } catch (_) {
-      // silent
+      setSaveError("המחיקה נכשלה. נסו שוב.");
     } finally {
       setSaving(false);
     }
@@ -700,15 +776,15 @@ export default function CalendarPage() {
 
         {/* Views */}
         {!loading && view === "month" && (
-          <MonthView year={year} month={month} events={events} today={today} onDayClick={handleDayClick} />
+          <MonthView year={year} month={month} events={displayEvents} today={today} onDayClick={handleDayClick} />
         )}
         {!loading && view === "week" && (
-          <WeekView weekStart={weekStart} events={events} today={today} onDayClick={handleDayClick} />
+          <WeekView weekStart={weekStart} events={displayEvents} today={today} onDayClick={handleDayClick} />
         )}
         {!loading && view === "day" && (
           <DayView
             date={currentDate}
-            events={events}
+            events={displayEvents}
             onAddClick={() => openAddModal(currentDate)}
             onEventClick={openEditModal}
           />
@@ -724,6 +800,8 @@ export default function CalendarPage() {
           onSave={handleSave}
           onDelete={editEvent ? handleDelete : undefined}
           saving={saving}
+          leads={myLeads}
+          error={saveError}
         />
       )}
 

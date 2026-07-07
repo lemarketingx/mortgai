@@ -6,12 +6,13 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "METHOD_NOT_ALLOWED" });
 
   const ip = getClientIp(req);
-  const { allowed } = checkRateLimit(ip, { limit: 5, windowMs: 15 * 60 * 1000 });
+  const RATE_OPTS = { scope: "advisor-reset-password", limit: 5, windowMs: 15 * 60 * 1000 };
+  const { allowed } = checkRateLimit(ip, RATE_OPTS);
   if (!allowed) {
-    recordRateLimitHit(ip);
+    recordRateLimitHit(ip, RATE_OPTS);
     return res.status(429).json({ error: "RATE_LIMITED", message: "יותר מדי ניסיונות. נסה שוב מאוחר יותר." });
   }
-  recordRateLimitHit(ip);
+  recordRateLimitHit(ip, RATE_OPTS);
 
   const { accessToken, password } = req.body || {};
   if (!accessToken || !password) {

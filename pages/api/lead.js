@@ -59,12 +59,12 @@ export default async function handler(req, res) {
   }
 
   const ip = getClientIp(req);
-  const rateLimit = checkRateLimit(ip, { limit: 10, windowMs: 15 * 60 * 1000 });
+  const rateLimit = checkRateLimit(ip, { scope: "lead", limit: 10, windowMs: 15 * 60 * 1000 });
   if (!rateLimit.allowed) {
     res.setHeader("Retry-After", String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)));
     return res.status(429).json({ ok: false, success: false, error: "TOO_MANY_REQUESTS", message: "יותר מדי בקשות. נסה שוב מאוחר יותר." });
   }
-  recordRateLimitHit(ip);
+  recordRateLimitHit(ip, { scope: "lead", limit: 10, windowMs: 15 * 60 * 1000 });
 
   const q = req.query || {};
   const rawLead = normalizeLeadFields(req.body?.lead || {});
@@ -171,19 +171,12 @@ export default async function handler(req, res) {
   const webhookUrl = process.env.LEAD_WEBHOOK_URL;
   let savedLead = null;
   let localOnly = false;
-  let insertError = null;
 
   try {
     savedLead = await createLead(req.body);
   } catch (error) {
     localOnly = true;
     const safeError = buildSafeLeadError(error);
-    insertError = {
-      code: safeError,
-      internalCode: error?.code || "LEAD_SAVE_FAILED",
-      message: error?.message || "",
-      details: error?.details || "",
-    };
     logLeadFailure("insert_failed", {
       safeErrorCode: safeError,
       internalCode: error?.code || "LEAD_SAVE_FAILED",
@@ -213,14 +206,12 @@ export default async function handler(req, res) {
   }
 
   if (!savedLead) {
+    // Internal Supabase codes/messages are logged server-side in logLeadFailure
+    // above — never returned to the public client (QA report F-4).
     return res.status(500).json({
       ok: false,
       success: false,
-      step: "supabase_insert",
-      error: "SUPABASE_INSERT_FAILED",
-      supabaseCode: insertError?.internalCode || "",
-      supabaseMessage: insertError?.message || "",
-      supabaseDetails: insertError?.details || "",
+      error: "LEAD_SAVE_FAILED",
       message: "לא הצלחנו לשלוח את הפרטים כרגע. נסה שוב בעוד רגע.",
       localOnly,
     });

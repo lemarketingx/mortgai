@@ -122,6 +122,7 @@ function BankerFormFields({ form, onChange }) {
 
 export default function BankersPage() {
   const [bankers, setBankers]             = useState([]);
+  const [caseStats, setCaseStats]         = useState({});
   const [loading, setLoading]             = useState(true);
   const [showAdd, setShowAdd]             = useState(false);
   const [editingId, setEditingId]         = useState(null);
@@ -145,6 +146,7 @@ export default function BankersPage() {
       if (r.ok) {
         const j = await r.json();
         setBankers(Array.isArray(j.bankers) ? j.bankers : []);
+        setCaseStats(j.caseStats && typeof j.caseStats === "object" ? j.caseStats : {});
       }
     } finally {
       setLoading(false);
@@ -424,6 +426,19 @@ export default function BankersPage() {
                           </div>
                         )}
                       </div>
+                      {caseStats[banker.id] && caseStats[banker.id].total > 0 && (
+                        <div className="mt-2 flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
+                            {caseStats[banker.id].total} תיקים
+                          </span>
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-800">
+                            {caseStats[banker.id].sent} נשלחו
+                          </span>
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800">
+                            {caseStats[banker.id].approved} אושרו
+                          </span>
+                        </div>
+                      )}
                       {banker.specialties && (
                         <p className="mt-1.5 text-[11px] font-bold text-slate-400 dark:text-slate-500">התמחות: {banker.specialties}</p>
                       )}
