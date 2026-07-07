@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
   const ip = getClientIp(req);
   const RATE_OPTS = { scope: "advisor-login", limit: 5, windowMs: 15 * 60 * 1000 };
-  const { allowed } = checkRateLimit(ip, RATE_OPTS);
+  const { allowed } = await checkRateLimit(ip, RATE_OPTS);
   if (!allowed) return apiError(res, 429, "RATE_LIMITED", "יותר מדי ניסיונות. נסה שוב מאוחר יותר.");
 
   const body = typeof req.body === "object" ? req.body : {};
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
   }
   const { error: authError, user: authUser } = authResult;
   if (authError || !authUser?.id) {
-    recordRateLimitHit(ip, RATE_OPTS);
+    await recordRateLimitHit(ip, RATE_OPTS);
     return apiError(res, 401, "INVALID_CREDENTIALS", "אימייל או סיסמה שגויים");
   }
 

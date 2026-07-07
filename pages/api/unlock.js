@@ -28,7 +28,7 @@ function safeNext(value) {
   return trimmed;
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const lockEnabled =
@@ -52,7 +52,7 @@ export default function handler(req, res) {
 
   const ip = getClientIp(req);
   const RATE_OPTS = { scope: "unlock", limit: 10, windowMs: 15 * 60 * 1000 };
-  const { allowed } = checkRateLimit(ip, RATE_OPTS);
+  const { allowed } = await checkRateLimit(ip, RATE_OPTS);
   if (!allowed) {
     const errorUrl = `/unlock?error=3${next !== "/" ? `&next=${encodeURIComponent(next)}` : ""}`;
     return res.redirect(302, errorUrl);
@@ -62,7 +62,7 @@ export default function handler(req, res) {
   const passwordMatch = !!submitted && safeStringCompare(submitted, sitePassword);
 
   if (!passwordMatch) {
-    recordRateLimitHit(ip, RATE_OPTS);
+    await recordRateLimitHit(ip, RATE_OPTS);
     const errorUrl = `/unlock?error=1${next !== "/" ? `&next=${encodeURIComponent(next)}` : ""}`;
     return res.redirect(302, errorUrl);
   }

@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { Analytics } from "@vercel/analytics/next";
 import ErrorBoundary from "../components/ErrorBoundary";
 import BetaBanner from "../components/BetaBanner";
+import WhatsAppButton from "../components/WhatsAppButton";
 import "../styles/globals.css";
 
 const THEME_KEY = "finzo_theme_mode";
@@ -183,6 +184,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       <ThemeProvider>
         <Component {...pageProps} />
       </ThemeProvider>
+      {showBanner && <WhatsAppButton />}
       <Analytics />
     </ErrorBoundary>
   );

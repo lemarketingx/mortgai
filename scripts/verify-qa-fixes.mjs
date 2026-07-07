@@ -32,23 +32,23 @@ console.log("\n── F-1: rate-limit scope isolation ──");
   const leadOpts = { scope: "lead", limit: 10, windowMs: 15 * 60 * 1000 };
 
   // Exhaust the lead scope
-  for (let i = 0; i < 10; i++) recordRateLimitHit(ip, leadOpts);
-  check("lead scope blocked after 10 hits", checkRateLimit(ip, leadOpts).allowed === false);
+  for (let i = 0; i < 10; i++) await recordRateLimitHit(ip, leadOpts);
+  check("lead scope blocked after 10 hits", (await checkRateLimit(ip, leadOpts)).allowed === false);
 
   // Every auth scope must still be open for the same IP
   for (const scope of ["admin-login", "advisor-login", "advisor-register", "advisor-reset-password", "advisor-forgot-password", "unlock"]) {
-    check(`scope "${scope}" unaffected by lead flood`, checkRateLimit(ip, { scope, limit: 5 }).allowed === true);
+    check(`scope "${scope}" unaffected by lead flood`, (await checkRateLimit(ip, { scope, limit: 5 })).allowed === true);
   }
 
   // clearRateLimit only clears its own scope
-  recordRateLimitHit(ip, { scope: "admin-login", limit: 5 });
-  clearRateLimit(ip, { scope: "admin-login" });
-  check("clearRateLimit(admin-login) does not clear lead scope", checkRateLimit(ip, leadOpts).allowed === false);
-  check("clearRateLimit(admin-login) resets admin-login scope", checkRateLimit(ip, { scope: "admin-login", limit: 5 }).remaining === 5);
+  await recordRateLimitHit(ip, { scope: "admin-login", limit: 5 });
+  await clearRateLimit(ip, { scope: "admin-login" });
+  check("clearRateLimit(admin-login) does not clear lead scope", (await checkRateLimit(ip, leadOpts)).allowed === false);
+  check("clearRateLimit(admin-login) resets admin-login scope", (await checkRateLimit(ip, { scope: "admin-login", limit: 5 })).remaining === 5);
 
   // Different IPs stay independent within a scope
-  check("different IP not blocked in lead scope", checkRateLimit("198.51.100.9", leadOpts).allowed === true);
-  clearRateLimit(ip, { scope: "lead" });
+  check("different IP not blocked in lead scope", (await checkRateLimit("198.51.100.9", leadOpts)).allowed === true);
+  await clearRateLimit(ip, { scope: "lead" });
 }
 
 // ── F-3: HTML escaping in admin lead-notification email (real lib/email.js) ──
