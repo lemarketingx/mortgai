@@ -13,12 +13,12 @@ export default async function handler(req, res) {
 
   const ip = getClientIp(req);
   const RATE_OPTS = { scope: "advisor-register", limit: 3, windowMs: 60 * 60 * 1000 };
-  const { allowed } = checkRateLimit(ip, RATE_OPTS);
+  const { allowed } = await checkRateLimit(ip, RATE_OPTS);
   if (!allowed) {
-    recordRateLimitHit(ip, RATE_OPTS);
+    await recordRateLimitHit(ip, RATE_OPTS);
     return err(res, 429, "RATE_LIMITED", "יותר מדי ניסיונות הרשמה. נסה שוב מאוחר יותר.");
   }
-  recordRateLimitHit(ip, RATE_OPTS);
+  await recordRateLimitHit(ip, RATE_OPTS);
 
   const body = req.body || {};
   const fullName = String(body.fullName || "").trim();

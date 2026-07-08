@@ -11,20 +11,36 @@ const INQUIRY_TYPES = [
   { value: "accessibility", label: "בעיית נגישות" },
 ];
 
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@finzo.co.il";
+
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", type: "", message: "" });
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
-  function buildMailto() {
-    const subject = encodeURIComponent(`פנייה מאתר FINZO — ${INQUIRY_TYPES.find(t => t.value === form.type)?.label || "כללי"}`);
-    const body = encodeURIComponent(`שם: ${form.name}\nאימייל: ${form.email}\n\n${form.message}`);
-    return `mailto:lemarketingx@gmail.com?subject=${subject}&body=${body}`;
-  }
-
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    window.location.href = buildMailto();
-    setSent(true);
+    if (sending) return;
+    setSending(true);
+    setError("");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, type: form.type || "general" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.message || "לא הצלחנו לשלוח את הפנייה. נסו שוב או שלחו לנו מייל ישירות.");
+        return;
+      }
+      setSent(true);
+    } catch {
+      setError("שגיאת רשת. נסו שוב או שלחו לנו מייל ישירות.");
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -45,21 +61,20 @@ export default function ContactPage() {
         <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
           <h1 className="text-3xl font-black text-slate-900 sm:text-4xl">יצירת קשר</h1>
           <p className="mt-3 text-slate-600 font-semibold">
-            תמיכה ניתנת דרך ערוצים דיגיטליים בלבד. נחזור אליכם תוך 1–3 ימי עסקים.
+            שלחו לנו הודעה ונחזור אליכם בהקדם. למענה מהיר ניתן גם לפנות אלינו בוואטסאפ.
           </p>
 
           <div className="mt-4 rounded-2xl bg-brand-50 border border-brand-200 px-5 py-4 text-sm font-bold text-brand-800">
             כתובת אימייל ישירה:{" "}
-            <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">
-              lemarketingx@gmail.com
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-brand-700 hover:underline">
+              {SUPPORT_EMAIL}
             </a>
           </div>
 
           {sent ? (
             <div className="mt-8 rounded-[28px] border border-success-200 bg-success-50 p-8 text-center">
-              <p className="text-2xl font-black text-success-800">הפנייה נשלחה</p>
-              <p className="mt-2 text-sm font-semibold text-success-700">נפתחה אפליקציית הדואר האלקטרוני שלכם עם הפנייה.</p>
-              <p className="mt-1 text-xs text-success-600">אם לא נפתח כלום, שלחו אלינו ישירות ל-lemarketingx@gmail.com</p>
+              <p className="text-2xl font-black text-success-800">הפנייה נשלחה ✓</p>
+              <p className="mt-2 text-sm font-semibold text-success-700">קיבלנו את פנייתכם ונחזור אליכם בהקדם.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-[28px] border border-slate-200 bg-slate-50 p-6 shadow-sm">
@@ -113,14 +128,21 @@ export default function ContactPage() {
                 />
               </div>
 
+              {error ? (
+                <p className="rounded-2xl bg-danger-50 border border-danger-200 px-4 py-3 text-center text-sm font-bold text-danger-700">
+                  {error}
+                </p>
+              ) : null}
+
               <button
                 type="submit"
-                className="w-full rounded-full bg-brand-700 hover:bg-brand-800 px-6 py-4 font-black text-white transition text-sm"
+                disabled={sending}
+                className="w-full rounded-full bg-brand-700 hover:bg-brand-800 px-6 py-4 font-black text-white transition text-sm disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                שלחו פנייה ←
+                {sending ? "שולח…" : "שלחו פנייה ←"}
               </button>
               <p className="text-center text-xs text-slate-400">
-                לחיצה על הכפתור תפתח את אפליקציית הדואר האלקטרוני שלכם עם הפנייה המוכנה לשליחה.
+                הפנייה נשלחת ישירות לצוות FINZO. לא תיפתח אפליקציית דואר.
               </p>
             </form>
           )}

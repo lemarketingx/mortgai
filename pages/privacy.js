@@ -29,7 +29,7 @@ export default function PrivacyPage() {
               <p>
                 FINZO הוא שירות דיגיטלי המופעל על ידי <strong>ל.א.ה שיווק</strong> (להלן: "החברה", "אנחנו").
                 ניתן ליצור איתנו קשר בכתובת:{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">lemarketingx@gmail.com</a>.
+                <a href="mailto:support@finzo.co.il" className="text-brand-700 hover:underline">support@finzo.co.il</a>.
               </p>
             </section>
 
@@ -77,7 +77,7 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-black text-slate-900 mb-3">6. מחיקת מידע</h2>
               <p>
                 ניתן לפנות אלינו בבקשה למחיקת המידע שלכם בכתובת{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">lemarketingx@gmail.com</a>.
+                <a href="mailto:support@finzo.co.il" className="text-brand-700 hover:underline">support@finzo.co.il</a>.
                 נטפל בבקשה בהקדם ובהתאם להוראות הדין.
               </p>
             </section>
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
               <p>
                 בעצם מסירת פרטיכם אתם מסכימים לקבל יצירת קשר מחברת ל.א.ה שיווק ו/או מיועצים מורשים לצורך מתן שירות.
                 ניתן לבקש הפסקת פנייה שיווקית בכל עת באמצעות פנייה ל-{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">lemarketingx@gmail.com</a>.
+                <a href="mailto:support@finzo.co.il" className="text-brand-700 hover:underline">support@finzo.co.il</a>.
               </p>
             </section>
 
@@ -110,7 +110,7 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-black text-slate-900 mb-3">10. יצירת קשר</h2>
               <p>
                 לכל שאלה בנושא פרטיות, פנו אלינו:{" "}
-                <a href="mailto:lemarketingx@gmail.com" className="text-brand-700 hover:underline">lemarketingx@gmail.com</a>
+                <a href="mailto:support@finzo.co.il" className="text-brand-700 hover:underline">support@finzo.co.il</a>
               </p>
             </section>
           </div>

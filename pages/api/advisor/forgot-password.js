@@ -8,12 +8,12 @@ export default async function handler(req, res) {
   // reset email, so unlimited calls allow email bombing of arbitrary addresses.
   const ip = getClientIp(req);
   const RATE_OPTS = { scope: "advisor-forgot-password", limit: 5, windowMs: 15 * 60 * 1000 };
-  const { allowed, resetAt } = checkRateLimit(ip, RATE_OPTS);
+  const { allowed, resetAt } = await checkRateLimit(ip, RATE_OPTS);
   if (!allowed) {
     res.setHeader("Retry-After", String(Math.ceil((resetAt - Date.now()) / 1000)));
     return res.status(429).json({ error: "RATE_LIMITED", message: "יותר מדי בקשות. נסה שוב מאוחר יותר." });
   }
-  recordRateLimitHit(ip, RATE_OPTS);
+  await recordRateLimitHit(ip, RATE_OPTS);
 
   const email = String((req.body || {}).email || "").trim();
   if (!email || !email.includes("@")) {

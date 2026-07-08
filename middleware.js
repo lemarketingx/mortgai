@@ -4,10 +4,13 @@ const COOKIE_NAME = "finzo_access";
 const TOKEN_SUFFIX = ":finzo-access-v1";
 const IS_DEV = process.env.NODE_ENV !== "production";
 
-// Paths that always bypass the lock
+// Paths that always bypass the lock. "/advisor/" keeps its trailing slash on
+// purpose: the authenticated portal (/advisor/login, /advisor/leads, ...) stays
+// reachable, but the PUBLIC advisor marketing page "/advisors" must NOT bypass
+// the lock (F-6). Exact "/advisor" is allowed via the explicit check below.
 const BYPASS_PREFIXES = [
   "/api/",
-  "/advisor",
+  "/advisor/",
   "/unlock",
   "/_next/",
   "/favicon",
@@ -30,7 +33,7 @@ export async function middleware(request) {
 
   const { pathname } = request.nextUrl;
 
-  if (BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {
+  if (pathname === "/advisor" || BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 

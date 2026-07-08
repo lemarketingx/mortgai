@@ -7,12 +7,12 @@ export default async function handler(req, res) {
 
   const ip = getClientIp(req);
   const RATE_OPTS = { scope: "advisor-reset-password", limit: 5, windowMs: 15 * 60 * 1000 };
-  const { allowed } = checkRateLimit(ip, RATE_OPTS);
+  const { allowed } = await checkRateLimit(ip, RATE_OPTS);
   if (!allowed) {
-    recordRateLimitHit(ip, RATE_OPTS);
+    await recordRateLimitHit(ip, RATE_OPTS);
     return res.status(429).json({ error: "RATE_LIMITED", message: "יותר מדי ניסיונות. נסה שוב מאוחר יותר." });
   }
-  recordRateLimitHit(ip, RATE_OPTS);
+  await recordRateLimitHit(ip, RATE_OPTS);
 
   const { accessToken, password } = req.body || {};
   if (!accessToken || !password) {
