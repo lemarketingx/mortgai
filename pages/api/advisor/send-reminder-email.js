@@ -67,13 +67,13 @@ export default async function handler(req, res) {
   // Resolve advisor name from session or lead
   const advisorName = lead.assignedAdvisor || session.name || "היועץ שלכם";
 
-  // If custom subject and content provided, send custom email; otherwise send document reminder
+  // If custom content provided, send custom email; otherwise send document reminder
   let result;
-  if (subject && content) {
+  if (content) {
     result = await sendAdvisorCustomEmail({
       clientName: clientName || lead.name,
       clientEmail,
-      subject,
+      subject: subject || "הודעה מהיועץ שלך",
       content,
     });
   } else {

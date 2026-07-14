@@ -1595,6 +1595,7 @@ export default function LeadDetailPage() {
                       if (!clientEmail) { setMsg({ text: "אין כתובת מייל זמינה", ok: false }); return; }
                       if (!emailContent.trim()) { setMsg({ text: "יש להזין תוכן למייל", ok: false }); return; }
                       setSendingEmail(true);
+                      setTimeout(() => setMsg({ text: "", ok: true }), 100);
                       try {
                         const res = await fetch("/api/advisor/send-reminder-email", {
                           method: "POST",
@@ -1603,17 +1604,19 @@ export default function LeadDetailPage() {
                             leadId: id,
                             clientEmail,
                             clientName: lead.name,
-                            subject: emailSubject,
+                            subject: emailSubject || undefined,
                             content: emailContent,
                           }),
                         });
                         const j = await res.json().catch(() => ({}));
                         if (!res.ok) throw new Error(j.message || "שליחת המייל נכשלה");
-                        setMsg({ text: "המייל נשלח בהצלחה", ok: true });
+                        setMsg({ text: "✓ המייל נשלח בהצלחה", ok: true });
                         pushActivity("נשלח מייל", "email_sent");
-                        setEmailSubject("");
-                        setEmailContent("");
-                        setActiveAction(null);
+                        setTimeout(() => {
+                          setEmailSubject("");
+                          setEmailContent("");
+                          setActiveAction(null);
+                        }, 1500);
                       } catch (err) {
                         setMsg({ text: err.message || "שליחת המייל נכשלה", ok: false });
                       } finally {
