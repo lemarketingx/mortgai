@@ -44,6 +44,12 @@ export default async function handler(req, res) {
     return apiError(res, 400, "INVALID_CLIENT_EMAIL", "כתובת אימייל של הלקוח אינה תקינה");
   }
 
+  // Check email configuration before anything else
+  const hasResend = Boolean(process.env.RESEND_API_KEY);
+  if (!hasResend) {
+    return apiError(res, 503, "EMAIL_NOT_CONFIGURED", "שירות המייל לא מוגדר - חסר RESEND_API_KEY בתצורה");
+  }
+
   // Verify advisor owns this lead
   let lead;
   try {

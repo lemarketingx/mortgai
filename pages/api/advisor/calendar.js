@@ -48,6 +48,12 @@ export default async function handler(req, res) {
     if (!title) return apiError(res, 400, "TITLE_REQUIRED", "title is required");
     const startAt = String(body.startAt || "").trim();
     if (!startAt) return apiError(res, 400, "START_AT_REQUIRED", "startAt is required");
+
+    const hasSupabase = Boolean(process.env.SUPABASE_URL) && Boolean(process.env.SUPABASE_SERVICE_KEY);
+    if (!hasSupabase) {
+      return apiError(res, 503, "SUPABASE_NOT_CONFIGURED", "יומן לא מוגדר - חסרות הגדרות Supabase (SUPABASE_URL ו-SUPABASE_SERVICE_KEY)");
+    }
+
     const event = await createCalendarEvent({
       advisorId,
       title,
@@ -57,7 +63,7 @@ export default async function handler(req, res) {
       eventType: body.eventType || body.type || "meeting",
       leadId: body.leadId || null,
     });
-    if (!event) return apiError(res, 503, "EVENT_CREATE_FAILED", "Could not create event");
+    if (!event) return apiError(res, 503, "EVENT_CREATE_FAILED", "שמירת האירוע נכשלה - בדוק את הלוגים");
     return res.status(201).json({ event: toClientEvent(event) });
   }
 
