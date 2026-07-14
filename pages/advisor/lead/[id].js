@@ -495,6 +495,9 @@ export default function LeadDetailPage() {
   const [reminderPriority, setReminderPriority] = useState("normal");
   const [nextActionTime, setNextActionTime] = useState("");
   const [reminderNote, setReminderNote] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailContent, setEmailContent] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
   const { dark } = useTheme();
 
   // Upload-link & reminder state
@@ -1572,7 +1575,7 @@ export default function LeadDetailPage() {
                     <div>
                       <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">נושא</label>
                       <input type="text" className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500/30"
-                        placeholder="נושא ההודעה..." />
+                        placeholder="נושא ההודעה..." value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">תבנית</label>
@@ -1585,11 +1588,44 @@ export default function LeadDetailPage() {
                     <div>
                       <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">תוכן</label>
                       <textarea className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-3 text-sm resize-y min-h-[150px] outline-none focus:ring-2 focus:ring-brand-500/30"
-                        placeholder="כתוב את תוכן המייל..." />
+                        placeholder="כתוב את תוכן המייל..." value={emailContent} onChange={(e) => setEmailContent(e.target.value)} />
                     </div>
-                    <button type="button" onClick={() => { pushActivity("נשלח מייל", "email_sent"); }}
-                      className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white py-3 text-sm font-semibold transition-colors">
-                      שלח מייל
+                    <button type="button" onClick={async () => {
+                      const clientEmail = lead.email || lead.advisorEmail;
+                      if (!clientEmail) { setMsg({ text: "אין כתובת מייל זמינה", ok: false }); return; }
+                      if (!emailContent.trim()) { setMsg({ text: "יש להזין תוכן למייל", ok: false }); return; }
+                      setSendingEmail(true);
+                      setTimeout(() => setMsg({ text: "", ok: true }), 100);
+                      try {
+                        const res = await fetch("/api/advisor/send-reminder-email", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            leadId: id,
+                            clientEmail,
+                            clientName: lead.name,
+                            subject: emailSubject || undefined,
+                            content: emailContent,
+                          }),
+                        });
+                        const j = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(j.message || "שליחת המייל נכשלה");
+                        setMsg({ text: "✓ המייל נשלח בהצלחה", ok: true });
+                        pushActivity("נשלח מייל", "email_sent");
+                        setTimeout(() => {
+                          setEmailSubject("");
+                          setEmailContent("");
+                          setActiveAction(null);
+                        }, 1500);
+                      } catch (err) {
+                        setMsg({ text: err.message || "שליחת המייל נכשלה", ok: false });
+                      } finally {
+                        setSendingEmail(false);
+                      }
+                    }}
+                      disabled={sendingEmail}
+                      className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white py-3 text-sm font-semibold transition-colors disabled:opacity-50">
+                      {sendingEmail ? "שולח..." : "שלח מייל"}
                     </button>
                   </div>
                 )}

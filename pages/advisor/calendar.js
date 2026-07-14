@@ -179,7 +179,7 @@ function EventModal({ event, initialDate, onClose, onSave, onDelete, saving, lea
       startAt: `${date}T${startTime}:00`,
       endAt: `${date}T${endTime}:00`,
       eventType,
-      description: notes.trim() || undefined,
+      description: notes.trim(),
       leadId: leadId || null,
     };
   }
