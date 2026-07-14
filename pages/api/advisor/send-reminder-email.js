@@ -16,7 +16,7 @@
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { LeadStoreError, readMyLead } from "../../../lib/leadsStore";
 import { getReminderForLead, recordReminderSent } from "../../../lib/documentReminderEngine";
-import { sendDocumentReminderEmail } from "../../../lib/email";
+import { sendDocumentReminderEmail, sendAdvisorCustomEmail } from "../../../lib/email";
 
 const MIN_HOURS_BETWEEN_EMAILS = 24;
 
@@ -36,6 +36,8 @@ export default async function handler(req, res) {
   const clientName = String(body.clientName || "").trim();
   const uploadLink = String(body.uploadLink || "").trim();
   const missingDocs = Array.isArray(body.missingDocs) ? body.missingDocs : [];
+  const subject = String(body.subject || "").trim();
+  const content = String(body.content || "").trim();
 
   if (!leadId) return apiError(res, 400, "LEAD_ID_REQUIRED", "leadId is required");
   if (!clientEmail || !clientEmail.includes("@")) {
@@ -65,13 +67,24 @@ export default async function handler(req, res) {
   // Resolve advisor name from session or lead
   const advisorName = lead.assignedAdvisor || session.name || "היועץ שלכם";
 
-  const result = await sendDocumentReminderEmail({
-    clientName: clientName || lead.name,
-    clientEmail,
-    advisorName,
-    uploadLink: uploadLink || null,
-    missingDocs,
-  });
+  // If custom subject and content provided, send custom email; otherwise send document reminder
+  let result;
+  if (subject && content) {
+    result = await sendAdvisorCustomEmail({
+      clientName: clientName || lead.name,
+      clientEmail,
+      subject,
+      content,
+    });
+  } else {
+    result = await sendDocumentReminderEmail({
+      clientName: clientName || lead.name,
+      clientEmail,
+      advisorName,
+      uploadLink: uploadLink || null,
+      missingDocs,
+    });
+  }
 
   if (!result.ok) {
     if (result.reason === "not_configured") {
@@ -85,5 +98,5 @@ export default async function handler(req, res) {
     await recordReminderSent(existing.id, existing.reminder_count || 0).catch(() => {});
   }
 
-  return res.status(200).json({ ok: true, message: "תזכורת נשלחה בהצלחה" });
+  return res.status(200).json({ ok: true, message: "האימייל נשלח בהצלחה" });
 }
