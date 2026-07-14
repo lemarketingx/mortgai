@@ -223,16 +223,32 @@ ALTER TABLE lead_purchases ENABLE ROW LEVEL SECURITY;
 -- ══════════════════════════════════════════════════════════════════════════════
 -- LEAD DOCUMENTS TABLE  (extended for client upload portal)
 -- ══════════════════════════════════════════════════════════════════════════════
--- Core table — created by activitiesStore.js logic. These ALTER statements add
--- file-upload columns that may be missing from an older schema.
-ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS storage_path  TEXT;
-ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS file_name     TEXT;
-ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS file_size     INTEGER;
-ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS mime_type     TEXT;
-ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS uploaded_by   TEXT NOT NULL DEFAULT 'advisor';
-ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS uploaded_at   TIMESTAMPTZ;
-ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS reviewed_at   TIMESTAMPTZ;
-ALTER TABLE lead_documents ADD COLUMN IF NOT EXISTS review_note   TEXT;
+CREATE TABLE IF NOT EXISTS lead_documents (
+  id                 TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  lead_id            TEXT        NOT NULL,
+  document_type      TEXT        NOT NULL,
+  status             TEXT        NOT NULL DEFAULT 'missing',
+  notes              TEXT,
+  storage_path       TEXT,
+  file_name          TEXT,
+  file_size          INTEGER,
+  mime_type          TEXT,
+  uploaded_by        TEXT        NOT NULL DEFAULT 'advisor',
+  uploaded_at        TIMESTAMPTZ,
+  requested_at       TIMESTAMPTZ,
+  received_at        TIMESTAMPTZ,
+  reviewed_at        TIMESTAMPTZ,
+  review_note        TEXT,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Indexes for document queries
+CREATE INDEX IF NOT EXISTS lead_documents_lead_idx       ON lead_documents (lead_id);
+CREATE INDEX IF NOT EXISTS lead_documents_status_idx     ON lead_documents (status);
+CREATE INDEX IF NOT EXISTS lead_documents_document_type_idx ON lead_documents (document_type);
+
+ALTER TABLE lead_documents ENABLE ROW LEVEL SECURITY;
 
 
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -313,6 +329,216 @@ CREATE TABLE IF NOT EXISTS advisor_notification_prefs (
   whatsapp_new_lead BOOLEAN NOT NULL DEFAULT FALSE,
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ADVISOR TASKS TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS advisor_tasks (
+  id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  advisor_id  TEXT        NOT NULL,
+  lead_id     TEXT,
+  text        TEXT        NOT NULL,
+  priority    TEXT        NOT NULL DEFAULT 'medium',
+  done        BOOLEAN     NOT NULL DEFAULT false,
+  due_at      TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS advisor_tasks_advisor_idx ON advisor_tasks (advisor_id);
+CREATE INDEX IF NOT EXISTS advisor_tasks_lead_idx    ON advisor_tasks (lead_id);
+ALTER TABLE advisor_tasks ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ADVISOR NOTIFICATIONS TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS advisor_notifications (
+  id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  advisor_id  TEXT        NOT NULL,
+  title       TEXT        NOT NULL,
+  message     TEXT,
+  type        TEXT        NOT NULL DEFAULT 'info',
+  read        BOOLEAN     NOT NULL DEFAULT false,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS advisor_notifications_advisor_idx ON advisor_notifications (advisor_id);
+ALTER TABLE advisor_notifications ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- LEAD PRICING RULES TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS lead_pricing_rules (
+  id             TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  name           TEXT        NOT NULL,
+  criteria       JSONB       NOT NULL DEFAULT '{}'::JSONB,
+  base_price     NUMERIC     NOT NULL DEFAULT 0,
+  multiplier     NUMERIC     NOT NULL DEFAULT 1,
+  exclusive_mult NUMERIC     NOT NULL DEFAULT 1.5,
+  active         BOOLEAN     NOT NULL DEFAULT true,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE lead_pricing_rules ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ADVISOR COMMISSIONS TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS advisor_commissions (
+  id           TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  advisor_id   TEXT        NOT NULL,
+  lead_id      TEXT        NOT NULL,
+  amount       NUMERIC     NOT NULL DEFAULT 0,
+  status       TEXT        NOT NULL DEFAULT 'pending',
+  paid_at      TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS advisor_commissions_advisor_idx ON advisor_commissions (advisor_id);
+CREATE INDEX IF NOT EXISTS advisor_commissions_lead_idx    ON advisor_commissions (lead_id);
+ALTER TABLE advisor_commissions ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ADVISOR FAVORITES TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS advisor_favorites (
+  id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  advisor_id  TEXT        NOT NULL,
+  lead_id     TEXT        NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS advisor_favorites_advisor_idx ON advisor_favorites (advisor_id);
+CREATE INDEX IF NOT EXISTS advisor_favorites_lead_idx    ON advisor_favorites (lead_id);
+ALTER TABLE advisor_favorites ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ADVISOR ALERT RULES TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS advisor_alert_rules (
+  id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  advisor_id  TEXT        NOT NULL,
+  name        TEXT        NOT NULL,
+  conditions  JSONB       NOT NULL DEFAULT '{}'::JSONB,
+  action      TEXT        NOT NULL,
+  enabled     BOOLEAN     NOT NULL DEFAULT true,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS advisor_alert_rules_advisor_idx ON advisor_alert_rules (advisor_id);
+ALTER TABLE advisor_alert_rules ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ADVISOR PRICING PROFILES TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS advisor_pricing_profiles (
+  id                TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  advisor_id        TEXT        NOT NULL UNIQUE,
+  default_price     NUMERIC     NOT NULL DEFAULT 0,
+  exclusive_mult    NUMERIC     NOT NULL DEFAULT 1.5,
+  custom_rules      JSONB       NOT NULL DEFAULT '[]'::JSONB,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS advisor_pricing_profiles_advisor_idx ON advisor_pricing_profiles (advisor_id);
+ALTER TABLE advisor_pricing_profiles ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- WORKFLOW AUTOMATION LOGS TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS workflow_automation_logs (
+  id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  workflow_id TEXT        NOT NULL,
+  lead_id     TEXT,
+  action      TEXT        NOT NULL,
+  status      TEXT        NOT NULL DEFAULT 'pending',
+  result      JSONB,
+  error       TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS workflow_logs_lead_idx ON workflow_automation_logs (lead_id);
+ALTER TABLE workflow_automation_logs ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ADVISOR CASE BANKERS TABLE (for banker assignments to cases)
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS advisor_case_bankers (
+  id                    TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  lead_id               TEXT        NOT NULL,
+  advisor_id            TEXT        NOT NULL,
+  banker_id             TEXT        NOT NULL,
+  bank_name             TEXT,
+  banker_name           TEXT,
+  phone                 TEXT,
+  email                 TEXT,
+  status                TEXT        NOT NULL DEFAULT 'selected',
+  notes                 TEXT,
+  sent_at               TIMESTAMPTZ,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS advisor_case_bankers_lead_idx    ON advisor_case_bankers (lead_id);
+CREATE INDEX IF NOT EXISTS advisor_case_bankers_advisor_idx ON advisor_case_bankers (advisor_id);
+ALTER TABLE advisor_case_bankers ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- IDEMPOTENCY KEYS TABLE (for preventing duplicate operations)
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS idempotency_keys (
+  id           TEXT        PRIMARY KEY,
+  advisor_id   TEXT        NOT NULL,
+  result       JSONB,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at   TIMESTAMPTZ NOT NULL DEFAULT now() + INTERVAL '1 hour'
+);
+
+CREATE INDEX IF NOT EXISTS idempotency_keys_expires_at_idx ON idempotency_keys (expires_at);
+ALTER TABLE idempotency_keys ENABLE ROW LEVEL SECURITY;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ADVISOR CALENDAR EVENTS TABLE
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS advisor_calendar_events (
+  id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  advisor_id  TEXT        NOT NULL,
+  lead_id     TEXT,
+  title       TEXT        NOT NULL DEFAULT '',
+  description TEXT        NOT NULL DEFAULT '',
+  event_type  TEXT        NOT NULL DEFAULT 'meeting',
+  start_at    TIMESTAMPTZ NOT NULL,
+  end_at      TIMESTAMPTZ,
+  all_day     BOOLEAN     NOT NULL DEFAULT false,
+  source      TEXT,
+  source_id   TEXT,
+  color       TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Indexes for calendar queries
+CREATE INDEX IF NOT EXISTS calendar_events_advisor_idx    ON advisor_calendar_events (advisor_id);
+CREATE INDEX IF NOT EXISTS calendar_events_lead_idx       ON advisor_calendar_events (lead_id);
+CREATE INDEX IF NOT EXISTS calendar_events_start_at_idx   ON advisor_calendar_events (start_at);
+CREATE INDEX IF NOT EXISTS calendar_events_advisor_start_idx ON advisor_calendar_events (advisor_id, start_at);
+
+ALTER TABLE advisor_calendar_events ENABLE ROW LEVEL SECURITY;
+
 
 -- SUPABASE STORAGE  (manual step — cannot be done via SQL)
 -- ══════════════════════════════════════════════════════════════════════════════
