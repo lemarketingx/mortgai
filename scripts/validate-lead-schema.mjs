@@ -1,4 +1,8 @@
-import { publicLeadSchema } from "../lib/validation.js";
+import { register } from "node:module";
+
+register("./esm-js-loader.mjs", import.meta.url);
+
+const { publicLeadSchema } = await import("../lib/validation.js");
 
 const payload = {
   lead: {

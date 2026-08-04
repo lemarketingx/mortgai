@@ -1591,8 +1591,8 @@ export default function LeadDetailPage() {
                         placeholder="כתוב את תוכן המייל..." value={emailContent} onChange={(e) => setEmailContent(e.target.value)} />
                     </div>
                     <button type="button" onClick={async () => {
-                      const clientEmail = lead.email || lead.advisorEmail;
-                      if (!clientEmail) { setMsg({ text: "אין כתובת מייל זמינה", ok: false }); return; }
+                      const clientEmail = lead.email;
+                      if (!clientEmail) { setMsg({ text: "אין כתובת מייל של הלקוח במערכת", ok: false }); return; }
                       if (!emailContent.trim()) { setMsg({ text: "יש להזין תוכן למייל", ok: false }); return; }
                       setSendingEmail(true);
                       setTimeout(() => setMsg({ text: "", ok: true }), 100);

@@ -110,7 +110,7 @@ export default function AdvisorHeader({ active, urgentItems = [] }) {
 
   const fetchNotifications = useCallback(() => {
     fetch("/api/advisor/notifications")
-      .then((r) => r.ok ? r.json() : { notifications: [] })
+      .then((r) => { if (!r.ok) throw new Error("notifications fetch failed"); return r.json(); })
       .then((j) => {
         setCachedJson("/api/advisor/notifications", j);
         const items = j.notifications || [];
