@@ -330,6 +330,7 @@ export default function RefinanceCheck() {
       monthlyIncome: cleanNumber(lead.income) || (result.income ? String(result.income) : ""),
       debtLevel: cleanNumber(lead.loans) || (result.loans ? String(result.loans) : ""),
       requestedContactTime: lead.requestedContactTime,
+      consentAdvisorContact: leadConsent,
       purchaseStatus: "refinance",
       hasExistingMortgage: "yes",
       source: "refinance-check",

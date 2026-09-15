@@ -1,5 +1,6 @@
 import { hasAdminSession } from "../../../lib/adminAuth";
 import { LeadStoreError, createLead, updateLead } from "../../../lib/leadsStore";
+import { calculateLeadScore } from "../../../lib/leadScoring";
 
 function apiError(res, status, code, message) {
   return res.status(status).json({ error: code, message });
@@ -32,6 +33,30 @@ export default async function handler(req, res) {
   try {
     const publishToStore = body.publishToStore === true || body.publishToStore === "true";
 
+    // Score the lead the same way the public funnel does, so a lead the admin
+    // explicitly publishes actually carries isSellable + a real price — without
+    // this, readStoreLeads() silently hides it from every advisor forever.
+    const scoreResult = calculateLeadScore({
+      fullName: String(name).trim(),
+      phone: String(phone).trim(),
+      city: body.city || "",
+      mortgageAmount: body.mortgageAmount,
+      propertyPrice: body.propertyPrice,
+      equityAmount: body.equityAmount,
+      monthlyIncome: body.monthlyIncome,
+      monthlyObligations: body.debtLevel,
+      serviceType: purchaseStatus,
+      requestedContactTime: body.requestedContactTime || "",
+      consentAdvisorContact: true,
+      createdAt: new Date().toISOString(),
+    });
+
+    // An admin manually publishing a lead is an explicit override of the
+    // automatic sellability threshold — still guarantee a non-zero price.
+    // isSellable/priceAtCreation must be set at creation time: updateLead()'s
+    // field map doesn't include either, so patching them in afterward is a no-op.
+    const priceAtCreation = publishToStore ? (scoreResult.price || 89) : 0;
+
     const lead = await createLead({
       name: String(name).trim(),
       phone: String(phone).trim(),
@@ -46,6 +71,13 @@ export default async function handler(req, res) {
       requestedContactTime: body.requestedContactTime || "",
       source: body.source || "admin_manual",
       createdBy: "Admin",
+      leadScore: scoreResult.score,
+      leadScoreTier: scoreResult.tier,
+      leadScoreBreakdown: scoreResult.breakdown,
+      scoreVersion: scoreResult.version,
+      qualityNotes: scoreResult.qualityNotes,
+      isSellable: publishToStore,
+      priceAtCreation,
     });
 
     if (publishToStore && lead?.id) {
