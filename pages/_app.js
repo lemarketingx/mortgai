@@ -55,6 +55,11 @@ const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posth
 
 const PRIVATE_PREFIXES = ["/advisor", "/admin", "/client"];
 
+// A "beta" banner right above the lead form / calculator undercuts trust at
+// the exact moment a user is deciding to hand over financial data — keep it
+// off the primary conversion pages even though it can stay elsewhere.
+const CONVERSION_PATHS = ["/", "/lead", "/refinance-check"];
+
 function pathWithoutQuery(url = "") {
   return String(url).split("?")[0].split("#")[0] || "/";
 }
@@ -77,9 +82,9 @@ function captureSafePostHogPageview(url = "") {
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
-  const showBanner = !PRIVATE_PREFIXES.some((prefix) =>
-    router.pathname.startsWith(prefix)
-  );
+  const isPublicPath = !PRIVATE_PREFIXES.some((prefix) => router.pathname.startsWith(prefix));
+  const showBanner = isPublicPath && !CONVERSION_PATHS.includes(pathWithoutQuery(router.pathname));
+  const showWhatsApp = isPublicPath;
 
   // GA4 page-view tracking on route changes
   useEffect(() => {
@@ -184,7 +189,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       <ThemeProvider>
         <Component {...pageProps} />
       </ThemeProvider>
-      {showBanner && <WhatsAppButton />}
+      {showWhatsApp && <WhatsAppButton />}
       <Analytics />
     </ErrorBoundary>
   );

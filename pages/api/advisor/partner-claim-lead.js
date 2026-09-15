@@ -22,6 +22,7 @@ export default async function handler(req, res) {
     const advisors = await readAdvisors();
     const advisor = advisors.find((a) => String(a.advisor_id || "") === session.advisorId);
     if (!advisor) return apiError(res, 404, "ADVISOR_NOT_FOUND", "Advisor profile not found");
+    if (advisor.active !== true) return apiError(res, 403, "ADVISOR_INACTIVE", "חשבון היועץ אינו פעיל.");
     if (!isPartnerAdvisor(advisor)) return apiError(res, 403, "PARTNER_ONLY", "Partner advisor access required");
 
     const lead = await readLeadById(leadId);

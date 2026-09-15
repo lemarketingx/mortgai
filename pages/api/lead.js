@@ -226,17 +226,34 @@ export default async function handler(req, res) {
   // Fire-and-forget email notification — never block or fail the response.
   // waitUntil keeps the serverless function alive to finish this after the
   // response is sent, instead of risking the runtime freezing it mid-flight.
+  // NOTE: send() never rejects on a Resend/network failure — it resolves with
+  // {ok:false, reason}. So a plain .catch() here would never fire on a real
+  // send failure; the .then() check below is what actually surfaces it.
   waitUntil(
-    sendLeadNotification(savedLead).catch((err) =>
-      console.error("[lead-api] email notification threw", err?.message || err)
-    )
+    sendLeadNotification(savedLead)
+      .then((result) => {
+        if (!result?.ok) {
+          logLeadFailure("admin_notification_failed", { leadId: savedLead?.id, reason: result?.reason || "unknown" });
+        }
+      })
+      .catch((err) => console.error("[lead-api] email notification threw", err?.message || err))
   );
 
   // Fire-and-forget advisor marketplace notification — never block or fail the response
   waitUntil(
-    sendMarketplaceLeadNotificationToAdvisors(savedLead).catch((err) =>
-      console.error("[lead-api] advisor marketplace notification threw", err?.message || err)
-    )
+    sendMarketplaceLeadNotificationToAdvisors(savedLead)
+      .then((result) => {
+        if (result && !result.ok && result.reason !== "not_marketplace_available") {
+          logLeadFailure("marketplace_notification_failed", {
+            leadId: savedLead?.id,
+            reason: result?.reason || "unknown",
+            total: result?.total,
+            sent: result?.sent,
+            failed: result?.failed,
+          });
+        }
+      })
+      .catch((err) => console.error("[lead-api] advisor marketplace notification threw", err?.message || err))
   );
 
   return res.status(200).json({ ok: true, success: true, lead: savedLead, localOnly });
