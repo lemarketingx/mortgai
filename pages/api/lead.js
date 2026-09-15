@@ -144,7 +144,13 @@ export default async function handler(req, res) {
     referrer:              parsed.data.lead?.referrer || "",
     createdAt:             parsed.data.lead?.createdAt || new Date().toISOString(),
   };
-  const scoreResult = calculateLeadScore(scoringInput);
+  let scoreResult;
+  try {
+    scoreResult = calculateLeadScore(scoringInput);
+  } catch (error) {
+    logLeadFailure("scoring_failed", { message: error?.message || "", stack: error?.stack || "" });
+    scoreResult = { score: 0, tier: "not_sellable", price: 0, isSellable: false, breakdown: {}, qualityNotes: "", version: "error_fallback" };
+  }
   const leadQuality = leadQualityFromScore(scoreResult.score);
 
   // Consent is mandatory — no consent means never sellable, regardless of score
