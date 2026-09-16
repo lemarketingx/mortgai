@@ -394,8 +394,8 @@ export default function Home() {
       setLeadError("יש להזין שם מלא כדי שנדע כיצד לפנות אליכם.");
       return;
     }
-    if (phone.length < 7) {
-      setLeadError("יש להזין מספר טלפון תקין כדי שנוכל לחזור אליכם.");
+    if (!/^05\d{8}$|^9725\d{8}$/.test(phone)) {
+      setLeadError("יש להזין מספר טלפון נייד ישראלי תקין כדי שנוכל לחזור אליכם.");
       return;
     }
     if (!leadConsent) {
