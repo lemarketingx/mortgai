@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds, lockLeadForPurchase } from "../../../lib/leadsStore";
+import { LeadStoreError, readStoreLeads, createLeadPurchase, readAdvisorPurchasedLeadIds, lockLeadForPurchase, readAdvisors, updateLead } from "../../../lib/leadsStore";
 import { getAdvisorSession } from "../../../lib/advisorAuth";
 import { checkIdempotencyKey, createIdempotencyKey, completeIdempotencyKey, failIdempotencyKey } from "../../../lib/idempotencyStore";
 import { createNotification } from "../../../lib/notificationsStore";
@@ -44,6 +44,13 @@ export default async function handler(req, res) {
   }
 
   try {
+    const advisors = await readAdvisors();
+    const advisor = advisors.find((a) => String(a.advisor_id || "") === session.advisorId);
+    if (!advisor || advisor.active !== true) {
+      await failIdempotencyKey(idempotencyKey);
+      return apiError(res, 403, "ADVISOR_INACTIVE", "חשבון היועץ אינו פעיל.");
+    }
+
     const ownedIds = await readAdvisorPurchasedLeadIds(session.advisorId);
     if (ownedIds.has(leadId)) {
       await failIdempotencyKey(idempotencyKey);
@@ -93,6 +100,17 @@ export default async function handler(req, res) {
         errorCode: purchaseError?.code || "",
         message: purchaseError?.message || String(purchaseError),
       });
+      // The lead was already locked as sold above. Without this, a failed
+      // purchase-record insert leaves it permanently orphaned: gone from the
+      // marketplace, but with no purchase row for the buyer either.
+      try {
+        await updateLead(leadId, { storeStatus: "available", buyerAdvisorId: "", soldAt: "" });
+      } catch (unlockError) {
+        console.error("[lead-purchase] unlock_after_failed_purchase_failed", {
+          leadId,
+          message: unlockError?.message || String(unlockError),
+        });
+      }
       throw purchaseError;
     }
 

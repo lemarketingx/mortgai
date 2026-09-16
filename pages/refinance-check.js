@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "./_app";
 import BrandLogo from "../components/BrandLogo";
 import { cleanNumber, displayNumber, formatILS, formatPct, toNumber } from "../lib/format";
@@ -248,6 +248,25 @@ export default function RefinanceCheck() {
   const successRef = useRef(null);
   const result = useMemo(() => calculateRefinance(data), [data]);
 
+  // Capture UTM params and referrer from the page URL at mount time — this
+  // page previously sent none, so every refinance lead lost all ad-campaign
+  // attribution. Same pattern as pages/lead.js.
+  const sourceMetaRef = useRef({});
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      sourceMetaRef.current = {
+        utmSource:   params.get("utm_source")   || "",
+        utmMedium:   params.get("utm_medium")   || "",
+        utmCampaign: params.get("utm_campaign") || "",
+        utmContent:  params.get("utm_content")  || "",
+        utmTerm:     params.get("utm_term")     || "",
+        referrer:    document.referrer          || "",
+        landingPage: window.location.href       || "",
+      };
+    } catch {}
+  }, []);
+
   async function handlePdfUpload(file) {
     if (!file) return;
     if (!file.name.toLowerCase().endsWith(".pdf")) {
@@ -331,6 +350,7 @@ export default function RefinanceCheck() {
       debtLevel: cleanNumber(lead.loans) || (result.loans ? String(result.loans) : ""),
       requestedContactTime: lead.requestedContactTime,
       consentAdvisorContact: leadConsent,
+      ...sourceMetaRef.current,
       purchaseStatus: "refinance",
       hasExistingMortgage: "yes",
       source: "refinance-check",
