@@ -744,6 +744,13 @@ function LiveResultPanel({ analysis, ready, recommendation }) {
     <aside className="overflow-hidden rounded-[34px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[0_24px_70px_rgba(15,23,42,0.10)]">
       <div className="h-1.5 w-full bg-gradient-to-l from-brand-600 to-accent-500" />
       <div className="p-6 sm:p-8">
+        {/* Screen-reader users typing in the form (elsewhere on the page) hear the
+            updated estimate without needing to move focus to this panel. Kept to one
+            short sentence on purpose — announcing the whole panel on every keystroke
+            would be far worse than announcing nothing. */}
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          {ready ? `אומדן סיכוי אישור מתעדכן: ${score} אחוז. ${approvalLabel(analysis, ready)}.` : "מלאו נתונים לבדיקה ראשונית של סיכוי האישור."}
+        </div>
         <span className="inline-flex rounded-full bg-brand-50 dark:bg-brand-950 px-4 py-1.5 text-xs font-black text-brand-700 dark:text-brand-300">{ready ? "תוצאה מתעדכנת בזמן אמת" : "מלאו נתונים לבדיקה ראשונית"}</span>
         <div className="mt-6 flex items-end justify-between gap-4">
           <div>
