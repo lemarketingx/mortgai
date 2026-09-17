@@ -331,8 +331,8 @@ export default function RefinanceCheck() {
     event.preventDefault();
     if (leadLoading || leadSent) return;
     const phone = cleanNumber(lead.phone);
-    if (lead.name.trim().length < 2 || phone.length < 7) {
-      setLeadError("יש להשלים שם וטלפון כדי לשלוח את הבדיקה");
+    if (lead.name.trim().length < 2 || !/^05\d{8}$|^9725\d{8}$/.test(phone)) {
+      setLeadError("יש להשלים שם וטלפון נייד ישראלי תקין כדי לשלוח את הבדיקה");
       return;
     }
     if (!leadConsent) {

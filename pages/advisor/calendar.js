@@ -762,6 +762,7 @@ export default function CalendarPage() {
     <div dir="rtl" className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <Head>
         <title>יומן | FINZO PRO</title>
+        <meta name="robots" content="noindex,nofollow" />
       </Head>
       <AdvisorHeader active="/advisor/calendar" />
 

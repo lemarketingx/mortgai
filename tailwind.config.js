@@ -5,12 +5,14 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // legacy — keep intact, still used by existing pages
-        sans: ['"Assistant"', '"Heebo"', '"Rubik"', "Arial", "sans-serif"],
-        number: ['"Manrope"', '"Assistant"', "Arial", "sans-serif"],
+        // legacy — keep intact, still used by existing pages.
+        // var(--font-*) comes from next/font (lib/fonts.js), applied on the
+        // _app.js wrapper div; the literal names remain as a fallback.
+        sans: ['var(--font-assistant)', '"Assistant"', 'var(--font-heebo)', '"Heebo"', '"Rubik"', "Arial", "sans-serif"],
+        number: ['var(--font-manrope)', '"Manrope"', 'var(--font-assistant)', '"Assistant"', "Arial", "sans-serif"],
         // FINZO design system v1.0
-        serif: ['"Frank Ruhl Libre"', '"Times New Roman"', "serif"],
-        mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
+        serif: ['var(--font-frank-ruhl-libre)', '"Frank Ruhl Libre"', '"Times New Roman"', "serif"],
+        mono: ['var(--font-ibm-plex-mono)', '"IBM Plex Mono"', "ui-monospace", "monospace"],
       },
       colors: {
         // ============================================================
