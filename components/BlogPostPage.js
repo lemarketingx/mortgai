@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Head from "next/head";
 import { trackEvent } from "../lib/analytics";
+import { cleanNumber } from "../lib/format";
 import { OG_IMAGE_URL, absoluteUrl, articleSchema, breadcrumbSchema, canonicalUrl, faqSchema, stringifyJsonLd } from "../lib/seo";
 import BrandLogo from "./BrandLogo";
 
@@ -63,6 +64,15 @@ function LeadForm({ slug, category }) {
     e.preventDefault();
     setError("");
 
+    const phone = cleanNumber(form.phone);
+    if (form.name.trim().length < 2) {
+      setError("יש להזין שם מלא כדי שנדע כיצד לפנות אליכם.");
+      return;
+    }
+    if (!/^05\d{8}$|^9725\d{8}$/.test(phone)) {
+      setError("יש להזין מספר טלפון נייד ישראלי תקין כדי שנוכל לחזור אליכם.");
+      return;
+    }
     if (!consent) {
       setError("יש לאשר את הסכמתכם לשיתוף המידע לפני שליחה.");
       return;
@@ -78,7 +88,7 @@ function LeadForm({ slug, category }) {
         body: JSON.stringify({
           lead: {
             name: form.name,
-            phone: form.phone,
+            phone,
             city: form.city,
             source: "blog",
             landingPage: `/blog/${slug}`,
