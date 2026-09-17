@@ -61,10 +61,10 @@
   --e-4:      0 24px 48px -24px rgba(10,23,51,.18);
   --e-cobalt: 0 12px 24px -16px rgba(44,91,255,.55);
 
-  /* FONTS */
-  --f-serif: "Frank Ruhl Libre", "Times New Roman", serif;
-  --f-sans:  "Heebo", "Helvetica Neue", Arial, sans-serif;
-  --f-mono:  "IBM Plex Mono", ui-monospace, monospace;
+  /* FONTS — self-hosted via next/font (lib/fonts.js), literal names kept as fallback */
+  --f-serif: var(--font-frank-ruhl-libre), "Frank Ruhl Libre", "Times New Roman", serif;
+  --f-sans:  var(--font-heebo), "Heebo", "Helvetica Neue", Arial, sans-serif;
+  --f-mono:  var(--font-ibm-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
 
   /* TYPE SCALE */
   --t-display: clamp(46px, 5.6vw, 80px);
@@ -134,8 +134,15 @@
       radial-gradient(circle at 88% 8%, rgba(255, 46, 166, 0.12), transparent 32%),
       radial-gradient(circle at 50% 92%, rgba(123, 61, 255, 0.08), transparent 38%),
       linear-gradient(145deg, #f8f9ff 0%, #eff4ff 42%, #f7fbfa 100%);
-    font-family: "Assistant", "Heebo", "Rubik", Arial, sans-serif;
     padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  /* Applied together with the next/font CSS variables on the _app.js
+     wrapper div — kept as its own class (rather than on body) because the
+     variables are only defined on that wrapper, and CSS custom properties
+     only cascade downward. */
+  .font-root {
+    font-family: var(--font-assistant), "Assistant", var(--font-heebo), "Heebo", "Rubik", Arial, sans-serif;
   }
 
   .dark body,
@@ -179,7 +186,7 @@
   }
 
   .number-display {
-    font-family: "Manrope", "Assistant", Arial, sans-serif;
+    font-family: var(--font-manrope), "Manrope", var(--font-assistant), "Assistant", Arial, sans-serif;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.01em;
   }

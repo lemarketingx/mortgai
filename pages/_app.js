@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next";
 import ErrorBoundary from "../components/ErrorBoundary";
 import BetaBanner from "../components/BetaBanner";
 import WhatsAppButton from "../components/WhatsAppButton";
+import { fontVariables } from "../lib/fonts";
 import "../styles/globals.css";
 
 const THEME_KEY = "finzo_theme_mode";
@@ -113,6 +114,7 @@ export default function App({ Component, pageProps }) {
 
   return (
     <ErrorBoundary>
+      <div className={`${fontVariables} font-root`}>
       <Head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -191,6 +193,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       </ThemeProvider>
       {showWhatsApp && <WhatsAppButton />}
       <Analytics />
+      </div>
     </ErrorBoundary>
   );
 }
