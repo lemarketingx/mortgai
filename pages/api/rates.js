@@ -1,16 +1,16 @@
 const fallbackRates = {
-  bankOfIsraelRate: 4.5,
-  primeRate: 6,
+  bankOfIsraelRate: 3.25,
+  primeRate: 4.75,
   inflation12m: 3.1,
   nextRateDecision: "לא זמין",
-  lastUpdated: "2025-04",
-  primeMortgage: 5.1,
-  fixedUnlinked: 5.45,
-  fixedLinked: 3.9,
-  variable5: 5.35,
-  variable5Linked: 3.7,
+  lastUpdated: "2026-10",
+  primeMortgage: 4.1,
+  fixedUnlinked: 4.75,
+  fixedLinked: 3.45,
+  variable5: 4.5,
+  variable5Linked: 3.2,
   forecastText:
-    "נתוני ריבית לדוגמה לצורך סימולציה. יש לוודא נתוני שוק עדכניים מול מקורות רשמיים והבנקים.",
+    "אומדן ריביות לצורך סימולציה (מעודכן 10/2026). הריבית בפועל תלויה בבנק ובפרופיל הלווה — יש לוודא מול הבנקים.",
 };
 
 export default function handler(req, res) {

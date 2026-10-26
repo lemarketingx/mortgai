@@ -52,16 +52,16 @@ const initialData = {
 };
 
 const fallbackRates = {
-  bankOfIsraelRate: 4.5,
-  primeRate: 6,
+  bankOfIsraelRate: 3.25,
+  primeRate: 4.75,
   inflation12m: 3.1,
   nextRateDecision: "לא זמין",
-  lastUpdated: "2025-04",
-  primeMortgage: 5.1,
-  fixedUnlinked: 5.45,
-  fixedLinked: 3.9,
-  variable5: 5.35,
-  variable5Linked: 3.7,
+  lastUpdated: "2026-10",
+  primeMortgage: 4.1,
+  fixedUnlinked: 4.75,
+  fixedLinked: 3.45,
+  variable5: 4.5,
+  variable5Linked: 3.2,
 };
 
 const wizardSteps = [
