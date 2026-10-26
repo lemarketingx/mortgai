@@ -1,7 +1,7 @@
 import { createLead } from "../../lib/leadsStore";
 import { publicLeadSchema, validationErrorPayload } from "../../lib/validation";
 import { checkRateLimit, getClientIp, recordRateLimitHit } from "../../lib/rateLimit";
-import { sendLeadNotification, sendMarketplaceLeadNotificationToAdvisors } from "../../lib/email";
+import { sendLeadNotification, sendMarketplaceLeadNotificationToAdvisors, sendOpsAlert } from "../../lib/email";
 import { waitUntil } from "@vercel/functions";
 import { calculateLeadScore } from "../../lib/leadScoring";
 
@@ -192,6 +192,17 @@ export default async function handler(req, res) {
       stack: error?.stack || "",
       leadKeys: Object.keys(req.body?.lead || {}),
     });
+    // Tell the admin: otherwise a DB outage loses leads silently.
+    waitUntil(
+      sendOpsAlert({
+        subject: "FINZO: שמירת ליד נכשלה",
+        details: [
+          `קוד שגיאה: ${safeError}`,
+          `זמן: ${new Date().toISOString()}`,
+          "הליד לא נשמר. בדקו את Supabase ואת הלוגים בהקדם.",
+        ],
+      }).catch(() => {})
+    );
   }
 
   if (webhookUrl) {
@@ -199,7 +210,9 @@ export default async function handler(req, res) {
       const response = await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...req.body, savedLead }),
+        // saveFailed lets the receiver tell a backup copy from a stored lead,
+        // since the user is shown an error and may resubmit.
+        body: JSON.stringify({ ...req.body, savedLead, saveFailed: !savedLead }),
       });
 
       if (!response.ok) {
@@ -250,6 +263,14 @@ export default async function handler(req, res) {
             total: result?.total,
             sent: result?.sent,
             failed: result?.failed,
+          });
+          return sendOpsAlert({
+            subject: "FINZO: התראת ליד לא נשלחה ליועצים",
+            details: [
+              `ליד: ${savedLead?.id || "—"}`,
+              `סיבה: ${result?.reason || "unknown"}`,
+              `נשלחו ${result?.sent ?? 0} מתוך ${result?.total ?? 0}`,
+            ],
           });
         }
       })

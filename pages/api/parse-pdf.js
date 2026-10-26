@@ -1,3 +1,5 @@
+import { checkRateLimit, getClientIp, recordRateLimitHit } from "../../lib/rateLimit";
+
 export const config = {
   api: {
     bodyParser: false,
@@ -286,6 +288,16 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "METHOD_NOT_ALLOWED" });
   }
+
+  // Public endpoint that can call OpenAI — cap per-IP usage to prevent cost abuse.
+  const ip = getClientIp(req);
+  const rateOpts = { scope: "parse-pdf", limit: 10, windowMs: 15 * 60 * 1000 };
+  const rateLimit = await checkRateLimit(ip, rateOpts);
+  if (!rateLimit.allowed) {
+    res.setHeader("Retry-After", String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)));
+    return res.status(429).json({ error: "RATE_LIMITED", message: "יותר מדי העלאות. נסו שוב מאוחר יותר." });
+  }
+  await recordRateLimitHit(ip, rateOpts);
 
   const contentType = req.headers["content-type"] || "";
   if (!contentType.includes("application/pdf")) {
